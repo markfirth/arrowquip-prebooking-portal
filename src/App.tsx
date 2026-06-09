@@ -723,9 +723,11 @@ function StrategicMap({
       </div>
 
       {!MAPBOX_TOKEN ? (
-        <div className="absolute bottom-4 left-4 max-w-lg border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-800">
-          Add <strong>VITE_MAPBOX_ACCESS_TOKEN</strong> to enable live Mapbox GL JS.
-          The planning canvas below preserves the same layer model for local review.
+        <div className="absolute bottom-4 left-4 max-w-xl border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-800">
+          Create a public Mapbox access token in the Mapbox dashboard, then add it
+          as <strong>VITE_MAPBOX_ACCESS_TOKEN</strong> in <strong>.env.local</strong>{" "}
+          and restart the dev server. The planning canvas below preserves the same
+          layer model for local review until that token is available.
         </div>
       ) : null}
     </div>

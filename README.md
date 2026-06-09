@@ -29,6 +29,20 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 
 Without credentials, the app uses a seeded planning dataset and a branded fallback map canvas. With `VITE_MAPBOX_ACCESS_TOKEN`, the Coverage Map uses Mapbox GL JS. With Supabase variables, the app queries live planning tables and falls back to seeded data if a read fails.
 
+### Create a Mapbox access token
+
+Mapbox access tokens must be created from the owning Mapbox account; do not commit them to git.
+
+1. Open the Mapbox dashboard at `https://account.mapbox.com/access-tokens/`.
+2. Create or copy a public token that starts with `pk.`.
+3. Add it to `.env.local`:
+
+   ```bash
+   VITE_MAPBOX_ACCESS_TOKEN=pk_your_mapbox_token_here
+   ```
+
+4. Restart `npm run dev`.
+
 ## Supabase schema
 
 Review and apply `supabase/schema.sql` in a Supabase project. The schema includes:
