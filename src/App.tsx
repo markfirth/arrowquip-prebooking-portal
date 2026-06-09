@@ -12,7 +12,6 @@ import {
   Globe2,
   Layers3,
   LineChart as LineChartIcon,
-  MapPin,
   Navigation,
   Search,
   ShieldCheck,
