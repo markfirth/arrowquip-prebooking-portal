@@ -446,7 +446,20 @@ function srcBadgeHTML(d){
     var allSf=idf.every(function(f){return s[f]==='salesforce';});
     cls=allSf?'sf':'mixed'; lbl=allSf?'SF':'MIXED';
   }
-  return '<span class="srcbadge '+cls+'" title="'+lbl+' — data source">'+lbl+'</span>';
+  /* Phase 4: field-level source details via the native title tooltip (hover) — no popup/modal, no new DOM. */
+  var LBL={name:'Name',territory:'Territory',tm:'Manager',tier:'Tier',loc:'State',address:'Address',lastYear:'2026 Revenue',lat:'Lat',lon:'Lon',booking:'2027 Target',loads:'Loads'};
+  var order=['name','territory','tm','tier','loc','address','lastYear','lat','lon','booking','loads'];
+  var sf=[], fb=[];
+  order.forEach(function(f){ if(s[f]==='salesforce') sf.push(LBL[f]); else if(s[f]==='planner-fallback') fb.push(LBL[f]); });
+  var head = (lbl==='SF') ? 'SF — all identity fields from Salesforce'
+           : (lbl==='MIXED') ? 'MIXED — Salesforce match, some planner fallback'
+           : 'PLANNER — no Salesforce match';
+  var lines=[head];
+  if(d._sf && d._sfId) lines.push('Salesforce Account Id: '+d._sfId);
+  lines.push('From Salesforce: '+(sf.length?sf.join(', '):'—'));
+  lines.push('Planner fallback: '+(fb.length?fb.join(', '):'—'));
+  lines.push('Local (planner): Visit, Kickoff, Remote, scheduling');
+  return '<span class="srcbadge '+cls+'" title="'+esc(lines.join('\n'))+'">'+lbl+'</span>';
 }
 function loadSFDealers(){
   try{
