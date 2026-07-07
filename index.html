@@ -126,6 +126,11 @@ tr.unsched td{background:#fffaf0;} tr.unsched .wkn{color:#9a6a12;}
 .ed.nm{font-weight:700;color:var(--aq-black);min-width:150px;} select.ed{cursor:pointer;}
 input[type=checkbox].edk{accent-color:var(--green);width:17px;height:17px;cursor:pointer;}
 td.act{text-align:center;} .delx{border:0;background:transparent;color:#cbced0;font-size:15px;cursor:pointer;line-height:1;} .delx:hover{color:var(--aq-red);}
+td.srccell{text-align:center;white-space:nowrap;padding-right:8px;}
+.srcbadge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.04em;line-height:1;padding:2px 4px;border-radius:3px;color:#8a8f98;background:#f1f2f4;border:1px solid #e4e6e9;vertical-align:middle;}
+.srcbadge.sf{color:#2f7a46;background:#eef7f1;border-color:#dcebe1;}
+.srcbadge.mixed{color:#8a6d1a;background:#faf4e6;border-color:#efe6cc;}
+.srcbadge.planner{color:#8a8f98;background:#f1f2f4;border-color:#e4e6e9;}
 tfoot td{padding:15px 14px;border-top:2px solid var(--aq-charcoal);background:#fbfbfc;font-weight:600;color:var(--aq-black);font-size:12.5px;}
 tfoot td.num{font-variant-numeric:tabular-nums;} tfoot .tlabel{text-transform:uppercase;letter-spacing:.06em;font-size:12px;}
 .ganttwrap{overflow-x:auto;}
@@ -366,7 +371,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
           <th class="srt" data-mk="name">Dealer</th><th class="srt" data-mk="territory">Territory</th><th class="srt" data-mk="tm">Acct. Mgr</th>
           <th class="srt" data-mk="tier">Tier</th><th class="srt" data-mk="loc">State</th><th>Address</th>
           <th class="srt num" data-mk="lastYear">2026 Rev</th><th class="srt num" data-mk="booking">2027 Target</th><th class="srt num" data-mk="loads">Loads</th>
-          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th><th></th>
+          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th><th></th><th></th>
         </tr></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
       </table>
@@ -429,6 +434,19 @@ function sfMasterMerge(d){
   src.visitConfirmed='local'; src.atKickoff='local';
   o._sources=src; /* internal metadata only — not persisted, not displayed */
   return o;
+}
+/* Master Sheet source badge (Master only): SF = all identity fields from Salesforce;
+   MIXED = matched but an identity field fell back; PLANNER = no Salesforce match.
+   booking/loads are expected planner fallback and are NOT counted toward MIXED. */
+function srcBadgeHTML(d){
+  var s=d._sources||{}, cls, lbl;
+  if(!d._sf){ cls='planner'; lbl='PLANNER'; }
+  else {
+    var idf=['name','territory','tm','tier','loc','address','lastYear'];
+    var allSf=idf.every(function(f){return s[f]==='salesforce';});
+    cls=allSf?'sf':'mixed'; lbl=allSf?'SF':'MIXED';
+  }
+  return '<span class="srcbadge '+cls+'" title="'+lbl+' — data source">'+lbl+'</span>';
 }
 function loadSFDealers(){
   try{
@@ -811,8 +829,9 @@ function renderMaster(){
     <td style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
     <td style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${ASSIGN[d.id]==='remote'?'checked':''}></td>
-    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
+    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td>
+    <td class="srccell">${srcBadgeHTML(d)}</td></tr>`).join("");
+  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
 function onMasterEdit(e){
