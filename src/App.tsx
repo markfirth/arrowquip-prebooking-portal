@@ -48,12 +48,19 @@ import {
   dealerRisks,
   monthlyRegistrations,
   recruitmentPipeline,
-  type ArrowquipDealer,
   type CompetitorDealer,
   type Market,
   type TradeShowEvent,
 } from "./data/marketData";
 import { loadCoverageDataset, type CoverageDataset } from "./lib/supabase";
+import {
+  DEALER_AREAS,
+  loadDealerDirectory,
+  syncDealersFromSalesforce,
+  updateDealerSettings,
+  type DealerDirectoryDataset,
+  type DealerDirectoryRow,
+} from "./lib/dealerDirectory";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -294,9 +301,7 @@ function App() {
             <CoverageMapView dataset={dataset} layers={layers} setLayers={setLayers} />
           ) : null}
           {activeSection === "dealer-locator" ? <DealerLocator dataset={dataset} /> : null}
-          {activeSection === "dealer-directory" ? (
-            <DealerDirectory dealers={dataset.arrowquipDealers} />
-          ) : null}
+          {activeSection === "dealer-directory" ? <DealerDirectory /> : null}
           {activeSection === "competitor-directory" ? (
             <CompetitorDirectory competitors={dataset.competitorDealers} />
           ) : null}
@@ -981,49 +986,277 @@ function DealerLocator({ dataset }: { dataset: CoverageDataset }) {
   );
 }
 
-function DealerDirectory({ dealers }: { dealers: ArrowquipDealer[] }) {
+const DIRECTORY_TABS = ["Master", ...DEALER_AREAS] as const;
+type DirectoryTab = (typeof DIRECTORY_TABS)[number];
+const AREA_OVERRIDE_OPTIONS = ["", ...DEALER_AREAS, "Unassigned"] as const;
+
+function formatSynced(ts: string | null): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+}
+
+function DealerDirectory() {
+  const [dataset, setDataset] = useState<DealerDirectoryDataset>({ dealers: [], source: "seeded" });
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<DirectoryTab>("Master");
+  const [syncing, setSyncing] = useState(false);
+  const [message, setMessage] = useState<string>("");
+
+  const refresh = async () => {
+    setLoading(true);
+    const next = await loadDealerDirectory();
+    setDataset(next);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const runSync = async () => {
+    setSyncing(true);
+    setMessage("Syncing dealers from Salesforce…");
+    const result = await syncDealersFromSalesforce();
+    if (result.ok) {
+      setMessage(`Synced ${result.remoteCount ?? 0} dealers from Salesforce.`);
+      await refresh();
+    } else {
+      setMessage(result.error || "Sync failed.");
+    }
+    setSyncing(false);
+  };
+
+  // Local-first edit: update UI immediately, then persist to Supabase.
+  const patchDealer = (id: string, patch: Partial<DealerDirectoryRow>) => {
+    setDataset((prev) => ({
+      ...prev,
+      dealers: prev.dealers.map((d) => {
+        if (d.id !== id) return d;
+        const merged = { ...d, ...patch };
+        if ("area_override" in patch) {
+          merged.effective_area = (patch.area_override && patch.area_override.trim()) || d.area;
+        }
+        return merged;
+      }),
+    }));
+    void updateDealerSettings(id, patch).then((res) => {
+      if (!res.ok) {
+        setMessage(
+          dataset.source === "seeded"
+            ? "Showing seeded data — connect Supabase and sign in as an admin to save edits."
+            : res.error || "Could not save edit.",
+        );
+      }
+    });
+  };
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { Master: dataset.dealers.length };
+    for (const area of DEALER_AREAS) {
+      c[area] = dataset.dealers.filter(
+        (d) => d.effective_area === area && d.visible_in_portal && d.show_in_area_tabs,
+      ).length;
+    }
+    return c;
+  }, [dataset]);
+
   return (
     <PageShell
       eyebrow="Dealer Directory"
-      title="Arrowquip dealer performance and coverage health"
-      description="Revenue, registrations, inventory, forecast accuracy, dealer score, and territory manager ownership."
+      title="Salesforce dealer sync — Master Sheet & area coverage"
+      description="Every dealer from every area, synced read-only from Salesforce. The Master Sheet is editable; area tabs are filtered views. Manual planner data is preserved across syncs."
     >
-      <div className="executive-card overflow-x-auto">
-        <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-          <thead className="bg-stone-50 text-xs uppercase tracking-[0.14em] text-stone-500">
-            <tr>
-              <Th>Dealer Name</Th>
-              <Th>Location</Th>
-              <Th>Revenue</Th>
-              <Th>Registrations</Th>
-              <Th>Inventory</Th>
-              <Th>Forecast Accuracy</Th>
-              <Th>Dealer Score</Th>
-              <Th>Territory Manager</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {dealers.map((dealer) => (
-              <tr key={dealer.id} className="border-t border-stone-200">
-                <Td>
-                  <p className="font-semibold">{dealer.name}</p>
-                  <p className="text-xs text-stone-500">{dealer.type}</p>
-                </Td>
-                <Td>{`${dealer.city}, ${dealer.state}`}</Td>
-                <Td>{formatCurrency(dealer.revenue)}</Td>
-                <Td>{formatNumber(dealer.registrations)}</Td>
-                <Td>{formatCurrency(dealer.inventoryValue)}</Td>
-                <Td>{dealer.forecastAccuracy}%</Td>
-                <Td>
-                  <ScoreBadge score={dealer.dealerScore} />
-                </Td>
-                <Td>{dealer.territoryManager}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {DIRECTORY_TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                tab === t
+                  ? "border-[#c8102e] bg-[#c8102e] text-white"
+                  : "border-stone-300 bg-white text-stone-600 hover:border-stone-400"
+              }`}
+            >
+              {t === "Master" ? "Master Sheet" : t}
+              <span className="ml-2 opacity-70">{counts[t] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex items-center gap-1 border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${
+              dataset.source === "supabase"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-amber-200 bg-amber-50 text-amber-700"
+            }`}
+          >
+            {dataset.source === "supabase" ? "Live" : "Seeded"}
+          </span>
+          <button
+            type="button"
+            onClick={() => void runSync()}
+            disabled={syncing}
+            className="border border-stone-900 bg-stone-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-black disabled:opacity-50"
+          >
+            {syncing ? "Syncing…" : "Sync from Salesforce"}
+          </button>
+        </div>
       </div>
+
+      {message ? (
+        <p className="border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">{message}</p>
+      ) : null}
+
+      {loading ? (
+        <p className="text-sm text-stone-500">Loading dealers…</p>
+      ) : tab === "Master" ? (
+        <MasterSheet dealers={dataset.dealers} onPatch={patchDealer} />
+      ) : (
+        <AreaView area={tab} dealers={dataset.dealers} />
+      )}
     </PageShell>
+  );
+}
+
+function MasterSheet({
+  dealers,
+  onPatch,
+}: {
+  dealers: DealerDirectoryRow[];
+  onPatch: (id: string, patch: Partial<DealerDirectoryRow>) => void;
+}) {
+  return (
+    <div className="executive-card overflow-x-auto">
+      <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
+        <thead className="bg-stone-50 text-xs uppercase tracking-[0.14em] text-stone-500">
+          <tr>
+            <Th>Dealer</Th>
+            <Th>Area (effective)</Th>
+            <Th>Area override</Th>
+            <Th>Account Owner</Th>
+            <Th>Territory Manager</Th>
+            <Th>Dealer Success</Th>
+            <Th>Billing</Th>
+            <Th>Status</Th>
+            <Th>Visible</Th>
+            <Th>Area tabs</Th>
+            <Th>Last synced</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {dealers.map((d) => (
+            <tr key={d.id} className="border-t border-stone-200">
+              <Td>
+                <p className="font-semibold">{d.dealer_name || "—"}</p>
+                <p className="text-[11px] text-stone-400">{d.salesforce_account_id}</p>
+                {!d.sf_present ? (
+                  <span className="mt-1 inline-block border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] uppercase text-amber-700">
+                    Missing in Salesforce
+                  </span>
+                ) : null}
+              </Td>
+              <Td>
+                <span className="inline-flex border border-stone-300 bg-white px-2 py-1 text-xs font-semibold">
+                  {d.effective_area}
+                </span>
+              </Td>
+              <Td>
+                <select
+                  value={d.area_override ?? ""}
+                  onChange={(e) => onPatch(d.id, { area_override: e.target.value || null })}
+                  className="border border-stone-300 bg-white px-2 py-1 text-xs"
+                >
+                  {AREA_OVERRIDE_OPTIONS.map((opt) => (
+                    <option key={opt || "sf"} value={opt}>
+                      {opt === "" ? "From Salesforce" : opt}
+                    </option>
+                  ))}
+                </select>
+              </Td>
+              <Td>{d.account_owner || "—"}</Td>
+              <Td>{d.territory_manager || "—"}</Td>
+              <Td>{d.dealer_success_specialist || "—"}</Td>
+              <Td>
+                {[d.billing_city, d.billing_state].filter(Boolean).join(", ") || "—"}
+                {d.billing_country ? (
+                  <p className="text-[11px] text-stone-400">{d.billing_country}</p>
+                ) : null}
+              </Td>
+              <Td>{d.status || "—"}</Td>
+              <Td>
+                <input
+                  type="checkbox"
+                  checked={d.visible_in_portal}
+                  onChange={(e) => onPatch(d.id, { visible_in_portal: e.target.checked })}
+                />
+              </Td>
+              <Td>
+                <input
+                  type="checkbox"
+                  checked={d.show_in_area_tabs}
+                  onChange={(e) => onPatch(d.id, { show_in_area_tabs: e.target.checked })}
+                />
+              </Td>
+              <Td className="text-[11px] text-stone-500">{formatSynced(d.last_synced_at)}</Td>
+            </tr>
+          ))}
+          {dealers.length === 0 ? (
+            <tr>
+              <td colSpan={11} className="px-4 py-6 text-center text-sm text-stone-500">
+                No dealers yet. Click “Sync from Salesforce”.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AreaView({ area, dealers }: { area: string; dealers: DealerDirectoryRow[] }) {
+  const rows = dealers.filter(
+    (d) => d.effective_area === area && d.visible_in_portal && d.show_in_area_tabs,
+  );
+  return (
+    <div className="executive-card overflow-x-auto">
+      <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+        <thead className="bg-stone-50 text-xs uppercase tracking-[0.14em] text-stone-500">
+          <tr>
+            <Th>Dealer</Th>
+            <Th>Account Owner</Th>
+            <Th>Territory Manager</Th>
+            <Th>Dealer Success</Th>
+            <Th>Billing</Th>
+            <Th>Status</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((d) => (
+            <tr key={d.id} className="border-t border-stone-200">
+              <Td>
+                <p className="font-semibold">{d.dealer_name || "—"}</p>
+                <p className="text-[11px] text-stone-400">{d.salesforce_account_id}</p>
+              </Td>
+              <Td>{d.account_owner || "—"}</Td>
+              <Td>{d.territory_manager || "—"}</Td>
+              <Td>{d.dealer_success_specialist || "—"}</Td>
+              <Td>{[d.billing_city, d.billing_state].filter(Boolean).join(", ") || "—"}</Td>
+              <Td>{d.status || "—"}</Td>
+            </tr>
+          ))}
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="px-4 py-6 text-center text-sm text-stone-500">
+                No {area} dealers are visible. Assign dealers to {area} on the Master Sheet.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -1671,8 +1904,8 @@ function Th({ children }: { children: ReactNode }) {
   return <th className="border-b border-stone-200 px-4 py-3 font-semibold">{children}</th>;
 }
 
-function Td({ children }: { children: ReactNode }) {
-  return <td className="px-4 py-4 align-top text-stone-700">{children}</td>;
+function Td({ children, className }: { children: ReactNode; className?: string }) {
+  return <td className={`px-4 py-4 align-top text-stone-700 ${className ?? ""}`}>{children}</td>;
 }
 
 function ScoreBadge({ score }: { score: number }) {

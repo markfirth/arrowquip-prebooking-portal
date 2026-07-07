@@ -22,4 +22,13 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "error",
     },
   },
+  {
+    // Serverless API functions run on Node (Vercel), not the browser.
+    files: ["api/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: "module",
+      globals: { ...globals.node, fetch: "readonly" },
+    },
+  },
 );
