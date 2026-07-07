@@ -390,8 +390,20 @@ let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reind
    localStorage values. Only renderMaster() uses this overlay; every other
    section reads DEALERS unchanged. --- */
 var SF_BY_ID={}, SF_BY_NAME={};
+/* Explicit HIGH-confidence aliases (approved): plannerName -> Salesforce Account Id.
+   Resolves dealers whose Salesforce name differs trivially from the planner name. */
+var SF_ALIAS={
+  "Capital Tractor Inc.":"001ON00000B7wIrYAJ",
+  "High Point Stockmans Supply":"001ON00000JHefBYAT",
+  "Southern States - Stanford":"001ON00000LOKjEYAX",
+  "Stenberg Trailers & Cattle Supply":"001ON00000JHTrpYAH",
+  "Cattleman's Resource Inc":"001ON00000Jyc9NYAR"
+};
 function _sfNorm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
-function sfLookup(d){ return SF_BY_ID[d.id]||SF_BY_NAME[_sfNorm(d.name)]||null; }
+function sfLookup(d){
+  var byAlias=SF_ALIAS[d.name]?SF_BY_ID[SF_ALIAS[d.name]]:null;
+  return SF_BY_ID[d.id]||byAlias||SF_BY_NAME[_sfNorm(d.name)]||null;
+}
 function sfMasterMerge(d){
   var sf=sfLookup(d); if(!sf) return d;
   var o=Object.assign({},d);

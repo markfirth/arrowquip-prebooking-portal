@@ -25,6 +25,17 @@ const TEAM_TO_AREA = {
   Exports: 'Exports',
 }
 
+// Explicit HIGH-confidence aliases (approved). Ensures these specific accounts
+// are always returned even if untiered (e.g. Capital Tractor), so the frontend
+// alias map can resolve them by Account Id.
+const ALIAS_IDS = [
+  '001ON00000B7wIrYAJ', // Capital Tractor Inc.
+  '001ON00000JHefBYAT', // High Point Stockman Supply
+  '001ON00000LOKjEYAX', // Southern States Co-op - Stanford
+  '001ON00000JHTrpYAH', // Stenberg's Trailers & Cattle Supply
+  '001ON00000Jyc9NYAR', // Cattleman's Resource
+]
+
 function readEnv(name) {
   let v = String(process.env[name] || '').trim()
   const p = `${name}=`
@@ -116,9 +127,10 @@ export default async function handler(req) {
     // territory teams (Account_Tier__c set). This matches the planner's dealer
     // set, rather than every account that merely has a Team__c (end-customers).
     const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude`
+    const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
     const [accounts, opp27, opp26] = await Promise.all([
       queryAll(base, instanceUrl, accessToken,
-        `SELECT ${fields} FROM Account WHERE Team__c IN (${teamList}) AND Account_Tier__c != null AND Name != '- -'`),
+        `SELECT ${fields} FROM Account WHERE (Team__c IN (${teamList}) AND Account_Tier__c != null AND Name != '- -') OR Id IN (${aliasIn})`),
       queryAll(base, instanceUrl, accessToken,
         `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
       queryAll(base, instanceUrl, accessToken,
