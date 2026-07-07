@@ -524,10 +524,11 @@ function renderSFBanner(){
   }
   var b=document.getElementById('sfSyncBtn'); if(b) b.onclick=syncSalesforce;
 }
-function syncSalesforce(){ var b=document.getElementById('sfSyncBtn'); if(b) b.disabled=true; cloudBadge('Syncing Salesforce…'); try{ fetch('/api/salesforce-refresh?k=aq-d3-4e8a1f60d9b2',{method:'POST'}).then(function(){loadSFDealers();},function(){loadSFDealers();}); }catch(e){ loadSFDealers(); } }
-function loadSFDealers(){
+function syncSalesforce(){ var b=document.getElementById('sfSyncBtn'); if(b) b.disabled=true; cloudBadge('Syncing Salesforce…'); try{ loadSFDealers({force:true}); }catch(e){ loadSFDealers({force:true}); } }
+function loadSFDealers(opts){
+  var force=opts&&opts.force;
   try{
-    fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2').then(function(r){return r.json();}).then(function(j){
+    fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2'+(force?'&refresh=1&_='+Date.now():''),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
       if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); return; }
       SF_BY_ID={}; SF_BY_NAME={}; var matched=0;
       j.dealers.forEach(function(sf){ if(sf.id)SF_BY_ID[sf.id]=sf; if(sf.name)SF_BY_NAME[_sfNorm(sf.name)]=sf; });

@@ -26,6 +26,17 @@ const TEAM_TO_AREA = {
   Exports: 'Exports',
 }
 
+// Territory is driven by the Salesforce Territory Manager. Managers not listed here
+// (e.g. Denver Logan, Jerry Langrell) yield a blank territory — the dealer still appears
+// in the Master Sheet, just without a territory assignment.
+const TM_TO_AREA = {
+  'Mark Firth': 'East',
+  'Dane Firth': 'South',
+  'Dale Cornell': 'Central',
+  'Darren Brennan': 'West',
+  'Andrew Firth': 'Exports',
+}
+
 // Explicit HIGH-confidence aliases (approved). Ensures these accounts are always
 // returned even if untiered, so the frontend alias map resolves them by Id.
 const ALIAS_IDS = [
@@ -107,7 +118,7 @@ function mapDealer(acc, opp27, opp26won) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
   const loadsRaw = opp27 ? num(opp27.Number_of_Loads__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
-  const area = TEAM_TO_AREA[acc.Team__c] || null
+  const area = TM_TO_AREA[acc.Territory_Manager__c] || null
 
   let loc = acc.BillingStateCode || ''
   if (!loc && area === 'Exports') loc = acc.BillingCountryCode || '' // Exports: country code when no state
@@ -155,7 +166,7 @@ async function fetchAllDealers() {
 
   const [accounts, opp27, opp26] = await Promise.all([
     queryAll(base, instanceUrl, accessToken,
-      `SELECT ${fields} FROM Account WHERE (Team__c IN (${teamList}) AND Account_Tier__c != null AND Name != '- -') OR Id IN (${aliasIn})`),
+      `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer'`),
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
     queryAll(base, instanceUrl, accessToken,
@@ -165,7 +176,8 @@ async function fetchAllDealers() {
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
   const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
 
-  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id])).filter((d) => d.territory)
+  // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
+  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id]))
 }
 
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────
