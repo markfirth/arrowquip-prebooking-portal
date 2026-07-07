@@ -1,0 +1,17 @@
+# Netlify configuration for the Arrowquip Pre-Booking Portal.
+# Static Vite build + read-only Salesforce Netlify Functions (v2).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# SPA fallback so client-side routing works. Function routes are declared with
+# `export const config = { path }` inside each function and take precedence.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

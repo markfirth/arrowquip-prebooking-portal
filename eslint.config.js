@@ -23,12 +23,19 @@ export default tseslint.config(
     },
   },
   {
-    // Serverless API functions run on Node (Vercel), not the browser.
-    files: ["api/**/*.js"],
+    // Netlify Functions run on Node, not the browser. Web APIs (fetch, Request,
+    // Response, URLSearchParams) are available in the functions runtime.
+    files: ["netlify/functions/**/*.{js,mjs}"],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",
-      globals: { ...globals.node, fetch: "readonly" },
+      globals: {
+        ...globals.node,
+        fetch: "readonly",
+        Request: "readonly",
+        Response: "readonly",
+        URLSearchParams: "readonly",
+      },
     },
   },
 );
