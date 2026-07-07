@@ -126,11 +126,39 @@ tr.unsched td{background:#fffaf0;} tr.unsched .wkn{color:#9a6a12;}
 .ed.nm{font-weight:700;color:var(--aq-black);min-width:150px;} select.ed{cursor:pointer;}
 input[type=checkbox].edk{accent-color:var(--green);width:17px;height:17px;cursor:pointer;}
 td.act{text-align:center;} .delx{border:0;background:transparent;color:#cbced0;font-size:15px;cursor:pointer;line-height:1;} .delx:hover{color:var(--aq-red);}
-td.srccell{text-align:center;white-space:nowrap;padding-right:8px;}
-.srcbadge{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.04em;line-height:1;padding:2px 4px;border-radius:3px;color:#8a8f98;background:#f1f2f4;border:1px solid #e4e6e9;vertical-align:middle;}
-.srcbadge.sf{color:#2f7a46;background:#eef7f1;border-color:#dcebe1;}
-.srcbadge.mixed{color:#8a6d1a;background:#faf4e6;border-color:#efe6cc;}
-.srcbadge.planner{color:#8a8f98;background:#f1f2f4;border-color:#e4e6e9;}
+/* Salesforce connection banner (Master Sheet only) */
+.sfbanner{margin:0 0 14px;border:1px solid #dde2e8;border-radius:10px;padding:15px 18px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#f4faf6;}
+.sfbanner.offline{background:#fcf4f3;border-color:#ecd2ce;}
+.sfbanner.connecting{background:#f6f8fa;}
+.sfb-lead{display:flex;align-items:flex-start;gap:12px;flex:1 1 280px;min-width:240px;}
+.sfb-ico{color:#2f9e5f;flex:0 0 auto;margin-top:1px;}
+.sfb-ico.off{color:#c0392b;}
+.sfb-title{font-weight:800;font-size:15px;color:#1b1b1b;}
+.sfb-desc{font-size:11px;color:#5b6472;line-height:1.45;margin-top:3px;max-width:330px;}
+.sfb-metrics{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;}
+.sfb-metric{display:flex;align-items:flex-start;gap:9px;}
+.sfb-mico{color:#8a919c;margin-top:1px;}
+.sfb-mlabel{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;font-weight:700;}
+.sfb-mval{font-size:18px;font-weight:800;color:#1b1b1b;line-height:1.15;}
+.sfb-msub{font-size:10px;color:#98a0ab;}
+.sfb-action{margin-left:auto;}
+.sfb-sync{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.sfb-sync svg{vertical-align:middle;}
+/* Locked (Salesforce) vs editable (planner) cells + group headers */
+tr.grprow th{background:#eef1f5;border-bottom:1px solid #e2e6ec;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;padding:6px 9px;text-align:left;font-weight:800;}
+tr.grprow th.grp-pln{background:#eef4fc;color:#3f5c86;}
+tr.grprow th .gsub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-size:10px;color:#9aa1ac;margin-top:1px;}
+.hlock,.grprow .glk{display:inline-block;width:10px;height:10px;vertical-align:middle;background:currentColor;opacity:.42;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2'%3E%3Crect x='4.5' y='10.5' width='15' height='9.5' rx='2'/%3E%3Cpath d='M8 10.5V7a4 4 0 0 1 8 0v3.5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2'%3E%3Crect x='4.5' y='10.5' width='15' height='9.5' rx='2'/%3E%3Cpath d='M8 10.5V7a4 4 0 0 1 8 0v3.5'/%3E%3C/svg%3E") center/contain no-repeat;}
+.hlock{margin-left:5px;}
+.grprow .glk{margin-right:6px;}
+td.sflock{background:#f3f4f6;color:#464c55;}
+td.sflock .lockico{color:#aab0b9;margin-right:6px;vertical-align:middle;display:inline-block;}
+td.sflock .lockval{color:#3f454e;}
+td.sflock b.lockval{font-weight:700;color:#2a2f36;}
+#mBody td:nth-child(7), #mFoot td:nth-child(7), tr.colhdr th:nth-child(7){border-right:1px dashed #d9dee4;}
+tr.grprow th.grp-sf{border-right:1px dashed #d9dee4;}
+tr.plannerrow td{background:#fffdf6;}
+.hinfo{opacity:.45;cursor:help;font-size:10px;}
 tfoot td{padding:15px 14px;border-top:2px solid var(--aq-charcoal);background:#fbfbfc;font-weight:600;color:var(--aq-black);font-size:12.5px;}
 tfoot td.num{font-variant-numeric:tabular-nums;} tfoot .tlabel{text-transform:uppercase;letter-spacing:.06em;font-size:12px;}
 .ganttwrap{overflow-x:auto;}
@@ -363,15 +391,18 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
     </div>
   </div>
   <div id="masterView" style="display:none;">
+    <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
         <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><input class="msearch" id="mSearch" placeholder="Search name, state…"><button class="btn" id="impBtn">⬆ Import CSV</button><button class="btn" id="tplBtn">⬇ Template</button><input type="file" id="impFile" accept=".csv,text/csv" style="display:none"><button class="btn" id="addBtn">+ Add dealer</button><button class="btn" id="resetBtn">Reset edits</button></div></div>
       <table>
-        <thead><tr>
-          <th class="srt" data-mk="name">Dealer</th><th class="srt" data-mk="territory">Territory</th><th class="srt" data-mk="tm">Acct. Mgr</th>
-          <th class="srt" data-mk="tier">Tier</th><th class="srt" data-mk="loc">State</th><th>Address</th>
-          <th class="srt num" data-mk="lastYear">2026 Rev</th><th class="srt num" data-mk="booking">2027 Target</th><th class="srt num" data-mk="loads">Loads</th>
-          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th><th></th><th></th>
+        <thead>
+        <tr class="grprow"><th class="grp-sf" colspan="7"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="6">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th></tr>
+        <tr class="colhdr">
+          <th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
+          <th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>
+          <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th><th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th><th class="srt num" data-mk="loads">Loads<span class="hinfo" title="Planner-managed load count"> ⓘ</span></th>
+          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th><th>Actions</th>
         </tr></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
       </table>
@@ -396,13 +427,6 @@ let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reind
    section reads DEALERS unchanged. --- */
 var SF_BY_ID={}, SF_BY_NAME={};
 var _sfSync=null; /* Phase 5: last Salesforce sync status (tiny — cloudBadge flash + Master subtitle) */
-function sfSyncText(){
-  if(!_sfSync) return '';
-  if(!_sfSync.connected) return ' · Salesforce: not connected';
-  var t=new Date(_sfSync.at), hh=('0'+t.getHours()).slice(-2), mm=('0'+t.getMinutes()).slice(-2);
-  var cache=_sfSync.meta?(_sfSync.meta.stale?'stale':'fresh'):'—';
-  return ' · Salesforce ✓ '+_sfSync.loaded+' loaded · '+_sfSync.matched+' matched · '+_sfSync.fallback+' fallback · synced '+hh+':'+mm+' · cache '+cache;
-}
 /* Explicit HIGH-confidence aliases (approved): plannerName -> Salesforce Account Id.
    Resolves dealers whose Salesforce name differs trivially from the planner name. */
 var SF_ALIAS={
@@ -446,29 +470,58 @@ function sfMasterMerge(d){
 /* Master Sheet source badge (Master only): SF = all identity fields from Salesforce;
    MIXED = matched but an identity field fell back; PLANNER = no Salesforce match.
    booking/loads are expected planner fallback and are NOT counted toward MIXED. */
-function srcBadgeHTML(d){
-  var s=d._sources||{}, cls, lbl;
-  if(!d._sf){ cls='planner'; lbl='PLANNER'; }
-  else {
-    var idf=['name','territory','tm','tier','loc','address','lastYear'];
-    var allSf=idf.every(function(f){return s[f]==='salesforce';});
-    cls=allSf?'sf':'mixed'; lbl=allSf?'SF':'MIXED';
-  }
-  /* Phase 4: field-level source details via the native title tooltip (hover) — no popup/modal, no new DOM. */
-  var LBL={name:'Name',territory:'Territory',tm:'Manager',tier:'Tier',loc:'State',address:'Address',lastYear:'2026 Revenue',lat:'Lat',lon:'Lon',booking:'2027 Target',loads:'Loads'};
-  var order=['name','territory','tm','tier','loc','address','lastYear','lat','lon','booking','loads'];
-  var sf=[], fb=[];
-  order.forEach(function(f){ if(s[f]==='salesforce') sf.push(LBL[f]); else if(s[f]==='planner-fallback') fb.push(LBL[f]); });
-  var head = (lbl==='SF') ? 'SF — all identity fields from Salesforce'
-           : (lbl==='MIXED') ? 'MIXED — Salesforce match, some planner fallback'
-           : 'PLANNER — no Salesforce match';
-  var lines=[head];
-  if(d._sf && d._sfId) lines.push('Salesforce Account Id: '+d._sfId);
-  lines.push('From Salesforce: '+(sf.length?sf.join(', '):'—'));
-  lines.push('Planner fallback: '+(fb.length?fb.join(', '):'—'));
-  lines.push('Local (planner): Visit, Kickoff, Remote, scheduling');
-  return '<span class="srcbadge '+cls+'" title="'+esc(lines.join('\n'))+'">'+lbl+'</span>';
+/* Ownership rendering: Salesforce-owned fields render locked (grey, read-only, lock icon);
+   planner-owned fields stay editable. A field is locked only when it is actually
+   Salesforce-sourced for this dealer (so planner-only dealers keep editable fields). */
+var LOCK_SVG='<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"></rect><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path></svg>';
+function sfLock(d,f){ return !!(d._sources && d._sources[f]==='salesforce'); }
+function sfLockTitle(d){
+  var s=d._sources||{}, LBL={name:'Name',territory:'Territory',tm:'Manager',tier:'Tier',loc:'State',address:'Address',lastYear:'2026 Revenue'};
+  var sf=[]; ['name','territory','tm','tier','loc','address','lastYear'].forEach(function(f){ if(s[f]==='salesforce') sf.push(LBL[f]); });
+  var lines=['From Salesforce — read-only'];
+  if(d._sfId) lines.push('Account Id: '+d._sfId);
+  lines.push('Fields: '+(sf.length?sf.join(', '):'—'));
+  return lines.join('\n');
 }
+function lockTD(cls,val,tag,title){ tag=tag||'span'; return '<td class="'+(cls?cls+' ':'')+'sflock" title="'+esc(title||'From Salesforce — read-only')+'"><span class="lockico">'+LOCK_SVG+'</span><'+tag+' class="lockval">'+esc(val==null?'':String(val))+'</'+tag+'></td>'; }
+
+/* Enterprise-style Salesforce connection banner (Master Sheet only). Live data from _sfSync. */
+function sfbMetric(ico,label,val,sub){
+  var I={
+    sync:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>',
+    users:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"></path><circle cx="9" cy="8" r="3.2"></circle><path d="M22 19v-1a4 4 0 0 0-3-3.87"></path><path d="M16 4.13a4 4 0 0 1 0 7.75"></path></svg>',
+    check:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>',
+    user:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"></path></svg>'};
+  return '<div class="sfb-metric"><div class="sfb-mico">'+(I[ico]||'')+'</div><div><div class="sfb-mlabel">'+label+'</div><div class="sfb-mval">'+val+'</div><div class="sfb-msub">'+sub+'</div></div></div>';
+}
+function renderSFBanner(){
+  var el=document.getElementById('sfBanner'); if(!el) return;
+  var s=_sfSync;
+  var CLOUD='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18.5a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.5 9.7 3.8 3.8 0 0 0 7 17.2"></path><path d="M9.5 14l2 2 4-4"></path></svg>';
+  var SYNC='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>';
+  if(s && s.connected){
+    var t=new Date(s.at), h=t.getHours(), mm=('0'+t.getMinutes()).slice(-2), ap=h<12?'AM':'PM', h12=((h+11)%12)+1;
+    el.className='sfbanner online';
+    el.innerHTML='<div class="sfb-lead"><div class="sfb-ico">'+CLOUD+'</div><div><div class="sfb-title">Salesforce Connected</div>'
+      +'<div class="sfb-desc">Grey locked fields come from Salesforce and update automatically. White editable fields are managed in the Travel Planner.</div></div></div>'
+      +'<div class="sfb-metrics">'
+      +sfbMetric('sync','Last Sync',h12+':'+mm+' '+ap,'Today')
+      +sfbMetric('users','Dealers Loaded',s.loaded,'Total')
+      +sfbMetric('check','Dealers Matched',s.matched,'Connected to Salesforce')
+      +sfbMetric('user','Planner-Only',s.fallback,'Not in Salesforce')
+      +'</div><div class="sfb-action"><button class="btn sfb-sync" id="sfSyncBtn">'+SYNC+' Sync Salesforce</button></div>';
+  } else if(s && !s.connected){
+    el.className='sfbanner offline';
+    el.innerHTML='<div class="sfb-lead"><div class="sfb-ico off">'+CLOUD+'</div><div><div class="sfb-title">Salesforce Offline</div>'
+      +'<div class="sfb-desc">The Travel Planner is operating from local planner data. Salesforce fields will refresh once the connection is restored.</div></div></div>'
+      +'<div class="sfb-action"><button class="btn sfb-sync" id="sfSyncBtn">'+SYNC+' Sync Salesforce</button></div>';
+  } else {
+    el.className='sfbanner connecting';
+    el.innerHTML='<div class="sfb-lead"><div class="sfb-ico">'+CLOUD+'</div><div><div class="sfb-title">Connecting to Salesforce…</div><div class="sfb-desc">Loading dealer data from Salesforce.</div></div></div>';
+  }
+  var b=document.getElementById('sfSyncBtn'); if(b) b.onclick=syncSalesforce;
+}
+function syncSalesforce(){ var b=document.getElementById('sfSyncBtn'); if(b) b.disabled=true; cloudBadge('Syncing Salesforce…'); try{ fetch('/api/salesforce-refresh?k=aq-d3-4e8a1f60d9b2',{method:'POST'}).then(function(){loadSFDealers();},function(){loadSFDealers();}); }catch(e){ loadSFDealers(); } }
 function loadSFDealers(){
   try{
     fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2').then(function(r){return r.json();}).then(function(j){
@@ -838,23 +891,23 @@ function renderMaster(){
   rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
   var gi=document.getElementById("goalInput"); if(gi && document.activeElement!==gi) gi.value=GOAL2027||'';
   var gtxt=GOAL2027?(' · goal '+fmtUSD(GOAL2027)+' · '+((grandTot()-GOAL2027)>=0?('+'+fmtUSD(grandTot()-GOAL2027)+' over'):('gap '+fmtUSD(GOAL2027-grandTot())))):'';
-  document.getElementById("mSub").textContent=rows.length+" of "+DEALERS.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit"+sfSyncText();
-  document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}">
-    <td><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>
-    <td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>
-    <td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>
-    <td><select class="ed" data-f="tier">${selOpts(TIERS,d.tier)}</select></td>
-    <td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>
-    <td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>
-    <td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>
-    <td class="num"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
-    <td class="num"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>
-    <td style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
-    <td style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
-    <td style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${ASSIGN[d.id]==='remote'?'checked':''}></td>
-    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td>
-    <td class="srccell">${srcBadgeHTML(d)}</td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
+  document.getElementById("mSub").textContent=rows.length+" of "+DEALERS.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
+  document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}">
+    ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>`}
+    ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
+    ${sfLock(d,'tm')?lockTD('',d.tm,'span',sfLockTitle(d)):`<td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>`}
+    ${sfLock(d,'tier')?lockTD('',d.tier,'span',sfLockTitle(d)):`<td><select class="ed" data-f="tier">${selOpts(TIERS,d.tier)}</select></td>`}
+    ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
+    ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
+    ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
+    <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
+    <td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>
+    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
+    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
+    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${ASSIGN[d.id]==='remote'?'checked':''}></td>
+    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
+  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
+  renderSFBanner();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
 function onMasterEdit(e){
