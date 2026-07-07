@@ -1,9 +1,15 @@
 /**
- * Server-side Supabase env (Vercel functions). Do not log values.
+ * Server-side Supabase env (Netlify functions). Do not log values.
  * Accepts the portal's VITE_* names as well as the un-prefixed server names.
  */
 export function getSupabaseUrl() {
-  return String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim()
+  return String(
+    process.env.SUPABASE_URL ||
+      process.env.VITE_SUPABASE_URL ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_PROJECT_URL ||
+      '',
+  ).trim()
 }
 
 export function getSupabaseAnonKey() {
