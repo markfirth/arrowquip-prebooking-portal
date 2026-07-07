@@ -468,7 +468,7 @@ const LEADER_CODE={"JW":"JW","Andrew":"AN","Brodie":"BR","Graeme":"GR","Jerry":"
 function leaderDotsDisplay(id){ var j=JOINA[id]||[]; if(!j.length) return ''; return '<span class="ldjoined">'+j.map(function(n){return '<span class="ldot on" style="background:'+LEADER_COLOR[n]+';border-color:'+LEADER_COLOR[n]+'" title="'+n+' joining">'+LEADER_CODE[n]+'</span>';}).join('')+'</span>'; }
 function leaderPicker(id){ var j=JOINA[id]||[]; return '<div class="ldpick">'+LEADERS.map(function(n){var on=j.indexOf(n)>=0; return '<button class="ldot'+(on?' on':'')+'" style="'+(on?('background:'+LEADER_COLOR[n]+';border-color:'+LEADER_COLOR[n]):'')+'" data-jappt="'+id+'|'+n+'" title="'+n+'">'+LEADER_CODE[n]+'</button>';}).join('')+'</div>'; }
 function leaderWrap(id){ return '<div class="ldwrap">'+leaderDotsDisplay(id)+'<button class="ldadd" title="Add leaders joining">+</button>'+leaderPicker(id)+'</div>'; }
-function toggleJappt(id,n){ var a=JOINA[id]||[]; var i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); if(a.length)JOINA[id]=a; else delete JOINA[id]; savePlan(); render(); }
+function toggleJappt(id,n){ var a=JOINA[id]||[]; var i=a.indexOf(n); if(i>=0)a.splice(i,1); else a.push(n); if(a.length)JOINA[id]=a; else delete JOINA[id]; savePlan(); withPreservedScroll(render); }
 const LEADERS=["JW","Andrew","Brodie","Graeme","Jerry","Jotham"];
 function settingsFor(t){ if(!SETTINGS[t])SETTINGS[t]={maxDrive:3,maxDay:8}; return SETTINGS[t]; }
 const ttOf=t=>DEALERS.filter(d=>d.territory===t).reduce((s,x)=>s+(+x.booking||0),0);
@@ -563,7 +563,7 @@ function renderPlanner(){
     +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+schd.filter(function(d){return APPT[d.id];}).length+'/'+schd.length+'</div></div>';
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
-function addLogi(type,wk){ LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr, wk:(wk==='remote'?'remote':parseInt(wk,10)), day:null, time:'', type:type, label:''}); savePlan(); render(); }
+function addLogi(type,wk){ LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr, wk:(wk==='remote'?'remote':parseInt(wk,10)), day:null, time:'', type:type, label:''}); savePlan(); refreshPlanner(); }
 function logiCard(it,wk){
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var opts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(it.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
@@ -810,7 +810,7 @@ function renderMaster(){
 function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const d=byId[tr.dataset.id]; if(!d) return; const f=el.dataset.f;
-  if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); renderMaster(); return; }
+  if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
   else if(f==='lastYear'||f==='booking'||f==='loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
@@ -820,7 +820,7 @@ function onMasterEdit(e){
   if(f==='loc'){ const c=COORD[v]; d.lat=c?c[0]:null; d.lon=c?c[1]:null; }
   if(f==='territory'){ ASSIGN[d.id]= d.atKickoff?31:(v==='Exports'?'remote':'pool'); DAY[d.id]=null; savePlan(); }
   if(f==='atKickoff'){ if(v){ASSIGN[d.id]=31;d.visitConfirmed=true;} else {ASSIGN[d.id]= d.territory==='Exports'?'remote':'pool';} DAY[d.id]=null; savePlan(); }
-  saveDealers(); renderMaster();
+  saveDealers(); withPreservedScroll(renderMaster);
 }
 function addDealer(){
   let n=1; while(byId['N'+n]) n++; const id='N'+n;
@@ -861,23 +861,23 @@ function wireDnD(){
       if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
       else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
       else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
-      savePlan(); render();});
+      savePlan(); refreshPlanner();});
   });
-  document.querySelectorAll('.cday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DAY[s.dataset.day]=s.value===''?null:parseInt(s.value,10);savePlan();render();}));
-  document.querySelectorAll('.ctime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();TIME[t.dataset.time]=t.value;savePlan();render();}));
-  document.querySelectorAll('.cdur').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DUR[s.dataset.dur]=parseInt(s.value,10);savePlan();render();}));
-  document.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.remove;const d=byId[id];ASSIGN[id]=d.territory==='Exports'?'remote':'pool';DAY[id]=null;TIME[id]='';savePlan();render();}));
-  document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();render();}));
+  document.querySelectorAll('.cday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DAY[s.dataset.day]=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}));
+  document.querySelectorAll('.ctime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();TIME[t.dataset.time]=t.value;savePlan();refreshPlanner();}));
+  document.querySelectorAll('.cdur').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DUR[s.dataset.dur]=parseInt(s.value,10);savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.remove;const d=byId[id];ASSIGN[id]=d.territory==='Exports'?'remote':'pool';DAY[id]=null;TIME[id]='';savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
-  document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();render();}));
+  document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addLogi(pr[0],pr[1]);}));
   document.querySelectorAll('.ltext').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.ltext;})[0]; if(it){it.label=t.value;savePlan();}}));
-  document.querySelectorAll('.lday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===s.dataset.lday;})[0]; if(it){it.day=s.value===''?null:parseInt(s.value,10);savePlan();render();}}));
-  document.querySelectorAll('.ltime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.ltime;})[0]; if(it){it.time=t.value;savePlan();render();}}));
-  document.querySelectorAll('.llink').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.llink;})[0]; if(it){it.link=t.value.trim();savePlan();render();}}));
-  document.querySelectorAll('.lstate').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.lstate;})[0]; if(it){it.loc=(t.value||'').trim().toUpperCase();savePlan();render();}}));
-  document.querySelectorAll('.larr').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.larr;})[0]; if(it){it.arr=t.value;savePlan();render();}}));
-  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();render();}));
+  document.querySelectorAll('.lday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===s.dataset.lday;})[0]; if(it){it.day=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}}));
+  document.querySelectorAll('.ltime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.ltime;})[0]; if(it){it.time=t.value;savePlan();refreshPlanner();}}));
+  document.querySelectorAll('.llink').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.llink;})[0]; if(it){it.link=t.value.trim();savePlan();refreshPlanner();}}));
+  document.querySelectorAll('.lstate').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.lstate;})[0]; if(it){it.loc=(t.value||'').trim().toUpperCase();savePlan();refreshPlanner();}}));
+  document.querySelectorAll('.larr').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.larr;})[0]; if(it){it.arr=t.value;savePlan();refreshPlanner();}}));
+  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
 }
@@ -1041,6 +1041,19 @@ function ensureAssignDefaults(){ DEALERS.forEach(function(d){ if(ASSIGN[d.id]===
 function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } }
 function cloudLoad(cb){ if(!SB){cb&&cb();return;} SB.from('prebooking_state').select('id,data').then(function(res){ var hadDealers=false; if(res&&res.data){ res.data.forEach(function(row){ if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true; applyCloudRow(row.id,row.data); }); } if(!hadDealers){ cloudSave('dealers',DEALERS); cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}); cloudBadge('Cloud initialized'); } else { cloudBadge('Loaded from cloud'); } cb&&cb(); },function(){cb&&cb();}); }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
+/* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
+   withPreservedScroll captures/restores scroll of the planner + master scroll containers and
+   the window across a re-render. refreshPlanner re-renders only the planner + KPI (conservative:
+   still re-binds via wireDnD within the planner subtree, not the whole page). --- */
+function withPreservedScroll(fn){
+  var wx=window.scrollX||window.pageXOffset||0, wy=window.scrollY||window.pageYOffset||0;
+  var sels=['.sbbody','#poolBody','#weeks','#planwrap','#masterView','.tablecard','#mBody'];
+  var saved=[];
+  sels.forEach(function(s){ try{ document.querySelectorAll(s).forEach(function(el){ if(el.scrollTop||el.scrollLeft) saved.push([el,el.scrollTop,el.scrollLeft]); }); }catch(e){} });
+  function restore(){ try{ window.scrollTo(wx,wy); }catch(e){} saved.forEach(function(a){ try{ a[0].scrollTop=a[1]; a[0].scrollLeft=a[2]; }catch(e){} }); }
+  try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
+}
+function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
 function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); loadSFDealers(); }
 (function(){ var g=document.getElementById('gate'); if(!g){ return; } if(sessionStorage.getItem('aq_unlocked')==='1'){ unlockApp(); return; } var pass=document.getElementById('gpass'), btn=document.getElementById('gbtn'), err=document.getElementById('gerr'); function tryUnlock(){ if(pass.value===TEAM_PASSCODE){ try{sessionStorage.setItem('aq_unlocked','1');}catch(e){} unlockApp(); } else { err.textContent='Incorrect passcode'; pass.value=''; pass.focus(); } } btn.addEventListener('click',tryUnlock); pass.addEventListener('keydown',function(e){ if(e.key==='Enter')tryUnlock(); }); setTimeout(function(){pass.focus();},50); })();
 </script>
