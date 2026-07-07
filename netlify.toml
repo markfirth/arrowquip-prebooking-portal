@@ -3,3 +3,8 @@
 [build]
   command = "echo 'static site - no build step'"
   publish = "."
+  functions = "netlify/functions"
+
+# TEMPORARY: read-only Salesforce discovery probe (remove after mapping).
+[functions]
+  node_bundler = "esbuild"
