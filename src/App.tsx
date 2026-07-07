@@ -13,7 +13,6 @@ import {
   Layers3,
   LineChart as LineChartIcon,
   Navigation,
-  Search,
   ShieldCheck,
   Store,
   Target,
@@ -65,15 +64,16 @@ import {
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
 type Section =
-  | "coverage-map"
-  | "dealer-locator"
+  | "dashboard"
   | "dealer-directory"
-  | "competitor-directory"
-  | "market-intelligence"
-  | "opportunity-finder"
-  | "trade-shows"
+  | "dealer-intelligence"
+  | "dealer-sales"
+  | "travel-planner"
+  | "forecast"
+  | "bonus-calculator"
+  | "competitive-map"
   | "reports"
-  | "admin";
+  | "settings";
 
 type LayerKey =
   | "arrowquipDealers"
@@ -89,15 +89,16 @@ const ARROWQUIP_RED = "#c8102e";
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const navItems: Array<{ id: Section; label: string; icon: Icon }> = [
-  { id: "coverage-map", label: "Coverage Map", icon: Globe2 },
-  { id: "dealer-locator", label: "Dealer Locator", icon: Search },
+  { id: "dashboard", label: "Dashboard", icon: Gauge },
   { id: "dealer-directory", label: "Dealer Directory", icon: Store },
-  { id: "competitor-directory", label: "Competitor Directory", icon: Building2 },
-  { id: "market-intelligence", label: "Market Intelligence", icon: BarChart3 },
-  { id: "opportunity-finder", label: "Opportunity Finder", icon: Target },
-  { id: "trade-shows", label: "Trade Shows & Events", icon: CalendarDays },
-  { id: "reports", label: "Reports", icon: LineChartIcon },
-  { id: "admin", label: "Admin", icon: ShieldCheck },
+  { id: "dealer-intelligence", label: "Dealer Intelligence", icon: BrainCircuit },
+  { id: "dealer-sales", label: "Dealer Sales", icon: CircleDollarSign },
+  { id: "travel-planner", label: "Travel Planner", icon: Navigation },
+  { id: "forecast", label: "Forecast", icon: LineChartIcon },
+  { id: "bonus-calculator", label: "Bonus Calculator", icon: Flag },
+  { id: "competitive-map", label: "Competitive Map", icon: Globe2 },
+  { id: "reports", label: "Reports", icon: BarChart3 },
+  { id: "settings", label: "Settings", icon: ShieldCheck },
 ];
 
 const layerLabels: Array<{ id: LayerKey; label: string; description: string }> = [
@@ -163,7 +164,7 @@ function formatNumber(value: number): string {
 }
 
 function App() {
-  const [activeSection, setActiveSection] = useState<Section>("coverage-map");
+  const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [layers, setLayers] = useState<LayerState>(initialLayers);
   const [dataset, setDataset] = useState<CoverageDataset | null>(null);
 
@@ -297,25 +298,52 @@ function App() {
         </header>
 
         <main>
-          {activeSection === "coverage-map" ? (
-            <CoverageMapView dataset={dataset} layers={layers} setLayers={setLayers} />
+          {activeSection === "dashboard" ? (
+            <Dashboard dataset={dataset} onNavigate={setActiveSection} />
           ) : null}
-          {activeSection === "dealer-locator" ? <DealerLocator dataset={dataset} /> : null}
           {activeSection === "dealer-directory" ? <DealerDirectory /> : null}
-          {activeSection === "competitor-directory" ? (
-            <CompetitorDirectory competitors={dataset.competitorDealers} />
+          {activeSection === "dealer-intelligence" ? (
+            <>
+              <MarketIntelligence dataset={dataset} />
+              <OpportunityFinder markets={dataset.markets} />
+              <DealerLocator dataset={dataset} />
+            </>
           ) : null}
-          {activeSection === "market-intelligence" ? (
-            <MarketIntelligence dataset={dataset} />
+          {activeSection === "dealer-sales" ? (
+            <ComingSoon
+              eyebrow="Dealer Sales"
+              title="Dealer sales performance"
+              description="Invoiced and registered sales by dealer. Wired to Salesforce after the read-only dealer sync is verified — Salesforce stays the source of truth."
+            />
           ) : null}
-          {activeSection === "opportunity-finder" ? (
-            <OpportunityFinder markets={dataset.markets} />
+          {activeSection === "travel-planner" ? <TravelPlanner /> : null}
+          {activeSection === "forecast" ? (
+            <ComingSoon
+              eyebrow="Forecast"
+              title="Pre-booking forecast"
+              description="Territory and program forecast against goal. Builds on the synced dealer directory and sales data."
+            />
           ) : null}
-          {activeSection === "trade-shows" ? (
-            <TradeShows events={dataset.tradeShows} markets={dataset.markets} />
+          {activeSection === "bonus-calculator" ? (
+            <ComingSoon
+              eyebrow="Bonus Calculator"
+              title="Territory bonus calculator"
+              description="Model rep and territory bonuses from registered sales and targets."
+            />
           ) : null}
-          {activeSection === "reports" ? <ExecutiveReports dataset={dataset} /> : null}
-          {activeSection === "admin" ? <AdminArchitecture /> : null}
+          {activeSection === "competitive-map" ? (
+            <>
+              <CoverageMapView dataset={dataset} layers={layers} setLayers={setLayers} />
+              <CompetitorDirectory competitors={dataset.competitorDealers} />
+            </>
+          ) : null}
+          {activeSection === "reports" ? (
+            <>
+              <ExecutiveReports dataset={dataset} />
+              <TradeShows events={dataset.tradeShows} markets={dataset.markets} />
+            </>
+          ) : null}
+          {activeSection === "settings" ? <AdminArchitecture /> : null}
         </main>
       </div>
     </div>
@@ -981,6 +1009,107 @@ function DealerLocator({ dataset }: { dataset: CoverageDataset }) {
           <DataTile label="Feedlots" value={formatNumber(matches.market.feedlots)} />
           <DataTile label="Auction Marts" value={formatNumber(matches.market.auctionMarts)} />
         </div>
+      </div>
+    </PageShell>
+  );
+}
+
+function Dashboard({
+  dataset,
+  onNavigate,
+}: {
+  dataset: CoverageDataset;
+  onNavigate: (section: Section) => void;
+}) {
+  const dealerCount = dataset.arrowquipDealers.length;
+  const totalRevenue = dataset.arrowquipDealers.reduce((sum, d) => sum + (d.revenue || 0), 0);
+  const totalRegistrations = dataset.arrowquipDealers.reduce((sum, d) => sum + (d.registrations || 0), 0);
+  const competitorCount = dataset.competitorDealers.length;
+
+  const tiles: Array<{ label: string; value: string; section: Section }> = [
+    { label: "Arrowquip Dealers", value: formatNumber(dealerCount), section: "dealer-directory" },
+    { label: "Total Revenue", value: formatCurrency(totalRevenue), section: "reports" },
+    { label: "Registrations", value: formatNumber(totalRegistrations), section: "dealer-intelligence" },
+    { label: "Competitor Dealers", value: formatNumber(competitorCount), section: "competitive-map" },
+  ];
+
+  const quickLinks: Array<{ label: string; section: Section }> = [
+    { label: "Open Dealer Directory", section: "dealer-directory" },
+    { label: "Dealer Intelligence", section: "dealer-intelligence" },
+    { label: "Travel Planner", section: "travel-planner" },
+    { label: "Competitive Map", section: "competitive-map" },
+    { label: "Reports", section: "reports" },
+  ];
+
+  return (
+    <PageShell
+      eyebrow="Dashboard"
+      title="Arrowquip Pre-Booking Portal"
+      description="One workspace for dealer coverage, intelligence, sales, and pre-booking travel planning."
+    >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            onClick={() => onNavigate(t.section)}
+            className="executive-card p-4 text-left transition hover:border-[#c8102e]"
+          >
+            <p className="text-xs uppercase tracking-[0.14em] text-stone-500">{t.label}</p>
+            <p className="mt-2 text-2xl font-semibold text-stone-900">{t.value}</p>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {quickLinks.map((q) => (
+          <button
+            key={q.section}
+            type="button"
+            onClick={() => onNavigate(q.section)}
+            className="border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-stone-600 transition hover:border-stone-400"
+          >
+            {q.label}
+          </button>
+        ))}
+      </div>
+    </PageShell>
+  );
+}
+
+function TravelPlanner() {
+  return (
+    <section className="space-y-3 p-4 sm:p-6">
+      <PanelTitle
+        eyebrow="Travel Planner"
+        title="2027 Pre-Booking Travel Planner"
+        description="The full pre-booking travel planner, embedded unchanged."
+      />
+      <div className="executive-card overflow-hidden p-0">
+        <iframe
+          src="/travel-planner.html"
+          title="Arrowquip Pre-Booking Travel Planner"
+          className="block w-full"
+          style={{ height: "calc(100vh - 180px)", minHeight: "640px", border: "0" }}
+        />
+      </div>
+    </section>
+  );
+}
+
+function ComingSoon({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <PageShell eyebrow={eyebrow} title={title} description={description}>
+      <div className="executive-card p-8 text-center text-sm text-stone-500">
+        This module is being wired up. The dealer directory and Salesforce sync it depends on are
+        already in place.
       </div>
     </PageShell>
   );
