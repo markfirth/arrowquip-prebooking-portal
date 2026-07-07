@@ -97,12 +97,18 @@ function mapDealer(acc, opp27, opp26won) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
   const loadsRaw = opp27 ? num(opp27.Number_of_Loads__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
+  const area = TEAM_TO_AREA[acc.Team__c] || null
+  // loc = state code; for Exports only, if the state code is blank fall back to
+  // the country ISO code (e.g. GB, FR). Domestic dealers are unaffected.
+  let loc = acc.BillingStateCode || ''
+  if (!loc && area === 'Exports') loc = acc.BillingCountryCode || ''
+  if (!loc) loc = acc.BillingState || ''
   return {
     id: acc.Id,
-    territory: TEAM_TO_AREA[acc.Team__c] || null,
+    territory: area,
     tm: acc.Territory_Manager__c || '',
     name: acc.Name || '',
-    loc: acc.BillingStateCode || acc.BillingState || '',
+    loc,
     address: [acc.BillingStreet, acc.BillingCity, acc.BillingState].filter(Boolean).join(', '),
     tier: acc.Account_Tier_Text__c || 'New',
     loads: loadsRaw > 0 ? loadsRaw : null,
@@ -126,7 +132,7 @@ export default async function handler(req) {
     // The pre-booking dealer directory = tiered dealers in the five mapped
     // territory teams (Account_Tier__c set). This matches the planner's dealer
     // set, rather than every account that merely has a Team__c (end-customers).
-    const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude`
+    const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
     const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
     const [accounts, opp27, opp26] = await Promise.all([
       queryAll(base, instanceUrl, accessToken,
