@@ -58,6 +58,16 @@ export default async function handler(req) {
   try {
     const { accessToken, instanceUrl } = await getToken()
     const base = `${instanceUrl}/services/data/${apiVersion()}`
+
+    // Ad-hoc single search: &q=<term>
+    const q = String(url.searchParams.get('q') || '').trim()
+    if (q) {
+      let candidates = []
+      let error = ''
+      try { candidates = await sosl(base, accessToken, q) } catch (e) { error = e instanceof Error ? e.message : String(e) }
+      return json({ ok: true, term: q, candidateCount: candidates.length, candidates, error })
+    }
+
     const results = []
     for (const t of TARGETS) {
       let candidates = []
