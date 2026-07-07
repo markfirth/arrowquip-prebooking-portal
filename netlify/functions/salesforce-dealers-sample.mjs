@@ -136,14 +136,31 @@ export default async function handler(req) {
     const { accessToken, instanceUrl } = await getToken()
     const base = `${instanceUrl}/services/data/${apiVersion()}`
 
-    // A few real dealers in the five mapped teams.
     const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
-    const accounts = await soql(
+
+    // Prefer real dealers that have a 2026 Closed-Won pre-booking (so lastYear is
+    // demonstrably populated from Salesforce), falling back to any mapped-team
+    // dealer with coordinates. This is only to make the sample meaningful.
+    const won26 = await soql(
       base,
       accessToken,
-      `SELECT Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude
-       FROM Account WHERE Team__c IN (${teamList}) ORDER BY Name LIMIT ${limit}`,
+      `SELECT AccountId, Prebooked_Value__c FROM Opportunity
+       WHERE Prebooking_Year__c = '2026' AND StageName = 'Closed Won' AND Prebooked_Value__c > 0
+       ORDER BY Prebooked_Value__c DESC LIMIT 30`,
     )
+    const wonIds = [...new Set(won26.map((o) => o.AccountId))]
+
+    const accountsFields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude`
+    let accounts = []
+    if (wonIds.length) {
+      const inIds = wonIds.slice(0, 25).map((i) => `'${i}'`).join(', ')
+      accounts = await soql(base, accessToken, `SELECT ${accountsFields} FROM Account WHERE Id IN (${inIds}) AND Team__c IN (${teamList}) AND Name != '- -' LIMIT ${limit}`)
+    }
+    if (accounts.length < limit) {
+      const more = await soql(base, accessToken, `SELECT ${accountsFields} FROM Account WHERE Team__c IN (${teamList}) AND Name != '- -' AND BillingLatitude != null ORDER BY Name LIMIT ${limit}`)
+      const seen = new Set(accounts.map((a) => a.Id))
+      for (const a of more) { if (accounts.length >= limit) break; if (!seen.has(a.Id)) { accounts.push(a); seen.add(a.Id) } }
+    }
     if (!accounts.length) return json({ ok: true, env, count: 0, dealers: [], note: 'No accounts with a mapped Team__c found.' })
 
     const ids = accounts.map((a) => `'${a.Id}'`).join(', ')
