@@ -1,0 +1,5 @@
+# Static hosting for the Arrowquip 2027 Pre-Booking Travel Planner.
+# Single self-contained HTML app — no build step.
+[build]
+  command = "echo 'static site - no build step'"
+  publish = "."
