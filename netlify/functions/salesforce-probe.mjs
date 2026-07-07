@@ -100,6 +100,29 @@ export default async function handler(req) {
       return json({ ok: true, mode: 'objects', total: all.length, candidates, customObjects: custom })
     }
 
+    // Targeted sample query: &fields=a,b,c &where=<soql> &limit=N (read-only).
+    const rawFields = String(url.searchParams.get('fields') || '').trim()
+    const rawWhere = String(url.searchParams.get('where') || '').trim()
+    const rawLimit = parseInt(url.searchParams.get('limit') || '5', 10)
+    const lim = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 20) : 5
+    if (rawFields) {
+      if (!/^[A-Za-z0-9_.,\s]+$/.test(rawFields)) return json({ ok: false, error: 'bad fields' }, 400)
+      if (rawWhere && !/^[A-Za-z0-9_.,\s='!<>()%-]+$/.test(rawWhere)) return json({ ok: false, error: 'bad where' }, 400)
+      if (!/^[A-Za-z0-9_]+$/.test(obj)) return json({ ok: false, error: 'bad obj' }, 400)
+      const cols = rawFields.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 40)
+      const soql = `SELECT ${cols.join(', ')} FROM ${obj}${rawWhere ? ` WHERE ${rawWhere}` : ''} LIMIT ${lim}`
+      const q = await sfGet(`${base}/query?q=${encodeURIComponent(soql)}`, accessToken)
+      if (!q.ok || !Array.isArray(q.data?.records)) {
+        return json({ ok: false, error: (q.text || `query failed ${q.status}`).slice(0, 300), soql }, 502)
+      }
+      const records = q.data.records.map((r) => {
+        const clean = {}
+        for (const k of Object.keys(r)) { if (k !== 'attributes') clean[k] = truncate(r[k]) }
+        return clean
+      })
+      return json({ ok: true, mode: 'sample', object: obj, soql, count: records.length, records })
+    }
+
     // Mode B: describe one object + up to 5 samples.
     if (!/^[A-Za-z0-9_]+$/.test(obj)) return json({ ok: false, error: 'bad obj' }, 400)
     const desc = await sfGet(`${base}/sobjects/${encodeURIComponent(obj)}/describe`, accessToken)
