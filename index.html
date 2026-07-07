@@ -382,6 +382,43 @@ let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
 let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
+/* --- Salesforce overlay for the MASTER SHEET ONLY (Deliverable 3). Read-only.
+   Salesforce is fetched from a server-side Netlify Function (no credentials in
+   this file). Fields overlaid: id, name, territory, tm, loc, address, tier,
+   lastYear, lat, lon. All other fields (booking, loads, risk, attendees,
+   visitConfirmed, atKickoff, suggestedWeek, growth) keep their planner/seed/
+   localStorage values. Only renderMaster() uses this overlay; every other
+   section reads DEALERS unchanged. --- */
+var SF_BY_ID={}, SF_BY_NAME={};
+function _sfNorm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function sfLookup(d){ return SF_BY_ID[d.id]||SF_BY_NAME[_sfNorm(d.name)]||null; }
+function sfMasterMerge(d){
+  var sf=sfLookup(d); if(!sf) return d;
+  var o=Object.assign({},d);
+  if(sf.name) o.name=sf.name;
+  if(sf.territory) o.territory=sf.territory;
+  if(sf.tm) o.tm=sf.tm;
+  if(sf.loc) o.loc=sf.loc;
+  if(sf.address) o.address=sf.address;
+  if(sf.tier) o.tier=sf.tier;
+  if(sf.lastYear!=null) o.lastYear=sf.lastYear; /* 0/null → keep planner fallback */
+  if(sf.lat!=null) o.lat=sf.lat;
+  if(sf.lon!=null) o.lon=sf.lon;
+  o._sfId=sf.id; o._sf=true;
+  return o;
+}
+function loadSFDealers(){
+  try{
+    fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2').then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); return; }
+      SF_BY_ID={}; SF_BY_NAME={}; var matched=0;
+      j.dealers.forEach(function(sf){ if(sf.id)SF_BY_ID[sf.id]=sf; if(sf.name)SF_BY_NAME[_sfNorm(sf.name)]=sf; });
+      try{ DEALERS.forEach(function(d){ if(sfLookup(d))matched++; }); }catch(e){}
+      console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
+      try{ if(document.getElementById('mBody')) renderMaster(); }catch(e){ console.warn('[SF] renderMaster after sync failed',e); }
+    }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); });
+  }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
+}
 var SB_URL="https://itgintixzfcvoiuwszdx.supabase.co";
 var SB_KEY="sb_publishable_o8oGWpu7NummrXxrN2-MHA_hjEoRI_M";
 var TEAM_PASSCODE="Arrowquip2027";
@@ -715,12 +752,13 @@ function renderTerrMap(){
 }
 function selOpts(list,cur){return list.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join("");}
 function renderMaster(){
-  let rows=DEALERS.slice();
+  var _allMerged=DEALERS.map(sfMasterMerge); /* Salesforce overlay — Master Sheet only */
+  let rows=_allMerged.slice();
   if(mFilterTerr) rows=rows.filter(function(d){return d.territory===mFilterTerr;});
   if(mFilterAM) rows=rows.filter(function(d){return (d.tm||'')===mFilterAM;});
   if(mq) rows=rows.filter(d=>((d.name||'')+' '+(d.loc||'')+' '+(d.territory||'')+' '+(d.tm||'')+' '+(d.tier||'')).toLowerCase().includes(mq));
   var terrOpts=["East","South","Central","West","Exports"];
-  var amList=[]; DEALERS.forEach(function(d){ if(d.tm && d.tm!=='—' && amList.indexOf(d.tm)<0) amList.push(d.tm); }); amList.sort();
+  var amList=[]; _allMerged.forEach(function(d){ if(d.tm && d.tm!=='—' && amList.indexOf(d.tm)<0) amList.push(d.tm); }); amList.sort();
   var ts=document.getElementById("mTerr"); if(ts) ts.innerHTML='<option value="">All territories</option>'+terrOpts.map(function(t){return '<option value="'+t+'"'+(mFilterTerr===t?' selected':'')+'>'+t+'</option>';}).join('');
   var as=document.getElementById("mAM"); if(as) as.innerHTML='<option value="">All managers</option>'+amList.map(function(a){return '<option value="'+a+'"'+(mFilterAM===a?' selected':'')+'>'+a+'</option>';}).join('');
   const k=msort.key,dir=msort.dir;
@@ -742,7 +780,7 @@ function renderMaster(){
     <td style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${ASSIGN[d.id]==='remote'?'checked':''}></td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(DEALERS.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
+  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
 function onMasterEdit(e){
@@ -979,7 +1017,7 @@ function ensureAssignDefaults(){ DEALERS.forEach(function(d){ if(ASSIGN[d.id]===
 function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } }
 function cloudLoad(cb){ if(!SB){cb&&cb();return;} SB.from('prebooking_state').select('id,data').then(function(res){ var hadDealers=false; if(res&&res.data){ res.data.forEach(function(row){ if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true; applyCloudRow(row.id,row.data); }); } if(!hadDealers){ cloudSave('dealers',DEALERS); cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}); cloudBadge('Cloud initialized'); } else { cloudBadge('Loaded from cloud'); } cb&&cb(); },function(){cb&&cb();}); }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
-function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); }
+function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); loadSFDealers(); }
 (function(){ var g=document.getElementById('gate'); if(!g){ return; } if(sessionStorage.getItem('aq_unlocked')==='1'){ unlockApp(); return; } var pass=document.getElementById('gpass'), btn=document.getElementById('gbtn'), err=document.getElementById('gerr'); function tryUnlock(){ if(pass.value===TEAM_PASSCODE){ try{sessionStorage.setItem('aq_unlocked','1');}catch(e){} unlockApp(); } else { err.textContent='Incorrect passcode'; pass.value=''; pass.focus(); } } btn.addEventListener('click',tryUnlock); pass.addEventListener('keydown',function(e){ if(e.key==='Enter')tryUnlock(); }); setTimeout(function(){pass.focus();},50); })();
 </script>
 </body>
