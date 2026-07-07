@@ -158,6 +158,8 @@ td.sflock b.lockval{font-weight:700;color:#2a2f36;}
 #mBody td:nth-child(7), #mFoot td:nth-child(7), tr.colhdr th:nth-child(7){border-right:1px dashed #d9dee4;}
 tr.grprow th.grp-sf{border-right:1px dashed #d9dee4;}
 tr.plannerrow td{background:#fffdf6;}
+tr.localrow td.dealer{position:relative;}
+tr.localrow td.dealer::after{content:'Not in Salesforce';display:block;font-size:8.5px;font-weight:700;letter-spacing:.03em;color:#9a7b3a;background:#fbf3e0;border:1px solid #efe3c4;border-radius:3px;padding:1px 5px;margin-top:3px;width:max-content;}
 .hinfo{opacity:.45;cursor:help;font-size:10px;}
 tfoot td{padding:15px 14px;border-top:2px solid var(--aq-charcoal);background:#fbfbfc;font-weight:600;color:var(--aq-black);font-size:12.5px;}
 tfoot td.num{font-variant-numeric:tabular-nums;} tfoot .tlabel{text-transform:uppercase;letter-spacing:.06em;font-size:12px;}
@@ -877,8 +879,41 @@ function renderTerrMap(){
   document.getElementById('terrMap').innerHTML='<div class="mapsplit"><div class="mapcol">'+mapHTML([terr], terrMapWeek, 'week')+'</div>'+panel+'</div>';
 }
 function selOpts(list,cur){return list.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join("");}
+/* Phase A: Salesforce is the master dealer list (Master Sheet render only).
+   Build the universe from the full Salesforce set (keyed by Account Id) and overlay existing
+   planner data where it exists; planner dealers with no Salesforce match remain as local-only
+   rows. DEALERS / dealersIn / scheduling / saved data shape are NOT touched — this only changes
+   what renderMaster iterates. Falls back to the current planner list when Salesforce isn't loaded. */
+function newSFRow(sf){
+  var o={ id:sf.id, _accountId:sf.id, _newSF:true, _sf:true, _sfId:sf.id,
+    name:sf.name||'', territory:sf.territory||'', tm:sf.tm||'', tier:sf.tier||'New',
+    loc:sf.loc||'', address:sf.address||'',
+    lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
+    booking:0, loads:0, visitConfirmed:false, atKickoff:false };
+  o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
+    tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
+    loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
+    lastYear:(sf.lastYear!=null?'salesforce':'planner-fallback'), lat:(sf.lat!=null?'salesforce':'planner-fallback'),
+    lon:(sf.lon!=null?'salesforce':'planner-fallback'), booking:'planner-fallback', loads:'planner-fallback',
+    visitConfirmed:'local', atKickoff:'local' };
+  return o;
+}
+function buildMasterUniverse(){
+  var ids=SF_BY_ID?Object.keys(SF_BY_ID):[];
+  if(!ids.length) return DEALERS.map(sfMasterMerge); /* Salesforce not loaded → current planner view */
+  var plannerBySf={};
+  DEALERS.forEach(function(d){ var sf=sfLookup(d); if(sf && !plannerBySf[sf.id]) plannerBySf[sf.id]=d; });
+  var rows=[];
+  ids.forEach(function(sid){
+    var p=plannerBySf[sid];
+    if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
+    else { rows.push(newSFRow(SF_BY_ID[sid])); }                       /* new Salesforce dealer: planner fields default 0/false */
+  });
+  DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
+  return rows;
+}
 function renderMaster(){
-  var _allMerged=DEALERS.map(sfMasterMerge); /* Salesforce overlay — Master Sheet only */
+  var _allMerged=buildMasterUniverse(); /* Phase A: Salesforce universe + planner overlay (Master Sheet only) */
   let rows=_allMerged.slice();
   if(mFilterTerr) rows=rows.filter(function(d){return d.territory===mFilterTerr;});
   if(mFilterAM) rows=rows.filter(function(d){return (d.tm||'')===mFilterAM;});
@@ -891,8 +926,8 @@ function renderMaster(){
   rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
   var gi=document.getElementById("goalInput"); if(gi && document.activeElement!==gi) gi.value=GOAL2027||'';
   var gtxt=GOAL2027?(' · goal '+fmtUSD(GOAL2027)+' · '+((grandTot()-GOAL2027)>=0?('+'+fmtUSD(grandTot()-GOAL2027)+' over'):('gap '+fmtUSD(GOAL2027-grandTot())))):'';
-  document.getElementById("mSub").textContent=rows.length+" of "+DEALERS.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
-  document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}">
+  document.getElementById("mSub").textContent=rows.length+" of "+_allMerged.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
+  document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
     ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
     ${sfLock(d,'tm')?lockTD('',d.tm,'span',sfLockTitle(d)):`<td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>`}
