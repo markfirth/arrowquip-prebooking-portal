@@ -405,18 +405,29 @@ function sfLookup(d){
   return SF_BY_ID[d.id]||byAlias||SF_BY_NAME[_sfNorm(d.name)]||null;
 }
 function sfMasterMerge(d){
-  var sf=sfLookup(d); if(!sf) return d;
-  var o=Object.assign({},d);
-  if(sf.name) o.name=sf.name;
-  if(sf.territory) o.territory=sf.territory;
-  if(sf.tm) o.tm=sf.tm;
-  if(sf.loc) o.loc=sf.loc;
-  if(sf.address) o.address=sf.address;
-  if(sf.tier) o.tier=sf.tier;
-  if(sf.lastYear!=null) o.lastYear=sf.lastYear; /* 0/null → keep planner fallback */
-  if(sf.lat!=null) o.lat=sf.lat;
-  if(sf.lon!=null) o.lon=sf.lon;
-  o._sfId=sf.id; o._sf=true;
+  var sf=sfLookup(d);
+  var o=Object.assign({},d); /* always a copy — original planner dealer is never mutated */
+  var src={};
+  if(sf){
+    if(sf.name){ o.name=sf.name; src.name='salesforce'; } else { src.name='planner-fallback'; }
+    if(sf.territory){ o.territory=sf.territory; src.territory='salesforce'; } else { src.territory='planner-fallback'; }
+    if(sf.tm){ o.tm=sf.tm; src.tm='salesforce'; } else { src.tm='planner-fallback'; }
+    if(sf.loc){ o.loc=sf.loc; src.loc='salesforce'; } else { src.loc='planner-fallback'; }
+    if(sf.address){ o.address=sf.address; src.address='salesforce'; } else { src.address='planner-fallback'; }
+    if(sf.tier){ o.tier=sf.tier; src.tier='salesforce'; } else { src.tier='planner-fallback'; }
+    if(sf.lastYear!=null){ o.lastYear=sf.lastYear; src.lastYear='salesforce'; } else { src.lastYear='planner-fallback'; } /* 0/null → keep planner fallback */
+    if(sf.lat!=null){ o.lat=sf.lat; src.lat='salesforce'; } else { src.lat='planner-fallback'; }
+    if(sf.lon!=null){ o.lon=sf.lon; src.lon='salesforce'; } else { src.lon='planner-fallback'; }
+    o._sfId=sf.id; o._sf=true;
+  } else {
+    src.name=src.territory=src.tm=src.loc=src.address=src.tier=src.lastYear=src.lat=src.lon='planner-fallback';
+    o._sf=false;
+  }
+  /* booking/loads: expected planner fallback while 2027 Salesforce is 0/null (not counted as MIXED) */
+  src.booking='planner-fallback'; src.loads='planner-fallback';
+  /* local planner-owned */
+  src.visitConfirmed='local'; src.atKickoff='local';
+  o._sources=src; /* internal metadata only — not persisted, not displayed */
   return o;
 }
 function loadSFDealers(){
