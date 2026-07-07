@@ -110,6 +110,24 @@ export default async function handler(req) {
   try {
     const { accessToken, instanceUrl } = await getToken()
     const base = `${instanceUrl}/services/data/${apiVersion()}`
+    const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
+
+    // One-shot diagnostic to choose the right "real dealer" filter.
+    if (url.searchParams.get('counts')) {
+      async function cnt(where) {
+        const recs = await queryAll(base, instanceUrl, accessToken, `SELECT COUNT(Id) c FROM Account WHERE ${where}`)
+        return recs?.[0]?.c ?? recs?.[0]?.expr0 ?? null
+      }
+      const counts = {
+        team_only: await cnt(`Team__c IN (${teamList})`),
+        team_and_tier: await cnt(`Team__c IN (${teamList}) AND Account_Tier__c != null`),
+        team_and_dealerStage: await cnt(`Team__c IN (${teamList}) AND Dealer_Stage__c != null`),
+        team_and_approved: await cnt(`Team__c IN (${teamList}) AND Dealer_Stage__c = 'Approved'`),
+        team_and_becameDealer: await cnt(`Team__c IN (${teamList}) AND Became_A_Dealer_Date__c != null`),
+        prebooked_pc: await cnt(`Prebooked_Dealer__pc = true`),
+      }
+      return json({ ok: true, counts })
+    }
 
     // The pre-booking dealer universe = Accounts that have a 2027 pre-booking
     // Opportunity (one per dealer). This matches the planner's dealer set,
