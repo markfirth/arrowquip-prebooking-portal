@@ -428,6 +428,7 @@ function loadSFDealers(){
       try{ DEALERS.forEach(function(d){ if(sfLookup(d))matched++; }); }catch(e){}
       console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
       try{ if(document.getElementById('mBody')) renderMaster(); }catch(e){ console.warn('[SF] renderMaster after sync failed',e); }
+      try{ if(document.getElementById('cards')) renderCards(); }catch(e){ console.warn('[SF] renderCards after sync failed',e); }
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
@@ -497,7 +498,13 @@ const sumL=a=>a.reduce((s,d)=>s+(+d.loads||0),0);
 const apptCount=a=>a.filter(d=>APPT[d.id]).length;
 const coordOf=d=>[d.lat,d.lon];
 function renderCards(){
-  const ds=scopeD(); const target=(terr==='All'||terr==='Master')?grandTot():ttOf(terr);
+  /* KPI cards source from the same Salesforce-merged dealer list as the Master
+     Sheet. booking/loads are not overlaid by the merge, so KPI $ values are
+     unchanged while 2027 Salesforce values are null/0; scheduling (ASSIGN),
+     GOAL2027 and dealer ids are untouched. */
+  const _md=DEALERS.map(sfMasterMerge);
+  const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
+  const target=sumB(ds);
   const kickRev=sumB(ds.filter(d=>ASSIGN[d.id]===31));
   const pool=ds.filter(d=>ASSIGN[d.id]==='pool'); const poolRev=sumB(pool);
   const placedRev=sumB(ds.filter(d=>ASSIGN[d.id]!=='pool'));
