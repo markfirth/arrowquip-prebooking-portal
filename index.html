@@ -395,6 +395,14 @@ let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reind
    localStorage values. Only renderMaster() uses this overlay; every other
    section reads DEALERS unchanged. --- */
 var SF_BY_ID={}, SF_BY_NAME={};
+var _sfSync=null; /* Phase 5: last Salesforce sync status (tiny — cloudBadge flash + Master subtitle) */
+function sfSyncText(){
+  if(!_sfSync) return '';
+  if(!_sfSync.connected) return ' · Salesforce: not connected';
+  var t=new Date(_sfSync.at), hh=('0'+t.getHours()).slice(-2), mm=('0'+t.getMinutes()).slice(-2);
+  var cache=_sfSync.meta?(_sfSync.meta.stale?'stale':'fresh'):'—';
+  return ' · Salesforce ✓ '+_sfSync.loaded+' loaded · '+_sfSync.matched+' matched · '+_sfSync.fallback+' fallback · synced '+hh+':'+mm+' · cache '+cache;
+}
 /* Explicit HIGH-confidence aliases (approved): plannerName -> Salesforce Account Id.
    Resolves dealers whose Salesforce name differs trivially from the planner name. */
 var SF_ALIAS={
@@ -464,15 +472,17 @@ function srcBadgeHTML(d){
 function loadSFDealers(){
   try{
     fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2').then(function(r){return r.json();}).then(function(j){
-      if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); return; }
+      if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); return; }
       SF_BY_ID={}; SF_BY_NAME={}; var matched=0;
       j.dealers.forEach(function(sf){ if(sf.id)SF_BY_ID[sf.id]=sf; if(sf.name)SF_BY_NAME[_sfNorm(sf.name)]=sf; });
       try{ DEALERS.forEach(function(d){ if(sfLookup(d))matched++; }); }catch(e){}
       console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
+      _sfSync={connected:true,loaded:j.dealers.length,matched:matched,fallback:DEALERS.length-matched,at:Date.now(),meta:j.meta||null};
+      cloudBadge('Salesforce ✓ · '+j.dealers.length+' loaded · '+matched+' matched · '+(DEALERS.length-matched)+' fallback');
       try{ if(document.getElementById('mBody')) renderMaster(); }catch(e){ console.warn('[SF] renderMaster after sync failed',e); }
       try{ if(document.getElementById('cards')) renderCards(); }catch(e){ console.warn('[SF] renderCards after sync failed',e); }
       try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){ console.warn('[SF] renderPlanner after sync failed',e); }
-    }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); });
+    }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
 var SB_URL="https://itgintixzfcvoiuwszdx.supabase.co";
@@ -828,7 +838,7 @@ function renderMaster(){
   rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
   var gi=document.getElementById("goalInput"); if(gi && document.activeElement!==gi) gi.value=GOAL2027||'';
   var gtxt=GOAL2027?(' · goal '+fmtUSD(GOAL2027)+' · '+((grandTot()-GOAL2027)>=0?('+'+fmtUSD(grandTot()-GOAL2027)+' over'):('gap '+fmtUSD(GOAL2027-grandTot())))):'';
-  document.getElementById("mSub").textContent=rows.length+" of "+DEALERS.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
+  document.getElementById("mSub").textContent=rows.length+" of "+DEALERS.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit"+sfSyncText();
   document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}">
     <td><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>
     <td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>
