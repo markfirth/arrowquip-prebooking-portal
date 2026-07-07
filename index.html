@@ -428,6 +428,7 @@ let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reind
    localStorage values. Only renderMaster() uses this overlay; every other
    section reads DEALERS unchanged. --- */
 var SF_BY_ID={}, SF_BY_NAME={};
+var SF_OVERLAY={}; /* Phase B: lazy Account-Id planner overlay for no-overlay Salesforce dealers (Master Sheet only), persisted to the separate overlay_v1 row */
 var _sfSync=null; /* Phase 5: last Salesforce sync status (tiny — cloudBadge flash + Master subtitle) */
 /* Explicit HIGH-confidence aliases (approved): plannerName -> Salesforce Account Id.
    Resolves dealers whose Salesforce name differs trivially from the planner name. */
@@ -889,7 +890,7 @@ function newSFRow(sf){
     name:sf.name||'', territory:sf.territory||'', tm:sf.tm||'', tier:sf.tier||'New',
     loc:sf.loc||'', address:sf.address||'',
     lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
-    booking:0, loads:0, visitConfirmed:false, atKickoff:false };
+    booking:0, loads:0, visitConfirmed:false, atKickoff:false, remote:false };
   o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
     tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
     loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
@@ -907,7 +908,7 @@ function buildMasterUniverse(){
   ids.forEach(function(sid){
     var p=plannerBySf[sid];
     if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
-    else { rows.push(newSFRow(SF_BY_ID[sid])); }                       /* new Salesforce dealer: planner fields default 0/false */
+    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.loads=+ov.loads||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
   });
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
@@ -939,7 +940,7 @@ function renderMaster(){
     <td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
-    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${ASSIGN[d.id]==='remote'?'checked':''}></td>
+    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${(ASSIGN[d.id]==='remote'||d.remote)?'checked':''}></td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
   document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
@@ -947,7 +948,15 @@ function renderMaster(){
 }
 function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
-  const tr=el.closest('tr'); const d=byId[tr.dataset.id]; if(!d) return; const f=el.dataset.f;
+  const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
+  if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
+    if(SF_BY_ID[id] && ['booking','loads','visitConfirmed','atKickoff','remote'].indexOf(f)>=0){
+      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,loads:0,visitConfirmed:false,atKickoff:false,remote:false});
+      if(el.type==='checkbox') ov[f]=!!el.checked; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
+      cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
+    }
+    return;
+  }
   if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
@@ -1169,7 +1178,7 @@ render();
 function cloudBadge(msg){try{var b=document.getElementById('cloudBadge');if(!b)return;b.textContent=msg;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove('show');},1800);}catch(e){}}
 function cloudSave(key,obj){ if(!SB)return; _lastSelfSave=Date.now(); clearTimeout(_cloudTimers[key]); _cloudTimers[key]=setTimeout(function(){ _lastSelfSave=Date.now(); SB.from('prebooking_state').upsert({id:key,data:obj,updated_at:new Date().toISOString()}).then(function(r){ if(r&&r.error){cloudBadge('Cloud save failed');} else {cloudBadge('Saved to cloud');} },function(){cloudBadge('Cloud save failed');}); },700); }
 function ensureAssignDefaults(){ DEALERS.forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } }
 function cloudLoad(cb){ if(!SB){cb&&cb();return;} SB.from('prebooking_state').select('id,data').then(function(res){ var hadDealers=false; if(res&&res.data){ res.data.forEach(function(row){ if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true; applyCloudRow(row.id,row.data); }); } if(!hadDealers){ cloudSave('dealers',DEALERS); cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}); cloudBadge('Cloud initialized'); } else { cloudBadge('Loaded from cloud'); } cb&&cb(); },function(){cb&&cb();}); }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
