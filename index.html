@@ -711,7 +711,9 @@ function mapHTML(tl, weekSel, colorBy){
   svg+='<text x="'+c2[0]+'" y="'+c2[1]+'" font-size="12" fill="#cdd1d3" letter-spacing="3">UNITED STATES</text>';
   var leg={}; var order=[]; var total=0;
   tl.forEach(function(t){
-    var ds=dealersIn(t).filter(function(d){ var a=ASSIGN[d.id]; var inw=(weekSel==='all')?(typeof a==='number'&&a!==31):(a===weekSel); return inw && d.lat!=null && d.lon!=null && d.lon<-50; });
+    /* Map only: overlay Salesforce lat/lon (sfMasterMerge keeps planner coords when SF has none).
+       Grouping stays by seed territory (t via dealersIn) so no dealer moves between territories. */
+    var ds=dealersIn(t).map(sfMasterMerge).filter(function(d){ var a=ASSIGN[d.id]; var inw=(weekSel==='all')?(typeof a==='number'&&a!==31):(a===weekSel); return inw && d.lat!=null && d.lon!=null && d.lon<-50; });
     total+=ds.length;
     var byWk={}; ds.forEach(function(d){ var k=ASSIGN[d.id]; (byWk[k]=byWk[k]||[]).push(d); });
     Object.keys(byWk).forEach(function(k){ var g=byWk[k];
