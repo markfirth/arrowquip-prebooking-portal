@@ -110,24 +110,33 @@ export default async function handler(req) {
   try {
     const { accessToken, instanceUrl } = await getToken()
     const base = `${instanceUrl}/services/data/${apiVersion()}`
-    const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
 
-    const [accounts, opp27, opp26] = await Promise.all([
-      queryAll(base, instanceUrl, accessToken,
-        `SELECT Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude
-         FROM Account WHERE Team__c IN (${teamList}) AND Name != '- -'`),
+    // The pre-booking dealer universe = Accounts that have a 2027 pre-booking
+    // Opportunity (one per dealer). This matches the planner's dealer set,
+    // rather than every account that merely has a Team__c.
+    const [opp27, opp26] = await Promise.all([
       queryAll(base, instanceUrl, accessToken,
         `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
       queryAll(base, instanceUrl, accessToken,
         `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026' AND StageName = 'Closed Won'`),
     ])
 
-    const by27 = {}; opp27.forEach((o) => { by27[o.AccountId] = o })
-    const by26 = {}; opp26.forEach((o) => { if (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c)) by26[o.AccountId] = o })
+    const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
+    const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
+
+    const dealerIds = Object.keys(by27)
+    // Fetch those accounts in chunks (keeps the SOQL IN() / URL length safe).
+    const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingLatitude, BillingLongitude`
+    const accounts = []
+    for (let i = 0; i < dealerIds.length; i += 150) {
+      const chunk = dealerIds.slice(i, i + 150).map((id) => `'${id}'`).join(', ')
+      const recs = await queryAll(base, instanceUrl, accessToken, `SELECT ${fields} FROM Account WHERE Id IN (${chunk}) AND Name != '- -'`)
+      accounts.push(...recs)
+    }
 
     const dealers = accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id])).filter((d) => d.territory)
 
-    return json({ ok: true, count: dealers.length, dealers })
+    return json({ ok: true, count: dealers.length, prebookingOpps2027: dealerIds.length, dealers })
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : String(e), missing: e?.missing || [] }, e?.missing ? 500 : 502)
   }
