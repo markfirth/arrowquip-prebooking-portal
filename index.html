@@ -429,6 +429,7 @@ function loadSFDealers(){
       console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
       try{ if(document.getElementById('mBody')) renderMaster(); }catch(e){ console.warn('[SF] renderMaster after sync failed',e); }
       try{ if(document.getElementById('cards')) renderCards(); }catch(e){ console.warn('[SF] renderCards after sync failed',e); }
+      try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){ console.warn('[SF] renderPlanner after sync failed',e); }
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
@@ -525,6 +526,7 @@ function renderCards(){
   document.getElementById("cards").innerHTML=cards.map(function(c){var hasP=(c.prog!=null); return '<div class="card" style="'+(hasP?('background:'+gtint(c.prog)):'')+'"><div class="lbl">'+c.lbl+'</div><div class="val"'+(c.valc?(' style="color:'+gcol(c.prog)+'"'):'')+'>'+c.val+'</div><div class="sub">'+(c.sub||'')+'</div>'+(hasP?('<div class="pbar"><i style="width:'+Math.min(100,c.prog)+'%;background:'+gcol(c.prog)+'"></i></div>'):'')+'</div>';}).join("");
 }
 function dealerCard(d){
+  d=sfMasterMerge(d); /* territory tab: show Salesforce-corrected fields (same overlay as Master Sheet); id/booking/loads/scheduling unchanged */
   return `<div class="dcard" draggable="true" data-id="${d.id}">
     <div class="dn">${d.name}${d.visitConfirmed?'<span class="vmini ok">✓</span>':''}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
@@ -611,6 +613,7 @@ function weekCard(wk){
     +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
 }
 function cardHTML(d,wk){
+  d=sfMasterMerge(d); /* territory tab: show Salesforce-corrected fields; id/booking/loads/scheduling unchanged */
   var ok=!!APPT[d.id];
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var opts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(DAY[d.id]===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
