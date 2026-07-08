@@ -347,6 +347,32 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .spop .sb{padding:.6rem .75rem;font-size:11px;color:var(--muted);line-height:1.5;}
 .spop .sb b{color:var(--aq-black);font-weight:600;}
 .spop .st-ok{color:#16a34a;font-weight:600;} .spop .st-pend{color:#d97706;font-weight:600;}
+/* sidebar tabs: Overview | Budget | Files */
+.sbtabs{display:flex;border-bottom:2px solid var(--line);margin-bottom:14px;}
+.sbtab{font-family:var(--font-heading);text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);cursor:pointer;background:0 0;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:.5rem 1rem;font-size:13px;font-weight:800;transition:all .15s;}
+.sbtab:hover{color:#374151;}
+.sbtab.on{color:var(--aq-black);border-bottom-color:var(--aq-black);}
+/* mileage */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;}
+.mgrid .mk{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);}
+.mgrid .mv{font-size:15px;font-weight:600;color:var(--aq-black);}
+/* expenses */
+.xtab{width:100%;border-collapse:collapse;}
+.xtab thead th{text-align:left;font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);padding:6px;border-bottom:1px solid var(--line);background:var(--surface);white-space:nowrap;}
+.xtab tbody td{padding:3px 6px;border-bottom:1px solid var(--line-soft);font-size:11.5px;vertical-align:middle;}
+.xtab .num{text-align:right;}
+.addexp{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+.addexp .btn{grid-column:1/-1;}
+.addexp .sbsel,.addexp .sbsearch{width:100%;font-size:11.5px;padding:6px 7px;}
+.delx{border:0;background:transparent;color:#cbced0;font-size:15px;cursor:pointer;line-height:1;}
+.delx:hover{color:var(--aq-red);}
+.rcpt{text-align:center;color:var(--muted-2);}
+/* receipt upload + wallet stay visibly present but inert until real auth exists */
+#uploadReceiptBtn:disabled{opacity:.45;cursor:not-allowed;}
+.lockmsg{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:6px 10px;margin-bottom:10px;text-align:center;}
+.emptywallet{text-align:center;padding:1.5rem .5rem;}
+.emptywallet .ew-t{font-family:var(--font-heading);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--aq-black);margin-bottom:8px;}
+.emptywallet .ew-s{font-size:11.5px;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto;}
 /* budget table */
 .btab{width:100%;border-collapse:collapse;}
 .btab th{text-align:right;font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);padding:4px 0;border-bottom:1px solid var(--line);}
@@ -729,6 +755,13 @@ let LOGI=[];
    from ASSIGN/DAY/TIME, so their budget fields live here keyed by dealer id.
    Manual stops carry their own fields on the LOGI record. */
 let STOPX={};
+/* Manual trip expenses (Option A: stored in the plan document, so they inherit optimistic
+   concurrency, history snapshots, auto-backup and logging without widening anon access).
+   pb_change_summary() already counts data->'expenses'. Migrates to prebooking_expenses
+   when real auth returns. Dealer visits are NEVER expenses. */
+let EXPENSES=[];
+/* actual kilometres driven, keyed 'Territory|week' */
+let ACTKM={};
 let JOINA={};
 let DUR={};
 let GOAL2027=0;
@@ -758,8 +791,8 @@ function travelRow(a,b,md){ var mi=roadMi([a.lat,a.lon],[b.lat,b.lon]); if(mi==n
 let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;}})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX};}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;}})();
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   if(PB_STALE){ pbStaleBanner(); return; }      /* don't cache locally what the cloud rejected */
@@ -1164,11 +1197,16 @@ const STOP_TYPES={
   rental :{label:'Rental' ,color:'#6b7280',glyph:'C',  cat:'Car Rental'},
   other  :{label:'Other'  ,color:'#6b7280',glyph:'',   cat:'Other'}
 };
-const BUDGET_CATS=['Hotel','Food','Car Rental','Fuel','Flights','Other'];
+/* Budget categories, exactly as specified. Dealer visits are NOT expenses and never
+   appear here — the budget is derived solely from EXPENSES, never from stops. */
+const BUDGET_CATS=['Flights','Hotels','Food','Fuel','Rental Cars','Parking / Tolls','Other'];
+/* legacy category names that predate this list */
+const CAT_ALIASES={'Hotel':'Hotels','Car Rental':'Rental Cars','Flight':'Flights','Parking':'Parking / Tolls'};
+function normCat(c){ c=CAT_ALIASES[c]||c; return BUDGET_CATS.indexOf(c)>=0 ? c : 'Other'; }
 let MAPF={};
+let SIDEBAR_TAB='overview';   /* overview | budget | files */
 /* legacy LOGI types predate this view: flight -> airport */
 function normType(t){ if(t==='flight')return 'airport'; return STOP_TYPES[t]?t:'other'; }
-function catFor(s){ return s.cat || STOP_TYPES[normType(s.type)].cat; }
 function money(n){ n=Number(n)||0; return (n<0?'-$':'$')+Math.abs(n).toFixed(2); }
 function num(v){ var n=parseFloat(v); return isFinite(n)?n:0; }
 /* 'All' has no dealersIn() bucket - union every territory so the map works there too */
@@ -1185,6 +1223,7 @@ function poolFiltered(t){
     return true;
   });
 }
+/* Stops carry NO cost fields. A dealer visit is a visit, not a line of spend. */
 function dealerStop(d,wk){
   var x=STOPX[d.id]||{};
   var labs=dayLabels(wk), di=DAY[d.id];
@@ -1192,8 +1231,8 @@ function dealerStop(d,wk){
     dayIdx:(di==null?null:di), dayLabel:(di!=null&&labs[di])?(labs[di][0]+', '+labs[di][1]):'—',
     time:TIME[d.id]||'', address:d.address||'', city:'', state:d.loc||'', county:d.county||'',
     lat:d.lat, lon:d.lon, status:(APPT[d.id]?'Confirmed':'Pending'),
-    est:num(x.est), act:num(x.act), notes:x.notes||'', conf:x.conf||'',
-    loads:d.loads||0, revenue:d.booking||0, cat:x.cat||'Other'};
+    notes:x.notes||'', conf:x.conf||'',
+    loads:d.loads||0, revenue:d.booking||0};
 }
 function manualStop(it,wk){
   var labs=dayLabels(wk), di=it.day, ty=normType(it.type);
@@ -1201,8 +1240,32 @@ function manualStop(it,wk){
     dayIdx:(di==null?null:di), dayLabel:(di!=null&&labs[di])?(labs[di][0]+', '+labs[di][1]):'—',
     time:it.time||'', address:it.address||'', city:it.city||'', state:it.state||'', county:it.county||'',
     lat:(it.lat!=null?Number(it.lat):null), lon:(it.lon!=null?Number(it.lon):null),
-    status:it.status||'Pending', est:num(it.est), act:num(it.act), notes:it.notes||'', conf:it.conf||'',
-    loads:0, revenue:0, cat:it.cat||STOP_TYPES[ty].cat};
+    status:it.status||'Pending', notes:it.notes||'', conf:it.conf||'',
+    loads:0, revenue:0};
+}
+
+/* ---------------- Manual expenses (plan JSON) ---------------- */
+function expensesFor(t,wk){
+  return EXPENSES.filter(function(e){ return (t==='All'||e.terr===t) && e.wk===wk; });
+}
+function addExpense(t,wk,o){
+  EXPENSES.push({id:'E'+Date.now()+Math.floor(Math.random()*1000), terr:(t==='All'?'East':t), wk:wk,
+    cat:normCat(o.cat), vendor:o.vendor||'', date:(o.date===''||o.date==null)?null:parseInt(o.date,10),
+    amount:num(o.amount), isEst:!!o.isEst, notes:o.notes||''});
+  savePlan(); renderTerrMap();
+}
+function setExpenseField(id,field,val){
+  var e=EXPENSES.filter(function(x){return x.id===id;})[0]; if(!e) return;
+  if(field==='amount') e.amount=num(val);
+  else if(field==='isEst') e.isEst=(val===true||val==='true'||val==='estimate');
+  else if(field==='cat') e.cat=normCat(val);
+  else if(field==='date') e.date=(val===''?null:parseInt(val,10));
+  else e[field]=val;
+  savePlan(); renderTerrMap();
+}
+function deleteExpense(id){
+  EXPENSES=EXPENSES.filter(function(x){return x.id!==id;});
+  savePlan(); renderTerrMap();
 }
 /* Sorted by day then time; undated stops sink to the bottom but still count in budgets. */
 function stopsForWeek(t,wk){
@@ -1218,15 +1281,29 @@ function stopsForWeek(t,wk){
   });
   return out;
 }
-function budgetFor(stops){
-  var rows={}; BUDGET_CATS.forEach(function(c){rows[c]={est:0,act:0};});
-  stops.forEach(function(s){ var c=catFor(s); if(!rows[c])rows[c]={est:0,act:0}; rows[c].est+=s.est; rows[c].act+=s.act; });
-  var tot={est:0,act:0}; BUDGET_CATS.forEach(function(c){tot.est+=rows[c].est; tot.act+=rows[c].act;});
+/* Budget derives from manual expenses only. Estimate and actual are separate rows in
+   the same category, which is what makes variance and "estimate with no actual" fall out. */
+function budgetFor(expenses){
+  var rows={}; BUDGET_CATS.forEach(function(c){rows[c]={est:0,act:0,receipts:0};});
+  (expenses||[]).forEach(function(e){
+    var c=normCat(e.cat); if(!rows[c])rows[c]={est:0,act:0,receipts:0};
+    if(e.isEst) rows[c].est+=num(e.amount); else rows[c].act+=num(e.amount);
+    /* receipts stay 0 until the Travel Wallet is enabled behind real auth */
+  });
+  var tot={est:0,act:0,receipts:0};
+  BUDGET_CATS.forEach(function(c){tot.est+=rows[c].est; tot.act+=rows[c].act;});
   return {rows:rows,total:tot};
 }
 function dailyFor(stops,wk){
   var labs=dayLabels(wk), days=labs.map(function(l,i){return {i:i,label:l[0]+' · '+l[1],total:0,items:[]};});
-  stops.forEach(function(s){ if(s.dayIdx!=null && days[s.dayIdx]){ days[s.dayIdx].total+=(s.act||s.est); days[s.dayIdx].items.push(s); } });
+  /* daily cost comes from expense dates; stops contribute presence, not money */
+  (arguments[2]||[]).forEach(function(e){
+    if(e.date!=null && days[e.date]){
+      if(!e.isEst) days[e.date].total+=num(e.amount);
+      days[e.date].items.push({name:(e.vendor||normCat(e.cat)), amount:num(e.amount), isEst:e.isEst});
+    }
+  });
+  stops.forEach(function(s){ if(s.dayIdx!=null && days[s.dayIdx]) days[s.dayIdx].stops=(days[s.dayIdx].stops||0)+1; });
   return days;
 }
 /* Great-circle * 1.2 between consecutive located stops - the same estimator the planner uses. */
@@ -1246,7 +1323,8 @@ function renderTerrMap(){
   var weeks=FIELD_NUMS.filter(function(w){return mapScope(terr).some(function(d){return ASSIGN[d.id]===w;});});
   if(typeof wk!=='number'){ wk=weeks.length?weeks[0]:FIELD_NUMS[0]; terrMapWeek=wk; }
   var stops=stopsForWeek(terr,wk);
-  var bud=budgetFor(stops), days=dailyFor(stops,wk), rm=routeMetrics(stops);
+  var exps=expensesFor(terr,wk);                         /* budget comes from expenses, not stops */
+  var bud=budgetFor(exps), days=dailyFor(stops,wk,exps), rm=routeMetrics(stops);
   var confirmed=stops.filter(function(s){return s.status==='Confirmed';}).length;
   var loads=stops.reduce(function(a,s){return a+s.loads;},0);
   var revenue=stops.reduce(function(a,s){return a+s.revenue;},0);
@@ -1305,59 +1383,150 @@ function renderTerrMap(){
       +'<td><input class="cellin txt" type="time" data-sk="'+s.key+'" data-f="time" value="'+esc(s.time)+'" style="width:98px"></td>'
       +'<td>'+esc(loc)+'</td>'
       +'<td class="'+(s.status==='Confirmed'?'st-ok':'st-pend')+'">'+esc(s.status)+'</td>'
-      +'<td class="num"><input class="cellin" type="number" step="0.01" data-sk="'+s.key+'" data-f="est" value="'+(s.est||'')+'" placeholder="0.00"></td>'
-      +'<td class="num"><input class="cellin" type="number" step="0.01" data-sk="'+s.key+'" data-f="act" value="'+(s.act||'')+'" placeholder="0.00"></td>'
       +'</tr>'
-      +'<tr><td></td><td colspan="8" style="padding-top:0;border-bottom:1px solid var(--line-soft)">'
+      +'<tr><td></td><td colspan="6" style="padding-top:0;border-bottom:1px solid var(--line-soft)">'
       +'<input class="cellin txt" data-sk="'+s.key+'" data-f="notes" value="'+esc(s.notes)+'" placeholder="notes…" style="width:55%">'
       +'<input class="cellin txt" data-sk="'+s.key+'" data-f="conf" value="'+esc(s.conf)+'" placeholder="confirmation #" style="width:35%">'
       +'</td></tr>';
-  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted-2);padding:20px">No stops this week. Place dealers into the week on the Schedule tab, or add a stop.</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted-2);padding:20px">No stops this week. Place dealers into the week on the Schedule tab, or add a stop.</td></tr>';
 
   var center='<div><div id="tripMap"></div>'+legend
     +'<div class="tcard" style="margin-top:14px">'
     +'<div class="tch"><div class="tct">Week '+wk+' · '+WEEKDATES[wk]+' <span style="font-weight:400;color:var(--muted);text-transform:none">('+stops.length+' stops)</span></div></div>'
     +'<div style="overflow-x:auto"><table class="stoptab"><thead><tr>'
     +'<th>#</th><th>Stop</th><th>Type</th><th>Date</th><th>Time</th><th>Location</th><th>Status</th>'
-    +'<th style="text-align:right">Est. Cost</th><th style="text-align:right">Actual Cost</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'<div class="tcb"><button class="btn" id="addStopBtn">+ Add Stop</button></div></div></div>';
 
   var wkOpts=FIELD_NUMS.map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week '+w+' · '+WEEKDATES[w]+'</option>';}).join('');
   var lbl='font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2)';
-  var right='<div><div class="tcard"><div class="tch"><div class="tct">Trip Overview</div>'
+
+  /* ---- mileage metrics ---- */
+  var kmKey=terr+'|'+wk;
+  var plannedKm=Math.round(rm.km);
+  var actualKm=num(ACTKM[kmKey]);
+  var dealerVisits=stops.filter(function(s){return s.kind==='dealer';}).length;
+  var spend=bud.total.act;                       /* actual spend drives cost metrics */
+  var kmForCost=actualKm||plannedKm;
+  var costPerKm=kmForCost?spend/kmForCost:0;
+  var costPerVisit=dealerVisits?spend/dealerVisits:0;
+
+  /* ---- tab strip ---- */
+  var tab=function(id,label){
+    return '<button class="sbtab'+(SIDEBAR_TAB===id?' on':'')+'" data-sbtab="'+id+'">'+label+'</button>';
+  };
+  var tabs='<div class="sbtabs">'+tab('overview','Overview')+tab('budget','Budget')+tab('files','Files')+'</div>';
+
+  /* ================= OVERVIEW ================= */
+  var overview=
+     '<div class="tcard"><div class="tch"><div class="tct">Trip Overview</div>'
     +'<select class="wksel" id="tripWeekSel">'+wkOpts+'</select></div>'
     +'<div class="tcb"><div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">'
       +stops.length+' stops · '+loads+' loads · $'+revenue.toLocaleString()+' · '+confirmed+'/'+stops.length+' confirmed</div>'
-    +'<div style="display:flex;gap:28px">'
+    +'<div style="display:flex;gap:28px;margin-bottom:12px">'
       +'<div><div style="'+lbl+'">Total drive time</div><div style="font-size:15px;font-weight:600">'+hrsLabel(rm.hours)+'</div></div>'
-      +'<div><div style="'+lbl+'">Total distance</div><div style="font-size:15px;font-weight:600">'+Math.round(rm.km).toLocaleString()+' km</div></div>'
-    +'</div></div></div>'
+      +'<div><div style="'+lbl+'">Planned distance</div><div style="font-size:15px;font-weight:600">'+plannedKm.toLocaleString()+' km</div></div>'
+    +'</div>'
+    +'<div style="border-top:1px solid var(--line-soft);padding-top:10px">'
+      +'<div style="'+lbl+';margin-bottom:6px">Mileage</div>'
+      +'<div class="mgrid">'
+        +'<div><div class="mk">Planned km</div><div class="mv">'+plannedKm.toLocaleString()+'</div></div>'
+        +'<div><div class="mk">Actual km</div><input class="cellin" id="actKmIn" type="number" step="1" value="'+(actualKm||'')+'" placeholder="—" style="text-align:left;font-size:15px;font-weight:600;padding:0"></div>'
+        +'<div><div class="mk">Cost / km</div><div class="mv">'+(kmForCost?money(costPerKm):'—')+'</div></div>'
+        +'<div><div class="mk">Cost / dealer visit</div><div class="mv">'+(dealerVisits?money(costPerVisit):'—')+'</div></div>'
+      +'</div>'
+      +'<div style="font-size:.65rem;color:var(--muted-2);margin-top:6px">Cost metrics use actual spend'
+        +(actualKm?' and actual km.':' and planned km until actual km is entered.')+'</div>'
+    +'</div></div></div>';
 
-    +'<div class="tcard"><div class="tch"><div class="tct">Budget Summary</div></div><div class="tcb">'
-    +'<table class="btab"><thead><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th></tr></thead><tbody>'
+  /* ================= BUDGET ================= */
+  var dayOpts='<option value="">— day —</option>'+dayLabels(wk).map(function(l,i){return '<option value="'+i+'">'+l[0]+' '+l[1]+'</option>';}).join('');
+  var catOpts=BUDGET_CATS.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+
+  var expRows=exps.length? exps.map(function(e){
+      var labs=dayLabels(wk);
+      var dOpts='<option value="">—</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(e.date===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
+      return '<tr>'
+        +'<td><select class="cellin txt xin" data-ex="'+e.id+'" data-f="cat">'
+          +BUDGET_CATS.map(function(c){return '<option value="'+esc(c)+'"'+(normCat(e.cat)===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')
+        +'</select></td>'
+        +'<td><input class="cellin txt xin" data-ex="'+e.id+'" data-f="vendor" value="'+esc(e.vendor||'')+'" placeholder="vendor"></td>'
+        +'<td><select class="cellin txt xin" data-ex="'+e.id+'" data-f="date">'+dOpts+'</select></td>'
+        +'<td><select class="cellin txt xin" data-ex="'+e.id+'" data-f="isEst">'
+          +'<option value="estimate"'+(e.isEst?' selected':'')+'>Est</option>'
+          +'<option value="actual"'+(e.isEst?'':' selected')+'>Actual</option></select></td>'
+        +'<td class="num"><input class="cellin xin" data-ex="'+e.id+'" data-f="amount" type="number" step="0.01" value="'+(e.amount||'')+'" placeholder="0.00"></td>'
+        +'<td><button class="delx" data-exdel="'+e.id+'" title="Delete">×</button></td>'
+        +'</tr>'
+        +'<tr><td colspan="6" style="padding-top:0"><input class="cellin txt xin" data-ex="'+e.id+'" data-f="notes" value="'+esc(e.notes||'')+'" placeholder="notes…" style="width:100%"></td></tr>';
+    }).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--muted-2);padding:14px">No expenses yet for this week.</td></tr>';
+
+  var budget=
+     '<div class="tcard"><div class="tch"><div class="tct">Budget Summary</div>'
+       +'<select class="wksel" id="tripWeekSel">'+wkOpts+'</select></div><div class="tcb">'
+    +'<table class="btab"><thead><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th><th>Receipts</th></tr></thead><tbody>'
     +BUDGET_CATS.map(function(c){var r=bud.rows[c], v=r.act-r.est;
-       return '<tr><td>'+c+'</td><td>'+money(r.est)+'</td><td>'+money(r.act)+'</td><td class="'+varCls(v)+'">'+varTxt(v)+'</td></tr>';}).join('')
+       return '<tr><td>'+esc(c)+'</td><td>'+money(r.est)+'</td><td>'+money(r.act)+'</td>'
+         +'<td class="'+varCls(v)+'">'+varTxt(v)+'</td>'
+         +'<td class="rcpt" title="Receipts require secure login">—</td></tr>';}).join('')
     +'<tr class="tot"><td>Total</td><td>'+money(bud.total.est)+'</td><td>'+money(bud.total.act)+'</td>'
-      +'<td class="'+varCls(bud.total.act-bud.total.est)+'">'+varTxt(bud.total.act-bud.total.est)+'</td></tr>'
+      +'<td class="'+varCls(bud.total.act-bud.total.est)+'">'+varTxt(bud.total.act-bud.total.est)+'</td>'
+      +'<td class="rcpt">—</td></tr>'
     +'</tbody></table></div></div>'
+
+    +'<div class="tcard"><div class="tch"><div class="tct">Expenses</div>'
+      +'<button class="btn" id="uploadReceiptBtn" disabled title="Receipt storage is disabled until secure login is enabled">Upload receipt</button>'
+      +'</div><div class="tcb">'
+      +'<div class="lockmsg">Requires secure login</div>'
+      +'<div style="overflow-x:auto"><table class="xtab"><thead><tr>'
+        +'<th>Category</th><th>Vendor</th><th>Date</th><th>Type</th><th style="text-align:right">Amount</th><th></th>'
+      +'</tr></thead><tbody>'+expRows+'</tbody></table></div>'
+      +'<div class="addexp">'
+        +'<select id="ex_cat" class="sbsel">'+catOpts+'</select>'
+        +'<input id="ex_vendor" class="sbsearch" placeholder="Vendor">'
+        +'<select id="ex_date" class="sbsel">'+dayOpts+'</select>'
+        +'<select id="ex_type" class="sbsel"><option value="actual">Actual</option><option value="estimate">Estimate</option></select>'
+        +'<input id="ex_amount" class="sbsearch" type="number" step="0.01" placeholder="0.00">'
+        +'<input id="ex_notes" class="sbsearch" placeholder="Notes (optional)">'
+        +'<button class="btn primary" id="ex_add">+ Add expense</button>'
+      +'</div>'
+    +'</div></div>'
 
     +'<div class="tcard"><div class="tch"><div class="tct">Daily Breakdown</div></div><div class="tcb" id="dailyBox">'
     +days.map(function(d){
        return '<div class="dayrow" data-day="'+d.i+'"><div class="dl"><span class="caret">›</span> '+esc(d.label)+'</div><div class="dv">'+money(d.total)+'</div></div>'
         +'<div class="daydetail" data-daydet="'+d.i+'" style="display:none">'
-        +(d.items.length?d.items.map(function(s){return '<div><span>'+esc(s.name)+'</span><span>'+money(s.act||s.est)+'</span></div>';}).join(''):'<div><span>No stops</span><span></span></div>')
+        +(d.items.length?d.items.map(function(x){return '<div><span>'+esc(x.name)+(x.isEst?' <i style="font-style:normal;color:var(--muted-2)">(est)</i>':'')+'</span><span>'+money(x.amount)+'</span></div>';}).join('')
+                        :'<div><span>No expenses</span><span></span></div>')
         +'</div>';}).join('')
     +'</div></div>'
 
     +'<div class="tcard"><div class="tcb dlrow">'
     +'<button class="btn primary" id="dlReport">Download Trip Report</button>'
     +'<select class="wksel" id="dlFmt"><option value="pdf">PDF</option><option value="csv">CSV</option></select>'
-    +'</div></div></div>';
+    +'</div></div>';
+
+  /* ================= FILES ================= */
+  var files=
+     '<div class="tcard"><div class="tch"><div class="tct">Travel Wallet</div></div><div class="tcb">'
+    +'<div class="emptywallet">'
+      +'<div class="ew-t">Travel Wallet requires secure login.</div>'
+      +'<div class="ew-s">Flight confirmations, hotel bookings, rental agreements, boarding passes, '
+      +'dealer agendas, meeting notes, photos and receipts will be stored here once email '
+      +'authentication is enabled.</div>'
+      +'<div class="ew-s" style="margin-top:8px">Nothing is uploaded or stored today. The documents '
+      +'bucket stays private and is not reachable from this session.</div>'
+    +'</div>'
+    +'</div></div>';
+
+  var right='<div>'+tabs
+    +'<div id="sbPane">'+(SIDEBAR_TAB==='budget'?budget:(SIDEBAR_TAB==='files'?files:overview))+'</div>'
+    +'</div>';
 
   document.getElementById('terrMap').innerHTML='<div class="tripgrid">'+left+center+right+'</div>';
   drawTripMap(stops);
-  wireMapView(wk,stops,bud,rm);
+  wireMapView(wk,stops,bud,rm,exps);
 }
 
 /* ---------- leaflet ---------- */
@@ -1377,7 +1546,6 @@ function popupHTML(s){
     +(geo?esc(geo)+'<br>':'')
     +'<div style="margin-top:6px">'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'')+'</div>'
     +'<div class="'+(s.status==='Confirmed'?'st-ok':'st-pend')+'" style="margin-top:4px">'+esc(s.status)+'</div>'
-    +'<div style="margin-top:6px;display:flex;justify-content:space-between"><span>Est. <b>'+money(s.est)+'</b></span><span>Actual <b>'+money(s.act)+'</b></span></div>'
     +(s.conf?'<div style="margin-top:4px">Conf# <b>'+esc(s.conf)+'</b></div>':'')
     +(s.notes?'<div style="margin-top:6px;font-style:italic">'+esc(s.notes)+'</div>':'')
     +'</div></div>';
@@ -1402,17 +1570,16 @@ function drawTripMap(stops){
 /* ---------- editing ---------- */
 function setStopField(key,field,val){
   var kind=key.slice(0,1), id=key.slice(2);
+  /* No cost fields on stops: spend lives in EXPENSES, not on a visit. */
   if(kind==='d'){
     var x=STOPX[id]=STOPX[id]||{};
-    if(field==='est'||field==='act') x[field]=num(val);
-    else if(field==='time') TIME[id]=val;                       /* shared with Schedule */
-    else if(field==='type') x.cat=STOP_TYPES[normType(val)].cat;/* dealer stays a dealer; only its budget category moves */
+    if(field==='time') TIME[id]=val;                            /* shared with Schedule */
+    else if(field==='type') return;                             /* a dealer visit stays a dealer visit */
     else if(field==='name') return;                             /* dealer names belong to the Master Sheet */
-    else x[field]=val;
+    else x[field]=val;                                          /* notes, conf */
   } else {
     var it=LOGI.filter(function(l){return l.id===id;})[0]; if(!it) return;
-    if(field==='est'||field==='act') it[field]=num(val);
-    else if(field==='type'){ it.type=normType(val); it.cat=STOP_TYPES[it.type].cat; }
+    if(field==='type') it.type=normType(val);
     else it[field]=val;
   }
   savePlan();
@@ -1422,7 +1589,7 @@ function addManualStop(o){
   LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:(terr==='All'?'East':terr), wk:terrMapWeek,
     type:normType(o.type), name:o.name, label:o.name, address:o.address, city:o.city, state:o.state, county:o.county,
     lat:(o.lat!==''&&o.lat!=null)?Number(o.lat):null, lon:(o.lon!==''&&o.lon!=null)?Number(o.lon):null,
-    day:(o.day===''?null:parseInt(o.day,10)), time:o.time, est:num(o.est), act:num(o.act),
+    day:(o.day===''?null:parseInt(o.day,10)), time:o.time,
     notes:o.notes, conf:o.conf, status:o.status||'Pending'});
   savePlan(); renderTerrMap();
 }
@@ -1444,7 +1611,7 @@ function openAddStop(){
     +f('lat','Latitude','type="number" step="any"')+f('lon','Longitude','type="number" step="any"')
     +'<div><label>Date</label><select id="as_day">'+dayOpts+'</select></div>'
     +f('time','Time','type="time"')
-    +f('est','Estimated cost','type="number" step="0.01"')+f('act','Actual cost','type="number" step="0.01"')
+    +'<div class="full" style="font-size:11px;color:var(--muted-2);padding-top:2px">Costs are entered in the Budget tab, not on a stop.</div>'
     +'<div class="full"><label>Notes</label><textarea id="as_notes" rows="2"></textarea></div>'
     +'</div><div class="mf"><button class="btn" id="as_cancel">Cancel</button><button class="btn primary" id="as_save">Add Stop</button></div></div>';
   document.body.appendChild(wrap);
@@ -1457,57 +1624,142 @@ function openAddStop(){
     if(!g('name')){ alert('Give the stop a name.'); return; }
     addManualStop({type:g('type'),status:g('status'),name:g('name'),address:g('address'),city:g('city'),
       state:g('state'),county:g('county'),lat:g('lat'),lon:g('lon'),day:g('day'),time:g('time'),
-      est:g('est'),act:g('act'),notes:g('notes'),conf:g('conf')});
+      notes:g('notes'),conf:g('conf')});
     close();
   };
 }
 
 /* ---------- export ---------- */
+/* Stops carry no money. Expenses are reported separately, with variance. */
 function tripReportRows(t,wk,stops){
   return stops.map(function(s,i){
     return {'#':i+1, Territory:t, Week:wk, Dates:WEEKDATES[wk], Stop:s.name, Type:STOP_TYPES[normType(s.type)].label,
       Date:s.dayLabel, Time:s.time?t12s(s.time):'', Address:s.address, City:s.city, 'State/Prov':s.state,
-      County:s.county, Status:s.status, Category:catFor(s), Estimated:s.est.toFixed(2), Actual:s.act.toFixed(2),
-      Variance:(s.act-s.est).toFixed(2), 'Confirmation #':s.conf, Notes:s.notes};
+      County:s.county, Status:s.status, 'Confirmation #':s.conf, Notes:s.notes};
   });
 }
-function tripDownloadCSV(t,wk,stops,rm,bud){
-  var rows=tripReportRows(t,wk,stops);
-  var cols=rows.length?Object.keys(rows[0]):['#'];
+function expenseReportRows(t,wk,exps){
+  var labs=dayLabels(wk);
+  return (exps||[]).map(function(e,i){
+    return {'#':i+1, Territory:e.terr, Week:e.wk, Category:normCat(e.cat), Vendor:e.vendor||'',
+      Date:(e.date!=null&&labs[e.date])?(labs[e.date][0]+', '+labs[e.date][1]):'',
+      Type:(e.isEst?'Estimate':'Actual'), Amount:num(e.amount).toFixed(2), Notes:e.notes||'',
+      'Receipt':''};   /* receipts require secure login */
+  });
+}
+function tripDownloadCSV(t,wk,stops,rm,bud,exps){
   var q=function(v){ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-  var lines=[cols.join(',')].concat(rows.map(function(r){return cols.map(function(c){return q(r[c]);}).join(',');}));
-  lines.push('','Budget category,Estimated,Actual,Variance');
-  BUDGET_CATS.forEach(function(c){var r=bud.rows[c]; lines.push([q(c),r.est.toFixed(2),r.act.toFixed(2),(r.act-r.est).toFixed(2)].join(','));});
-  lines.push(['TOTAL',bud.total.est.toFixed(2),bud.total.act.toFixed(2),(bud.total.act-bud.total.est).toFixed(2)].join(','));
-  lines.push('','Total drive time,'+hrsLabel(rm.hours),'Total distance (km),'+Math.round(rm.km));
+  var lines=[];
+
+  var srows=tripReportRows(t,wk,stops);
+  var scols=srows.length?Object.keys(srows[0]):['#'];
+  lines.push('STOPS');
+  lines.push(scols.join(','));
+  srows.forEach(function(r){ lines.push(scols.map(function(c){return q(r[c]);}).join(',')); });
+
+  lines.push('','EXPENSES');
+  var erows=expenseReportRows(t,wk,exps);
+  var ecols=['#','Territory','Week','Category','Vendor','Date','Type','Amount','Notes','Receipt'];
+  lines.push(ecols.join(','));
+  erows.forEach(function(r){ lines.push(ecols.map(function(c){return q(r[c]);}).join(',')); });
+
+  lines.push('','BUDGET','Category,Estimated,Actual,Variance,Receipts');
+  BUDGET_CATS.forEach(function(c){var r=bud.rows[c];
+    lines.push([q(c),r.est.toFixed(2),r.act.toFixed(2),(r.act-r.est).toFixed(2),''].join(','));});
+  lines.push(['TOTAL',bud.total.est.toFixed(2),bud.total.act.toFixed(2),(bud.total.act-bud.total.est).toFixed(2),''].join(','));
+
+  var kmKey=t+'|'+wk, actualKm=num(ACTKM[kmKey]), plannedKm=Math.round(rm.km);
+  var visits=stops.filter(function(s){return s.kind==='dealer';}).length;
+  var kmForCost=actualKm||plannedKm;
+  lines.push('','MILEAGE');
+  lines.push('Total drive time,'+hrsLabel(rm.hours));
+  lines.push('Planned km,'+plannedKm);
+  lines.push('Actual km,'+(actualKm||''));
+  lines.push('Cost per km,'+(kmForCost?(bud.total.act/kmForCost).toFixed(2):''));
+  lines.push('Cost per dealer visit,'+(visits?(bud.total.act/visits).toFixed(2):''));
+  lines.push('','Receipts,Requires secure login');
+
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='trip-'+String(t).toLowerCase()+'-week'+wk+'.csv';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
 }
-function tripDownloadPDF(t,wk,stops,rm,bud){
-  var rows=tripReportRows(t,wk,stops);
-  var cols=rows.length?Object.keys(rows[0]):[];
-  var head='<tr>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr>';
-  var body=rows.map(function(r){return '<tr>'+cols.map(function(c){return '<td>'+esc(String(r[c]==null?'':r[c]))+'</td>';}).join('')+'</tr>';}).join('');
+function tripDownloadPDF(t,wk,stops,rm,bud,exps){
+  var srows=tripReportRows(t,wk,stops);
+  var scols=srows.length?Object.keys(srows[0]):[];
+  var shead='<tr>'+scols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr>';
+  var sbody=srows.map(function(r){return '<tr>'+scols.map(function(c){return '<td>'+esc(String(r[c]==null?'':r[c]))+'</td>';}).join('')+'</tr>';}).join('');
+
+  var erows=expenseReportRows(t,wk,exps);
+  var ecols=['#','Category','Vendor','Date','Type','Amount','Notes'];
+  var ehead='<tr>'+ecols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr>';
+  var ebody=erows.length? erows.map(function(r){return '<tr>'+ecols.map(function(c){return '<td>'+esc(String(r[c]==null?'':r[c]))+'</td>';}).join('')+'</tr>';}).join('')
+                        : '<tr><td colspan="7">No expenses recorded.</td></tr>';
+
   var budRows=BUDGET_CATS.map(function(c){var r=bud.rows[c];
-    return '<tr><td>'+c+'</td><td>'+money(r.est)+'</td><td>'+money(r.act)+'</td><td>'+money(r.act-r.est)+'</td></tr>';}).join('');
+    return '<tr><td>'+esc(c)+'</td><td>'+money(r.est)+'</td><td>'+money(r.act)+'</td><td>'+money(r.act-r.est)+'</td><td>—</td></tr>';}).join('');
+
+  var kmKey=t+'|'+wk, actualKm=num(ACTKM[kmKey]), plannedKm=Math.round(rm.km);
+  var visits=stops.filter(function(s){return s.kind==='dealer';}).length;
+  var kmForCost=actualKm||plannedKm;
+
   var html='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(String(t))+' — Week '+wk+' ('+esc(WEEKDATES[wk])+')</div></div>'
-    +'<p>Total drive time '+hrsLabel(rm.hours)+' · Total distance '+Math.round(rm.km)+' km</p>'
-    +'<table class="sched">'+head+body+'</table>'
-    +'<h3>Budget</h3><table class="sched"><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th></tr>'
-    +budRows+'<tr><th>TOTAL</th><th>'+money(bud.total.est)+'</th><th>'+money(bud.total.act)+'</th><th>'+money(bud.total.act-bud.total.est)+'</th></tr></table>';
+    +'<p>Drive time '+hrsLabel(rm.hours)+' · Planned '+plannedKm+' km'+(actualKm?(' · Actual '+actualKm+' km'):'')
+      +(kmForCost?(' · '+money(bud.total.act/kmForCost)+'/km'):'')
+      +(visits?(' · '+money(bud.total.act/visits)+'/dealer visit'):'')+'</p>'
+    +'<h3>Stops</h3><table class="sched">'+shead+sbody+'</table>'
+    +'<h3>Expenses</h3><table class="sched">'+ehead+ebody+'</table>'
+    +'<h3>Budget</h3><table class="sched"><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th><th>Receipts</th></tr>'
+    +budRows+'<tr><th>TOTAL</th><th>'+money(bud.total.est)+'</th><th>'+money(bud.total.act)+'</th><th>'+money(bud.total.act-bud.total.est)+'</th><th>—</th></tr></table>'
+    +'<p style="color:#666">Receipts require secure login; none are stored for this trip.</p>';
   tpOpen(String(t)+' Week '+wk+' Trip Report', html);
 }
 
-/* ---------- wiring ---------- */
-function wireMapView(wk,stops,bud,rm){
+function wireMapView(wk,stops,bud,rm,exps){
   var sel=document.getElementById('tripWeekSel');
   if(sel) sel.addEventListener('change',function(e){ terrMapWeek=parseInt(e.target.value,10); renderTerrMap(); });
-  document.querySelectorAll('#terrMap .cellin').forEach(function(el){
+
+  /* sidebar tabs */
+  document.querySelectorAll('#terrMap [data-sbtab]').forEach(function(b){
+    b.addEventListener('click',function(){ SIDEBAR_TAB=b.dataset.sbtab; renderTerrMap(); });
+  });
+
+  /* stop-table inline edits — scoped to cells that carry a stop key, so the
+     expense inputs below (data-ex) never reach setStopField */
+  document.querySelectorAll('#terrMap .cellin[data-sk]').forEach(function(el){
     el.addEventListener('change',function(e){ e.stopPropagation(); setStopField(el.dataset.sk, el.dataset.f, el.value); });
   });
+
+  /* expense inline edits */
+  document.querySelectorAll('#terrMap .xin[data-ex]').forEach(function(el){
+    el.addEventListener('change',function(e){ e.stopPropagation(); setExpenseField(el.dataset.ex, el.dataset.f, el.value); });
+  });
+  document.querySelectorAll('#terrMap [data-exdel]').forEach(function(b){
+    b.addEventListener('click',function(e){ e.stopPropagation(); deleteExpense(b.dataset.exdel); });
+  });
+
+  /* add expense */
+  var add=document.getElementById('ex_add');
+  if(add) add.addEventListener('click',function(){
+    var g=function(id){var el=document.getElementById(id); return el?el.value:'';};
+    var amt=g('ex_amount');
+    if(amt===''||!isFinite(parseFloat(amt))){ alert('Enter an amount.'); return; }
+    addExpense(terr, wk, {cat:g('ex_cat'), vendor:g('ex_vendor'), date:g('ex_date'),
+      isEst:(g('ex_type')==='estimate'), amount:amt, notes:g('ex_notes')});
+  });
+
+  /* actual kilometres */
+  var km=document.getElementById('actKmIn');
+  if(km) km.addEventListener('change',function(){
+    var v=num(km.value);
+    if(v>0) ACTKM[terr+'|'+wk]=v; else delete ACTKM[terr+'|'+wk];
+    savePlan(); renderTerrMap();
+  });
+
+  /* receipt upload stays inert: no bucket call, no document row */
+  var up=document.getElementById('uploadReceiptBtn');
+  if(up) up.addEventListener('click',function(e){ e.preventDefault(); });
   document.querySelectorAll('#terrMap [data-mapf]').forEach(function(el){
     el.addEventListener('change',function(){ MAPF[el.dataset.mapf]=el.value; renderTerrMap(); });
   });
@@ -1529,7 +1781,7 @@ function wireMapView(wk,stops,bud,rm){
   var dl=document.getElementById('dlReport');
   if(dl) dl.addEventListener('click',function(){
     var fmt=document.getElementById('dlFmt').value;
-    if(fmt==='csv') tripDownloadCSV(terr,wk,stops,rm,bud); else tripDownloadPDF(terr,wk,stops,rm,bud);
+    if(fmt==='csv') tripDownloadCSV(terr,wk,stops,rm,bud,exps); else tripDownloadPDF(terr,wk,stops,rm,bud,exps);
   });
 }
 function selOpts(list,cur){return list.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join("");}
@@ -1770,7 +2022,7 @@ function importDealers(text){
   if(!arr.length){alert('No valid dealer rows were found.');return;}
   if(!confirm('Import '+arr.length+' dealers? This REPLACES the current dealer list and clears existing scheduling.'))return;
   DEALERS=arr.map(function(d){return Object.assign({},d);});reindex();
-  ASSIGN={};DAY={};TIME={};CONF={};APPT={};LOGI=[];JOINA={};DUR={};STOPX={};
+  ASSIGN={};DAY={};TIME={};CONF={};APPT={};LOGI=[];JOINA={};DUR={};STOPX={};EXPENSES=[];ACTKM={};
   DEALERS.forEach(function(d){ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
   saveDealers();savePlan();terr='Master';renderMaster();alert('Imported '+arr.length+' dealers.');
 }
@@ -1892,7 +2144,7 @@ function cloudSave(key,obj){
   },700);
 }
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
