@@ -114,7 +114,7 @@ function computeGrowth(booking, lastYear) {
  * for future pages. booking/loads are null when the 2027 Salesforce value is
  * 0/null so the planner keeps its seed fallback.
  */
-function mapDealer(acc, opp27, opp26won) {
+function mapDealer(acc, opp27, opp26won, prebook2026) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
   const loadsRaw = opp27 ? num(opp27.Number_of_Loads__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
@@ -142,6 +142,10 @@ function mapDealer(acc, opp27, opp26won) {
     loads,
     booking,
     lastYear,
+    // 2026 Pre-Booking Original Commitment — Salesforce-derived COUNT of Dealer Loads
+    // opportunities (Production_Estimated_Ship_Date__c in 2026, stage Closed Won or
+    // Prebooked). Locked/non-editable in the Master Sheet. Always a number.
+    prebook2026: num(prebook2026),
     lat,
     lon,
     _source: 'salesforce',
@@ -164,20 +168,34 @@ async function fetchAllDealers() {
   const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
   const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
 
-  const [accounts, opp27, opp26] = await Promise.all([
+  const [accounts, opp27, opp26, pb26] = await Promise.all([
     queryAll(base, instanceUrl, accessToken,
       `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer'`),
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026' AND StageName = 'Closed Won'`),
+    // 2026 Pre-Booking Original Commitment = COUNT of Dealer Loads opportunities per dealer.
+    // RecordType.Name = 'Dealer Loads' excludes Small Sales / Commercial / End User / Warranty /
+    // Prebooking / Pre-Production / parts / non-load orders automatically. Use
+    // Production_Estimated_Ship_Date__c (NOT Shipment_Date__c — that is null on prebooked loads,
+    // which would make the commitment change when a load moves Prebooked → Closed Won). Each
+    // Dealer Loads opportunity = 1 load. Aggregate COUNT allows the field alias; AccountId groups.
+    queryAll(base, instanceUrl, accessToken,
+      `SELECT AccountId, COUNT(Id) c FROM Opportunity ` +
+      `WHERE RecordType.Name = 'Dealer Loads' ` +
+      `AND Production_Estimated_Ship_Date__c >= 2026-01-01 ` +
+      `AND Production_Estimated_Ship_Date__c <= 2026-12-31 ` +
+      `AND StageName IN ('Closed Won', 'Prebooked') ` +
+      `GROUP BY AccountId`),
   ])
 
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
   const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
+  const byPB = {}; pb26.forEach((o) => { if (o.AccountId) byPB[o.AccountId] = num(o.c) })
 
   // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
-  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id]))
+  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byPB[a.Id] || 0))
 }
 
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────
