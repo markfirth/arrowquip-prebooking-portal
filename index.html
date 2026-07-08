@@ -601,8 +601,9 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
           <th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
           <th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>
           <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th>
-          <th class="srt num" data-mk="prebook2026">2026 Pre-Booking<span class="hsub">Original Commitment</span><span class="hlock"></span></th>
-          <th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th><th class="srt num" data-mk="loads">Loads<span class="hinfo" title="Planner-managed load count"> ⓘ</span></th>
+          <th class="srt num" data-mk="loads">2026 Loads<span class="hsub">Confirmed</span><span class="hlock"></span></th>
+          <th class="srt num" data-mk="prebook2026">2026 Pre-Booking<span class="hsub">Original Commitment</span><span class="hinfo" title="Planner-managed original commitment"> ⓘ</span></th>
+          <th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th>
           <th class="srt" data-mk="areaPlanning">Area Planning<span class="hinfo" title="Show this dealer in East, West, South, Central or Export planning pages."> ⓘ</span></th>
           <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th>
           <th class="srt" data-mk="status">Status</th><th>Actions</th>
@@ -659,16 +660,17 @@ function sfMasterMerge(d){
     if(sf.lastYear!=null){ o.lastYear=sf.lastYear; src.lastYear='salesforce'; } else { src.lastYear='planner-fallback'; } /* 0/null → keep planner fallback */
     if(sf.lat!=null){ o.lat=sf.lat; src.lat='salesforce'; } else { src.lat='planner-fallback'; }
     if(sf.lon!=null){ o.lon=sf.lon; src.lon='salesforce'; } else { src.lon='planner-fallback'; }
-    /* 2026 Pre-Booking Original Commitment: Salesforce-derived Dealer-Loads count. Locked; overrides any saved planner value. */
-    o.prebook2026=(sf.prebook2026!=null?+sf.prebook2026:0); src.prebook2026='salesforce';
+    /* 2026 Loads: Salesforce-derived Dealer-Loads count. Salesforce-owned — locked and
+       read-only; overrides any saved planner value. Always a number (0..n) for SF dealers. */
+    if(sf.loads!=null){ o.loads=+sf.loads; src.loads='salesforce'; } else { src.loads='planner-fallback'; }
     o._sfId=sf.id; o._sf=true;
   } else {
     src.name=src.territory=src.tm=src.loc=src.address=src.tier=src.lastYear=src.lat=src.lon='planner-fallback';
-    o.prebook2026=0; src.prebook2026='salesforce';
+    src.loads='planner-fallback';   /* local-only dealer: no Salesforce loads, planner may enter one */
     o._sf=false;
   }
-  /* booking/loads: expected planner fallback while 2027 Salesforce is 0/null (not counted as MIXED) */
-  src.booking='planner-fallback'; src.loads='planner-fallback';
+  /* planner-owned, editable: 2027 Target + 2026 Pre-Booking Original Commitment */
+  src.booking='planner-fallback'; src.prebook2026='planner-fallback';
   /* local planner-owned */
   src.visitConfirmed='local'; src.atKickoff='local';
   o._sources=src; /* internal metadata only — not persisted, not displayed */
@@ -683,7 +685,7 @@ function sfMasterMerge(d){
 var LOCK_SVG='<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"></rect><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path></svg>';
 function sfLock(d,f){ return !!(d._sources && d._sources[f]==='salesforce'); }
 function sfLockTitle(d){
-  var s=d._sources||{}, LBL={name:'Name',territory:'Territory',tm:'Manager',tier:'Tier',loc:'State',address:'Address',lastYear:'2026 Revenue'};
+  var s=d._sources||{}, LBL={name:'Name',territory:'Territory',tm:'Manager',tier:'Tier',loc:'State',address:'Address',lastYear:'2026 Revenue',loads:'2026 Loads'};
   var sf=[]; ['name','territory','tm','tier','loc','address','lastYear'].forEach(function(f){ if(s[f]==='salesforce') sf.push(LBL[f]); });
   var lines=['From Salesforce — read-only'];
   if(d._sfId) lines.push('Account Id: '+d._sfId);
@@ -2231,13 +2233,14 @@ function newSFRow(sf){
     name:sf.name||'', territory:sf.territory||'', tm:sf.tm||'', tier:sf.tier||'New',
     loc:sf.loc||'', address:sf.address||'',
     lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
-    booking:0, loads:0, visitConfirmed:false, atKickoff:false, remote:false,
-    prebook2026:(sf.prebook2026!=null?+sf.prebook2026:0), areaPlanning:true, status:'Not Started' };
+    booking:0, loads:(sf.loads!=null?+sf.loads:0), visitConfirmed:false, atKickoff:false, remote:false,
+    prebook2026:0, areaPlanning:true, status:'Not Started' };
   o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
     tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
     loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
     lastYear:(sf.lastYear!=null?'salesforce':'planner-fallback'), lat:(sf.lat!=null?'salesforce':'planner-fallback'),
-    lon:(sf.lon!=null?'salesforce':'planner-fallback'), booking:'planner-fallback', loads:'planner-fallback',
+    lon:(sf.lon!=null?'salesforce':'planner-fallback'), booking:'planner-fallback',
+    loads:(sf.loads!=null?'salesforce':'planner-fallback'), prebook2026:'planner-fallback',
     visitConfirmed:'local', atKickoff:'local' };
   return o;
 }
@@ -2250,7 +2253,7 @@ function buildMasterUniverse(){
   ids.forEach(function(sid){
     var p=plannerBySf[sid];
     if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
-    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.loads=+ov.loads||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
+    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.prebook2026=+ov.prebook2026||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
   });
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
@@ -2295,16 +2298,16 @@ function renderMaster(){
     ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
-    ${lockTD('num',(+d.prebook2026||0),'span','2026 Pre-Booking Original Commitment — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date)')}
+    ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','2026 Loads — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date). Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
+    <td class="num pln"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}"></td>
     <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
-    <td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${(ASSIGN[d.id]==='remote'||d.remote)?'checked':''}></td>
     <td class="pln statuscell">${statusSel(d)}</td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${_allMerged.reduce((s,d)=>s+(+d.prebook2026||0),0)}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${_allMerged.reduce((s,d)=>s+(+d.loads||0),0)}</td><td class="num">${_allMerged.reduce((s,d)=>s+(+d.prebook2026||0),0)}</td><td class="num">${fmtUSD(grandTot())}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
@@ -2312,8 +2315,8 @@ function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
   if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
-    if(SF_BY_ID[id] && ['booking','loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
-      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,loads:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
+    if(SF_BY_ID[id] && ['booking','prebook2026','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
+      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
       if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
       invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
     }
@@ -2322,7 +2325,7 @@ function onMasterEdit(e){
   if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
-  else if(f==='lastYear'||f==='booking'||f==='loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
+  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='prebook2026') v=Math.max(0,Math.round(parseFloat(el.value)||0));
   else if(f==='loc') v=(el.value||'').trim().toUpperCase();
   else v=(el.value||'').trim();
   d[f]=v;
@@ -2431,8 +2434,8 @@ function exportTripPlans(){
 function downloadCSV(fn,txt){var blob=new Blob([txt],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 function csvCell(v){v=(v==null?'':String(v));return /[",\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v;}
 function dealerTemplate(){
-  var cols=['Dealer Name','Territory','Account Manager','Tier','State','Address','2026 Revenue','2027 Target','Loads','Area Planning','Visit Confirmed','Kickoff','Status'];
-  var ex=['Example Dealer Co','East','Mark Firth','Tier 3','GA','123 Main St, Calhoun, GA','750000','1125000','15','Yes','No','No','Not Started'];
+  var cols=['Dealer Name','Territory','Account Manager','Tier','State','Address','2026 Revenue','2026 Pre-Booking','2027 Target','Area Planning','Visit Confirmed','Kickoff','Status'];
+  var ex=['Example Dealer Co','East','Mark Firth','Tier 3','GA','123 Main St, Calhoun, GA','750000','800000','1125000','Yes','No','No','Not Started'];
   downloadCSV('dealer-import-template.csv', cols.join(',')+'\n'+ex.map(csvCell).join(',')+'\n');
 }
 function parseCSVLine(line){var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){out.push(cur);cur='';}else cur+=ch;}}out.push(cur);return out;}
@@ -2441,7 +2444,7 @@ function importDealers(text){
   if(lines.length<2){alert('No data rows found in the file.');return;}
   var hdr=parseCSVLine(lines[0]).map(function(s){return s.trim().toLowerCase();});
   function idx(names){for(var k=0;k<names.length;k++){var j=hdr.indexOf(names[k]);if(j>=0)return j;}return -1;}
-  var iName=idx(['dealer name','dealer','name']),iT=idx(['territory','region']),iAM=idx(['account manager','acct mgr','am','owner']),iTier=idx(['tier']),iSt=idx(['state','state/prov','st']),iAddr=idx(['address']),i26=idx(['2026 revenue','2026 rev','last year','lastyear']),i27=idx(['2027 target','target','booking']),iL=idx(['loads']),iV=idx(['visit confirmed','visit']),iK=idx(['kickoff']),iAP=idx(['area planning','include in area planning','areaplanning']),iSS=idx(['status','planning status']);
+  var iName=idx(['dealer name','dealer','name']),iT=idx(['territory','region']),iAM=idx(['account manager','acct mgr','am','owner']),iTier=idx(['tier']),iSt=idx(['state','state/prov','st']),iAddr=idx(['address']),i26=idx(['2026 revenue','2026 rev','last year','lastyear']),i27=idx(['2027 target','target','booking']),iPB=idx(['2026 pre-booking','2026 prebooking','pre-booking','prebook2026']),iV=idx(['visit confirmed','visit']),iK=idx(['kickoff']),iAP=idx(['area planning','include in area planning','areaplanning']),iSS=idx(['status','planning status']);
   if(iName<0){alert('Could not find a "Dealer Name" column. Download the Template for the correct format.');return;}
   var terrs=['East','South','Central','West','Exports'];
   function yes(v){v=(v||'').trim().toLowerCase();return v==='yes'||v==='true'||v==='y'||v==='1'||v==='✓';}
@@ -2450,7 +2453,7 @@ function importDealers(text){
   for(var r=1;r<lines.length;r++){var c=parseCSVLine(lines[r]);if(!c[iName]||!c[iName].trim())continue;n++;
     var st=(iSt>=0?(c[iSt]||'').trim().toUpperCase():'');var co=COORD[st];
     var terr=(iT>=0?(c[iT]||'').trim():'East');if(terrs.indexOf(terr)<0)terr='East';
-    arr.push({id:'I'+n,territory:terr,tm:(iAM>=0?(c[iAM]||'').trim():''),name:(c[iName]||'').trim(),tier:((iTier>=0?(c[iTier]||'').trim():'')||'Tier 5'),loc:st,address:(iAddr>=0?(c[iAddr]||'').trim():''),lastYear:i26>=0?num(c[i26]):0,booking:i27>=0?num(c[i27]):0,loads:iL>=0?num(c[iL]):0,visitConfirmed:iV>=0?yes(c[iV]):false,atKickoff:iK>=0?yes(c[iK]):false,areaPlanning:iAP>=0?yes(c[iAP]):true,status:(iSS>=0&&STATUSES.indexOf((c[iSS]||'').trim())>=0)?(c[iSS]||'').trim():'Not Started',suggestedWeek:null,lat:co?co[0]:null,lon:co?co[1]:null});
+    arr.push({id:'I'+n,territory:terr,tm:(iAM>=0?(c[iAM]||'').trim():''),name:(c[iName]||'').trim(),tier:((iTier>=0?(c[iTier]||'').trim():'')||'Tier 5'),loc:st,address:(iAddr>=0?(c[iAddr]||'').trim():''),lastYear:i26>=0?num(c[i26]):0,booking:i27>=0?num(c[i27]):0,prebook2026:iPB>=0?num(c[iPB]):0,visitConfirmed:iV>=0?yes(c[iV]):false,atKickoff:iK>=0?yes(c[iK]):false,areaPlanning:iAP>=0?yes(c[iAP]):true,status:(iSS>=0&&STATUSES.indexOf((c[iSS]||'').trim())>=0)?(c[iSS]||'').trim():'Not Started',suggestedWeek:null,lat:co?co[0]:null,lon:co?co[1]:null});
   }
   if(!arr.length){alert('No valid dealer rows were found.');return;}
   if(!confirm('Import '+arr.length+' dealers? This REPLACES the current dealer list and clears existing scheduling.'))return;
