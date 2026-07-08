@@ -64,17 +64,22 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* Sales nav has no active marker; this red underline is the one addition (see notes) */
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
 /* ---- Page heading: home-module title / teamBadge ---- */
-.titlewrap{max-width:100%;margin:0 auto;padding:.875rem 20px 0;}
-.titlewrap h1{margin:0;font-family:var(--font-heading);font-size:28px;font-weight:900;text-transform:uppercase;color:var(--aq-black);letter-spacing:0;line-height:1.1;}
-.titlewrap p{margin:.2rem 0 0;color:var(--muted);font-size:.8rem;font-weight:600;max-width:980px;line-height:1.35;}
-.wrap{max-width:100%;margin:0 auto;padding:.75rem 20px 40px;}
-/* ---- KPI strip: RegisteredSalesCard summaryRow / summaryItem ---- */
-.cards{display:flex;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:.75rem;}
-.card{display:flex;flex-direction:column;flex:1;align-items:flex-start;justify-content:center;padding:.5rem .875rem;border-right:1px solid var(--line);background:var(--panel);min-width:0;line-height:1.2;}
-.card:last-child{border-right:none;background:var(--surface);}
+.wrap{max-width:100%;margin:0 auto;padding:1rem 20px 40px;}
+/* ---- KPI cards: discrete tiles per approved mockup, Sales card chrome
+       (1px #e5e7eb, 4px radius, no shadow) ---- */
+.cards{display:flex;gap:12px;margin-bottom:12px;}
+.card{position:relative;display:flex;flex-direction:column;flex:1;align-items:flex-start;justify-content:center;padding:.625rem .875rem .75rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);min-width:0;line-height:1.2;overflow:hidden;}
 .card .lbl{font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);margin-bottom:.1rem;}
 .card .val{font-size:1rem;font-weight:600;color:var(--aq-black);letter-spacing:-.5px;line-height:1.15;}
 .card .sub{font-size:.65rem;color:var(--muted-2);margin-top:.1rem;}
+/* Tone accent: a 2px rail along the card's bottom edge. Colour carries the
+   status; the value text stays ink so the strip never reads as loud. */
+.card .tone{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--line-soft);}
+.card .tone i{display:block;height:100%;transition:width .2s;background:var(--tone,var(--muted-2));}
+.card[data-tone="good"]{--tone:#16a34a;}
+.card[data-tone="warn"]{--tone:#d97706;}
+.card[data-tone="bad"]{--tone:#dc2626;}
+.card[data-tone="neutral"]{--tone:#9ca3af;}
 .planwrap{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start;}
 .sidebar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);position:sticky;top:105px;max-height:calc(100vh - 121px);display:flex;flex-direction:column;overflow:hidden;z-index:30;}
 .sbhead{padding:14px 16px;border-bottom:1px solid var(--line-soft);}
@@ -99,7 +104,9 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .vmini.ok{background:#e7f3ec;color:var(--green);} .vmini.pend{background:#f0f1f2;color:#8a8e90;}
 .poolempty{font-size:12px;color:var(--muted);text-align:center;padding:24px 8px;border:1px dashed var(--line);border-radius:7px;margin-top:6px;}
 .planhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;}
-.planhead .pt{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--aq-black);}
+/* "EAST — MARK FIRTH · SCHEDULE" heading retired per approved mockup. The node
+   stays in the DOM because renderPlanner/refreshPlanner still write to it. */
+.planhead .pt{display:none;}
 .planhead .pa{display:flex;gap:8px;}
 /* Sales cancelButton (ghost) + submitButton (solid black, inverts on hover) */
 .btn{appearance:none;font-family:inherit;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:.5rem 1rem;border-radius:var(--radius);cursor:pointer;border:1px solid #d1d5db;background:0 0;color:var(--muted);transition:all .15s;}
@@ -382,7 +389,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .setbar{font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;}
 .setbar input{width:46px;font-family:inherit;font-size:11px;border:1px solid var(--line);border-radius:5px;padding:4px 5px;text-align:center;}
 
-@media(max-width:1200px){.cards{flex-wrap:wrap;} .cards .card{flex:1 1 33%;border-bottom:1px solid var(--line);} .planwrap{grid-template-columns:1fr;} .sidebar{position:static;max-height:none;} .weeks{grid-template-columns:1fr;}}
+@media(max-width:1200px){.cards{flex-wrap:wrap;} .cards .card{flex:1 1 30%;} .planwrap{grid-template-columns:1fr;} .sidebar{position:static;max-height:none;} .weeks{grid-template-columns:1fr;}}
 @media(max-width:900px){.aqNavContainer{padding:0 10px;} .aqNavLinks{gap:14px;} .aqNavLinks .tab{font-size:13px;} .aqUtilityBar{padding:8px 15px;} .cards .card{flex:1 1 50%;}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -423,10 +430,6 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
   </div>
   </div></div>
 </header>
-<div class="titlewrap">
-  <h1>2027 Pre-Booking <span class="cond">Travel Planner</span></h1>
-  <p>Drag dealers into a week, set day &amp; time, confirm each appointment, then confirm the week. Distances between same-day stops are estimated automatically. "Master Sheet" is fully editable.</p>
-</div>
 <div class="wrap">
   <div class="cards" id="cards"></div>
   <div id="plannerView" style="display:none;">
@@ -677,6 +680,14 @@ const sumB=a=>a.reduce((s,d)=>s+(+d.booking||0),0);
 const sumL=a=>a.reduce((s,d)=>s+(+d.loads||0),0);
 const apptCount=a=>a.filter(d=>APPT[d.id]).length;
 const coordOf=d=>[d.lat,d.lon];
+/* --- KPI status tones (approved mockup, step 7). Thresholds are inclusive of
+   the upper bound: 0-30 bad, 31-70 warn, 71-100 good. --- */
+function pctTone(p){ if(!isFinite(p)) return 'neutral'; if(p<=30) return 'bad'; if(p<=70) return 'warn'; return 'good'; }
+/* Unscheduled pool: high share of revenue still unplaced is the problem case. */
+function remainTone(p){ if(!isFinite(p)) return 'neutral'; if(p<=30) return 'good'; if(p<=70) return 'warn'; return 'bad'; }
+/* Deadline: >60 days is comfortable, 30-60 tightening, <30 urgent. */
+function deadlineTone(d){ if(d==null||!isFinite(d)) return 'neutral'; if(d<30) return 'bad'; if(d<=60) return 'warn'; return 'good'; }
+
 function renderCards(){
   /* KPI cards source from the same Salesforce-merged dealer list as the Master
      Sheet. booking/loads are not overlaid by the merge, so KPI $ values are
@@ -693,16 +704,26 @@ function renderCards(){
   var isOv=(terr==='All'||terr==='Master');
   var goalPct=(GOAL2027>0)?Math.min(100,Math.round(target/GOAL2027*100)):null;
   var placedPct=ds.length?Math.round((ds.length-pool.length)/ds.length*100):0;
+  /* share of the territory's revenue still sitting unplaced in the pool */
+  var remainPct=target?Math.round(poolRev/target*100):(pool.length?100:0);
   const cards=[
    {lbl:(GOAL2027>0&&isOv)?"2027 Forecast vs Goal":"2027 Target", val:fmtUSDk(target), sub:(GOAL2027>0&&isOv)?('Goal '+fmtUSDk(GOAL2027)+' · '+((target-GOAL2027)>=0?('+'+fmtUSDk(target-GOAL2027)+' over'):('gap '+fmtUSDk(GOAL2027-target)))):((isOv?'all territories · ':terr+' · ')+fmtUSD(target)), prog:(GOAL2027>0&&isOv)?goalPct:null},
-   {lbl:"Kickoff Coverage (Wk 31)",val:cov.toFixed(0)+"%",sub:fmtUSDk(kickRev)+" locked at kickoff",prog:cov,valc:true},
-   {lbl:"Planned into Weeks",val:schedPct.toFixed(0)+"%",sub:fmtUSDk(placedRev)+" placed of "+fmtUSDk(target),prog:schedPct,valc:true},
-   {lbl:"Unscheduled Pool",val:fmtUSDk(poolRev),sub:pool.length+" of "+ds.length+" dealers to place",prog:placedPct},
-   {lbl:"Pre-Book Deadline",val:"Oct 31",sub:days+" days left · no bookings after Oct"},
+   {lbl:"Kickoff Coverage (Wk 31)",val:cov.toFixed(0)+"%",sub:fmtUSDk(kickRev)+" locked at kickoff",prog:cov,tone:pctTone(cov)},
+   {lbl:"Planned into Weeks",val:schedPct.toFixed(0)+"%",sub:fmtUSDk(placedRev)+" placed of "+fmtUSDk(target),prog:schedPct,tone:pctTone(schedPct)},
+   {lbl:"Unscheduled Pool",val:fmtUSDk(poolRev),sub:pool.length+" of "+ds.length+" dealers to place",prog:placedPct,tone:remainTone(remainPct)},
+   {lbl:"Pre-Book Deadline",val:"Oct 31",sub:days+" days left · no bookings after Oct",tone:deadlineTone(days)},
   ];
-  /* Sales summaryRow: flat, no tinted background, no coloured value — the progress
-     bar carries the signal instead (2px, ink). gcol/gtint intentionally unused. */
-  document.getElementById("cards").innerHTML=cards.map(function(c){ return '<div class="card"><div class="lbl">'+c.lbl+'</div><div class="val">'+c.val+'</div><div class="sub">'+(c.sub||'')+'</div></div>';}).join("");
+  /* Status tone rides on a 2px bottom rail only — value text stays ink. */
+  document.getElementById("cards").innerHTML=cards.map(function(c){
+    var tone=c.tone||'neutral';
+    var fill=(c.prog!=null)?Math.max(0,Math.min(100,c.prog)):100;
+    return '<div class="card" data-tone="'+tone+'">'+
+      '<div class="lbl">'+c.lbl+'</div>'+
+      '<div class="val">'+c.val+'</div>'+
+      '<div class="sub">'+(c.sub||'')+'</div>'+
+      '<div class="tone"><i style="width:'+fill+'%"></i></div>'+
+    '</div>';
+  }).join("");
 }
 function dealerCard(d){
   d=sfMasterMerge(d); /* territory tab: show Salesforce-corrected fields (same overlay as Master Sheet); id/booking/loads/scheduling unchanged */
