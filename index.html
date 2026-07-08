@@ -668,6 +668,24 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 #gate .gerr{color:#ff6b6b;font-size:12px;min-height:16px;margin-top:12px;}
 .cloudbadge{position:fixed;bottom:10px;right:12px;z-index:500;font:11px 'Open Sans',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:4px 9px;border-radius:12px;pointer-events:none;opacity:0;transition:opacity .3s;}
 .cloudbadge.show{opacity:1;}
+.aqAcct{display:inline-flex;align-items:center;gap:8px;margin-left:10px;font-size:12px;}
+.aqAcct .aqWho{color:#e5e7eb;opacity:.85;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aqAcct .aqRole{font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:#cf202f;color:#fff;padding:2px 6px;border-radius:9px;}
+.aqAcct button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;}
+.aqAcct button:hover{background:rgba(255,255,255,.12);}
+.pbModal{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
+.pbModal .pbCard{background:#fff;border-radius:10px;width:560px;max-width:94vw;max-height:88vh;overflow:auto;padding:22px 24px;box-shadow:0 24px 70px rgba(0,0,0,.35);font-family:'Open Sans',Arial,sans-serif;}
+.pbModal h3{margin:0 0 4px;font-size:18px;}
+.pbModal .pbSub{color:#6b7280;font-size:12px;margin-bottom:16px;}
+.pbModal table{width:100%;border-collapse:collapse;font-size:13px;}
+.pbModal th,.pbModal td{text-align:left;padding:7px 8px;border-bottom:1px solid #eef0f2;}
+.pbModal th{color:#6b7280;font-weight:600;font-size:11px;text-transform:uppercase;}
+.pbModal select,.pbModal input{padding:5px 7px;border:1px solid #d9dee4;border-radius:5px;font-size:13px;}
+.pbModal .pbrm{color:#cf202f;background:none;border:0;cursor:pointer;font-size:16px;}
+.pbModal .pbrm:disabled{color:#cbd0d6;cursor:not-allowed;}
+.pbModal .pbAdd{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pbModal .pbClose{float:right;background:none;border:0;font-size:20px;cursor:pointer;color:#9ca3af;}
+.pbModal .pbErr{color:#cf202f;font-size:12px;min-height:16px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -1962,9 +1980,9 @@ function renderTerrMap(){
     +'</tbody></table></div></div>'
 
     +'<div class="tcard"><div class="tch"><div class="tct">Expenses</div>'
-      +'<button class="btn" id="uploadReceiptBtn" disabled title="Receipt storage is disabled until secure login is enabled">Upload receipt</button>'
+      +'<button class="btn'+(pbAuthed()?' primary':'')+'" id="uploadReceiptBtn"'+(pbAuthed()?'':' disabled title="Sign in to store receipts"')+'>Upload receipt</button>'
       +'</div><div class="tcb">'
-      +'<div class="lockmsg">Requires secure login</div>'
+      +(pbAuthed()?'':'<div class="lockmsg">Requires secure login</div>')
       +'<div style="overflow-x:auto"><table class="xtab"><thead><tr>'
         +'<th>Category</th><th>Vendor</th><th>Date</th><th>Type</th><th style="text-align:right">Amount</th><th></th>'
       +'</tr></thead><tbody>'+expRows+'</tbody></table></div>'
@@ -2353,9 +2371,12 @@ function wireMapView(wk,stops,bud,rm,exps){
     savePlan(); renderTerrMap();
   });
 
-  /* receipt upload stays inert: no bucket call, no document row */
+  /* receipt upload -> private receipt-photos bucket + document row (auth only) */
   var up=document.getElementById('uploadReceiptBtn');
-  if(up) up.addEventListener('click',function(e){ e.preventDefault(); });
+  if(up) up.addEventListener('click',function(e){ e.preventDefault();
+    if(!pbAuthed()) return;
+    pbCaptureReceipt({territory:terr, week:wk}, function(){ /* budget receipts panel is read-only today */ });
+  });
   document.querySelectorAll('#terrMap [data-mapf]').forEach(function(el){
     el.addEventListener('change',function(){ MAPF[el.dataset.mapf]=el.value; renderTerrMap(); });
   });
@@ -2781,6 +2802,7 @@ function withPreservedScroll(fn){
 function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
 function unlockApp(){
   var g=document.getElementById('gate'); if(g)g.style.display='none';
+  try{ pbRenderAcct(); }catch(e){}
   /* airport picker source */
   var dl=document.getElementById('apList');
   if(dl && !dl.childElementCount){
@@ -2869,6 +2891,142 @@ async function pbBootAuth(){
   });
 }
 (function(){ if(document.getElementById('gate')) pbBootAuth(); })();
+
+/* ===================== Secure file storage (private buckets) =================
+   Images and files NEVER live in plan/report JSON. Each upload goes to a private
+   Supabase bucket and is indexed by a prebooking_documents row. Routing (req 13):
+     Visit Photos   -> bucket 'visit-photos'   kind 'visit_photo' (dealer visit)
+     Receipt Photos -> bucket 'receipt-photos' kind 'receipt'     (expense)
+     Documents      -> bucket 'trip-documents' kind 'document'    (general trip)
+     Notes          -> stay in plan/report JSON (VISIT[]), never a bucket
+   Every bucket + the documents table require an authenticated, APPROVED session
+   (RLS). Capture UI is disabled until pbAuthed() is true. */
+function pbSlug(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40)||'trip'; }
+function pbFileExt(f){ var n=(f&&f.name)||''; var m=n.match(/\.([a-z0-9]+)$/i); if(m) return m[1].toLowerCase(); var t=(f&&f.type)||''; return t.indexOf('/')>0?t.split('/')[1].split('+')[0]:'bin'; }
+async function pbUpload(bucket, file, meta){
+  if(!SB) return {ok:false,error:'cloud not configured'};
+  if(!pbAuthed()) return {ok:false,error:'not authenticated'};
+  meta=meta||{};
+  var t=(meta.territory||(typeof MOB!=='undefined'&&MOB.terr)||(typeof terr==='string'?terr:'')||'trip');
+  var wk=(meta.week!=null?meta.week:((typeof MOB!=='undefined'&&MOB.wk!=null)?MOB.wk:null));
+  var path=pbSlug(t)+'/'+(wk!=null?('wk'+wk+'/'):'')+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.'+pbFileExt(file);
+  var up=await SB.storage.from(bucket).upload(path, file, {contentType:file.type||'application/octet-stream', upsert:false});
+  if(up&&up.error) return {ok:false,error:up.error.message||String(up.error)};
+  var row={ territory:(t||null), week:(wk!=null?+wk:null), stop_key:meta.stopKey||null,
+            kind:meta.kind||'document', title:meta.title||(file.name||null),
+            storage_path:bucket+'/'+path, mime_type:file.type||null, byte_size:file.size||null,
+            source:meta.source||'upload', created_by:pbActor() };
+  try{ var ins=await SB.from('prebooking_documents').insert(row).select('id').maybeSingle();
+       if(ins&&!ins.error&&ins.data) return {ok:true,bucket:bucket,path:path,docId:ins.data.id}; }catch(e){}
+  return {ok:true,bucket:bucket,path:path,docId:null}; /* file is stored even if indexing failed */
+}
+function pbPickFile(accept, useCamera, multiple, cb){
+  var inp=document.createElement('input'); inp.type='file'; if(accept)inp.accept=accept;
+  if(useCamera)inp.setAttribute('capture','environment'); if(multiple)inp.multiple=true;
+  inp.style.display='none'; document.body.appendChild(inp);
+  inp.onchange=function(){ var fs=[].slice.call(inp.files||[]); inp.remove(); cb(fs); };
+  inp.click();
+}
+/* Capture a receipt image -> receipt-photos bucket + document row (kind 'receipt'). */
+function pbCaptureReceipt(meta, done){
+  if(!pbAuthed()){ alert('Sign in to capture receipts.'); return; }
+  pbPickFile('image/*,application/pdf', true, false, function(fs){
+    if(!fs.length) return;
+    cloudBadge('Uploading receipt…');
+    pbUpload('receipt-photos', fs[0], Object.assign({kind:'receipt',source:'receipt'}, meta||{})).then(function(r){
+      cloudBadge(r.ok?'Receipt saved':'Receipt upload failed');
+      if(done) done(r);
+    });
+  });
+}
+/* Capture general documents -> trip-documents bucket + document rows. */
+function pbCaptureDocuments(meta, done){
+  if(!pbAuthed()){ alert('Sign in to upload documents.'); return; }
+  pbPickFile('image/*,application/pdf', false, true, function(fs){
+    if(!fs.length) return;
+    cloudBadge('Uploading…');
+    Promise.all(fs.map(function(f){ return pbUpload('trip-documents', f, Object.assign({kind:'document',source:'files'}, meta||{})); }))
+      .then(function(rs){ cloudBadge('Uploaded '+rs.filter(function(r){return r.ok;}).length+' file(s)'); if(done)done(rs); });
+  });
+}
+
+/* ---- Offline: notes + visit completion already write localStorage immediately
+   (savePlan) so they persist offline; push to cloud when connectivity returns. --- */
+function pbFlushOnline(){
+  if(!SB) return;
+  try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER['plan']!==undefined && !PB_READONLY && !PB_STALE){ cloudSave('plan', planPayload()); } }catch(e){}
+}
+window.addEventListener('online', function(){ cloudBadge('Back online — syncing'); pbFlushOnline(); });
+
+/* ---- Account controls (utility bar): who's signed in, sign out, manage users --- */
+function pbRenderAcct(){
+  var host=document.getElementById('aqAcct'); if(!host) return;
+  if(!pbAuthed()){ host.innerHTML=''; return; }
+  var role=(PB_ROLE==='super_admin'?'Super Admin':(PB_ROLE==='admin'?'Admin':'Planner'));
+  host.innerHTML='<span class="aqWho">'+esc(PB_USER.email||'')+'</span><span class="aqRole">'+role+'</span>'
+    +(pbIsSuperAdmin()?'<button id="aqUsers">Users</button>':'')
+    +'<button id="aqSignout">Sign out</button>';
+  var u=document.getElementById('aqUsers'); if(u) u.onclick=pbAdminUsers;
+  var s=document.getElementById('aqSignout'); if(s) s.onclick=pbSignOut;
+}
+
+/* ---- Super Admin: approved-user & role management (req 4). RLS also enforces
+   that only a super_admin may write here, and a DB trigger blocks demoting or
+   removing the Super Admin — the UI mirrors those guarantees. --- */
+async function pbAdminUsers(){
+  if(!pbIsSuperAdmin()){ alert('Only the Super Admin can manage users.'); return; }
+  var r=await SB.from('prebooking_users').select('email,full_name,role,approved').order('role',{ascending:false}).order('email');
+  var rows=(r&&r.data)||[];
+  var body=rows.map(function(u){
+    var isSuper=(u.role==='super_admin');
+    return '<tr data-email="'+esc(u.email)+'">'
+      +'<td>'+esc(u.email)+'</td>'
+      +'<td>'+esc(u.full_name||'')+'</td>'
+      +'<td><select class="pbrole" '+(isSuper?'disabled':'')+'>'
+        +['planner','admin','super_admin'].map(function(o){return '<option'+(o===u.role?' selected':'')+(o==='super_admin'?' disabled':'')+'>'+o+'</option>';}).join('')
+      +'</select></td>'
+      +'<td><input type="checkbox" class="pbappr" '+(u.approved?'checked':'')+(isSuper?' disabled':'')+'></td>'
+      +'<td><button class="pbrm" '+(isSuper?'disabled title="The Super Admin cannot be removed"':'')+'>✕</button></td></tr>';
+  }).join('');
+  var m=document.createElement('div'); m.className='pbModal'; m.id='pbUsersModal';
+  m.innerHTML='<div class="pbCard"><button class="pbClose">×</button>'
+    +'<h3>Approved users</h3><div class="pbSub">Only you (Super Admin) can change this. The Super Admin account cannot be demoted or removed.</div>'
+    +'<table><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Approved</th><th></th></tr></thead><tbody id="pbUserRows">'+body+'</tbody></table>'
+    +'<div class="pbAdd"><input id="pbNewEmail" type="email" placeholder="name@arrowquip.com" style="flex:1;min-width:180px">'
+      +'<input id="pbNewName" placeholder="Full name" style="flex:1;min-width:120px">'
+      +'<select id="pbNewRole"><option value="admin">Admin</option><option value="planner">Planner</option></select>'
+      +'<button id="pbAddBtn" class="aqAction aqAction--solid">Add user</button></div>'
+    +'<div class="pbErr" id="pbUsersErr"></div>'
+    +'<div class="pbSub" style="margin-top:10px">Invitations are not sent automatically. A new user signs in themselves with their work email; access is granted only once they appear here as approved.</div>'
+    +'</div>';
+  document.body.appendChild(m);
+  var err=function(t){ var e=m.querySelector('#pbUsersErr'); if(e)e.textContent=t||''; };
+  m.addEventListener('click',function(e){ if(e.target===m) m.remove(); });
+  m.querySelector('.pbClose').onclick=function(){ m.remove(); };
+  m.querySelectorAll('#pbUserRows tr').forEach(function(tr){
+    var email=tr.dataset.email;
+    var roleSel=tr.querySelector('.pbrole'), appr=tr.querySelector('.pbappr'), rm=tr.querySelector('.pbrm');
+    if(roleSel&&!roleSel.disabled) roleSel.onchange=function(){
+      SB.from('prebooking_users').update({role:roleSel.value}).eq('email',email).then(function(x){ if(x&&x.error)err(x.error.message); });
+    };
+    if(appr&&!appr.disabled) appr.onchange=function(){
+      SB.from('prebooking_users').update({approved:appr.checked}).eq('email',email).then(function(x){ if(x&&x.error){err(x.error.message);appr.checked=!appr.checked;} });
+    };
+    if(rm&&!rm.disabled) rm.onclick=function(){
+      if(!confirm('Remove '+email+'? They will lose access.')) return;
+      SB.from('prebooking_users').delete().eq('email',email).then(function(x){ if(x&&x.error){err(x.error.message);} else tr.remove(); });
+    };
+  });
+  m.querySelector('#pbAddBtn').onclick=function(){
+    var em=(m.querySelector('#pbNewEmail').value||'').trim().toLowerCase();
+    var nm=(m.querySelector('#pbNewName').value||'').trim();
+    var ro=m.querySelector('#pbNewRole').value;
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ err('Enter a valid email'); return; }
+    SB.from('prebooking_users').insert({email:em,full_name:nm,role:ro,approved:true}).then(function(x){
+      if(x&&x.error){ err(x.error.message); return; } m.remove(); pbAdminUsers();
+    });
+  };
+}
 
 
 /* ===================== TRIP MODE (mobile) =====================
@@ -3076,24 +3234,33 @@ function mobBudget_render(){
       }).join('') || '<div class="tm-empty">Nothing recorded yet.</div>';
 
   h+='<button class="tm-primary" id="mobAddExp">+ Add Expense</button>';
-  h+='<button class="tm-primary" style="background:#e5e7eb;color:#9ca3af;margin-top:8px" disabled title="Requires secure login">📷 Capture Receipt — requires secure login</button>';
+  h+= pbAuthed()
+      ? '<button class="tm-primary" id="mobCapReceipt" style="margin-top:8px">📷 Capture Receipt</button>'
+      : '<button class="tm-primary" style="background:#e5e7eb;color:#9ca3af;margin-top:8px" disabled title="Requires secure login">📷 Capture Receipt — requires secure login</button>';
   h+='</div>';
   return h;
 }
 
 /* ---------- FILES ---------- */
 function mobFiles_render(){
+  if(!pbAuthed()){
+    return '<div class="tm-screen">'
+      +'<div class="tm-lock">'
+        +'<div class="warnpill">Secure login required</div>'
+        +'<div class="lt">Travel Wallet requires secure login.</div>'
+        +'<div class="ls">Flight confirmations, hotel bookings, rental agreements, boarding passes, '
+        +'photos and receipts will live here once you sign in.</div>'
+        +'<div class="ls" style="margin-top:8px">Nothing is uploaded or stored today. The documents bucket '
+        +'stays private and is not reachable from this session.</div>'
+      +'</div></div>';
+  }
   return '<div class="tm-screen">'
-    +'<div class="tm-lock">'
-      +'<div class="warnpill">Secure login required</div>'
-      +'<div class="lt">Travel Wallet requires secure login.</div>'
-      +'<div class="ls">Flight confirmations, hotel bookings, rental agreements, boarding passes, '
-      +'photos and receipts will live here once email authentication is enabled.</div>'
-      +'<div class="ls" style="margin-top:8px">Nothing is uploaded or stored today. The documents bucket '
-      +'stays private and is not reachable from this session.</div>'
-    +'</div>'
-    +'<div class="tm-h"><span>Receipts</span></div>'
-    +'<div class="tm-lock"><div class="ls">Receipt capture is disabled until secure login is enabled.</div></div>'
+    +'<div class="tm-h"><span>Trip documents</span></div>'
+    +'<div style="font-size:12px;color:#6b7280;margin:2px 0 8px">Boarding passes, hotel and rental confirmations, agreements. Stored privately for '+esc(MOB.terr)+' · Week '+MOB.wk+'.</div>'
+    +'<button class="tm-primary" id="mobUploadDoc">＋ Upload document</button>'
+    +'<div class="tm-h" style="margin-top:14px"><span>Receipts</span></div>'
+    +'<button class="tm-primary" id="mobUploadReceipt">📷 Capture receipt</button>'
+    +'<div style="font-size:11px;color:#9ca3af;margin-top:10px">Files are stored in private Supabase buckets with authenticated access only. Images are never saved inside the plan.</div>'
     +'</div>';
 }
 
@@ -3155,6 +3322,9 @@ function wireMobile(){
   var cd=document.getElementById('mobChangeDay'); if(cd) cd.onclick=mobDaySheet;
   var add=document.getElementById('mobAdd'); if(add) add.onclick=mobAddSheet;
   var ae=document.getElementById('mobAddExp'); if(ae) ae.onclick=mobExpenseSheet;
+  var cr=document.getElementById('mobCapReceipt'); if(cr) cr.onclick=function(){ pbCaptureReceipt({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); };
+  var ud=document.getElementById('mobUploadDoc'); if(ud) ud.onclick=function(){ pbCaptureDocuments({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); };
+  var ur=document.getElementById('mobUploadReceipt'); if(ur) ur.onclick=function(){ pbCaptureReceipt({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); };
   var so=document.getElementById('mobSignOut'); if(so) so.onclick=function(){ pbSignOut(); };
 
   q('[data-mobdone]').forEach(function(b){ b.onclick=function(){
@@ -3204,7 +3374,7 @@ var MOB_ADD=[
 ];
 function mobAddSheet(){
   var inner=MOB_ADD.map(function(o){
-    var locked=(o[4]==='lock');
+    var locked=(o[4]==='lock') && !pbAuthed();   /* photo/receipt/note unlock with a session */
     return '<button class="tm-opt'+(locked?' locked':'')+'" data-addk="'+o[0]+'"'+(locked?' disabled':'')+'>'
       +'<span class="oi" style="background:'+o[2]+'">'+o[3]+'</span>'+esc(o[1])
       +(locked?'<span class="lk">Secure login</span>':'')+'</button>';
@@ -3213,6 +3383,9 @@ function mobAddSheet(){
   w.querySelectorAll('[data-addk]').forEach(function(b){ b.onclick=function(){
     var k=b.dataset.addk; w.remove();
     if(k==='expense'){ mobExpenseSheet(); return; }
+    if(k==='receipt'){ pbCaptureReceipt({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); return; }
+    if(k==='photo'){ pbCaptureDocuments({territory:MOB.terr, week:MOB.wk, kind:'document', source:'trip-photo'}, function(){ renderMobile(); }); return; }
+    if(k==='note'){ alert('Open a dealer visit to add notes — they save to the visit report.'); return; }
     if(k==='dealer'){ alert('Drag dealers into a week on the Schedule tab (desktop). Trip Mode edits the trip, not the dealer roster.'); return; }
     /* travel item: create it in the selected week, then open its editor */
     var prevTerr=terr; terr=MOB.terr;
@@ -3303,6 +3476,13 @@ function pbPhotoDB(){
   });
 }
 function pbPhotoAdd(dealer, blob){
+  /* Authenticated: store the image in the private visit-photos bucket + index row.
+     The IndexedDB copy stays only as an offline/thumbnail cache — images are never
+     written into the plan/report JSON. */
+  if(pbAuthed()){
+    try{ var d=uniById(dealer); pbUpload('visit-photos', blob, {kind:'visit_photo', stopKey:String(dealer),
+      title:(d&&d.name?('Visit photo — '+d.name):'Visit photo'), source:'visit'}); }catch(e){}
+  }
   return pbPhotoDB().then(function(db){ return new Promise(function(res,rej){
     var tx=db.transaction('photos','readwrite');
     tx.objectStore('photos').add({dealer:dealer, blob:blob, at:Date.now()});
@@ -3380,7 +3560,7 @@ function mobVisitDetail(id){
     pane='<div id="vd_photos" class="vd-grid"><div class="tm-empty" style="grid-column:1/-1">Loading…</div></div>'
       +'<label class="tm-primary" style="display:block;text-align:center;cursor:pointer">📷 Add photo'
       +'<input id="vd_cam" type="file" accept="image/*" capture="environment" multiple style="display:none"></label>'
-      +'<div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">Photos are saved on this device and become part of the visit report. Cloud sync arrives with secure login.</div>';
+      +'<div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">'+(pbAuthed()?'Photos upload to private storage and are kept on this device for offline viewing. They are never stored inside the plan.':'Photos are saved on this device and become part of the visit report. Sign in to store them privately in the cloud.')+'</div>';
   }
 
   var inner=''
