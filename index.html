@@ -904,7 +904,14 @@ function loadSFDealers(opts){
 var SB_URL="https://oicmwmnnsgivmsolrqhq.supabase.co";
 var SB_KEY="sb_publishable_HxzW7epbXUcQBDMiW5g8Jw_P1Wa0gW6";
 /* TEAM_PASSCODE removed: access is a real Supabase session + prebooking_users allowlist. */
-var SB=null; try{ if(window.supabase&&window.supabase.createClient){ SB=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){ SB=null; }
+var SB=null; try{ if(window.supabase&&window.supabase.createClient){ SB=window.supabase.createClient(SB_URL,SB_KEY,{
+  auth:{
+    persistSession:true,        /* keep the session in localStorage so the device stays signed in */
+    autoRefreshToken:true,      /* silently refresh the access token before it expires */
+    detectSessionInUrl:true,    /* pick up the magic-link session from the callback URL */
+    storageKey:'aq-prebooking-auth'
+  }
+}); } }catch(e){ SB=null; }
 var _cloudTimers={}, _lastSelfSave=0;
 function saveDealers(){invalidateUniverse();try{localStorage.setItem('aq2027dealersv1',JSON.stringify(DEALERS));}catch(e){}cloudSave('dealers',DEALERS);}
 const WEEKDATES={31:"Jul 28–29",32:"Aug 2–8",33:"Aug 9–15",34:"Aug 16–22",35:"Aug 23–29",36:"Aug 30–Sep 5",37:"Sep 6–12",38:"Sep 13–19",39:"Sep 20–26",40:"Sep 27–Oct 3",41:"Oct 4–10",42:"Oct 11–17",43:"Oct 18–24",44:"Oct 25–31"};
@@ -2800,8 +2807,19 @@ function withPreservedScroll(fn){
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
 }
 function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
+/* After a magic-link callback the URL carries auth params (#access_token…, ?code=…,
+   type=magiclink). supabase-js consumes them, but strip anything left so the address
+   bar is clean and a refresh doesn't re-trigger detection. */
+function pbCleanAuthUrl(){
+  try{
+    if(/(access_token|refresh_token|[?&]code=|type=magiclink|[?&]error)/.test(location.hash+location.search)){
+      history.replaceState(null,'',location.origin+location.pathname);
+    }
+  }catch(e){}
+}
 function unlockApp(){
   var g=document.getElementById('gate'); if(g)g.style.display='none';
+  pbCleanAuthUrl();
   try{ pbRenderAcct(); }catch(e){}
   /* airport picker source */
   var dl=document.getElementById('apList');
