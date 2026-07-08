@@ -691,8 +691,11 @@ function loadSFDealers(opts){
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
-var SB_URL="https://itgintixzfcvoiuwszdx.supabase.co";
-var SB_KEY="sb_publishable_o8oGWpu7NummrXxrN2-MHA_hjEoRI_M";
+/* Arrowquip Pre-Booking project (oicmwmnnsgivmsolrqhq). Migrated 2026-07-08 from
+   itgintixzfcvoiuwszdx, which remains intact as a rollback and still serves the
+   operator-dashboard. Publishable key only; all writes go through SECURITY DEFINER rpcs. */
+var SB_URL="https://oicmwmnnsgivmsolrqhq.supabase.co";
+var SB_KEY="sb_publishable_HxzW7epbXUcQBDMiW5g8Jw_P1Wa0gW6";
 /* TEAM_PASSCODE removed: access is a real Supabase session + prebooking_users allowlist. */
 var SB=null; try{ if(window.supabase&&window.supabase.createClient){ SB=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){ SB=null; }
 var _cloudTimers={}, _lastSelfSave=0;
