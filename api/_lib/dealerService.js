@@ -114,9 +114,8 @@ function computeGrowth(booking, lastYear) {
  * for future pages. booking/loads are null when the 2027 Salesforce value is
  * 0/null so the planner keeps its seed fallback.
  */
-function mapDealer(acc, opp27, opp26won, prebook2026) {
+function mapDealer(acc, opp27, opp26won, loadCount) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
-  const loadsRaw = opp27 ? num(opp27.Number_of_Loads__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
   const area = TM_TO_AREA[acc.Territory_Manager__c] || null
 
@@ -125,7 +124,6 @@ function mapDealer(acc, opp27, opp26won, prebook2026) {
   if (!loc) loc = acc.BillingState || ''
 
   const booking = bookingRaw > 0 ? bookingRaw : null
-  const loads = loadsRaw > 0 ? loadsRaw : null
   const lastYear = lastYearRaw > 0 ? lastYearRaw : null
   const lat = acc.BillingLatitude != null ? Number(acc.BillingLatitude) : null
   const lon = acc.BillingLongitude != null ? Number(acc.BillingLongitude) : null
@@ -139,13 +137,12 @@ function mapDealer(acc, opp27, opp26won, prebook2026) {
     loc,
     address: [acc.BillingStreet, acc.BillingCity, acc.BillingState].filter(Boolean).join(', '),
     tier: acc.Account_Tier_Text__c || 'New',
-    loads,
+    // 2026 Loads — Salesforce-derived COUNT of Dealer Loads opportunities
+    // (Production_Estimated_Ship_Date__c in 2026, stage Closed Won or Prebooked).
+    // Salesforce-owned: locked/non-editable in the Master Sheet. Always a number.
+    loads: num(loadCount),
     booking,
     lastYear,
-    // 2026 Pre-Booking Original Commitment — Salesforce-derived COUNT of Dealer Loads
-    // opportunities (Production_Estimated_Ship_Date__c in 2026, stage Closed Won or
-    // Prebooked). Locked/non-editable in the Master Sheet. Always a number.
-    prebook2026: num(prebook2026),
     lat,
     lon,
     _source: 'salesforce',
@@ -192,10 +189,10 @@ async function fetchAllDealers() {
 
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
   const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
-  const byPB = {}; pb26.forEach((o) => { if (o.AccountId) byPB[o.AccountId] = num(o.c) })
+  const byLoads = {}; pb26.forEach((o) => { if (o.AccountId) byLoads[o.AccountId] = num(o.c) })
 
   // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
-  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byPB[a.Id] || 0))
+  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0))
 }
 
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────
