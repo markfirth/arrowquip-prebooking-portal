@@ -487,7 +487,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 </style>
 </head>
 <body>
-<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" placeholder="Team passcode" autocomplete="off"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
+<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gmail" type="email" placeholder="you@arrowquip.com" autocomplete="email" autocapitalize="off" spellcheck="false"><button id="gbtn">Send sign-in link</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
   <div class="aqUtilityBar">
@@ -693,7 +693,7 @@ function loadSFDealers(opts){
 }
 var SB_URL="https://itgintixzfcvoiuwszdx.supabase.co";
 var SB_KEY="sb_publishable_o8oGWpu7NummrXxrN2-MHA_hjEoRI_M";
-var TEAM_PASSCODE="Arrowquip2027";
+/* TEAM_PASSCODE removed: access is a real Supabase session + prebooking_users allowlist. */
 var SB=null; try{ if(window.supabase&&window.supabase.createClient){ SB=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){ SB=null; }
 var _cloudTimers={}, _lastSelfSave=0;
 function saveDealers(){invalidateUniverse();try{localStorage.setItem('aq2027dealersv1',JSON.stringify(DEALERS));}catch(e){}cloudSave('dealers',DEALERS);}
@@ -1836,12 +1836,10 @@ var PB_STALE=false;         /* once a save is rejected, this tab may not write a
    declaration — assigning it earlier in the file is undone when this var executes. */
 var PB_READONLY=(function(){ try{ return /[?&]readonly=1/.test(location.search); }catch(e){ return false; } })();
 
+/* The audit trail names a person, not an anonymous session. */
 function pbActor(){
-  try{
-    var a=localStorage.getItem('aq_actor');
-    if(!a){ a='session-'+Math.random().toString(36).slice(2,8); localStorage.setItem('aq_actor',a); }
-    return a;
-  }catch(e){ return 'unknown'; }
+  if(typeof PB_USER!=='undefined' && PB_USER && PB_USER.email) return PB_USER.email;
+  return 'unauthenticated';
 }
 function pbLog(kind,rowId,detail){
   if(!SB)return;
@@ -1930,7 +1928,71 @@ function withPreservedScroll(fn){
 }
 function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
 function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); loadSFDealers(); }
-(function(){ var g=document.getElementById('gate'); if(!g){ return; } if(sessionStorage.getItem('aq_unlocked')==='1'){ unlockApp(); return; } var pass=document.getElementById('gpass'), btn=document.getElementById('gbtn'), err=document.getElementById('gerr'); function tryUnlock(){ if(pass.value===TEAM_PASSCODE){ try{sessionStorage.setItem('aq_unlocked','1');}catch(e){} unlockApp(); } else { err.textContent='Incorrect passcode'; pass.value=''; pass.focus(); } } btn.addEventListener('click',tryUnlock); pass.addEventListener('keydown',function(e){ if(e.key==='Enter')tryUnlock(); }); setTimeout(function(){pass.focus();},50); })();
+/* ===================== Authentication (Supabase magic link) =====================
+   The plaintext TEAM_PASSCODE gate is gone. Access now requires:
+     1. a real signed-in session (magic link), and
+     2. an approved row in prebooking_users.
+   RLS enforces (2) server-side; the UI check below is only for a useful message.
+   A signed-in but unapproved user can read nothing. */
+var PB_USER=null;      /* supabase user object */
+var PB_APPROVED=false;
+
+function gateErr(msg){ var e=document.getElementById('gerr'); if(e)e.textContent=msg||''; }
+function gateMsg(msg){
+  var box=document.querySelector('#gate .gbox'); if(!box)return;
+  var e=document.getElementById('gerr'); if(e){ e.style.color='#9ca3af'; e.textContent=msg; }
+}
+async function pbCheckApproved(){
+  if(!SB||!PB_USER) return false;
+  var r=await SB.from('prebooking_users').select('email,approved,full_name,role')
+                .eq('email',(PB_USER.email||'').toLowerCase()).maybeSingle();
+  if(r&&r.error) return false;
+  return !!(r&&r.data&&r.data.approved);
+}
+async function pbBootAuth(){
+  var g=document.getElementById('gate');
+  if(!SB){ gateErr('Cloud not configured.'); return; }
+
+  var sess=await SB.auth.getSession();
+  PB_USER=(sess&&sess.data&&sess.data.session&&sess.data.session.user)||null;
+
+  if(PB_USER){
+    PB_APPROVED=await pbCheckApproved();
+    if(PB_APPROVED){ unlockApp(); return; }
+    /* signed in, not on the allowlist */
+    gateErr('');
+    var box=document.querySelector('#gate .gbox');
+    if(box) box.innerHTML='<div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div>'
+      +'<div style="color:#9ca3af;font-size:12px;line-height:1.6;margin:8px 0 14px">Signed in as <b style="color:#fff">'+esc(PB_USER.email)+'</b><br>'
+      +'This account is not approved for the portal yet.<br>Ask an administrator to approve it.</div>'
+      +'<button id="gsignout">Sign out</button>';
+    var so=document.getElementById('gsignout');
+    if(so) so.onclick=async function(){ await SB.auth.signOut(); location.reload(); };
+    return;
+  }
+
+  /* not signed in: magic link */
+  var mail=document.getElementById('gmail'), btn=document.getElementById('gbtn');
+  if(!mail||!btn) return;
+  async function sendLink(){
+    var email=(mail.value||'').trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ gateErr('Enter a valid email address'); return; }
+    btn.disabled=true; gateMsg('Sending…');
+    var r=await SB.auth.signInWithOtp({ email:email, options:{ emailRedirectTo: location.origin + location.pathname } });
+    btn.disabled=false;
+    if(r&&r.error){ gateErr(r.error.message||'Could not send link'); return; }
+    gateMsg('Check your inbox — sign-in link sent to '+email);
+  }
+  btn.addEventListener('click',sendLink);
+  mail.addEventListener('keydown',function(e){ if(e.key==='Enter')sendLink(); });
+  setTimeout(function(){mail.focus();},50);
+
+  /* magic-link return lands with a session; react without a manual reload */
+  SB.auth.onAuthStateChange(function(evt,session){
+    if(session&&session.user&&!PB_USER){ PB_USER=session.user; pbBootAuth(); }
+  });
+}
+(function(){ if(document.getElementById('gate')) pbBootAuth(); })();
 </script>
 </body>
 </html>
