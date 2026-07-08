@@ -319,7 +319,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .statbar{display:flex;align-items:stretch;gap:14px;width:100%;}
 .statbar .plansum{flex:1 1 auto;margin-bottom:0;border-radius:var(--radius);}
 .statbar .pa{display:flex;align-items:center;gap:8px;}
-.tripgrid{display:grid;grid-template-columns:250px minmax(0,1fr) 380px;gap:14px;align-items:start;}
+.tripgrid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start;}
 .tcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);}
 .tcard+.tcard{margin-top:14px;}
 .tcard .tch{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:.75rem 1rem;border-bottom:1px solid var(--line);}
@@ -569,7 +569,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
       <div class="pt" id="planTitle"></div>
       <div class="statbar">
         <div class="plansum" id="planSummary"></div>
-        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><button class="btn" id="histBtn">History</button><button class="btn" id="signOutBtn">Sign out</button></div>
+        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
       </div>
     </div>
     <div class="planwrap" id="planwrap">
@@ -1694,22 +1694,10 @@ function renderTerrMap(){
 
   var pool=mapScope(terr), shown=poolFiltered(terr);
   var uniq=function(f){var s=[];pool.forEach(function(d){var v=f(d); if(v&&s.indexOf(v)<0)s.push(v);});return s.sort();};
-  var selHTML=function(id,label,vals){ var cur=MAPF[id]||'';
-    return '<select class="sbsel" data-mapf="'+id+'"><option value="">'+label+'</option>'
-      +vals.map(function(v){return '<option'+(v===cur?' selected':'')+'>'+esc(v)+'</option>';}).join('')+'</select>'; };
-
-  var left='<div class="tcard"><div class="tcb">'
-    +'<div style="font-family:var(--font-heading);font-size:14px;font-weight:800;text-transform:uppercase;color:var(--aq-black)">Dealer Pool — '+esc(terr)+'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin:2px 0 10px">'+shown.length+' of '+pool.length+' · '+fmtUSDk(shown.reduce(function(a,d){return a+(d.booking||0);},0))+' potential</div>'
-    +'<div class="tfilters">'
-    +'<input class="sbsearch" id="mapSearch" placeholder="Search dealers…" value="'+esc(MAPF.q||'')+'">'
-    +selHTML('state','All states',uniq(function(d){return d.loc;}))
-    +selHTML('county','All counties',uniq(function(d){return d.county;}))
-    +selHTML('tier','All tiers',uniq(function(d){return d.tier;}))
-    +selHTML('tm','All managers',uniq(function(d){return d.tm;}))
-    +selHTML('status','All statuses',uniq(function(d){return d.status;}))
-    +'<button class="btn" id="manageDealers" style="margin-top:4px">Manage Dealers</button>'
-    +'</div></div></div>';
+  /* Dealer pool / filter column removed from the Map view: the map answers
+     'where am I going', not 'which dealers exist'. The Schedule tab still has
+     the full pool. MAPF stays empty, so poolFiltered() filters nothing here. */
+  var left='';
 
   var legend='<div class="maplegend">'
     +['dealer','hotel','airport','meal','fuel','other'].map(function(k){
@@ -1995,7 +1983,9 @@ function itinIcon(i){
 function itinName(i){
   if(i.kind==='dealer') return esc(i.name);
   var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
-  return esc(T.label)+(i.name?(' — '+esc(i.name)):'');
+  /* itineraryFor() falls back to the type label when a place is unnamed — don't repeat it */
+  if(!i.name || i.name===T.label) return esc(T.label);
+  return esc(T.label)+' — '+esc(i.name);
 }
 function itineraryCard(t,wk){
   var items=itineraryFor(t,wk);
@@ -2039,13 +2029,19 @@ function itineraryCard(t,wk){
     +'<div class="geo-attr">Geocoding &copy; <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>'
     +'</div></div>';
 }
+/* plain-text name of an itinerary item (no label duplication) */
+function legName(i){
+  if(i.kind==='dealer') return i.name;
+  var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
+  return (!i.name||i.name===T.label)?T.label:(T.label+' — '+i.name);
+}
 /* route summary rows for the trip report */
 function routeSummaryRows(t,wk){
   var items=itineraryFor(t,wk), R=legsFor(items), labs=dayLabels(wk);
   return R.legs.map(function(l,i){
     return {'#':i+1,
-      From:(l.from.kind==='dealer'?l.from.name:((TRAVEL_TYPES[l.from.type]||TRAVEL_TYPES.other).label+(l.from.name?' — '+l.from.name:''))),
-      To:(l.to.kind==='dealer'?l.to.name:((TRAVEL_TYPES[l.to.type]||TRAVEL_TYPES.other).label+(l.to.name?' — '+l.to.name:''))),
+      From:legName(l.from),
+      To:legName(l.to),
       Day:(l.to.day!=null&&labs[l.to.day])?(labs[l.to.day][0]+', '+labs[l.to.day][1]):'',
       'Distance (km)':Math.round(l.km),
       'Drive time':hrsLabel(l.hours)};
@@ -2481,8 +2477,7 @@ function render(){
   }
 }
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
-(function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory);
-             var sb=document.getElementById('signOutBtn'); if(sb) sb.addEventListener('click',function(){ pbSignOut(); }); })();
+(function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
 
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";render();});
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
@@ -2648,6 +2643,7 @@ var TEAM_PASSCODE="Arrowquip2027";
 var PB_USER=null;   /* no auth session in passcode mode; kept for pbActor()/History UI */
 
 function unlockedFlag(){ try{ return sessionStorage.getItem('aq_unlocked')==='1'; }catch(e){ return false; } }
+/* No sign-out control is exposed (product decision). Kept for the console / future use. */
 function pbSignOut(){ try{ sessionStorage.removeItem('aq_unlocked'); }catch(e){} location.reload(); }
 
 (function(){
