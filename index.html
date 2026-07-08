@@ -516,7 +516,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
       <div class="pt" id="planTitle"></div>
       <div class="statbar">
         <div class="plansum" id="planSummary"></div>
-        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div></div>
+        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><button class="btn" id="histBtn">History</button></div>
       </div>
     </div>
     <div class="planwrap" id="planwrap">
@@ -758,7 +758,106 @@ DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
 (function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;}})();
 function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX};}
-function savePlan(){try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}cloudSave('plan',planPayload());}
+function savePlan(){
+  if(PB_READONLY) return;                       /* verification screens never write */
+  if(PB_STALE){ pbStaleBanner(); return; }      /* don't cache locally what the cloud rejected */
+  try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
+  cloudSave('plan',planPayload());
+}
+
+/* ---------------- Trip Plans -> History (preview / compare / restore) --------------- */
+function pbFmtTs(s){ try{ return new Date(s).toLocaleString(); }catch(e){ return s; } }
+function pbChangeLine(c){
+  if(!c) return '';
+  if(c.initial) return 'initial version';
+  var bits=[];
+  if(+c.dealers_moved) bits.push(c.dealers_moved+' dealer'+(+c.dealers_moved===1?'':'s')+' moved');
+  if(+c.days_changed) bits.push(c.days_changed+' day'+(+c.days_changed===1?'':'s'));
+  if(+c.times_changed) bits.push(c.times_changed+' time'+(+c.times_changed===1?'':'s'));
+  if(+c.confirmations_changed) bits.push(c.confirmations_changed+' confirmation'+(+c.confirmations_changed===1?'':'s'));
+  if(+c.logistics_delta) bits.push((c.logistics_delta>0?'+':'')+c.logistics_delta+' logistics');
+  if(+c.expenses_delta) bits.push((c.expenses_delta>0?'+':'')+c.expenses_delta+' expenses');
+  if(+c.receipts_delta) bits.push((c.receipts_delta>0?'+':'')+c.receipts_delta+' receipts');
+  var sched='';
+  if(c.scheduled_before!=null && c.scheduled_after!=null && c.scheduled_before!==c.scheduled_after)
+    sched=' · scheduled '+c.scheduled_before+' → '+c.scheduled_after;
+  return (bits.join(' · ')||'no field changes')+sched;
+}
+function openHistory(){
+  if(!SB){ alert('Cloud not connected.'); return; }
+  var wrap=document.createElement('div');
+  wrap.className='modalbg'; wrap.id='histModal';
+  wrap.innerHTML='<div class="modalbox" style="width:min(860px,95vw)">'
+    +'<div class="mh"><div class="mt">Trip Plan History</div><button class="mclose" id="h_x">×</button></div>'
+    +'<div id="h_body" style="padding:1rem 1.25rem;font-size:12px;color:var(--muted)">Loading…</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  document.getElementById('h_x').onclick=close;
+
+  SB.from('prebooking_history').select('new_version,prev_version,saved_at,saved_by,territory,change_summary,reason')
+    .eq('row_id','plan').order('new_version',{ascending:false}).limit(100)
+    .then(function(res){
+      var box=document.getElementById('h_body'); if(!box)return;
+      if(res&&res.error){ box.textContent='Could not load history: '+res.error.message; return; }
+      var rows=(res&&res.data)||[];
+      if(!rows.length){ box.innerHTML='<div style="padding:1rem 0;color:var(--muted-2)">No history yet. The first snapshot is written on the next save.</div>'; return; }
+      box.innerHTML='<div style="margin-bottom:8px">Current version <b>'+(PB_VER['plan']!=null?PB_VER['plan']:'?')
+        +'</b>. Restoring version <i>N</i> returns the plan to its state <i>before</i> save N.</div>'
+        +'<table class="stoptab"><thead><tr><th>Version</th><th>When</th><th>Who</th><th>Territory</th><th>Reason</th><th>Changes</th><th></th></tr></thead><tbody>'
+        +rows.map(function(r){
+          return '<tr><td>'+r.new_version+'</td><td>'+pbFmtTs(r.saved_at)+'</td><td>'+esc(r.saved_by||'—')+'</td>'
+            +'<td>'+esc(r.territory||'—')+'</td><td>'+esc(r.reason||'save')+'</td>'
+            +'<td>'+esc(pbChangeLine(r.change_summary))+'</td>'
+            +'<td style="white-space:nowrap">'
+              +'<button class="btn" data-hprev="'+r.new_version+'" style="padding:3px 8px;font-size:10px">Preview</button> '
+              +'<button class="btn" data-hrest="'+r.new_version+'" style="padding:3px 8px;font-size:10px">Restore</button>'
+            +'</td></tr>';
+        }).join('')+'</tbody></table>'
+        +'<div id="h_prev" style="margin-top:12px"></div>';
+
+      box.querySelectorAll('[data-hprev]').forEach(function(b){
+        b.onclick=function(){ pbPreviewVersion(parseInt(b.dataset.hprev,10)); };
+      });
+      box.querySelectorAll('[data-hrest]').forEach(function(b){
+        b.onclick=function(){ pbRestoreVersion(parseInt(b.dataset.hrest,10), close); };
+      });
+    });
+}
+/* Preview + compare a snapshot against what is currently loaded. Read-only. */
+function pbPreviewVersion(v){
+  SB.from('prebooking_history').select('data').eq('row_id','plan').eq('new_version',v).limit(1)
+    .then(function(res){
+      var el=document.getElementById('h_prev'); if(!el)return;
+      if(res&&res.error){ el.textContent='Preview failed: '+res.error.message; return; }
+      var snap=(res.data&&res.data[0]&&res.data[0].data)||null;
+      if(!snap){ el.textContent='No snapshot for version '+v; return; }
+      var a=snap.a||{}, cur=ASSIGN||{};
+      var sched=function(m){ return Object.keys(m).filter(function(k){return m[k]!=='pool'&&m[k]!=='remote';}).length; };
+      var diffs=[];
+      Object.keys(Object.assign({},a,cur)).forEach(function(k){
+        if(String(a[k])!==String(cur[k])) diffs.push(k+': '+(a[k]===undefined?'—':a[k])+' → '+(cur[k]===undefined?'—':cur[k]));
+      });
+      el.innerHTML='<div class="tcard"><div class="tch"><div class="tct">Version '+v+' vs current</div></div><div class="tcb">'
+        +'<div>Scheduled: <b>'+sched(a)+'</b> in snapshot · <b>'+sched(cur)+'</b> now</div>'
+        +'<div>Days set: <b>'+Object.values(snap.day||{}).filter(function(x){return x!=null;}).length+'</b> · '
+          +'Logistics: <b>'+((snap.logi||[]).length)+'</b> · Confirmed weeks: <b>'+Object.keys(snap.conf||{}).length+'</b></div>'
+        +'<div style="margin-top:8px;max-height:180px;overflow:auto;font-family:ui-monospace,monospace;font-size:11px">'
+        +(diffs.length?diffs.slice(0,200).map(esc).join('<br>'):'identical assignments')
+        +(diffs.length>200?'<br>… '+(diffs.length-200)+' more':'')+'</div></div></div>';
+    });
+}
+function pbRestoreVersion(v,onDone){
+  if(!confirm('Restore the plan to its state before save '+v+'?\n\nThe current plan is backed up automatically first.')) return;
+  SB.rpc('pb_restore_version',{p_id:'plan',p_version:v,p_actor:pbActor()}).then(function(r){
+    if(r&&r.error){ alert('Restore failed: '+r.error.message); return; }
+    var out=r&&r.data;
+    if(!out||!out.ok){ alert('Restore failed: '+((out&&out.reason)||'unknown')); return; }
+    cloudBadge('Restored version '+v);
+    onDone&&onDone();
+    location.reload();   /* reload so every in-memory store matches the restored row */
+  });
+}
 /* Area Planning: dealers with areaPlanning===false are hidden from all planning pages,
    totals and scheduling. They remain in the Master Sheet and still sync with Salesforce. */
 const dealersIn=t=>planningUniverse().filter(d=>d.territory===t && d.areaPlanning!==false);
@@ -1694,6 +1793,8 @@ function render(){
   }
 }
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
+(function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
+
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";render();});
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
 document.getElementById("poolState").addEventListener("change",function(e){poolState=e.target.value;renderPlanner();wireDnD();});
@@ -1724,11 +1825,97 @@ document.querySelectorAll('th.srt').forEach(th=>th.addEventListener('click',()=>
 render();
 
 function cloudBadge(msg){try{var b=document.getElementById('cloudBadge');if(!b)return;b.textContent=msg;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove('show');},1800);}catch(e){}}
-function cloudSave(key,obj){ if(!SB)return; _lastSelfSave=Date.now(); clearTimeout(_cloudTimers[key]); _cloudTimers[key]=setTimeout(function(){ _lastSelfSave=Date.now(); SB.from('prebooking_state').upsert({id:key,data:obj,updated_at:new Date().toISOString()}).then(function(r){ if(r&&r.error){cloudBadge('Cloud save failed');} else {cloudBadge('Saved to cloud');} },function(){cloudBadge('Cloud save failed');}); },700); }
+/* ============ Data integrity layer ==========================================
+   Writes go exclusively through the pb_save_state RPC, which enforces optimistic
+   concurrency server-side (anon no longer holds UPDATE/INSERT on prebooking_state).
+   A tab that has fallen behind is rejected rather than silently overwriting newer
+   work — the failure mode that destroyed the 2027 plan. */
+var PB_VER={};              /* row id -> version this tab loaded / last wrote */
+var PB_STALE=false;         /* once a save is rejected, this tab may not write again */
+/* verification mode: ?readonly=1 blocks every write path. Initialised here, at the
+   declaration — assigning it earlier in the file is undone when this var executes. */
+var PB_READONLY=(function(){ try{ return /[?&]readonly=1/.test(location.search); }catch(e){ return false; } })();
+
+function pbActor(){
+  try{
+    var a=localStorage.getItem('aq_actor');
+    if(!a){ a='session-'+Math.random().toString(36).slice(2,8); localStorage.setItem('aq_actor',a); }
+    return a;
+  }catch(e){ return 'unknown'; }
+}
+function pbLog(kind,rowId,detail){
+  if(!SB)return;
+  try{ SB.rpc('pb_log_event',{p_kind:kind,p_row_id:rowId,p_actor:pbActor(),p_detail:detail||{}}); }catch(e){}
+}
+/* Blocking, non-dismissable notice. This tab is read-only until reloaded. */
+function pbStaleBanner(){
+  if(document.getElementById('pbStale'))return;
+  var d=document.createElement('div');
+  d.id='pbStale';
+  d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:5000;background:#7f1d1d;color:#fff;'
+    +'font:600 13px "Open Sans",Arial,sans-serif;padding:12px 20px;display:flex;align-items:center;'
+    +'justify-content:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,.35)';
+  d.innerHTML='<span>This Trip Plan has changed since you opened it. Please reload before saving.</span>'
+    +'<button id="pbStaleReload" style="background:#fff;color:#7f1d1d;border:0;border-radius:4px;'
+    +'padding:6px 14px;font:700 12px inherit;text-transform:uppercase;letter-spacing:.5px;cursor:pointer">Reload</button>';
+  document.body.appendChild(d);
+  document.getElementById('pbStaleReload').onclick=function(){ location.reload(); };
+}
+function cloudSave(key,obj){
+  if(!SB)return;
+  if(PB_READONLY) return;                                      /* verification never writes */
+  if(PB_STALE){ pbStaleBanner(); return; }                     /* refuse to overwrite newer work */
+  var expected=PB_VER[key];
+  if(expected===undefined){                                    /* never loaded this row: don't guess */
+    cloudBadge('Not synced — reload'); pbLog('sync_failure',key,{reason:'no_version_loaded'}); return;
+  }
+  _lastSelfSave=Date.now();
+  clearTimeout(_cloudTimers[key]);
+  _cloudTimers[key]=setTimeout(function(){
+    _lastSelfSave=Date.now();
+    SB.rpc('pb_save_state',{
+      p_id:key, p_expected_version:expected, p_data:obj,
+      p_actor:pbActor(), p_territory:(typeof terr==='string'?terr:null), p_reason:'save'
+    }).then(function(r){
+      if(r&&r.error){ cloudBadge('Cloud save failed'); pbLog('sync_failure',key,{error:String(r.error.message||r.error)}); return; }
+      var out=r&&r.data;
+      if(out&&out.ok){ PB_VER[key]=out.version; cloudBadge('Saved to cloud'); return; }
+      if(out&&out.reason==='stale'){ PB_STALE=true; pbStaleBanner(); cloudBadge('Save rejected — plan changed'); return; }
+      cloudBadge('Cloud save failed');
+    },function(e){ cloudBadge('Cloud save failed'); pbLog('sync_failure',key,{error:String((e&&e.message)||e)}); });
+  },700);
+}
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
 function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
-function cloudLoad(cb){ if(!SB){cb&&cb();return;} SB.from('prebooking_state').select('id,data').then(function(res){ var hadDealers=false; if(res&&res.data){ res.data.forEach(function(row){ if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true; applyCloudRow(row.id,row.data); }); } if(!hadDealers){ cloudSave('dealers',DEALERS); cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}); cloudBadge('Cloud initialized'); } else { cloudBadge('Loaded from cloud'); } cb&&cb(); },function(){cb&&cb();}); }
-function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
+function cloudLoad(cb){
+  if(!SB){cb&&cb();return;}
+  SB.from('prebooking_state').select('id,data,version').then(function(res){
+    if(res&&res.error){ cloudBadge('Cloud load failed'); pbLog('sync_failure',null,{stage:'load',error:String(res.error.message||res.error)}); cb&&cb(); return; }
+    var rows=(res&&res.data)||[];
+    var hadDealers=false;
+    rows.forEach(function(row){
+      PB_VER[row.id]=row.version;                       /* the version this tab is now based on */
+      if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true;
+      applyCloudRow(row.id,row.data);
+    });
+    /* Seed an EMPTY database only. Previously this pushed in-memory state whenever the
+       dealers row looked empty, which let a fresh tab overwrite a populated cloud plan. */
+    if(rows.length===0){
+      /* null expected version => RPC inserts if absent, rejects if the row exists */
+      PB_VER['dealers']=null; PB_VER['plan']=null;
+      cloudSave('dealers',DEALERS);
+      cloudSave('plan',planPayload());
+      cloudBadge('Cloud initialized');
+    } else if(!hadDealers){
+      cloudBadge('Loaded from cloud');
+      pbLog('sync_failure','dealers',{reason:'dealers_row_empty_no_autoseed'});
+    } else {
+      cloudBadge('Loaded from cloud');
+    }
+    cb&&cb();
+  },function(e){ cloudBadge('Cloud load failed'); pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb(); });
+}
+function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ if(row.version!=null)PB_VER[row.id]=row.version; /* adopt teammate's version: we now hold their data */ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
    withPreservedScroll captures/restores scroll of the planner + master scroll containers and
    the window across a re-render. refreshPlanner re-renders only the planner + KPI (conservative:
