@@ -430,7 +430,7 @@ const TERRS=["East","South","Central","West","Exports"];
 const TIERS=["Tier 2","Tier 3","Tier 4","Tier 5","Tier 6","New"];
 let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
-let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d);} reindex();
+let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); invalidateUniverse();} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
 /* --- Salesforce overlay for the MASTER SHEET ONLY (Deliverable 3). Read-only.
    Salesforce is fetched from a server-side Netlify Function (no credentials in
@@ -544,6 +544,7 @@ function loadSFDealers(opts){
       if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); return; }
       SF_BY_ID={}; SF_BY_NAME={}; var matched=0;
       j.dealers.forEach(function(sf){ if(sf.id)SF_BY_ID[sf.id]=sf; if(sf.name)SF_BY_NAME[_sfNorm(sf.name)]=sf; });
+      invalidateUniverse();
       try{ DEALERS.forEach(function(d){ if(sfLookup(d))matched++; }); }catch(e){}
       console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
       _sfSync={connected:true,loaded:j.dealers.length,matched:matched,fallback:DEALERS.length-matched,at:Date.now(),meta:j.meta||null};
@@ -559,7 +560,7 @@ var SB_KEY="sb_publishable_o8oGWpu7NummrXxrN2-MHA_hjEoRI_M";
 var TEAM_PASSCODE="Arrowquip2027";
 var SB=null; try{ if(window.supabase&&window.supabase.createClient){ SB=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){ SB=null; }
 var _cloudTimers={}, _lastSelfSave=0;
-function saveDealers(){try{localStorage.setItem('aq2027dealersv1',JSON.stringify(DEALERS));}catch(e){}cloudSave('dealers',DEALERS);}
+function saveDealers(){invalidateUniverse();try{localStorage.setItem('aq2027dealersv1',JSON.stringify(DEALERS));}catch(e){}cloudSave('dealers',DEALERS);}
 const WEEKDATES={31:"Jul 28–29",32:"Aug 2–8",33:"Aug 9–15",34:"Aug 16–22",35:"Aug 23–29",36:"Aug 30–Sep 5",37:"Sep 6–12",38:"Sep 13–19",39:"Sep 20–26",40:"Sep 27–Oct 3",41:"Oct 4–10",42:"Oct 11–17",43:"Oct 18–24",44:"Oct 25–31"};
 const FIELD_NUMS=[32,33,34,35,36,37,38,39,40,41,42,43,44];
 const MON={32:[7,3],33:[7,10],34:[7,17],35:[7,24],36:[7,31],37:[8,7],38:[8,14],39:[8,21],40:[8,28],41:[9,5],42:[9,12],43:[9,19],44:[9,26]};
@@ -619,7 +620,7 @@ function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return
 function savePlan(){try{localStorage.setItem('aq2027planv2',JSON.stringify({a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}));}catch(e){}cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027});}
 /* Area Planning: dealers with areaPlanning===false are hidden from all planning pages,
    totals and scheduling. They remain in the Master Sheet and still sync with Salesforce. */
-const dealersIn=t=>DEALERS.filter(d=>d.territory===t && d.areaPlanning!==false);
+const dealersIn=t=>planningUniverse().filter(d=>d.territory===t && d.areaPlanning!==false);
 const scopeD=()=>(terr==='All'||terr==='Master')?DEALERS:dealersIn(terr);
 const sumB=a=>a.reduce((s,d)=>s+(+d.booking||0),0);
 const sumL=a=>a.reduce((s,d)=>s+(+d.loads||0),0);
@@ -630,7 +631,7 @@ function renderCards(){
      Sheet. booking/loads are not overlaid by the merge, so KPI $ values are
      unchanged while 2027 Salesforce values are null/0; scheduling (ASSIGN),
      GOAL2027 and dealer ids are untouched. */
-  const _md=DEALERS.map(sfMasterMerge);
+  const _md=planningUniverse().filter(function(d){return d.areaPlanning!==false;});
   const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
   const target=sumB(ds);
   const kickRev=sumB(ds.filter(d=>ASSIGN[d.id]===31));
@@ -934,6 +935,19 @@ function buildMasterUniverse(){
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
 }
+/* The Master Sheet universe is the single source of truth for every planning view.
+   Cached per mutation (invalidated by reindex/saveDealers/Salesforce sync/overlay change). */
+var _uni=null, _uniById=null;
+function invalidateUniverse(){ _uni=null; _uniById=null; }
+function planningUniverse(){
+  if(!_uni){
+    _uni=buildMasterUniverse();
+    _uniById={}; _uni.forEach(function(d){ _uniById[d.id]=d; });
+    ensureAssignDefaults(_uni); /* in-memory scheduling defaults for dealers new to the planner */
+  }
+  return _uni;
+}
+function uniById(id){ planningUniverse(); return _uniById[id]||byId[id]||null; }
 function renderMaster(){
   var _allMerged=buildMasterUniverse(); /* Phase A: Salesforce universe + planner overlay (Master Sheet only) */
   let rows=_allMerged.slice();
@@ -981,7 +995,7 @@ function onMasterEdit(e){
     if(SF_BY_ID[id] && ['booking','loads','visitConfirmed','atKickoff','remote','prebook2026','areaPlanning','status'].indexOf(f)>=0){
       var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,loads:0,visitConfirmed:false,atKickoff:false,remote:false,prebook2026:0,areaPlanning:true,status:'Not Started'});
       if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
-      cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
+      invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
     }
     return;
   }
@@ -1031,7 +1045,7 @@ function wireDnD(){
     z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
     z.addEventListener('dragleave',()=>z.classList.remove('over'));
     z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');
-      const id=e.dataTransfer.getData('text/plain'); const d=byId[id]; if(!d)return;
+      const id=e.dataTransfer.getData('text/plain'); const d=uniById(id); if(!d)return;
       const t=z.dataset.drop;
       if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
       else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
@@ -1041,7 +1055,7 @@ function wireDnD(){
   document.querySelectorAll('.cday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DAY[s.dataset.day]=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}));
   document.querySelectorAll('.ctime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();TIME[t.dataset.time]=t.value;savePlan();refreshPlanner();}));
   document.querySelectorAll('.cdur').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DUR[s.dataset.dur]=parseInt(s.value,10);savePlan();refreshPlanner();}));
-  document.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.remove;const d=byId[id];ASSIGN[id]=d.territory==='Exports'?'remote':'pool';DAY[id]=null;TIME[id]='';savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.remove;const d=uniById(id);if(!d)return;ASSIGN[id]=d.territory==='Exports'?'remote':'pool';DAY[id]=null;TIME[id]='';savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();refreshPlanner();}));
@@ -1207,8 +1221,8 @@ render();
 
 function cloudBadge(msg){try{var b=document.getElementById('cloudBadge');if(!b)return;b.textContent=msg;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove('show');},1800);}catch(e){}}
 function cloudSave(key,obj){ if(!SB)return; _lastSelfSave=Date.now(); clearTimeout(_cloudTimers[key]); _cloudTimers[key]=setTimeout(function(){ _lastSelfSave=Date.now(); SB.from('prebooking_state').upsert({id:key,data:obj,updated_at:new Date().toISOString()}).then(function(r){ if(r&&r.error){cloudBadge('Cloud save failed');} else {cloudBadge('Saved to cloud');} },function(){cloudBadge('Cloud save failed');}); },700); }
-function ensureAssignDefaults(){ DEALERS.forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } }
+function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){ if(!SB){cb&&cb();return;} SB.from('prebooking_state').select('id,data').then(function(res){ var hadDealers=false; if(res&&res.data){ res.data.forEach(function(row){ if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true; applyCloudRow(row.id,row.data); }); } if(!hadDealers){ cloudSave('dealers',DEALERS); cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}); cloudBadge('Cloud initialized'); } else { cloudBadge('Loaded from cloud'); } cb&&cb(); },function(){cb&&cb();}); }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
