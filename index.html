@@ -487,7 +487,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 </style>
 </head>
 <body>
-<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gmail" type="email" placeholder="you@arrowquip.com" autocomplete="email" autocapitalize="off" spellcheck="false"><button id="gbtn">Send sign-in link</button><div id="gerr" class="gerr"></div></div></div>
+<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" placeholder="Team passcode" autocomplete="off"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
   <div class="aqUtilityBar">
@@ -516,7 +516,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
       <div class="pt" id="planTitle"></div>
       <div class="statbar">
         <div class="plansum" id="planSummary"></div>
-        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><button class="btn" id="histBtn">History</button></div>
+        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><button class="btn" id="histBtn">History</button><button class="btn" id="signOutBtn">Sign out</button></div>
       </div>
     </div>
     <div class="planwrap" id="planwrap">
@@ -691,9 +691,8 @@ function loadSFDealers(opts){
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
-/* Arrowquip Pre-Booking project (oicmwmnnsgivmsolrqhq). Migrated 2026-07-08 from
-   itgintixzfcvoiuwszdx, which remains intact as a rollback and still serves the
-   operator-dashboard. Publishable key only; all writes go through SECURITY DEFINER rpcs. */
+/* Arrowquip Pre-Booking Supabase project. Publishable key only; every write goes
+   through the SECURITY DEFINER pb_save_state rpc (optimistic concurrency + history). */
 var SB_URL="https://oicmwmnnsgivmsolrqhq.supabase.co";
 var SB_KEY="sb_publishable_HxzW7epbXUcQBDMiW5g8Jw_P1Wa0gW6";
 /* TEAM_PASSCODE removed: access is a real Supabase session + prebooking_users allowlist. */
@@ -1796,7 +1795,8 @@ function render(){
   }
 }
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
-(function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
+(function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory);
+             var sb=document.getElementById('signOutBtn'); if(sb) sb.addEventListener('click',function(){ pbSignOut(); }); })();
 
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";render();});
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
@@ -1839,10 +1839,15 @@ var PB_STALE=false;         /* once a save is rejected, this tab may not write a
    declaration — assigning it earlier in the file is undone when this var executes. */
 var PB_READONLY=(function(){ try{ return /[?&]readonly=1/.test(location.search); }catch(e){ return false; } })();
 
-/* The audit trail names a person, not an anonymous session. */
+/* Audit actor. With a real session this would be the user's email; behind the passcode
+   gate it is a stable per-browser id, so history/log still attribute changes to someone. */
 function pbActor(){
   if(typeof PB_USER!=='undefined' && PB_USER && PB_USER.email) return PB_USER.email;
-  return 'unauthenticated';
+  try{
+    var a=localStorage.getItem('aq_actor');
+    if(!a){ a='passcode-'+Math.random().toString(36).slice(2,8); localStorage.setItem('aq_actor',a); }
+    return a;
+  }catch(e){ return 'passcode-unknown'; }
 }
 function pbLog(kind,rowId,detail){
   if(!SB)return;
@@ -1931,71 +1936,35 @@ function withPreservedScroll(fn){
 }
 function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
 function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); loadSFDealers(); }
-/* ===================== Authentication (Supabase magic link) =====================
-   The plaintext TEAM_PASSCODE gate is gone. Access now requires:
-     1. a real signed-in session (magic link), and
-     2. an approved row in prebooking_users.
-   RLS enforces (2) server-side; the UI check below is only for a useful message.
-   A signed-in but unapproved user can read nothing. */
-var PB_USER=null;      /* supabase user object */
-var PB_APPROVED=false;
+/* ===================== Access gate (team passcode) =====================
+   Password-based access, per product decision. The browser therefore talks to
+   Supabase as the `anon` role: prebooking_state/history/log are anon-readable and
+   writes go through pb_save_state, which still enforces optimistic concurrency,
+   history snapshots and logging. prebooking_users / _documents / _expenses and the
+   trip-documents bucket remain closed to anon (no anon policy, no grant).
+   NOTE: this passcode is checked client-side and the anon key ships in this page. */
+var TEAM_PASSCODE="Arrowquip2027";
+var PB_USER=null;   /* no auth session in passcode mode; kept for pbActor()/History UI */
 
-function gateErr(msg){ var e=document.getElementById('gerr'); if(e)e.textContent=msg||''; }
-function gateMsg(msg){
-  var box=document.querySelector('#gate .gbox'); if(!box)return;
-  var e=document.getElementById('gerr'); if(e){ e.style.color='#9ca3af'; e.textContent=msg; }
-}
-async function pbCheckApproved(){
-  if(!SB||!PB_USER) return false;
-  var r=await SB.from('prebooking_users').select('email,approved,full_name,role')
-                .eq('email',(PB_USER.email||'').toLowerCase()).maybeSingle();
-  if(r&&r.error) return false;
-  return !!(r&&r.data&&r.data.approved);
-}
-async function pbBootAuth(){
-  var g=document.getElementById('gate');
-  if(!SB){ gateErr('Cloud not configured.'); return; }
+function unlockedFlag(){ try{ return sessionStorage.getItem('aq_unlocked')==='1'; }catch(e){ return false; } }
+function pbSignOut(){ try{ sessionStorage.removeItem('aq_unlocked'); }catch(e){} location.reload(); }
 
-  var sess=await SB.auth.getSession();
-  PB_USER=(sess&&sess.data&&sess.data.session&&sess.data.session.user)||null;
-
-  if(PB_USER){
-    PB_APPROVED=await pbCheckApproved();
-    if(PB_APPROVED){ unlockApp(); return; }
-    /* signed in, not on the allowlist */
-    gateErr('');
-    var box=document.querySelector('#gate .gbox');
-    if(box) box.innerHTML='<div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div>'
-      +'<div style="color:#9ca3af;font-size:12px;line-height:1.6;margin:8px 0 14px">Signed in as <b style="color:#fff">'+esc(PB_USER.email)+'</b><br>'
-      +'This account is not approved for the portal yet.<br>Ask an administrator to approve it.</div>'
-      +'<button id="gsignout">Sign out</button>';
-    var so=document.getElementById('gsignout');
-    if(so) so.onclick=async function(){ await SB.auth.signOut(); location.reload(); };
-    return;
+(function(){
+  var g=document.getElementById('gate'); if(!g) return;
+  if(unlockedFlag()){ unlockApp(); return; }
+  var pass=document.getElementById('gpass'), btn=document.getElementById('gbtn'), err=document.getElementById('gerr');
+  function tryUnlock(){
+    if(pass.value===TEAM_PASSCODE){
+      try{ sessionStorage.setItem('aq_unlocked','1'); }catch(e){}
+      unlockApp();
+    } else {
+      err.textContent='Incorrect passcode'; pass.value=''; pass.focus();
+    }
   }
-
-  /* not signed in: magic link */
-  var mail=document.getElementById('gmail'), btn=document.getElementById('gbtn');
-  if(!mail||!btn) return;
-  async function sendLink(){
-    var email=(mail.value||'').trim();
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ gateErr('Enter a valid email address'); return; }
-    btn.disabled=true; gateMsg('Sending…');
-    var r=await SB.auth.signInWithOtp({ email:email, options:{ emailRedirectTo: location.origin + location.pathname } });
-    btn.disabled=false;
-    if(r&&r.error){ gateErr(r.error.message||'Could not send link'); return; }
-    gateMsg('Check your inbox — sign-in link sent to '+email);
-  }
-  btn.addEventListener('click',sendLink);
-  mail.addEventListener('keydown',function(e){ if(e.key==='Enter')sendLink(); });
-  setTimeout(function(){mail.focus();},50);
-
-  /* magic-link return lands with a session; react without a manual reload */
-  SB.auth.onAuthStateChange(function(evt,session){
-    if(session&&session.user&&!PB_USER){ PB_USER=session.user; pbBootAuth(); }
-  });
-}
-(function(){ if(document.getElementById('gate')) pbBootAuth(); })();
+  btn.addEventListener('click',tryUnlock);
+  pass.addEventListener('keydown',function(e){ if(e.key==='Enter') tryUnlock(); });
+  setTimeout(function(){ pass.focus(); },50);
+})();
 </script>
 </body>
 </html>
