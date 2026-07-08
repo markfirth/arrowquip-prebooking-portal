@@ -431,24 +431,50 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tstop{border:1px solid var(--line-soft);border-left:3px solid #c1c6c8;border-radius:6px;padding:7px 9px;margin-bottom:5px;} .tstop.ok{border-left-color:var(--green);background:#f6faf7;}
 .tst{display:flex;align-items:baseline;gap:8px;} .ttime{font-size:10px;font-weight:700;color:var(--aq-red);min-width:46px;} .tnm{font-size:11.5px;font-weight:600;color:var(--aq-black);flex:1 1 auto;} .tamt{font-size:10.5px;font-weight:600;color:var(--ink);}
 .tloc{font-size:10px;color:var(--muted);margin-top:2px;margin-left:54px;}
-.addbar{display:flex;gap:5px;padding:8px 8px 0;}
-.addl{flex:1 1 0;font-family:inherit;font-size:9px;font-weight:600;border:1px dashed var(--line);background:#fff;color:var(--muted);border-radius:5px;padding:5px 3px;cursor:pointer;}
+.addbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px 8px 0;}
+.addl{flex:1 1 30%;font-family:inherit;font-size:9px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:5px 4px;cursor:pointer;white-space:nowrap;}
 .addl:hover{border-color:var(--aq-red);color:var(--aq-red);}
-.lcard{border:1px solid var(--line);border-left:4px solid #888;border-radius:6px;padding:6px 8px;margin-bottom:6px;background:#fff;}
-.lcard.flight{border-left-color:#e08a00;background:#fff8ef;}
-.lcard.hotel{border-left-color:#8e24aa;background:#faf2fc;}
-.lcard.rental{border-left-color:#00897b;background:#eefaf8;}
-.lc-top{display:flex;align-items:center;gap:6px;} .lic{font-size:12px;}
-.ltext{flex:1 1 auto;min-width:0;border:0;background:transparent;font-family:inherit;font-size:11px;font-weight:600;color:var(--aq-black);padding:2px 0;}
-.ltext:focus{outline:none;border-bottom:1px solid var(--aq-red);}
-.lc-ctl{display:flex;gap:5px;margin-top:5px;}
-.lc-ctl .lday{flex:1 1 auto;min-width:0;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:3px 5px;background:#fff;}
-.lc-ctl .ltime,.lc-ctl .larr{width:78px;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:3px 5px;}
-.lc-ctl .lstate{width:42px;text-transform:uppercase;font-family:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:3px 4px;}
-.lc-link{display:flex;align-items:center;gap:5px;margin-top:5px;}
-.llink{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10px;border:1px solid var(--line);border-radius:5px;padding:3px 6px;color:#2f63a8;}
-.lopen{color:var(--aq-red);font-weight:700;text-decoration:none;font-size:14px;line-height:1;}
-.lpick{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+/* rebuilt travel card: stacked rows, nothing floats over anything */
+.tvcard{border:1px solid var(--line);border-left:3px solid #888;border-radius:var(--radius);background:#fff;margin-bottom:6px;overflow:hidden;}
+.tvcard.t-flight_in,.tvcard.t-flight_out{border-left-color:#2563eb;}
+.tvcard.t-hotel{border-left-color:#7c3aed;}
+.tvcard.t-rental_pickup,.tvcard.t-rental_return{border-left-color:#0f766e;}
+.tvcard.t-fuel{border-left-color:#dc2626;} .tvcard.t-food{border-left-color:#ea580c;}
+.tvcard.t-parking,.tvcard.t-other{border-left-color:#6b7280;}
+.tv-head{display:flex;align-items:center;gap:6px;padding:6px 7px;border-bottom:1px solid var(--line-soft);background:var(--surface);}
+.tv-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;flex:0 0 auto;}
+.tv-type{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;font-weight:600;color:var(--aq-black);border:1px solid var(--line);border-radius:3px;background:#fff;padding:2px 3px;cursor:pointer;}
+.tv-ok,.tv-bad{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 5px;border-radius:3px;white-space:nowrap;}
+.tv-ok{background:#e7f3ec;color:#16a34a;} .tv-bad{background:#fdecec;color:#dc2626;}
+.tv-del{border:0;background:transparent;color:#b9bdbf;font-size:15px;line-height:1;cursor:pointer;padding:0 2px;}
+.tv-del:hover{color:var(--aq-red);}
+.tv-body{padding:6px 7px 7px;}
+.tv-row{display:flex;align-items:center;gap:5px;margin-top:5px;}
+.tv-row:first-child{margin-top:0;}
+.tv-lbl{flex:0 0 54px;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
+.tv-in{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 5px;background:#fff;}
+.tv-in:focus{outline:none;border-color:#2563eb;}
+.tv-time{flex:0 0 82px;}
+.tv-code{flex:0 0 96px;text-transform:uppercase;font-weight:700;}
+.tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tv-place i{color:var(--muted-2);}
+.tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
+.tv-geo:hover{border-color:#2563eb;color:#2563eb;}
+/* itinerary + legs */
+.legrow{display:flex;align-items:center;gap:6px;font-size:9px;color:#a8acae;justify-content:center;margin:2px 0 4px;letter-spacing:.03em;}
+.legrow b{color:#8a8e90;font-weight:700;}
+.legrow.warn{color:var(--aq-red);}
+.itin{font-size:11.5px;}
+.itin .idayhd{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);margin:10px 0 4px;}
+.itin .irow{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line-soft);}
+.itin .iic{width:16px;height:16px;border-radius:50%;color:#fff;font-size:8px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.itin .itime{width:58px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.itin .iname{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.itin .ibad{font-size:8px;font-weight:700;text-transform:uppercase;color:#dc2626;}
+.itin .ileg{font-size:9px;color:var(--muted-2);padding:2px 0 2px 24px;}
+.geo-attr{font-size:9px;color:var(--muted-2);margin-top:8px;text-align:center;}
+.geo-attr a{color:var(--muted-2);}
+
 .tstop.l-flight{border-left-color:#e08a00;background:#fff8ef;} .tstop.l-hotel{border-left-color:#8e24aa;background:#faf2fc;} .tstop.l-rental{border-left-color:#00897b;background:#eefaf8;}
 .joinhd{padding:14px 16px;font-size:12.5px;font-weight:600;color:var(--aq-black);border-bottom:1px solid var(--line-soft);display:flex;align-items:center;}
 .lvblock{border:1px solid var(--line);border-radius:8px;margin:12px 14px;overflow:hidden;}
@@ -513,6 +539,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 </style>
 </head>
 <body>
+<datalist id="apList"></datalist>
 <div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" placeholder="Team passcode" autocomplete="off"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
@@ -984,19 +1011,335 @@ function renderPlanner(){
     +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+schd.filter(function(d){return APPT[d.id];}).length+'/'+schd.length+'</div></div>';
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
-function addLogi(type,wk){ LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr, wk:(wk==='remote'?'remote':parseInt(wk,10)), day:null, time:'', type:type, label:''}); savePlan(); refreshPlanner(); }
-function logiCard(it,wk){
-  var labs=(typeof wk==='number')?dayLabels(wk):[];
-  var opts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(it.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
-  var ic={flight:'✈',hotel:'🏨',rental:'🚗'}[it.type]||'•';
-  var openlink=it.link?('<a class="lopen" href="'+esc(it.link)+'" target="_blank" rel="noopener" title="Open '+it.type+' link">↗</a>'):'';
-  var linkrow='<div class="lc-link"><input class="llink" data-llink="'+it.id+'" value="'+esc(it.link||'')+'" placeholder="paste '+it.type+' link…">'+openlink+'</div>';
-  var isF=it.type==='flight'; var lbl=isF?'depart':(it.type==='hotel'?'check-in':'pickup');
-  var tctl='<label class="lpick">'+lbl+'</label><input class="ltime" type="time" data-ltime="'+it.id+'" value="'+(it.time||'')+'">'+(isF?('<label class="lpick">arrive</label><input class="larr" type="time" data-larr="'+it.id+'" value="'+(it.arr||'')+'">'):'');
-  var dctl=(wk==='remote')?'':'<div class="lc-ctl"><select class="lday" data-lday="'+it.id+'">'+opts+'</select>'+tctl+'<input class="lstate" data-lstate="'+it.id+'" maxlength="3" placeholder="ST" value="'+(it.loc||'')+'" title="location (state) for drive times"></div>';
-  return '<div class="lcard '+it.type+'" data-lid="'+it.id+'"><div class="lc-top"><span class="lic">'+ic+'</span><input class="ltext" data-ltext="'+it.id+'" value="'+esc(it.label||'')+'" placeholder="'+it.type+' details…"><button class="cx" data-ldel="'+it.id+'">✕</button></div>'+linkrow+dctl+'</div>';
+/* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
+   Every travel item is a real place, not a note. Items without coordinates are flagged
+   "Needs address" and excluded from routing (they still show, and still hold expenses).
+
+   Stored on LOGI (inside the plan document), so they inherit optimistic concurrency,
+   history snapshots and auto-backup. Legacy records (type flight/hotel/rental with a
+   free-text label) are migrated in place on load — see migrateTravel().           */
+
+const TRAVEL_TYPES={
+  flight_in :{label:'Flight Arrival', icon:'✈', color:'#2563eb', place:'airport'},
+  flight_out:{label:'Flight Departure',icon:'✈', color:'#2563eb', place:'airport'},
+  rental_pickup:{label:'Rental Pickup', icon:'🚗', color:'#0f766e', place:'address'},
+  rental_return:{label:'Rental Return', icon:'🚗', color:'#0f766e', place:'address'},
+  hotel     :{label:'Hotel',         icon:'🏨', color:'#7c3aed', place:'address'},
+  fuel      :{label:'Fuel',          icon:'⛽', color:'#dc2626', place:'address'},
+  food      :{label:'Food',          icon:'🍴', color:'#ea580c', place:'address'},
+  parking   :{label:'Parking / Toll',icon:'🅿',  color:'#6b7280', place:'address'},
+  other     :{label:'Other',         icon:'•',  color:'#6b7280', place:'address'}
+};
+/* which budget category an item's expenses default to */
+const TRAVEL_CAT={flight_in:'Flights',flight_out:'Flights',rental_pickup:'Rental Cars',
+  rental_return:'Rental Cars',hotel:'Hotels',fuel:'Fuel',food:'Food',
+  parking:'Parking / Tolls',other:'Other'};
+
+/* Airports the Arrowquip territories actually fly through. code, name, city, lat, lon. */
+const AIRPORTS=[
+  ['YWG','Winnipeg Richardson Intl','Winnipeg, MB',49.9100,-97.2399],
+  ['YYZ','Toronto Pearson Intl','Toronto, ON',43.6777,-79.6248],
+  ['YUL','Montreal-Trudeau Intl','Montreal, QC',45.4706,-73.7408],
+  ['YOW','Ottawa Macdonald-Cartier','Ottawa, ON',45.3225,-75.6692],
+  ['YQB','Quebec City Jean Lesage','Quebec City, QC',46.7911,-71.3933],
+  ['YHZ','Halifax Stanfield Intl','Halifax, NS',44.8808,-63.5086],
+  ['YYG','Charlottetown','Charlottetown, PE',46.2900,-63.1211],
+  ['YYC','Calgary Intl','Calgary, AB',51.1315,-114.0106],
+  ['YEG','Edmonton Intl','Edmonton, AB',53.3097,-113.5800],
+  ['YXE','Saskatoon Diefenbaker','Saskatoon, SK',52.1708,-106.6997],
+  ['YQR','Regina Intl','Regina, SK',50.4319,-104.6658],
+  ['YVR','Vancouver Intl','Vancouver, BC',49.1967,-123.1815],
+  ['ATL','Hartsfield-Jackson Atlanta','Atlanta, GA',33.6407,-84.4277],
+  ['CLT','Charlotte Douglas Intl','Charlotte, NC',35.2140,-80.9431],
+  ['DFW','Dallas/Fort Worth Intl','Dallas, TX',32.8998,-97.0403],
+  ['DAL','Dallas Love Field','Dallas, TX',32.8471,-96.8518],
+  ['IAH','Houston Bush Intercontinental','Houston, TX',29.9902,-95.3368],
+  ['OKC','Will Rogers World','Oklahoma City, OK',35.3931,-97.6007],
+  ['TUL','Tulsa Intl','Tulsa, OK',36.1984,-95.8881],
+  ['ICT','Wichita Eisenhower','Wichita, KS',37.6499,-97.4331],
+  ['MCI','Kansas City Intl','Kansas City, MO',39.2976,-94.7139],
+  ['STL','St. Louis Lambert Intl','St. Louis, MO',38.7487,-90.3700],
+  ['ORD',"Chicago O'Hare Intl",'Chicago, IL',41.9742,-87.9073],
+  ['MDW','Chicago Midway','Chicago, IL',41.7868,-87.7522],
+  ['DTW','Detroit Metro','Detroit, MI',42.2162,-83.3554],
+  ['GRR','Gerald R. Ford Intl','Grand Rapids, MI',42.8808,-85.5228],
+  ['CLE','Cleveland Hopkins Intl','Cleveland, OH',41.4117,-81.8498],
+  ['CMH','John Glenn Columbus','Columbus, OH',39.9980,-82.8919],
+  ['CVG','Cincinnati/N. Kentucky','Cincinnati, OH',39.0489,-84.6678],
+  ['IND','Indianapolis Intl','Indianapolis, IN',39.7169,-86.2956],
+  ['MSP','Minneapolis-St Paul Intl','Minneapolis, MN',44.8848,-93.2223],
+  ['FSD','Sioux Falls Regional','Sioux Falls, SD',43.5820,-96.7419],
+  ['OMA','Eppley Airfield','Omaha, NE',41.3032,-95.8941],
+  ['DEN','Denver Intl','Denver, CO',39.8561,-104.6737],
+  ['ABQ','Albuquerque Sunport','Albuquerque, NM',35.0402,-106.6091],
+  ['ROW','Roswell Air Center','Roswell, NM',33.3016,-104.5306],
+  ['PHX','Phoenix Sky Harbor','Phoenix, AZ',33.4342,-112.0116],
+  ['SLC','Salt Lake City Intl','Salt Lake City, UT',40.7899,-111.9791],
+  ['BOI','Boise Air Terminal','Boise, ID',43.5644,-116.2228],
+  ['GEG','Spokane Intl','Spokane, WA',47.6199,-117.5338],
+  ['SEA','Seattle-Tacoma Intl','Seattle, WA',47.4502,-122.3088],
+  ['PDX','Portland Intl','Portland, OR',45.5898,-122.5951],
+  ['BNA','Nashville Intl','Nashville, TN',36.1263,-86.6774],
+  ['MEM','Memphis Intl','Memphis, TN',35.0424,-89.9767],
+  ['BHM','Birmingham-Shuttlesworth','Birmingham, AL',33.5629,-86.7535],
+  ['JAN','Jackson-Medgar Evers','Jackson, MS',32.3112,-90.0759],
+  ['MSY','Louis Armstrong New Orleans','New Orleans, LA',29.9934,-90.2581],
+  ['LIT','Clinton National','Little Rock, AR',34.7294,-92.2243],
+  ['RDU','Raleigh-Durham Intl','Raleigh, NC',35.8776,-78.7875],
+  ['GSO','Piedmont Triad Intl','Greensboro, NC',36.0978,-79.9373],
+  ['CAE','Columbia Metropolitan','Columbia, SC',33.9388,-81.1195],
+  ['SAV','Savannah/Hilton Head','Savannah, GA',32.1276,-81.2021],
+  ['JAX','Jacksonville Intl','Jacksonville, FL',30.4941,-81.6879],
+  ['MCO','Orlando Intl','Orlando, FL',28.4312,-81.3081],
+  ['TPA','Tampa Intl','Tampa, FL',27.9755,-82.5332],
+  ['RIC','Richmond Intl','Richmond, VA',37.5052,-77.3197],
+  ['ORF','Norfolk Intl','Norfolk, VA',36.8946,-76.2012],
+  ['PIT','Pittsburgh Intl','Pittsburgh, PA',40.4915,-80.2329],
+  ['MDT','Harrisburg Intl','Harrisburg, PA',40.1935,-76.7634],
+  ['BUF','Buffalo Niagara Intl','Buffalo, NY',42.9405,-78.7322],
+  ['SYR','Syracuse Hancock Intl','Syracuse, NY',43.1112,-76.1063],
+  ['ALB','Albany Intl','Albany, NY',42.7483,-73.8017],
+  ['BTV','Burlington Intl','Burlington, VT',44.4720,-73.1533]
+];
+function airportByCode(code){
+  code=(code||'').toUpperCase();
+  var a=AIRPORTS.filter(function(x){return x[0]===code;})[0];
+  return a?{code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4]}:null;
 }
-function logiRowDetail(x){ var ic={flight:'✈',hotel:'🏨',rental:'🚗'}[x.type]||'•'; var lk=x.link?(' <a href="'+esc(x.link)+'" target="_blank" rel="noopener" class="lopen">↗</a>'):''; return '<div class="tstop l-'+x.type+'"><div class="tst"><span class="ttime">'+(x.time?t12s(x.time):'—')+'</span><span class="tnm">'+ic+' '+esc(x.label||x.type)+lk+'</span></div></div>'; }
+/* search by code or name; returns up to 8 */
+function airportSearch(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q) return [];
+  var starts=[], contains=[];
+  AIRPORTS.forEach(function(a){
+    var code=a[0].toLowerCase(), name=a[1].toLowerCase(), city=a[2].toLowerCase();
+    if(code===q || code.indexOf(q)===0) starts.push(a);
+    else if(name.indexOf(q)>=0 || city.indexOf(q)>=0) contains.push(a);
+  });
+  return starts.concat(contains).slice(0,8).map(function(a){
+    return {code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4]};
+  });
+}
+
+/* ---- geocoding (OpenStreetMap Nominatim). Results are cached on the item, so a
+       given address is looked up once, ever. Attribution is required and shown. ---- */
+var _geoBusy={};
+function geocodeAddress(q,cb){
+  q=(q||'').trim();
+  if(!q){ cb(null); return; }
+  if(_geoBusy[q]){ cb(null); return; }
+  _geoBusy[q]=1;
+  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q='+encodeURIComponent(q);
+  fetch(url,{headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.ok?r.json():[]; })
+    .then(function(j){
+      delete _geoBusy[q];
+      if(j&&j[0]) cb({lat:parseFloat(j[0].lat), lon:parseFloat(j[0].lon), display:j[0].display_name});
+      else cb(null);
+    })
+    .catch(function(){ delete _geoBusy[q]; cb(null); });
+}
+
+/* ---- model helpers ---- */
+function travelType(it){ return TRAVEL_TYPES[it.type]?it.type:'other'; }
+function travelHasLocation(it){
+  return it.lat!=null && it.lon!=null && isFinite(it.lat) && isFinite(it.lon);
+}
+function travelPlaceLabel(it){
+  if(travelType(it)==='flight_in'||travelType(it)==='flight_out'){
+    return it.airportCode?(it.airportName||it.airportCode)+' ('+it.airportCode+')':'';
+  }
+  return it.name||it.address||'';
+}
+/* Legacy: flight/hotel/rental with a free-text label and no coordinates. */
+function migrateTravel(){
+  var changed=false;
+  LOGI.forEach(function(it){
+    if(it.type==='flight'){ it.type='flight_out'; changed=true; }
+    else if(it.type==='rental'){ it.type='rental_pickup'; changed=true; }
+    if(it.type==='hotel'&&it.label&&!it.name){ it.name=it.label; changed=true; }
+    if(!TRAVEL_TYPES[it.type]){ it.type='other'; changed=true; }
+    if(it.lat===undefined) it.lat=null;
+    if(it.lon===undefined) it.lon=null;
+  });
+  return changed;
+}
+function addTravel(type,wk){
+  var t=TRAVEL_TYPES[type]?type:'other';
+  LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr,
+    wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
+    name:'', address:'', lat:null, lon:null,
+    airportCode:'', airportName:'',
+    airline:'', flightNo:'',
+    day:null, time:'',
+    day2:null, time2:'',           /* check-out / drop-off */
+    conf:'', notes:''});
+  savePlan(); refreshPlanner();
+}
+function setTravelField(id,field,val){
+  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it) return;
+  if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
+  else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
+  else if(field==='airportCode'){
+    var a=airportByCode(val);
+    it.airportCode=(val||'').toUpperCase();
+    if(a){ it.airportName=a.name; it.lat=a.lat; it.lon=a.lon; it.address=a.city; }
+  }
+  else it[field]=val;
+  savePlan(); refreshPlanner();
+}
+/* geocode an address field and persist coordinates */
+function geocodeTravel(id){
+  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it) return;
+  var q=[it.name,it.address].filter(Boolean).join(', ');
+  if(!q){ alert('Enter a name or address first.'); return; }
+  cloudBadge('Locating…');
+  geocodeAddress(q,function(g){
+    if(!g){ cloudBadge('Address not found'); return; }
+    it.lat=g.lat; it.lon=g.lon;
+    savePlan(); refreshPlanner();
+    cloudBadge('Location found');
+  });
+}
+
+/* ---------- ITINERARY + ROUTING ----------
+   One chronological list per (territory, week): travel items + dealer visits.
+   Legs are computed only between consecutive items that have coordinates.        */
+function itineraryFor(t,wk){
+  var items=[];
+  mapScope(t).map(sfMasterMerge).forEach(function(d){
+    if(ASSIGN[d.id]===wk){
+      items.push({kind:'dealer', id:d.id, type:'dealer', name:d.name,
+        address:d.address||'', lat:d.lat, lon:d.lon,
+        day:(DAY[d.id]==null?null:DAY[d.id]), time:TIME[d.id]||'',
+        located:(d.lat!=null&&d.lon!=null), revenue:d.booking||0, loads:d.loads||0,
+        status:(APPT[d.id]?'Confirmed':'Pending')});
+    }
+  });
+  LOGI.forEach(function(it){
+    if((t==='All'||it.terr===t) && it.wk===wk){
+      var ty=travelType(it);
+      items.push({kind:'travel', id:it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
+        address:it.address||'', lat:it.lat, lon:it.lon,
+        day:(it.day==null?null:it.day), time:it.time||'',
+        day2:it.day2, time2:it.time2,
+        airline:it.airline, flightNo:it.flightNo, conf:it.conf, notes:it.notes,
+        located:travelHasLocation(it), raw:it});
+    }
+  });
+  items.sort(function(a,b){
+    var ad=(a.day==null?99:a.day), bd=(b.day==null?99:b.day);
+    return (ad-bd) || String(a.time||'zz').localeCompare(String(b.time||'zz'));
+  });
+  return items;
+}
+/* legs between consecutive LOCATED items; unlocated items break no legs, they're skipped */
+function legsFor(items){
+  var pts=items.filter(function(i){return i.located;});
+  var legs=[], totalMi=0;
+  for(var i=1;i<pts.length;i++){
+    var a=pts[i-1], b=pts[i];
+    var mi=roadMi([a.lat,a.lon],[b.lat,b.lon]);
+    if(mi==null) mi=0;
+    totalMi+=mi;
+    legs.push({from:a, to:b, miles:mi, km:mi*1.60934, hours:mi/55,
+               sameDay:(a.day!=null && a.day===b.day)});
+  }
+  return {legs:legs, totalMi:totalMi, totalKm:totalMi*1.60934, totalHours:totalMi/55,
+          unlocated:items.filter(function(i){return !i.located;}).length};
+}
+function legLabel(l){
+  return Math.round(l.km)+' km · '+hrsLabel(l.hours);
+}
+
+
+/* ---------- rebuilt travel card: compact, stacked, no overlapping controls ---------- */
+function travelCard(it,wk){
+  var ty=travelType(it), T=TRAVEL_TYPES[ty];
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var dayOpts=function(sel){ return '<option value="">— day —</option>'+labs.map(function(l,i){
+      return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join(''); };
+
+  var isFlight=(ty==='flight_in'||ty==='flight_out');
+  var isHotel=(ty==='hotel');
+  var located=travelHasLocation(it);
+
+  var typeSel='<select class="tv-type" data-tv="'+it.id+'" data-f="type">'
+    +Object.keys(TRAVEL_TYPES).map(function(k){
+        return '<option value="'+k+'"'+(k===ty?' selected':'')+'>'+TRAVEL_TYPES[k].label+'</option>';}).join('')
+    +'</select>';
+
+  /* --- place row: airport picker for flights, address + locate for everything else --- */
+  var place;
+  if(isFlight){
+    place='<div class="tv-row">'
+      +'<input class="tv-in tv-code" data-tv="'+it.id+'" data-f="airportCode" list="apList" '
+        +'value="'+esc(it.airportCode||'')+'" placeholder="Airport code (YYZ)" maxlength="4">'
+      +'<span class="tv-place">'+(it.airportName?esc(it.airportName):'<i>choose an airport</i>')+'</span>'
+      +'</div>';
+  } else {
+    place='<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="name" value="'+esc(it.name||'')+'" placeholder="'+esc(T.label)+' name">'
+      +'</div>'
+      +'<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="address" value="'+esc(it.address||'')+'" placeholder="Address">'
+      +'<button class="tv-geo" data-tvgeo="'+it.id+'" title="Find coordinates from the address">Locate</button>'
+      +'</div>';
+  }
+
+  /* --- when --- */
+  var whenLbl=isHotel?'Check-in':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
+  var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
+    +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
+    +'<input class="tv-in tv-time" type="time" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||'')+'">'
+    +'</div>';
+  var when2='';
+  if(isHotel){
+    when2='<div class="tv-row"><label class="tv-lbl">Check-out</label>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2)+'</select>'
+      +'<input class="tv-in tv-time" type="time" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||'')+'">'
+      +'</div>';
+  }
+
+  /* --- flight detail --- */
+  var flight=isFlight?('<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="airline" value="'+esc(it.airline||'')+'" placeholder="Airline">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="flightNo" value="'+esc(it.flightNo||'')+'" placeholder="Flight #">'
+      +'</div>'):'';
+
+  var conf='<div class="tv-row">'
+    +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Confirmation #">'
+    +'</div>'
+    +'<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Notes"></div>';
+
+  var badge=located
+    ? '<span class="tv-ok" title="Included in routing">Located</span>'
+    : '<span class="tv-bad" title="Excluded from routing until it has a location">Needs address</span>';
+
+  return '<div class="tvcard t-'+ty+'" data-lid="'+it.id+'">'
+    +'<div class="tv-head">'
+      +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
+      +typeSel
+      +badge
+      +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
+    +'</div>'
+    +'<div class="tv-body">'+place+when+when2+flight+conf+'</div>'
+    +'</div>';
+}
+/* printable/trip-plan row */
+function logiRowDetail(x){
+  var ty=travelType(x), T=TRAVEL_TYPES[ty];
+  var where=travelPlaceLabel(x)||T.label;
+  var extra=[];
+  if(x.airline||x.flightNo) extra.push([x.airline,x.flightNo].filter(Boolean).join(' '));
+  if(x.conf) extra.push('Conf# '+x.conf);
+  if(!travelHasLocation(x)) extra.push('needs address');
+  return '<div class="tstop l-'+ty+'"><div class="tst"><span class="ttime">'+(x.time?t12s(x.time):'—')+'</span>'
+    +'<b>'+T.icon+' '+esc(T.label)+'</b> — '+esc(where)
+    +(extra.length?(' <span class="tag">'+esc(extra.join(' · '))+'</span>'):'')
+    +'</div></div>';
+}
+
 function weekCard(wk){
   var isk=wk===31, isRemote=wk==='remote';
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;}).sort(function(a,b){return b.booking-a.booking;});
@@ -1007,21 +1350,21 @@ function weekCard(wk){
   var md=settingsFor(terr).maxDrive;
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var cards;
-  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return cardHTML(d,wk);}).join('')+wlogi.map(function(x){return logiCard(x,wk);}).join('')):'<div class="dcempty">drag dealers here</div>'; }
+  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return cardHTML(d,wk);}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag dealers here</div>'; }
   else if(!ds.length && !wlogi.length){ cards='<div class="dcempty">drag dealers here</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
     var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
     var nodl=wlogi.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'l',x:x};});
     var nod=nodv.concat(nodl);
-    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+nod.map(function(e){return e.k==='v'?cardHTML(e.d,wk):logiCard(e.x,wk);}).join(''); }
+    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+nod.map(function(e){return e.k==='v'?cardHTML(e.d,wk):travelCard(e.x,wk);}).join(''); }
     labs.forEach(function(l,i){
       var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
       var el=wlogi.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',x:x,t:x.time||'99'};});
       var entries=ev.concat(el).sort(function(a,b){return a.t.localeCompare(b.t);});
       cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
       if(!entries.length){ cards+='<div class="dcempty">—</div>'; return; }
-      entries.forEach(function(e,j){ cards+=(e.k==='v'?cardHTML(e.d,wk):logiCard(e.x,wk));
+      entries.forEach(function(e,j){ cards+=(e.k==='v'?cardHTML(e.d,wk):travelCard(e.x,wk));
         if(wk!==31 && j<entries.length-1 && e.k==='v' && entries[j+1].k==='v'){ cards+=travelRow(e.d,entries[j+1].d,md); } });
     });
   }
@@ -1030,7 +1373,14 @@ function weekCard(wk){
     +'<div class="wkhead"><div class="wl">'+title+'</div>'
     +'<div class="kpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSD(rev)+'</span><span class="kpill sub">'+apc+'/'+ds.length+' appts · '+pct.toFixed(0)+'%</span></div></div>'
     +'<div class="wmeta"><div><b>Dates:</b> '+dates+'</div><div><b>Dealers:</b> '+ds.length+' &nbsp;·&nbsp; <b>Loads:</b> '+loads+'</div>'+(isk?'<div class="hqnote">🏢 Head office · no travel between visits · 1 hr per visit</div>':'')+confBtn+'<button class="wkdl" data-dl="'+wk+'">⤓ Trip plan</button></div>'
-    +'<div class="addbar"><button class="addl" data-add="flight|'+wk+'">✈ Flight</button><button class="addl" data-add="hotel|'+wk+'">🏨 Hotel</button><button class="addl" data-add="rental|'+wk+'">🚗 Rental</button></div>'
+    +'<div class="addbar">'
+      +'<button class="addl" data-add="flight_in|'+wk+'" title="Inbound flight">✈ Arrive</button>'
+      +'<button class="addl" data-add="flight_out|'+wk+'" title="Outbound flight">✈ Depart</button>'
+      +'<button class="addl" data-add="hotel|'+wk+'">🏨 Hotel</button>'
+      +'<button class="addl" data-add="rental_pickup|'+wk+'" title="Rental pickup">🚗 Pickup</button>'
+      +'<button class="addl" data-add="rental_return|'+wk+'" title="Rental return">🚗 Return</button>'
+      +'<button class="addl" data-add="other|'+wk+'" title="Fuel, food, parking or other stop">＋ Stop</button>'
+    +'</div>'
     +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
 }
 function cardHTML(d,wk){
@@ -1206,7 +1556,11 @@ function normCat(c){ c=CAT_ALIASES[c]||c; return BUDGET_CATS.indexOf(c)>=0 ? c :
 let MAPF={};
 let SIDEBAR_TAB='overview';   /* overview | budget | files */
 /* legacy LOGI types predate this view: flight -> airport */
-function normType(t){ if(t==='flight')return 'airport'; return STOP_TYPES[t]?t:'other'; }
+/* map the location-based travel types onto the map's pin vocabulary */
+const MAP_PIN={flight_in:'airport',flight_out:'airport',rental_pickup:'rental',rental_return:'rental',
+  hotel:'hotel',fuel:'fuel',food:'meal',parking:'other',other:'other',
+  flight:'airport',rental:'rental'};   /* last two: legacy records, pre-migration */
+function normType(t){ if(MAP_PIN[t]) return MAP_PIN[t]; return STOP_TYPES[t]?t:'other'; }
 function money(n){ n=Number(n)||0; return (n<0?'-$':'$')+Math.abs(n).toFixed(2); }
 function num(v){ var n=parseFloat(v); return isFinite(n)?n:0; }
 /* 'All' has no dealersIn() bucket - union every territory so the map works there too */
@@ -1437,7 +1791,9 @@ function renderTerrMap(){
       +'</div>'
       +'<div style="font-size:.65rem;color:var(--muted-2);margin-top:6px">Cost metrics use actual spend'
         +(actualKm?' and actual km.':' and planned km until actual km is entered.')+'</div>'
-    +'</div></div></div>';
+    +'</div></div>'
+    +itineraryCard(terr,wk)
+    +'</div>';
 
   /* ================= BUDGET ================= */
   var dayOpts='<option value="">— day —</option>'+dayLabels(wk).map(function(l,i){return '<option value="'+i+'">'+l[0]+' '+l[1]+'</option>';}).join('');
@@ -1630,6 +1986,72 @@ function openAddStop(){
 }
 
 /* ---------- export ---------- */
+/* ---------- itinerary card: the actual trip, day by day, with legs ---------- */
+function itinIcon(i){
+  if(i.kind==='dealer') return '<span class="iic" style="background:'+STOP_TYPES.dealer.color+'"></span>';
+  var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
+  return '<span class="iic" style="background:'+T.color+'">'+T.icon+'</span>';
+}
+function itinName(i){
+  if(i.kind==='dealer') return esc(i.name);
+  var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
+  return esc(T.label)+(i.name?(' — '+esc(i.name)):'');
+}
+function itineraryCard(t,wk){
+  var items=itineraryFor(t,wk);
+  var R=legsFor(items);
+  var labs=dayLabels(wk);
+  /* index legs by the item they arrive at, so a leg renders under its destination */
+  var legTo={}; R.legs.forEach(function(l){ legTo[l.to.kind+':'+l.to.id]=l; });
+
+  var byDay={}, undated=[];
+  items.forEach(function(i){ if(i.day==null) undated.push(i); else (byDay[i.day]=byDay[i.day]||[]).push(i); });
+
+  var body='';
+  Object.keys(byDay).sort(function(a,b){return a-b;}).forEach(function(d){
+    var lab=labs[d]?(labs[d][0]+' · '+labs[d][1]):('Day '+d);
+    body+='<div class="idayhd">'+esc(lab)+'</div>';
+    byDay[d].forEach(function(i){
+      var leg=legTo[i.kind+':'+i.id];
+      if(leg && leg.sameDay) body+='<div class="ileg">↓ '+legLabel(leg)+'</div>';
+      body+='<div class="irow">'+itinIcon(i)
+        +'<span class="itime">'+(i.time?t12s(i.time):'—')+'</span>'
+        +'<span class="iname">'+itinName(i)+'</span>'
+        +(i.located?'':'<span class="ibad">Needs address</span>')
+        +'</div>';
+    });
+  });
+  if(undated.length){
+    body+='<div class="idayhd">Needs a day</div>';
+    undated.forEach(function(i){
+      body+='<div class="irow">'+itinIcon(i)+'<span class="itime">—</span>'
+        +'<span class="iname">'+itinName(i)+'</span>'
+        +(i.located?'':'<span class="ibad">Needs address</span>')+'</div>';
+    });
+  }
+  if(!items.length) body='<div style="color:var(--muted-2);padding:10px 0">Nothing scheduled this week.</div>';
+
+  var warn=R.unlocated?('<div class="legrow warn">'+R.unlocated+' item'+(R.unlocated===1?'':'s')+' excluded from routing — needs an address</div>'):'';
+
+  return '<div class="tcard"><div class="tch"><div class="tct">Itinerary</div>'
+    +'<span style="font-size:11px;color:var(--muted)">'+Math.round(R.totalKm).toLocaleString()+' km · '+hrsLabel(R.totalHours)+'</span></div>'
+    +'<div class="tcb"><div class="itin">'+body+'</div>'+warn
+    +'<div class="geo-attr">Geocoding &copy; <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>'
+    +'</div></div>';
+}
+/* route summary rows for the trip report */
+function routeSummaryRows(t,wk){
+  var items=itineraryFor(t,wk), R=legsFor(items), labs=dayLabels(wk);
+  return R.legs.map(function(l,i){
+    return {'#':i+1,
+      From:(l.from.kind==='dealer'?l.from.name:((TRAVEL_TYPES[l.from.type]||TRAVEL_TYPES.other).label+(l.from.name?' — '+l.from.name:''))),
+      To:(l.to.kind==='dealer'?l.to.name:((TRAVEL_TYPES[l.to.type]||TRAVEL_TYPES.other).label+(l.to.name?' — '+l.to.name:''))),
+      Day:(l.to.day!=null&&labs[l.to.day])?(labs[l.to.day][0]+', '+labs[l.to.day][1]):'',
+      'Distance (km)':Math.round(l.km),
+      'Drive time':hrsLabel(l.hours)};
+  });
+}
+
 /* Stops carry no money. Expenses are reported separately, with variance. */
 function tripReportRows(t,wk,stops){
   return stops.map(function(s,i){
@@ -1656,6 +2078,13 @@ function tripDownloadCSV(t,wk,stops,rm,bud,exps){
   lines.push('STOPS');
   lines.push(scols.join(','));
   srows.forEach(function(r){ lines.push(scols.map(function(c){return q(r[c]);}).join(',')); });
+
+  lines.push('','ROUTE');
+  var rrows=routeSummaryRows(t,wk);
+  var rcols=['#','From','To','Day','Distance (km)','Drive time'];
+  lines.push(rcols.join(','));
+  if(rrows.length) rrows.forEach(function(r){ lines.push(rcols.map(function(c){return q(r[c]);}).join(',')); });
+  else lines.push('(no located legs)');
 
   lines.push('','EXPENSES');
   var erows=expenseReportRows(t,wk,exps);
@@ -1709,6 +2138,14 @@ function tripDownloadPDF(t,wk,stops,rm,bud,exps){
       +(kmForCost?(' · '+money(bud.total.act/kmForCost)+'/km'):'')
       +(visits?(' · '+money(bud.total.act/visits)+'/dealer visit'):'')+'</p>'
     +'<h3>Stops</h3><table class="sched">'+shead+sbody+'</table>'
+    +(function(){
+        var rr=routeSummaryRows(t,wk);
+        if(!rr.length) return '<h3>Route</h3><p>No located legs — add addresses to travel items.</p>';
+        var rc=['#','From','To','Day','Distance (km)','Drive time'];
+        return '<h3>Route</h3><table class="sched"><tr>'+rc.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr>'
+          +rr.map(function(r){return '<tr>'+rc.map(function(c){return '<td>'+esc(String(r[c]))+'</td>';}).join('')+'</tr>';}).join('')
+          +'</table>';
+      })()
     +'<h3>Expenses</h3><table class="sched">'+ehead+ebody+'</table>'
     +'<h3>Budget</h3><table class="sched"><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th><th>Receipts</th></tr>'
     +budRows+'<tr><th>TOTAL</th><th>'+money(bud.total.est)+'</th><th>'+money(bud.total.act)+'</th><th>'+money(bud.total.act-bud.total.est)+'</th><th>—</th></tr></table>'
@@ -1928,13 +2365,10 @@ function wireDnD(){
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();refreshPlanner();}));
-  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addLogi(pr[0],pr[1]);}));
-  document.querySelectorAll('.ltext').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.ltext;})[0]; if(it){it.label=t.value;savePlan();}}));
-  document.querySelectorAll('.lday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===s.dataset.lday;})[0]; if(it){it.day=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}}));
-  document.querySelectorAll('.ltime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.ltime;})[0]; if(it){it.time=t.value;savePlan();refreshPlanner();}}));
-  document.querySelectorAll('.llink').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.llink;})[0]; if(it){it.link=t.value.trim();savePlan();refreshPlanner();}}));
-  document.querySelectorAll('.lstate').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.lstate;})[0]; if(it){it.loc=(t.value||'').trim().toUpperCase();savePlan();refreshPlanner();}}));
-  document.querySelectorAll('.larr').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();var it=LOGI.filter(function(x){return x.id===t.dataset.larr;})[0]; if(it){it.arr=t.value;savePlan();refreshPlanner();}}));
+  /* travel items: one delegated handler for every typed field */
+  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
+  document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
+  document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
@@ -2187,7 +2621,22 @@ function withPreservedScroll(fn){
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
 }
 function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
-function unlockApp(){ var g=document.getElementById('gate'); if(g)g.style.display='none'; cloudLoad(function(){ render(); }); initRealtime(); loadSFDealers(); }
+function unlockApp(){
+  var g=document.getElementById('gate'); if(g)g.style.display='none';
+  /* airport picker source */
+  var dl=document.getElementById('apList');
+  if(dl && !dl.childElementCount){
+    dl.innerHTML=AIRPORTS.map(function(a){
+      return '<option value="'+a[0]+'">'+esc(a[1])+' — '+esc(a[2])+'</option>';}).join('');
+  }
+  cloudLoad(function(){
+    /* legacy flight/hotel/rental records -> location-based travel items. In memory only:
+       the migrated shape persists on the next real save, so loading never writes. */
+    migrateTravel();
+    render();
+  });
+  initRealtime(); loadSFDealers();
+}
 /* ===================== Access gate (team passcode) =====================
    Password-based access, per product decision. The browser therefore talks to
    Supabase as the `anon` role: prebooking_state/history/log are anon-readable and
