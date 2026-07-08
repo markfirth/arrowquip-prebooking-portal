@@ -691,7 +691,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 <body>
 <datalist id="apList"></datalist>
 <div id="tripmode"></div>
-<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gmail" type="email" inputmode="email" placeholder="Work email" autocomplete="email" autocapitalize="off" spellcheck="false"><button id="gbtn">Send sign-in link</button><div id="gerr" class="gerr"></div></div></div>
+<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" inputmode="text" placeholder="Team passcode" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
   <div class="aqUtilityBar">
@@ -2890,26 +2890,35 @@ async function pbBootAuth(){
     return;
   }
 
-  /* not signed in — send a one-time magic link to the entered email */
-  var mail=document.getElementById('gmail'), btn=document.getElementById('gbtn');
-  if(!mail||!btn) return;
-  async function sendLink(){
-    var email=(mail.value||'').trim().toLowerCase();
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ gateErr('Enter a valid email address'); return; }
-    btn.disabled=true; gateMsg('Sending…');
-    var r=await SB.auth.signInWithOtp({ email:email, options:{ emailRedirectTo: location.origin + location.pathname } });
-    btn.disabled=false;
-    if(r&&r.error){ gateErr(r.error.message||'Could not send link'); return; }
-    gateMsg('Check your inbox — a sign-in link was sent to '+email);
+  /* not signed in — team passcode. The passcode is verified server-side by the
+     pb-passcode-login edge function, which mints a session for a shared approved
+     account. The passcode and the shared account's password never reach this page.
+     The session persists (localStorage), so this screen only appears once per device. */
+  var pass=document.getElementById('gpass'), btn=document.getElementById('gbtn');
+  if(!pass||!btn) return;
+  async function enter(){
+    var code=(pass.value||'');
+    if(!code){ gateErr('Enter the team passcode'); return; }
+    btn.disabled=true; gateMsg('Signing in…');
+    try{
+      var res=await fetch(SB_URL+'/functions/v1/pb-passcode-login',{
+        method:'POST',
+        headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json' },
+        body:JSON.stringify({ passcode:code })
+      });
+      var j=await res.json().catch(function(){ return {}; });
+      if(!res.ok || !j.access_token){ btn.disabled=false; pass.value=''; gateErr('Incorrect passcode'); pass.focus(); return; }
+      var s=await SB.auth.setSession({ access_token:j.access_token, refresh_token:j.refresh_token });
+      if(s&&s.error){ btn.disabled=false; gateErr(s.error.message||'Sign-in failed'); return; }
+      PB_USER=(s&&s.data&&s.data.session&&s.data.session.user)||null;
+      var row=await pbLoadRole();
+      if(!row){ btn.disabled=false; gateErr('This account is not approved.'); return; }
+      PB_APPROVED=true; unlockApp();
+    }catch(e){ btn.disabled=false; gateErr('Network error — try again'); }
   }
-  btn.addEventListener('click',sendLink);
-  mail.addEventListener('keydown',function(e){ if(e.key==='Enter') sendLink(); });
-  setTimeout(function(){ try{ mail.focus(); }catch(e){} },50);
-
-  /* magic-link return lands with a session; react without a manual reload */
-  SB.auth.onAuthStateChange(function(evt,session){
-    if(session&&session.user&&!PB_USER){ PB_USER=session.user; pbBootAuth(); }
-  });
+  btn.addEventListener('click',enter);
+  pass.addEventListener('keydown',function(e){ if(e.key==='Enter') enter(); });
+  setTimeout(function(){ try{ pass.focus(); }catch(e){} },50);
 }
 (function(){ if(document.getElementById('gate')) pbBootAuth(); })();
 
