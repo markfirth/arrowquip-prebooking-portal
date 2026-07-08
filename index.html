@@ -155,7 +155,15 @@ td.sflock{background:#f3f4f6;color:#464c55;}
 td.sflock .lockico{color:#aab0b9;margin-right:6px;vertical-align:middle;display:inline-block;}
 td.sflock .lockval{color:#3f454e;}
 td.sflock b.lockval{font-weight:700;color:#2a2f36;}
-#mBody td:nth-child(7), #mFoot td:nth-child(7), tr.colhdr th:nth-child(7){border-right:1px dashed #d9dee4;}
+#mBody td:nth-child(8), #mFoot td:nth-child(8), tr.colhdr th:nth-child(8){border-right:1px dashed #d9dee4;}
+td.rownum{background:#f3f4f6;color:#6b7280;text-align:center;font-weight:600;font-size:11px;}
+tr.colhdr th .hsub{display:block;font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;color:#9aa1ac;margin-top:1px;}
+td.statuscell{text-align:center;}
+select.statuspill{width:auto;min-width:0;font-family:inherit;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:20px;padding:3px 8px;border:1px solid;cursor:pointer;}
+select.st-committed{color:#1f7a46;background:#eaf6ee;border-color:#cfe6d8;}
+select.st-working{color:#8a6d1a;background:#fbf5e6;border-color:#eee0bf;}
+select.st-notstarted{color:#b03a3a;background:#fdeeee;border-color:#f2d3d3;}
+select.st-complete{color:#2f5c96;background:#eaf1fb;border-color:#cfdcf0;}
 tr.grprow th.grp-sf{border-right:1px dashed #d9dee4;}
 tr.plannerrow td{background:#fffdf6;}
 tr.localrow td.dealer{position:relative;}
@@ -396,15 +404,19 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
-        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><input class="msearch" id="mSearch" placeholder="Search name, state…"><button class="btn" id="impBtn">⬆ Import CSV</button><button class="btn" id="tplBtn">⬇ Template</button><input type="file" id="impFile" accept=".csv,text/csv" style="display:none"><button class="btn" id="addBtn">+ Add dealer</button><button class="btn" id="resetBtn">Reset edits</button></div></div>
+        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><input class="msearch" id="mSearch" placeholder="Search name, state…"><button class="btn" id="impBtn">⬆ Import CSV</button><button class="btn" id="tplBtn">⬇ Template</button><input type="file" id="impFile" accept=".csv,text/csv" style="display:none"><button class="btn" id="addBtn">+ Add dealer</button><button class="btn" id="resetBtn">Reset edits</button></div></div>
       <table>
         <thead>
-        <tr class="grprow"><th class="grp-sf" colspan="7"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="6">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th></tr>
+        <tr class="grprow"><th class="grp-sf" colspan="8"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="8">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th><th></th></tr>
         <tr class="colhdr">
-          <th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
+          <th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
           <th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>
-          <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th><th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th><th class="srt num" data-mk="loads">Loads<span class="hinfo" title="Planner-managed load count"> ⓘ</span></th>
-          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th><th>Actions</th>
+          <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th>
+          <th class="srt num" data-mk="prebook2026">2026 Pre-Booking<span class="hsub">Original Commitment</span></th>
+          <th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th><th class="srt num" data-mk="loads">Loads<span class="hinfo" title="Planner-managed load count"> ⓘ</span></th>
+          <th class="srt" data-mk="areaPlanning">Area Planning<span class="hinfo" title="Show this dealer in East, West, South, Central or Export planning pages."> ⓘ</span></th>
+          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th>
+          <th class="srt" data-mk="status">Status</th><th>Actions</th>
         </tr></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
       </table>
@@ -565,7 +577,12 @@ let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
-let mFilterTerr="", mFilterAM="";
+let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="";
+/* Planner-owned planning status (default Not Started). Rendered as a coloured pill <select>. */
+var STATUSES=['Committed','Working','Not Started','Complete'];
+function statusCls(s){ return 'st-'+String(s||'Not Started').toLowerCase().replace(/\s+/g,''); }
+function statusSel(d){ var cur=d.status||'Not Started';
+  return '<select class="ed statuspill '+statusCls(cur)+'" data-f="status">'+STATUSES.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'; }
 let terrMode='plan', terrMapWeek='all';
 let SETTINGS={};
 let LOGI=[];
@@ -600,7 +617,9 @@ DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
 (function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;}})();
 function savePlan(){try{localStorage.setItem('aq2027planv2',JSON.stringify({a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027}));}catch(e){}cloudSave('plan',{a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027});}
-const dealersIn=t=>DEALERS.filter(d=>d.territory===t);
+/* Area Planning: dealers with areaPlanning===false are hidden from all planning pages,
+   totals and scheduling. They remain in the Master Sheet and still sync with Salesforce. */
+const dealersIn=t=>DEALERS.filter(d=>d.territory===t && d.areaPlanning!==false);
 const scopeD=()=>(terr==='All'||terr==='Master')?DEALERS:dealersIn(terr);
 const sumB=a=>a.reduce((s,d)=>s+(+d.booking||0),0);
 const sumL=a=>a.reduce((s,d)=>s+(+d.loads||0),0);
@@ -891,7 +910,8 @@ function newSFRow(sf){
     name:sf.name||'', territory:sf.territory||'', tm:sf.tm||'', tier:sf.tier||'New',
     loc:sf.loc||'', address:sf.address||'',
     lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
-    booking:0, loads:0, visitConfirmed:false, atKickoff:false, remote:false };
+    booking:0, loads:0, visitConfirmed:false, atKickoff:false, remote:false,
+    prebook2026:0, areaPlanning:true, status:'Not Started' };
   o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
     tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
     loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
@@ -909,7 +929,7 @@ function buildMasterUniverse(){
   ids.forEach(function(sid){
     var p=plannerBySf[sid];
     if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
-    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.loads=+ov.loads||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
+    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.loads=+ov.loads||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.prebook2026=+ov.prebook2026||0; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
   });
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
@@ -919,17 +939,21 @@ function renderMaster(){
   let rows=_allMerged.slice();
   if(mFilterTerr) rows=rows.filter(function(d){return d.territory===mFilterTerr;});
   if(mFilterAM) rows=rows.filter(function(d){return (d.tm||'')===mFilterAM;});
+  if(mFilterArea==='in') rows=rows.filter(function(d){return d.areaPlanning!==false;});
+  else if(mFilterArea==='out') rows=rows.filter(function(d){return d.areaPlanning===false;});
+  if(mFilterStatus) rows=rows.filter(function(d){return (d.status||'Not Started')===mFilterStatus;});
   if(mq) rows=rows.filter(d=>((d.name||'')+' '+(d.loc||'')+' '+(d.territory||'')+' '+(d.tm||'')+' '+(d.tier||'')).toLowerCase().includes(mq));
   var terrOpts=["East","South","Central","West","Exports"];
   var amList=[]; _allMerged.forEach(function(d){ if(d.tm && d.tm!=='—' && amList.indexOf(d.tm)<0) amList.push(d.tm); }); amList.sort();
   var ts=document.getElementById("mTerr"); if(ts) ts.innerHTML='<option value="">All territories</option>'+terrOpts.map(function(t){return '<option value="'+t+'"'+(mFilterTerr===t?' selected':'')+'>'+t+'</option>';}).join('');
   var as=document.getElementById("mAM"); if(as) as.innerHTML='<option value="">All managers</option>'+amList.map(function(a){return '<option value="'+a+'"'+(mFilterAM===a?' selected':'')+'>'+a+'</option>';}).join('');
   const k=msort.key,dir=msort.dir;
-  rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
+  rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(k==='areaPlanning'){va=(va!==false)?1:0;vb=(vb!==false)?1:0;} if(k==='status'){va=va||'Not Started';vb=vb||'Not Started';} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
   var gi=document.getElementById("goalInput"); if(gi && document.activeElement!==gi) gi.value=GOAL2027||'';
   var gtxt=GOAL2027?(' · goal '+fmtUSD(GOAL2027)+' · '+((grandTot()-GOAL2027)>=0?('+'+fmtUSD(grandTot()-GOAL2027)+' over'):('gap '+fmtUSD(GOAL2027-grandTot())))):'';
   document.getElementById("mSub").textContent=rows.length+" of "+_allMerged.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
-  document.getElementById("mBody").innerHTML=rows.map(d=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
+  document.getElementById("mBody").innerHTML=rows.map((d,i)=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
+    <td class="rownum">${i+1}</td>
     ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
     ${sfLock(d,'tm')?lockTD('',d.tm,'span',sfLockTitle(d)):`<td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>`}
@@ -937,13 +961,16 @@ function renderMaster(){
     ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
+    <td class="num pln"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}"></td>
     <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
     <td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>
+    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${(ASSIGN[d.id]==='remote'||d.remote)?'checked':''}></td>
+    <td class="pln statuscell">${statusSel(d)}</td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td></tr>`;
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.prebook2026||0),0))}</td><td class="num">${fmtUSD(grandTot())}</td><td class="num">${sumL(DEALERS)}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
@@ -951,9 +978,9 @@ function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
   if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
-    if(SF_BY_ID[id] && ['booking','loads','visitConfirmed','atKickoff','remote'].indexOf(f)>=0){
-      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,loads:0,visitConfirmed:false,atKickoff:false,remote:false});
-      if(el.type==='checkbox') ov[f]=!!el.checked; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
+    if(SF_BY_ID[id] && ['booking','loads','visitConfirmed','atKickoff','remote','prebook2026','areaPlanning','status'].indexOf(f)>=0){
+      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,loads:0,visitConfirmed:false,atKickoff:false,remote:false,prebook2026:0,areaPlanning:true,status:'Not Started'});
+      if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
       cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
     }
     return;
@@ -961,7 +988,7 @@ function onMasterEdit(e){
   if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
-  else if(f==='lastYear'||f==='booking'||f==='loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
+  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='prebook2026') v=Math.max(0,Math.round(parseFloat(el.value)||0));
   else if(f==='loc') v=(el.value||'').trim().toUpperCase();
   else v=(el.value||'').trim();
   d[f]=v;
@@ -1088,8 +1115,8 @@ function exportTripPlans(){
 function downloadCSV(fn,txt){var blob=new Blob([txt],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 function csvCell(v){v=(v==null?'':String(v));return /[",\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v;}
 function dealerTemplate(){
-  var cols=['Dealer Name','Territory','Account Manager','Tier','State','Address','2026 Revenue','2027 Target','Loads','Visit Confirmed','Kickoff'];
-  var ex=['Example Dealer Co','East','Mark Firth','Tier 3','GA','123 Main St, Calhoun, GA','750000','1125000','15','No','No'];
+  var cols=['Dealer Name','Territory','Account Manager','Tier','State','Address','2026 Revenue','2026 Pre-Booking','2027 Target','Loads','Area Planning','Visit Confirmed','Kickoff','Status'];
+  var ex=['Example Dealer Co','East','Mark Firth','Tier 3','GA','123 Main St, Calhoun, GA','750000','800000','1125000','15','Yes','No','No','Not Started'];
   downloadCSV('dealer-import-template.csv', cols.join(',')+'\n'+ex.map(csvCell).join(',')+'\n');
 }
 function parseCSVLine(line){var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){out.push(cur);cur='';}else cur+=ch;}}out.push(cur);return out;}
@@ -1098,7 +1125,7 @@ function importDealers(text){
   if(lines.length<2){alert('No data rows found in the file.');return;}
   var hdr=parseCSVLine(lines[0]).map(function(s){return s.trim().toLowerCase();});
   function idx(names){for(var k=0;k<names.length;k++){var j=hdr.indexOf(names[k]);if(j>=0)return j;}return -1;}
-  var iName=idx(['dealer name','dealer','name']),iT=idx(['territory','region']),iAM=idx(['account manager','acct mgr','am','owner']),iTier=idx(['tier']),iSt=idx(['state','state/prov','st']),iAddr=idx(['address']),i26=idx(['2026 revenue','2026 rev','last year','lastyear']),i27=idx(['2027 target','target','booking']),iL=idx(['loads']),iV=idx(['visit confirmed','visit']),iK=idx(['kickoff']);
+  var iName=idx(['dealer name','dealer','name']),iT=idx(['territory','region']),iAM=idx(['account manager','acct mgr','am','owner']),iTier=idx(['tier']),iSt=idx(['state','state/prov','st']),iAddr=idx(['address']),i26=idx(['2026 revenue','2026 rev','last year','lastyear']),i27=idx(['2027 target','target','booking']),iL=idx(['loads']),iV=idx(['visit confirmed','visit']),iK=idx(['kickoff']),iPB=idx(['2026 pre-booking','2026 prebooking','pre-booking','prebook2026']),iAP=idx(['area planning','include in area planning','areaplanning']),iSS=idx(['status','planning status']);
   if(iName<0){alert('Could not find a "Dealer Name" column. Download the Template for the correct format.');return;}
   var terrs=['East','South','Central','West','Exports'];
   function yes(v){v=(v||'').trim().toLowerCase();return v==='yes'||v==='true'||v==='y'||v==='1'||v==='✓';}
@@ -1107,7 +1134,7 @@ function importDealers(text){
   for(var r=1;r<lines.length;r++){var c=parseCSVLine(lines[r]);if(!c[iName]||!c[iName].trim())continue;n++;
     var st=(iSt>=0?(c[iSt]||'').trim().toUpperCase():'');var co=COORD[st];
     var terr=(iT>=0?(c[iT]||'').trim():'East');if(terrs.indexOf(terr)<0)terr='East';
-    arr.push({id:'I'+n,territory:terr,tm:(iAM>=0?(c[iAM]||'').trim():''),name:(c[iName]||'').trim(),tier:((iTier>=0?(c[iTier]||'').trim():'')||'Tier 5'),loc:st,address:(iAddr>=0?(c[iAddr]||'').trim():''),lastYear:i26>=0?num(c[i26]):0,booking:i27>=0?num(c[i27]):0,loads:iL>=0?num(c[iL]):0,visitConfirmed:iV>=0?yes(c[iV]):false,atKickoff:iK>=0?yes(c[iK]):false,suggestedWeek:null,lat:co?co[0]:null,lon:co?co[1]:null});
+    arr.push({id:'I'+n,territory:terr,tm:(iAM>=0?(c[iAM]||'').trim():''),name:(c[iName]||'').trim(),tier:((iTier>=0?(c[iTier]||'').trim():'')||'Tier 5'),loc:st,address:(iAddr>=0?(c[iAddr]||'').trim():''),lastYear:i26>=0?num(c[i26]):0,booking:i27>=0?num(c[i27]):0,loads:iL>=0?num(c[iL]):0,visitConfirmed:iV>=0?yes(c[iV]):false,atKickoff:iK>=0?yes(c[iK]):false,prebook2026:iPB>=0?num(c[iPB]):0,areaPlanning:iAP>=0?yes(c[iAP]):true,status:(iSS>=0&&STATUSES.indexOf((c[iSS]||'').trim())>=0)?(c[iSS]||'').trim():'Not Started',suggestedWeek:null,lat:co?co[0]:null,lon:co?co[1]:null});
   }
   if(!arr.length){alert('No valid dealer rows were found.');return;}
   if(!confirm('Import '+arr.length+' dealers? This REPLACES the current dealer list and clears existing scheduling.'))return;
@@ -1151,6 +1178,8 @@ document.getElementById("poolSort").addEventListener("change",function(e){poolSo
 document.getElementById("mSearch").addEventListener("input",e=>{mq=e.target.value.toLowerCase();renderMaster();});
 document.getElementById("mTerr").addEventListener("change",function(e){mFilterTerr=e.target.value;renderMaster();});
 document.getElementById("mAM").addEventListener("change",function(e){mFilterAM=e.target.value;renderMaster();});
+document.getElementById("mArea").addEventListener("change",function(e){mFilterArea=e.target.value;renderMaster();});
+document.getElementById("mStatus").addEventListener("change",function(e){mFilterStatus=e.target.value;renderMaster();});
 document.getElementById("goalInput").addEventListener("change",function(e){GOAL2027=Math.max(0,Math.round(parseFloat(e.target.value)||0));savePlan();renderMaster();});
 document.getElementById("mBody").addEventListener("change",onMasterEdit);
 document.getElementById("mBody").addEventListener("click",e=>{const x=e.target.closest('.delx'); if(x) deleteDealer(x.dataset.del);});
