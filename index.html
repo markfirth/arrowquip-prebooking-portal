@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Pre-Booking">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <title>Arrowquip · 2027 Pre-Booking Travel Planner</title>
 <style>
 /* ===== Arrowquip design system — ported verbatim from the Sales Portal =====
@@ -520,6 +527,107 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 
 @media(max-width:1200px){.cards{flex-wrap:wrap;} .cards .card{flex:1 1 30%;} .planwrap{grid-template-columns:1fr;} .sidebar{position:static;max-height:none;} .weeks{grid-template-columns:1fr;}}
 @media(max-width:900px){.aqNavContainer{padding:0 10px;} .aqNavLinks{gap:14px;} .aqNavLinks .tab{font-size:13px;} .aqUtilityBar{padding:8px 15px;} .cards .card{flex:1 1 50%;}}
+
+/* ===================== TRIP MODE (mobile) =====================
+   A phone-width layer over the same data. The desktop DOM is untouched; it is
+   simply hidden below 820px, and #tripmode is hidden above it. Nothing here
+   changes desktop layout, the header, the Master Sheet or the Schedule board. */
+#tripmode{display:none;}
+.tm-only{display:none;}
+@media(max-width:820px){
+  /* hide the desktop planner entirely, show Trip Mode */
+  header.aqNavbar, .wrap, .cloudbadge{display:none!important;}
+  #tripmode{display:block;}
+  body{background:#f2f3f5;font-size:15px;}
+}
+#tripmode{
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --tabh:62px;
+  padding-bottom:calc(var(--tabh) + var(--safe-b) + 10px);
+  min-height:100vh;
+}
+/* header */
+.tm-top{background:#000;color:#fff;padding:calc(var(--safe-t) + 12px) 16px 12px;position:sticky;top:0;z-index:50;}
+.tm-brand{display:flex;align-items:center;justify-content:space-between;}
+.tm-brand img{height:22px;width:auto;display:block;}
+.tm-mode{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9ca3af;text-align:center;margin-top:10px;}
+.tm-week{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;}
+.tm-week select{background:#111;color:#fff;border:1px solid #333;border-radius:8px;font-family:var(--font-heading);font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;}
+.tm-dates{font-size:12px;color:#9ca3af;text-align:center;margin-top:4px;}
+/* screens */
+.tm-screen{padding:12px;}
+.tm-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;margin:14px 4px 8px;display:flex;justify-content:space-between;align-items:center;}
+.tm-h .tm-count{background:#e5e7eb;color:#374151;border-radius:10px;padding:1px 8px;font-size:11px;}
+/* cards */
+.tmcard{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:10px;}
+.tmc-top{display:flex;gap:10px;align-items:flex-start;}
+.tmc-ic{width:36px;height:36px;border-radius:10px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;}
+.tmc-main{flex:1 1 auto;min-width:0;}
+.tmc-kind{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.tmc-name{font-size:16px;font-weight:700;color:#111;margin-top:1px;word-break:break-word;}
+.tmc-sub{font-size:13px;color:#6b7280;margin-top:2px;}
+.tmc-meta{font-size:12px;color:#6b7280;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;}
+.tmc-time{font-size:13px;font-weight:600;color:#111;white-space:nowrap;}
+.tmc-actions{display:flex;gap:8px;margin-top:10px;}
+.tmbtn{flex:1 1 auto;min-height:44px;border-radius:10px;border:1px solid #d1d5db;background:#fff;color:#111;font-family:inherit;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+.tmbtn:active{background:#f3f4f6;}
+.tmbtn.nav{background:#2563eb;border-color:#2563eb;color:#fff;flex:2 1 auto;text-decoration:none;}
+.tmbtn.icon{flex:0 0 52px;}
+.tmbtn.done{color:#16a34a;}
+.tmbtn[disabled]{opacity:.45;}
+.tm-pill{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.tm-pill.ok{background:#e7f3ec;color:#16a34a;} .tm-pill.pend{background:#f3f4f6;color:#6b7280;}
+.tm-pill.bad{background:#fdecec;color:#dc2626;}
+.tm-primary{width:100%;min-height:52px;border-radius:12px;border:0;background:#2563eb;color:#fff;font-family:inherit;font-size:16px;font-weight:700;margin-top:6px;cursor:pointer;}
+.tm-empty{text-align:center;color:#9ca3af;font-size:14px;padding:26px 10px;}
+/* list rows */
+.tmrow{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.tmrow .n{width:22px;height:22px;border-radius:50%;background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.tmrow .t{flex:1 1 auto;min-width:0;}
+.tmrow .t b{display:block;font-size:14px;color:#111;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tmrow .t span{font-size:12px;color:#6b7280;}
+/* route */
+#tmMap{height:52vh;border-radius:12px;border:1px solid #e5e7eb;z-index:1;}
+.tm-seg{display:flex;background:#e5e7eb;border-radius:10px;padding:3px;margin-bottom:10px;}
+.tm-seg button{flex:1;min-height:38px;border:0;background:transparent;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:#6b7280;}
+.tm-seg button.on{background:#fff;color:#111;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.tm-drive{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:10px;}
+.tm-drive .d1{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.tm-drive .d2{font-size:18px;font-weight:700;color:#111;margin-top:2px;}
+/* budget */
+.tm-spend{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;}
+.tm-spend .row{display:flex;justify-content:space-between;}
+.tm-spend .k{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.tm-spend .v{font-size:24px;font-weight:700;color:#111;margin-top:2px;}
+.tm-bar{height:8px;border-radius:6px;background:#e5e7eb;margin-top:12px;overflow:hidden;}
+.tm-bar i{display:block;height:100%;background:#16a34a;}
+.tm-bar.over i{background:#dc2626;}
+.tm-cat{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.tm-cat .cn{flex:1 1 auto;font-size:14px;color:#111;font-weight:600;}
+.tm-cat .cv{font-size:14px;font-weight:700;color:#111;}
+.tm-cat .cp{font-size:12px;color:#9ca3af;width:38px;text-align:right;}
+/* locked */
+.tm-lock{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;}
+.tm-lock .lt{font-size:16px;font-weight:700;color:#111;}
+.tm-lock .ls{font-size:13px;color:#6b7280;margin-top:6px;line-height:1.5;}
+.tm-lock .warnpill{display:inline-block;background:#fff7ed;color:#b45309;font-size:12px;font-weight:600;border-radius:8px;padding:5px 10px;margin-bottom:10px;}
+/* bottom nav */
+.tm-nav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid #e5e7eb;display:flex;padding-bottom:var(--safe-b);}
+.tm-nav button{flex:1;min-height:var(--tabh);border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:10px;font-weight:600;color:#9ca3af;cursor:pointer;}
+.tm-nav button .ni{font-size:18px;line-height:1;}
+.tm-nav button.on{color:#2563eb;}
+/* sheet */
+.tm-sheet{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;}
+.tm-sheet .body{width:100%;background:#fff;border-radius:16px 16px 0 0;padding:14px 14px calc(14px + var(--safe-b));max-height:86vh;overflow:auto;}
+.tm-sheet h3{margin:2px 0 12px;font-size:17px;font-weight:700;color:#111;text-align:center;}
+.tm-opt{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:0 12px;margin-bottom:8px;font-family:inherit;font-size:15px;font-weight:600;color:#111;text-align:left;cursor:pointer;}
+.tm-opt .oi{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex:0 0 auto;}
+.tm-opt.locked{color:#9ca3af;} .tm-opt.locked .lk{margin-left:auto;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.tm-field{margin-bottom:10px;}
+.tm-field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin-bottom:4px;}
+.tm-field input,.tm-field select{width:100%;min-height:48px;border:1px solid #d1d5db;border-radius:10px;padding:0 12px;font-family:inherit;font-size:16px;color:#111;background:#fff;}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -540,6 +648,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 </head>
 <body>
 <datalist id="apList"></datalist>
+<div id="tripmode"></div>
 <div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" placeholder="Team passcode" autocomplete="off"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
@@ -2632,6 +2741,7 @@ function unlockApp(){
        the migrated shape persists on the next real save, so loading never writes. */
     migrateTravel();
     render();
+    mobBoot();          /* Trip Mode: phone widths only */
   });
   initRealtime(); loadSFDealers();
 }
@@ -2665,6 +2775,471 @@ function pbSignOut(){ try{ sessionStorage.removeItem('aq_unlocked'); }catch(e){}
   pass.addEventListener('keydown',function(e){ if(e.key==='Enter') tryUnlock(); });
   setTimeout(function(){ pass.focus(); },50);
 })();
+
+
+/* ===================== TRIP MODE (mobile) =====================
+   Same data, phone-shaped. Reads ASSIGN/DAY/TIME/LOGI/EXPENSES through the existing
+   itineraryFor()/legsFor()/budgetFor(); writes through addTravel/setTravelField/
+   addExpense, so optimistic concurrency, history and the stale guard all still apply.
+   Receipt/document capture stays disabled: passcode mode has no secure auth. */
+var MOB={terr:'East', wk:32, tab:'today', day:null, routeView:'map', map:null};
+
+function mobIsPhone(){ return window.matchMedia('(max-width:820px)').matches; }
+function mobWeeks(t){ return FIELD_NUMS.filter(function(w){ return mapScope(t).some(function(d){return ASSIGN[d.id]===w;}); }); }
+/* which day of the selected week is "today" (0..6); null when the week isn't current */
+function mobToday(wk){
+  var labs=dayLabels(wk); if(!labs.length) return null;
+  var now=new Date(), y=2026;
+  for(var i=0;i<labs.length;i++){
+    var d=new Date(labs[i][1]+' '+y);
+    if(d.getMonth()===now.getMonth() && d.getDate()===now.getDate()) return i;
+  }
+  return null;
+}
+function navUrl(o){
+  var dest = (o.lat!=null && o.lon!=null && isFinite(o.lat) && isFinite(o.lon))
+    ? (o.lat+','+o.lon)
+    : encodeURIComponent([o.name,o.address].filter(Boolean).join(', '));
+  return 'https://www.google.com/maps/dir/?api=1&destination='+dest;
+}
+function mobHasDest(o){ return (o.lat!=null&&o.lon!=null) || !!(o.name||o.address); }
+function mobIcon(i){
+  if(i.kind==='dealer') return {c:STOP_TYPES.dealer.color, g:'●'};
+  var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
+  return {c:T.color, g:T.icon};
+}
+function mobKind(i){
+  if(i.kind==='dealer') return 'Dealer Visit';
+  return (TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other).label;
+}
+function mobDayLabel(wk,d){ var l=dayLabels(wk); return (d!=null&&l[d])?(l[d][0]+', '+l[d][1]):'No day set'; }
+
+/* ---------- cards ---------- */
+function mobCard(i,wk){
+  var ic=mobIcon(i);
+  var dest=mobHasDest(i);
+  var done=(i.kind==='dealer')?!!APPT[i.id]:(i.raw&&i.raw.done);
+  var sub=[i.address, (i.kind==='travel'&&i.raw&&i.raw.conf)?('Conf# '+i.raw.conf):''].filter(Boolean).join(' · ');
+  var meta=[];
+  if(i.kind==='dealer'){ var dur=DUR[i.id]||90; meta.push(Math.round(dur/60*10)/10+'h visit'); }
+  if(i.kind==='travel'&&i.type==='hotel'&&i.raw&&i.raw.day2!=null) meta.push('Check-out '+mobDayLabel(wk,i.raw.day2));
+  if(i.kind==='travel'&&(i.type==='flight_in'||i.type==='flight_out')&&i.raw&&(i.raw.airline||i.raw.flightNo))
+    meta.push([i.raw.airline,i.raw.flightNo].filter(Boolean).join(' '));
+  if(!i.located) meta.push('no location');
+
+  return '<div class="tmcard">'
+    +'<div class="tmc-top">'
+      +'<span class="tmc-ic" style="background:'+ic.c+'">'+ic.g+'</span>'
+      +'<div class="tmc-main">'
+        +'<div class="tmc-kind">'+esc(mobKind(i))+'</div>'
+        +'<div class="tmc-name">'+esc(i.name||mobKind(i))+'</div>'
+        +(sub?'<div class="tmc-sub">'+esc(sub)+'</div>':'')
+        +(meta.length?'<div class="tmc-meta">'+meta.map(esc).join(' · ')+'</div>':'')
+      +'</div>'
+      +'<div style="text-align:right">'
+        +'<div class="tmc-time">'+(i.time?t12s(i.time):'—')+'</div>'
+        +'<div style="margin-top:5px">'+(done?'<span class="tm-pill ok">Done</span>':(i.located?'<span class="tm-pill pend">Planned</span>':'<span class="tm-pill bad">No address</span>'))+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="tmc-actions">'
+      +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">➤ Navigate</a>')
+            :('<button class="tmbtn" disabled>➤ Navigate</button>'))
+      +'<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>'
+      +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="Mark complete">✓</button>'
+    +'</div>'
+  +'</div>';
+}
+
+/* ---------- TODAY ---------- */
+function mobToday_render(){
+  var wk=MOB.wk, t=MOB.terr;
+  var items=itineraryFor(t,wk);
+  var today=(MOB.day!=null)?MOB.day:mobToday(wk);
+  var pick=function(f){ return items.filter(f); };
+
+  var todays=(today==null)?[]:items.filter(function(i){return i.day===today;});
+  var nextStop=todays.filter(function(i){return i.kind==='dealer' && !APPT[i.id];})[0]
+             || todays.filter(function(i){return i.kind==='dealer';})[0]
+             || todays[0];
+  var hotel=pick(function(i){return i.type==='hotel';})[0];
+  var rental=pick(function(i){return i.type==='rental_pickup'||i.type==='rental_return';})[0];
+  var flight=pick(function(i){return i.type==='flight_in'||i.type==='flight_out';})[0];
+  var dealersToday=todays.filter(function(i){return i.kind==='dealer';});
+
+  var h='<div class="tm-screen">';
+  h+='<div class="tm-h"><span>Today · '+esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span>'
+     +'<button class="tmbtn" style="min-height:32px;flex:0 0 auto;padding:0 12px;font-size:13px" id="mobChangeDay">Change day</button></div>';
+
+  if(nextStop) h+='<div class="tmc-kind" style="margin:0 4px 6px">Next stop</div>'+mobCard(nextStop,wk);
+  if(hotel)   h+='<div class="tmc-kind" style="margin:8px 4px 6px">Current hotel</div>'+mobCard(hotel,wk);
+  if(rental)  h+='<div class="tmc-kind" style="margin:8px 4px 6px">Rental car</div>'+mobCard(rental,wk);
+  if(flight)  h+='<div class="tmc-kind" style="margin:8px 4px 6px">Flight</div>'+mobCard(flight,wk);
+  if(!nextStop&&!hotel&&!rental&&!flight) h+='<div class="tm-empty">Nothing scheduled for this week yet.<br>Use + Add Quick Item.</div>';
+
+  h+='<div class="tm-h"><span>Dealer visits today</span><span class="tm-count">'+dealersToday.length+'</span></div>';
+  h+= dealersToday.length
+    ? dealersToday.map(function(d,n){
+        return '<div class="tmrow"><span class="n">'+(n+1)+'</span><div class="t"><b>'+esc(d.name)+'</b>'
+          +'<span>'+(d.time?t12s(d.time):'—')+'</span></div>'
+          +(APPT[d.id]?'<span class="tm-pill ok">Done</span>':'<span class="tm-pill pend">Planned</span>')+'</div>';
+      }).join('')
+    : '<div class="tm-empty">No dealer visits today.</div>';
+
+  h+='<button class="tm-primary" id="mobAdd">+ Add Quick Item</button>';
+  h+='</div>';
+  return h;
+}
+
+/* ---------- ROUTE ---------- */
+function mobRoute_render(){
+  var wk=MOB.wk, t=MOB.terr;
+  var all=itineraryFor(t,wk);
+  var today=(MOB.day!=null)?MOB.day:mobToday(wk);
+  var scope=(MOB.routeScope==='week'||today==null)?all:all.filter(function(i){return i.day===today;});
+  var R=legsFor(scope);
+  var h='<div class="tm-screen">'
+    +'<div class="tm-seg">'
+      +'<button data-mobroute="map" class="'+(MOB.routeView==='map'?'on':'')+'">Map</button>'
+      +'<button data-mobroute="list" class="'+(MOB.routeView==='list'?'on':'')+'">List</button>'
+    +'</div>'
+    +'<div class="tm-seg" style="background:#f3f4f6">'
+      +'<button data-mobscope="today" class="'+(MOB.routeScope!=='week'?'on':'')+'">Today</button>'
+      +'<button data-mobscope="week" class="'+(MOB.routeScope==='week'?'on':'')+'">Full week</button>'
+    +'</div>';
+
+  if(MOB.routeView==='map') h+='<div id="tmMap"></div>';
+  else h+= scope.length? scope.map(function(i,n){
+        var ic=mobIcon(i);
+        return '<div class="tmrow"><span class="n" style="background:'+ic.c+';color:#fff">'+(n+1)+'</span>'
+          +'<div class="t"><b>'+esc(i.name||mobKind(i))+'</b><span>'+esc(mobKind(i))+' · '+(i.time?t12s(i.time):'—')+'</span></div>'
+          +(mobHasDest(i)?'<a class="tmbtn nav" style="flex:0 0 96px;min-height:38px;font-size:13px" href="'+navUrl(i)+'" target="_blank" rel="noopener">Navigate</a>':'')
+          +'</div>';
+      }).join('') : '<div class="tm-empty">Nothing to route.</div>';
+
+  h+='<div class="tm-drive"><div class="d1">'+(MOB.routeScope==='week'?"This week's drive":"Today's drive")+'</div>'
+    +'<div class="d2">'+hrsLabel(R.totalHours)+' · '+Math.round(R.totalKm).toLocaleString()+' km</div>'
+    +(R.unlocated?('<div style="font-size:12px;color:#dc2626;margin-top:6px">'+R.unlocated+' stop'+(R.unlocated===1?'':'s')+' excluded — no address</div>'):'')
+    +'</div>';
+  h+='</div>';
+  return h;
+}
+function mobDrawMap(){
+  var el=document.getElementById('tmMap'); if(!el||typeof L==='undefined') return;
+  if(MOB.map){ try{MOB.map.remove();}catch(e){} MOB.map=null; }
+  var all=itineraryFor(MOB.terr,MOB.wk);
+  var today=(MOB.day!=null)?MOB.day:mobToday(MOB.wk);
+  var scope=(MOB.routeScope==='week'||today==null)?all:all.filter(function(i){return i.day===today;});
+  var pts=scope.filter(function(i){return i.located;});
+  MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:false,attributionControl:true}).setView([43.5,-79],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MOB.map);
+  pts.forEach(function(i){
+    var ic=mobIcon(i);
+    L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+'">'+ic.g+'</div>',iconSize:[26,26],iconAnchor:[13,13]})})
+      .addTo(MOB.map).bindPopup('<b>'+esc(i.name||mobKind(i))+'</b><br>'+esc(mobKind(i)));
+  });
+  if(pts.length>1){
+    L.polyline(pts.map(function(i){return [i.lat,i.lon];}),{color:'#2563eb',weight:4,opacity:.85}).addTo(MOB.map);
+  }
+  if(pts.length) MOB.map.fitBounds(L.latLngBounds(pts.map(function(i){return [i.lat,i.lon];})).pad(0.25));
+  setTimeout(function(){ if(MOB.map) MOB.map.invalidateSize(); },80);
+}
+
+/* ---------- BUDGET ---------- */
+function mobBudget_render(){
+  var exps=expensesFor(MOB.terr,MOB.wk);
+  var bud=budgetFor(exps);
+  var spend=bud.total.act, planned=bud.total.est;
+  var remaining=planned-spend;
+  var pct=planned?Math.min(100,Math.round(spend/planned*100)):0;
+  var over=spend>planned && planned>0;
+  var labs=dayLabels(MOB.wk);
+
+  var h='<div class="tm-screen">'
+    +'<div class="tm-spend"><div class="row">'
+      +'<div><div class="k">Total spend</div><div class="v">'+money(spend)+'</div></div>'
+      +'<div style="text-align:right"><div class="k">'+(over?'Over budget':'Remaining')+'</div><div class="v" style="color:'+(over?'#dc2626':'#111')+'">'+money(Math.abs(remaining))+'</div></div>'
+    +'</div>'
+    +(planned?('<div style="font-size:12px;color:#6b7280;margin-top:4px">of '+money(planned)+' budget</div>'
+      +'<div class="tm-bar'+(over?' over':'')+'"><i style="width:'+pct+'%"></i></div>'):'<div style="font-size:12px;color:#9ca3af;margin-top:6px">No estimate entered for this week.</div>')
+    +'</div>';
+
+  h+='<div class="tm-h"><span>By category</span></div>';
+  h+=BUDGET_CATS.map(function(c){
+      var r=bud.rows[c]; if(!r.act && !r.est) return '';
+      var p=spend?Math.round(r.act/spend*100):0;
+      return '<div class="tm-cat"><span class="cn">'+esc(c)+'</span><span class="cv">'+money(r.act)+'</span><span class="cp">'+p+'%</span></div>';
+    }).join('') || '<div class="tm-empty">No expenses yet this week.</div>';
+
+  h+='<div class="tm-h"><span>Recent expenses</span><span class="tm-count">'+exps.length+'</span></div>';
+  h+= exps.slice(-6).reverse().map(function(e){
+        return '<div class="tmrow"><div class="t"><b>'+esc(e.vendor||normCat(e.cat))+'</b>'
+          +'<span>'+esc(normCat(e.cat))+' · '+(e.date!=null&&labs[e.date]?(labs[e.date][0]+', '+labs[e.date][1]):'no date')+(e.isEst?' · estimate':'')+'</span></div>'
+          +'<span class="tmc-time">'+money(e.amount)+'</span></div>';
+      }).join('') || '<div class="tm-empty">Nothing recorded yet.</div>';
+
+  h+='<button class="tm-primary" id="mobAddExp">+ Add Expense</button>';
+  h+='<button class="tm-primary" style="background:#e5e7eb;color:#9ca3af;margin-top:8px" disabled title="Requires secure login">📷 Capture Receipt — requires secure login</button>';
+  h+='</div>';
+  return h;
+}
+
+/* ---------- FILES ---------- */
+function mobFiles_render(){
+  return '<div class="tm-screen">'
+    +'<div class="tm-lock">'
+      +'<div class="warnpill">Secure login required</div>'
+      +'<div class="lt">Travel Wallet requires secure login.</div>'
+      +'<div class="ls">Flight confirmations, hotel bookings, rental agreements, boarding passes, '
+      +'photos and receipts will live here once email authentication is enabled.</div>'
+      +'<div class="ls" style="margin-top:8px">Nothing is uploaded or stored today. The documents bucket '
+      +'stays private and is not reachable from this session.</div>'
+    +'</div>'
+    +'<div class="tm-h"><span>Receipts</span></div>'
+    +'<div class="tm-lock"><div class="ls">Receipt capture is disabled until secure login is enabled.</div></div>'
+    +'</div>';
+}
+
+/* ---------- MORE ---------- */
+function mobMore_render(){
+  return '<div class="tm-screen">'
+    +'<div class="tm-h"><span>Trip</span></div>'
+    +'<div class="tmrow"><div class="t"><b>'+esc(MOB.terr)+' · Week '+MOB.wk+'</b><span>'+esc(WEEKDATES[MOB.wk]||'')+', 2026</span></div></div>'
+    +'<div class="tm-h"><span>Desktop</span></div>'
+    +'<div class="tm-lock"><div class="ls">The full planner — Schedule board, Master Sheet and trip reports — '
+      +'is available on a larger screen. Trip Mode shows the current week only.</div></div>'
+    +'<div class="tm-h"><span>Session</span></div>'
+    +'<button class="tm-primary" style="background:#fff;color:#dc2626;border:1px solid #e5e7eb" id="mobSignOut">Sign out</button>'
+    +'</div>';
+}
+
+/* ---------- shell ---------- */
+function renderMobile(){
+  var host=document.getElementById('tripmode'); if(!host) return;
+  var weeks=mobWeeks(MOB.terr); if(!weeks.length) weeks=FIELD_NUMS;
+  if(weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0];
+
+  var body = MOB.tab==='today'  ? mobToday_render()
+           : MOB.tab==='route'  ? mobRoute_render()
+           : MOB.tab==='budget' ? mobBudget_render()
+           : MOB.tab==='files'  ? mobFiles_render()
+           : mobMore_render();
+
+  var tab=function(id,icon,label){
+    return '<button data-mobtab="'+id+'" class="'+(MOB.tab===id?'on':'')+'"><span class="ni">'+icon+'</span>'+label+'</button>';
+  };
+
+  host.innerHTML=
+     '<div class="tm-top">'
+      +'<div class="tm-brand"><img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>'
+      +'<div class="tm-mode">Trip Mode</div>'
+      +'<div class="tm-week">'
+        +'<select id="mobTerr">'+TERRS.map(function(t){return '<option'+(t===MOB.terr?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'
+        +'<select id="mobWeek">'+weeks.map(function(w){return '<option value="'+w+'"'+(w===MOB.wk?' selected':'')+'>Week '+w+'</option>';}).join('')+'</select>'
+      +'</div>'
+      +'<div class="tm-dates">'+esc(WEEKDATES[MOB.wk]||'')+', 2026</div>'
+     +'</div>'
+     +body
+     +'<div class="tm-nav">'
+       +tab('today','⌂','Today')+tab('route','⛗','Route')+tab('budget','▤','Budget')
+       +tab('files','🗎','Files')+tab('more','⋯','More')
+     +'</div>';
+
+  if(MOB.tab==='route' && MOB.routeView==='map') mobDrawMap();
+  wireMobile();
+}
+function wireMobile(){
+  var q=function(s){return document.querySelectorAll('#tripmode '+s);};
+  q('[data-mobtab]').forEach(function(b){ b.onclick=function(){ MOB.tab=b.dataset.mobtab; renderMobile(); }; });
+  q('[data-mobroute]').forEach(function(b){ b.onclick=function(){ MOB.routeView=b.dataset.mobroute; renderMobile(); }; });
+  q('[data-mobscope]').forEach(function(b){ b.onclick=function(){ MOB.routeScope=b.dataset.mobscope; renderMobile(); }; });
+  var te=document.getElementById('mobTerr'); if(te) te.onchange=function(){ MOB.terr=te.value; MOB.day=null; renderMobile(); };
+  var wkv=document.getElementById('mobWeek'); if(wkv) wkv.onchange=function(){ MOB.wk=parseInt(wkv.value,10); MOB.day=null; renderMobile(); };
+  var cd=document.getElementById('mobChangeDay'); if(cd) cd.onclick=mobDaySheet;
+  var add=document.getElementById('mobAdd'); if(add) add.onclick=mobAddSheet;
+  var ae=document.getElementById('mobAddExp'); if(ae) ae.onclick=mobExpenseSheet;
+  var so=document.getElementById('mobSignOut'); if(so) so.onclick=function(){ pbSignOut(); };
+
+  q('[data-mobdone]').forEach(function(b){ b.onclick=function(){
+    var p=b.dataset.mobdone.split(':'), kind=p[0], id=p[1];
+    if(kind==='dealer'){ APPT[id]=!APPT[id]; if(!APPT[id]) delete APPT[id]; }
+    else { var it=LOGI.filter(function(x){return x.id===id;})[0]; if(it) it.done=!it.done; }
+    savePlan(); renderMobile();
+  };});
+  q('[data-mobedit]').forEach(function(b){ b.onclick=function(){
+    var p=b.dataset.mobedit.split(':');
+    if(p[0]==='travel') mobEditSheet(p[1]); else mobDealerSheet(p[1]);
+  };});
+}
+
+/* ---------- sheets ---------- */
+function mobSheet(title,inner){
+  var w=document.createElement('div'); w.className='tm-sheet'; w.id='mobSheet';
+  w.innerHTML='<div class="body"><h3>'+esc(title)+'</h3>'+inner+'</div>';
+  document.body.appendChild(w);
+  w.addEventListener('click',function(e){ if(e.target===w) w.remove(); });
+  return w;
+}
+function mobDaySheet(){
+  var labs=dayLabels(MOB.wk);
+  var w=mobSheet('Change day', labs.map(function(l,i){
+    return '<button class="tm-opt" data-day="'+i+'"><span class="oi" style="background:#6b7280">'+(i+1)+'</span>'+l[0]+', '+l[1]+'</button>';
+  }).join('')+'<button class="tm-opt" data-day=""><span class="oi" style="background:#9ca3af">↺</span>Use actual today</button>');
+  w.querySelectorAll('[data-day]').forEach(function(b){ b.onclick=function(){
+    MOB.day=(b.dataset.day===''?null:parseInt(b.dataset.day,10)); w.remove(); renderMobile(); };});
+}
+var MOB_ADD=[
+  ['dealer','Dealer Visit','#2563eb','●',false],
+  ['hotel','Hotel','#7c3aed','🏨',true],
+  ['rental_pickup','Rental Car — Pickup','#0f766e','🚗',true],
+  ['rental_return','Rental Car — Return','#0f766e','🚗',true],
+  ['flight_in','Flight — Arrival','#2563eb','✈',true],
+  ['flight_out','Flight — Departure','#2563eb','✈',true],
+  ['food','Meal','#ea580c','🍴',true],
+  ['fuel','Fuel','#dc2626','⛽',true],
+  ['parking','Parking / Tolls','#6b7280','🅿',true],
+  ['other','Other','#6b7280','•',true],
+  ['expense','Expense','#16a34a','$',true],
+  ['note','Note','#9ca3af','📝','lock'],
+  ['photo','Photo','#9ca3af','📷','lock'],
+  ['receipt','Capture Receipt','#9ca3af','🧾','lock']
+];
+function mobAddSheet(){
+  var inner=MOB_ADD.map(function(o){
+    var locked=(o[4]==='lock');
+    return '<button class="tm-opt'+(locked?' locked':'')+'" data-addk="'+o[0]+'"'+(locked?' disabled':'')+'>'
+      +'<span class="oi" style="background:'+o[2]+'">'+o[3]+'</span>'+esc(o[1])
+      +(locked?'<span class="lk">Secure login</span>':'')+'</button>';
+  }).join('');
+  var w=mobSheet('Add Quick Item', inner);
+  w.querySelectorAll('[data-addk]').forEach(function(b){ b.onclick=function(){
+    var k=b.dataset.addk; w.remove();
+    if(k==='expense'){ mobExpenseSheet(); return; }
+    if(k==='dealer'){ alert('Drag dealers into a week on the Schedule tab (desktop). Trip Mode edits the trip, not the dealer roster.'); return; }
+    /* travel item: create it in the selected week, then open its editor */
+    var prevTerr=terr; terr=MOB.terr;
+    addTravel(k, MOB.wk);
+    terr=prevTerr;
+    var created=LOGI[LOGI.length-1];
+    if(MOB.day!=null){ created.day=MOB.day; }
+    savePlan(); renderMobile(); mobEditSheet(created.id);
+  };});
+}
+function mobField(label,html){ return '<div class="tm-field"><label>'+esc(label)+'</label>'+html+'</div>'; }
+function mobEditSheet(id){
+  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it) return;
+  var ty=travelType(it), T=TRAVEL_TYPES[ty];
+  var labs=dayLabels(MOB.wk);
+  var dayOpts=function(sel){ return '<option value="">— day —</option>'+labs.map(function(l,i){
+      return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+', '+l[1]+'</option>';}).join(''); };
+  var isFlight=(ty==='flight_in'||ty==='flight_out'), isHotel=(ty==='hotel');
+
+  var inner='';
+  if(isFlight){
+    inner+=mobField('Airport code','<input id="ms_code" list="apList" value="'+esc(it.airportCode||'')+'" placeholder="YYZ" maxlength="4" autocapitalize="characters">');
+    inner+=mobField('Airline','<input id="ms_airline" value="'+esc(it.airline||'')+'">');
+    inner+=mobField('Flight number','<input id="ms_flightNo" value="'+esc(it.flightNo||'')+'">');
+  } else {
+    inner+=mobField(T.label+' name','<input id="ms_name" value="'+esc(it.name||'')+'">');
+    inner+=mobField('Address','<input id="ms_address" value="'+esc(it.address||'')+'">');
+  }
+  inner+=mobField(isHotel?'Check-in day':'Day','<select id="ms_day">'+dayOpts(it.day)+'</select>');
+  inner+=mobField(isHotel?'Check-in time':'Time','<input id="ms_time" type="time" value="'+esc(it.time||'')+'">');
+  if(isHotel){
+    inner+=mobField('Check-out day','<select id="ms_day2">'+dayOpts(it.day2)+'</select>');
+    inner+=mobField('Check-out time','<input id="ms_time2" type="time" value="'+esc(it.time2||'')+'">');
+  }
+  inner+=mobField('Confirmation #','<input id="ms_conf" value="'+esc(it.conf||'')+'">');
+  inner+=mobField('Notes','<input id="ms_notes" value="'+esc(it.notes||'')+'">');
+  inner+='<button class="tm-primary" id="ms_save">Save</button>';
+  if(!isFlight) inner+='<button class="tm-primary" style="background:#fff;color:#2563eb;border:1px solid #d1d5db;margin-top:8px" id="ms_geo">Find location from address</button>';
+  inner+='<button class="tm-primary" style="background:#fff;color:#dc2626;border:1px solid #e5e7eb;margin-top:8px" id="ms_del">Remove</button>';
+
+  var w=mobSheet(T.label, inner);
+  var g=function(k){var el=document.getElementById('ms_'+k); return el?el.value:undefined;};
+  document.getElementById('ms_save').onclick=function(){
+    if(isFlight){
+      if(g('code')!==undefined) setTravelField(id,'airportCode',g('code'));
+      it.airline=g('airline'); it.flightNo=g('flightNo');
+    } else { it.name=g('name'); it.address=g('address'); }
+    it.day=(g('day')===''?null:parseInt(g('day'),10));
+    it.time=g('time');
+    if(isHotel){ it.day2=(g('day2')===''?null:parseInt(g('day2'),10)); it.time2=g('time2'); }
+    it.conf=g('conf'); it.notes=g('notes');
+    savePlan(); w.remove(); renderMobile();
+  };
+  var geo=document.getElementById('ms_geo');
+  if(geo) geo.onclick=function(){
+    it.name=g('name'); it.address=g('address');
+    geocodeAddress([it.name,it.address].filter(Boolean).join(', '),function(res){
+      if(!res){ alert('Address not found.'); return; }
+      it.lat=res.lat; it.lon=res.lon; savePlan(); w.remove(); renderMobile();
+    });
+  };
+  document.getElementById('ms_del').onclick=function(){
+    if(!confirm('Remove this item?')) return;
+    LOGI=LOGI.filter(function(x){return x.id!==id;});
+    savePlan(); w.remove(); renderMobile();
+  };
+}
+function mobDealerSheet(id){
+  var labs=dayLabels(MOB.wk);
+  var inner=mobField('Day','<select id="md_day"><option value="">— day —</option>'
+      +labs.map(function(l,i){return '<option value="'+i+'"'+(DAY[id]===i?' selected':'')+'>'+l[0]+', '+l[1]+'</option>';}).join('')+'</select>')
+    +mobField('Time','<input id="md_time" type="time" value="'+esc(TIME[id]||'')+'">')
+    +mobField('Duration (minutes)','<input id="md_dur" type="number" step="15" value="'+(DUR[id]||90)+'">')
+    +'<button class="tm-primary" id="md_save">Save</button>';
+  var d=uniById(id);
+  var w=mobSheet(d?d.name:'Dealer visit', inner);
+  document.getElementById('md_save').onclick=function(){
+    var dv=document.getElementById('md_day').value;
+    DAY[id]=(dv===''?null:parseInt(dv,10));
+    TIME[id]=document.getElementById('md_time').value;
+    DUR[id]=parseInt(document.getElementById('md_dur').value,10)||90;
+    savePlan(); w.remove(); renderMobile();
+  };
+}
+function mobExpenseSheet(){
+  var labs=dayLabels(MOB.wk);
+  var inner=mobField('Category','<select id="me_cat">'+BUDGET_CATS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>')
+    +mobField('Vendor','<input id="me_vendor" placeholder="Shell, Hampton Inn…">')
+    +mobField('Amount','<input id="me_amount" type="number" step="0.01" inputmode="decimal" placeholder="0.00">')
+    +mobField('Day','<select id="me_day"><option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'">'+l[0]+', '+l[1]+'</option>';}).join('')+'</select>')
+    +mobField('Type','<select id="me_type"><option value="actual">Actual</option><option value="estimate">Estimate</option></select>')
+    +mobField('Notes','<input id="me_notes">')
+    +'<button class="tm-primary" id="me_save">Add expense</button>'
+    +'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:10px">Receipt capture requires secure login.</div>';
+  var w=mobSheet('Add Expense', inner);
+  document.getElementById('me_save').onclick=function(){
+    var amt=document.getElementById('me_amount').value;
+    if(amt===''||!isFinite(parseFloat(amt))){ alert('Enter an amount.'); return; }
+    var prevTerr=terr; terr=MOB.terr;
+    addExpense(MOB.terr, MOB.wk, {
+      cat:document.getElementById('me_cat').value,
+      vendor:document.getElementById('me_vendor').value,
+      date:document.getElementById('me_day').value,
+      isEst:(document.getElementById('me_type').value==='estimate'),
+      amount:amt, notes:document.getElementById('me_notes').value});
+    terr=prevTerr;
+    w.remove(); renderMobile();
+  };
+}
+
+/* boot: only on phone widths, and only after the passcode gate unlocks */
+function mobBoot(){
+  if(!mobIsPhone()) return;
+  var weeks=mobWeeks(MOB.terr);
+  if(weeks.length && weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0];
+  renderMobile();
+}
+window.addEventListener('resize',function(){
+  var host=document.getElementById('tripmode');
+  if(mobIsPhone()){ if(host && !host.innerHTML) mobBoot(); }
+});
+/* service worker: only over https (or localhost) */
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='127.0.0.1'||location.hostname==='localhost')){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });
+}
+
 </script>
 </body>
 </html>
