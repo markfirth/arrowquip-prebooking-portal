@@ -61,7 +61,7 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqMainNav{background-color:#000;border-bottom:1px solid #000;}
 .aqNavContainer{display:flex;justify-content:space-between;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
 .aqLogoContainer{display:flex;align-items:center;}
-.aqLogo{height:40px;width:auto;display:block;transition:opacity .2s;}
+.aqLogo{height:54px;width:auto;display:block;transition:opacity .2s;}
 .aqLogo:hover{opacity:.8;}
 .aqNavLinks{display:flex;align-items:center;gap:30px;height:100%;}
 .aqNavItem{display:flex;align-items:center;height:100%;position:relative;}
@@ -594,8 +594,8 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tl-summary span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
 .tm-tl{position:relative;}
 .tl-item{position:relative;display:flex;gap:12px;}
-.tl-rail{position:relative;flex:0 0 46px;display:flex;flex-direction:column;align-items:center;padding-top:2px;}
-.tl-time{font-size:11px;font-weight:700;color:#6b7280;white-space:nowrap;margin-bottom:5px;}
+.tl-rail{position:relative;flex:0 0 58px;display:flex;flex-direction:column;align-items:center;padding-top:2px;}
+.tl-time{font-size:11px;font-weight:700;color:#6b7280;white-space:nowrap;margin-bottom:5px;position:relative;z-index:2;}
 .tl-node{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;box-shadow:0 0 0 3px #fff;position:relative;z-index:2;}
 .tl-item:not(:last-child) .tl-rail::after{content:"";position:absolute;left:50%;transform:translateX(-50%);top:44px;bottom:-14px;width:2px;background:#e5e7eb;z-index:1;}
 .tl-body{flex:1 1 auto;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:11px 12px;margin-bottom:14px;}
@@ -677,6 +677,46 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .vd-ph img{width:100%;height:100%;object-fit:cover;display:block;}
 .vd-phdel{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
 
+/* ---- Leader View: compact all-areas weekly overview + company map ---- */
+.lvtabs{display:flex;gap:6px;margin:0 0 12px;}
+.lvwk{border:1px solid var(--line);border-radius:var(--radius);background:#fff;margin-bottom:10px;overflow:hidden;}
+.lvwkbar{background:var(--aq-black);color:#fff;padding:7px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800;font-size:12.5px;letter-spacing:.3px;}
+.lvwkbar .sub{color:#c7cacc;font-weight:600;}
+.lvwk.min .lvwkbar{background:#3a3737;padding:5px 12px;font-size:11.5px;}
+.lvpills{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+.lvareas{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));}
+.lvarea{border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);padding:8px 10px;min-width:0;}
+.lvarea:last-child{border-right:0;}
+.lvah{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;flex-wrap:wrap;}
+.lvah .rep{color:var(--muted-2);font-weight:600;text-transform:none;letter-spacing:0;}
+.lvdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.lvopen{margin-left:auto;font-size:10px;color:var(--muted-2);cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:1px 7px;background:#fff;font-weight:700;letter-spacing:0;text-transform:none;}
+.lvopen:hover{color:var(--aq-red);border-color:var(--aq-red);}
+.lvday{display:flex;gap:6px;align-items:flex-start;padding:2px 0;}
+.lvd{flex:0 0 30px;font-weight:700;color:var(--muted-2);font-size:10px;padding-top:3px;}
+.lvunsch .lvd{color:#b45309;}
+.lvvis{display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+.lvchip{background:#f3f4f6;border:1px solid var(--line-soft);border-radius:10px;padding:1px 7px;font-size:10.5px;font-weight:600;color:#374151;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.lvchip.ok{background:#e7f3ec;border-color:#bfe3cd;color:#15803d;}
+.lvchip.trav{background:#fff;color:var(--muted);font-weight:500;}
+.lvnone{font-size:11px;color:var(--muted-2);font-style:italic;padding:2px 0 4px;}
+.lvastats{font-size:10px;color:var(--muted-2);font-weight:600;text-transform:none;letter-spacing:0;}
+.lvkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;}
+.lvkpi{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:8px 10px;min-width:0;}
+.lvkpi .k{font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);}
+.lvkpi .v{font-size:1.05rem;font-weight:700;color:var(--aq-black);letter-spacing:-.3px;margin-top:2px;}
+.lvctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.lvmapgrid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(280px,1fr);gap:14px;align-items:start;}
+#leaderMap{height:560px;border-radius:var(--radius);border:1px solid var(--line);z-index:1;}
+.lvlegend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;}
+.lvlegend .lga{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:14px;padding:3px 10px;cursor:pointer;background:#fff;color:#374151;user-select:none;}
+.lvlegend .lga.off{opacity:.35;}
+.lvsumtab{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:12px;}
+.lvsumtab th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);}
+.lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
+.lvsumtab .num{text-align:right;}
+.lvsumtab tr.tot td{font-weight:800;border-top:2px solid var(--line);}
+@media(max-width:1100px){.lvmapgrid{grid-template-columns:1fr;} #leaderMap{height:420px;}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -762,7 +802,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
   </div>
   <div id="allView" style="display:none;">
     <div class="tablecard">
-      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Calendar · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="calBtn" class="segb on">Calendar</button><button id="mapBtn" class="segb">Map</button><button id="leadBtn" class="segb">Leaders</button></div><span id="mapWeekWrap" style="display:none"><select id="mapWeekSel" class="msearch" style="max-width:180px"></select></span><span id="leadWrap" style="display:none"><select id="leadSel" class="msearch" style="max-width:160px"></select></span></div></div>
+      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Calendar · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="calBtn" class="segb on">Calendar</button><button id="mapBtn" class="segb">Map</button><button id="leadBtn" class="segb">Leaders</button><button id="lvBtn" class="segb">Leader View</button></div><span id="mapWeekWrap" style="display:none"><select id="mapWeekSel" class="msearch" style="max-width:180px"></select></span><span id="leadWrap" style="display:none"><select id="leadSel" class="msearch" style="max-width:160px"></select></span></div></div>
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
@@ -1023,6 +1063,14 @@ function savePlan(){
 
 /* ---------------- Trip Plans -> History (preview / compare / restore) --------------- */
 function pbFmtTs(s){ try{ return new Date(s).toLocaleString(); }catch(e){ return s; } }
+/* Audit actors are backend identities; the shared service account is shown as "Team". */
+function pbActorLabel(a){
+  a=String(a||'');
+  if(!a) return '—';
+  if(/^tripmode@/i.test(a)) return 'Team';
+  if(/^passcode-/i.test(a)) return 'Team device';
+  return a;
+}
 function pbChangeLine(c){
   if(!c) return '';
   if(c.initial) return 'initial version';
@@ -1062,7 +1110,7 @@ function openHistory(){
         +'</b>. Restoring version <i>N</i> returns the plan to its state <i>before</i> save N.</div>'
         +'<table class="stoptab"><thead><tr><th>Version</th><th>When</th><th>Who</th><th>Territory</th><th>Reason</th><th>Changes</th><th></th></tr></thead><tbody>'
         +rows.map(function(r){
-          return '<tr><td>'+r.new_version+'</td><td>'+pbFmtTs(r.saved_at)+'</td><td>'+esc(r.saved_by||'—')+'</td>'
+          return '<tr><td>'+r.new_version+'</td><td>'+pbFmtTs(r.saved_at)+'</td><td>'+esc(pbActorLabel(r.saved_by))+'</td>'
             +'<td>'+esc(r.territory||'—')+'</td><td>'+esc(r.reason||'save')+'</td>'
             +'<td>'+esc(pbChangeLine(r.change_summary))+'</td>'
             +'<td style="white-space:nowrap">'
@@ -1216,11 +1264,11 @@ function renderPlanner(){
 const TRAVEL_TYPES={
   flight_in :{label:'Flight Arrival', icon:'✈', color:'#2563eb', place:'airport'},
   flight_out:{label:'Flight Departure',icon:'✈', color:'#2563eb', place:'airport'},
-  rental_pickup:{label:'Rental Pickup', icon:'🚗', color:'#0f766e', place:'address'},
-  rental_return:{label:'Rental Return', icon:'🚗', color:'#0f766e', place:'address'},
+  rental_pickup:{label:'Rental Pickup', icon:'🚗', color:'#16a34a', place:'address'},
+  rental_return:{label:'Rental Return', icon:'🚗', color:'#16a34a', place:'address'},
   hotel     :{label:'Hotel',         icon:'🏨', color:'#7c3aed', place:'address'},
-  fuel      :{label:'Fuel',          icon:'⛽', color:'#dc2626', place:'address'},
-  food      :{label:'Food',          icon:'🍴', color:'#ea580c', place:'address'},
+  fuel      :{label:'Fuel',          icon:'⛽', color:'#ea580c', place:'address'},
+  food      :{label:'Food',          icon:'🍴', color:'#d97706', place:'address'},
   parking   :{label:'Parking / Toll',icon:'🅿',  color:'#6b7280', place:'address'},
   other     :{label:'Other',         icon:'•',  color:'#6b7280', place:'address'}
 };
@@ -1593,12 +1641,12 @@ function cardHTML(d,wk){
     +ctl+'</div>';
 }
 function renderAllView(){
-  var cb=document.getElementById('calBtn'),mb=document.getElementById('mapBtn'),lb=document.getElementById('leadBtn');
-  if(cb)cb.classList.toggle('on',allMode==='cal'); if(mb)mb.classList.toggle('on',allMode==='map'); if(lb)lb.classList.toggle('on',allMode==='leaders');
+  var cb=document.getElementById('calBtn'),mb=document.getElementById('mapBtn'),lb=document.getElementById('leadBtn'),vb=document.getElementById('lvBtn');
+  if(cb)cb.classList.toggle('on',allMode==='cal'); if(mb)mb.classList.toggle('on',allMode==='map'); if(lb)lb.classList.toggle('on',allMode==='leaders'); if(vb)vb.classList.toggle('on',allMode==='leader');
   var ww=document.getElementById('mapWeekWrap'); if(ww)ww.style.display=allMode==='map'?'':'none';
   var lw=document.getElementById('leadWrap'); if(lw)lw.style.display=allMode==='leaders'?'':'none';
-  var sub=document.getElementById('allSub'); if(sub)sub.textContent=allMode==='map'?('Map — Week '+mapWeek+' · '+WEEKDATES[mapWeek]):(allMode==='leaders'?('Leader trips — '+leaderFilter+' · filter by leader'):'Calendar · Week 31 (Kickoff) through Week 44 · tap + on a stop to add leaders joining');
-  if(allMode==='map') renderMap(); else if(allMode==='leaders') renderLeaderView(); else renderCalendar();
+  var sub=document.getElementById('allSub'); if(sub)sub.textContent=allMode==='map'?('Map — Week '+mapWeek+' · '+WEEKDATES[mapWeek]):(allMode==='leaders'?('Leader trips — '+leaderFilter+' · filter by leader'):(allMode==='leader'?'Leader View — every area, week by week · read-only overview':'Calendar · Week 31 (Kickoff) through Week 44 · tap + on a stop to add leaders joining'));
+  if(allMode==='map') renderMap(); else if(allMode==='leaders') renderLeaderView(); else if(allMode==='leader') renderLeaderSummary(); else renderCalendar();
 }
 function renderLeaderView(){
   var sel=document.getElementById('leadSel');
@@ -1630,6 +1678,167 @@ function renderJoin(){
     return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(sumB(r.ds))+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
   }).join(''):'<tr><td colspan="4" class="empty" style="padding:30px">No trips scheduled yet — plan some weeks first.</td></tr>';
   document.getElementById('ganttWrap').innerHTML='<div class="joinhd">Tap a name to confirm they will join that trip. Saved automatically.</div><table class="cal jtab"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+}
+/* =================== Leader View — executive overview =======================
+   One weekly overview of every area (East/South/Central/West/Exports), plus a
+   company-wide map. Reads the SAME shared plan state as the area tabs (ASSIGN/
+   DAY/TIME/APPT/LOGI/EXPENSES) — no duplicate state, strictly read-focused. */
+const AREA_COLOR={East:'#2563eb',South:'#16a34a',Central:'#ea580c',West:'#7c3aed',Exports:'#dc2626'};
+let LV_TAB='overview';   /* overview | map */
+let LV_WEEK=null;        /* week shown on the Leader Map */
+let LV_AREAS={East:true,South:true,Central:true,West:true,Exports:true};
+let LV_REP='';
+function lvWeeks(){ return [31].concat(FIELD_NUMS); }
+function lvWeekTarget(){ return (GOAL2027>0)?(GOAL2027/lvWeeks().length):0; }
+function lvVisits(wk,t){ return dealersIn(t).filter(function(d){ return ASSIGN[d.id]===wk; }); }
+function lvWeekStats(wk){
+  var per={}, rev=0, loads=0, n=0, conf=0, confRev=0;
+  TERRS.forEach(function(t){
+    var ds=lvVisits(wk,t);
+    var s={n:ds.length, rev:sumB(ds), loads:sumL(ds), conf:apptCount(ds),
+           confRev:ds.reduce(function(a,d){return a+(APPT[d.id]?(d.booking||0):0);},0)};
+    per[t]=s; rev+=s.rev; loads+=s.loads; n+=s.n; conf+=s.conf; confRev+=s.confRev;
+  });
+  return {per:per, rev:rev, loads:loads, n:n, conf:conf, confRev:confRev,
+          pct:(n?conf/n*100:0), target:lvWeekTarget(),
+          tpct:(lvWeekTarget()>0?confRev/lvWeekTarget()*100:null)};
+}
+function lvTravelChips(t,wk,dayIdx){
+  var keep={flight_in:'Arrive',flight_out:'Depart',hotel:'Hotel',rental_pickup:'Pickup',rental_return:'Return'};
+  return LOGI.filter(function(it){ return it.terr===t && it.wk===wk && keep[it.type] && (dayIdx==null?it.day==null:it.day===dayIdx); })
+    .map(function(it){ var ty=TRAVEL_TYPES[it.type]||{};
+      return '<span class="lvchip trav" title="'+esc((it.name||keep[it.type])+(it.time?(' · '+t12s(it.time)):''))+'">'
+        +(ty.icon||'•')+' '+keep[it.type]+(it.time?(' '+t12s(it.time)):'')+'</span>'; }).join('');
+}
+function lvAreaHTML(t,wk){
+  var ds=lvVisits(wk,t);
+  var rep=FLAT.tm[t]||'';
+  var head='<div class="lvah"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t
+    +(rep&&rep!=='—'?'<span class="rep">'+esc(rep)+'</span>':'')
+    +'<span class="lvopen" data-lvopen="'+t+'">Open ›</span></div>';
+  var hasTravel=LOGI.some(function(it){ return it.terr===t && it.wk===wk; });
+  if(!ds.length && !hasTravel) return '<div class="lvarea">'+head+'<div class="lvnone">No visits planned.</div></div>';
+  var labs=dayLabels(wk), rows='';
+  labs.forEach(function(l,i){
+    var dd=ds.filter(function(d){return DAY[d.id]===i;})
+             .sort(function(a,b){return (TIME[a.id]||'99').localeCompare(TIME[b.id]||'99');});
+    var chips=dd.map(function(d){ var ok=!!APPT[d.id];
+      return '<span class="lvchip'+(ok?' ok':'')+'" title="'+esc(d.name)+' · '+esc(d.loc||'')+(TIME[d.id]?(' · '+t12(TIME[d.id])):'')+(ok?' · Confirmed':' · Pending')+'">'
+        +esc(d.name)+(TIME[d.id]?(' · '+t12s(TIME[d.id])):'')+(ok?' ✓':'')+'</span>'; }).join('');
+    chips+=lvTravelChips(t,wk,i);
+    if(chips) rows+='<div class="lvday"><span class="lvd">'+l[0]+'</span><div class="lvvis">'+chips+'</div></div>';
+  });
+  var un=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;});
+  var unChips=un.map(function(d){ var ok=!!APPT[d.id];
+    return '<span class="lvchip'+(ok?' ok':'')+'">'+esc(d.name)+(ok?' ✓':'')+'</span>'; }).join('')+lvTravelChips(t,wk,null);
+  if(unChips) rows+='<div class="lvday lvunsch"><span class="lvd">TBD</span><div class="lvvis">'+unChips+'</div></div>';
+  var stats=ds.length?('<span class="lvastats">'+ds.length+' visits · '+sumL(ds)+' loads · '+fmtUSDk(sumB(ds))+' · '+apptCount(ds)+'/'+ds.length+' conf</span>'):'';
+  return '<div class="lvarea"><div class="lvah"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t
+    +(rep&&rep!=='—'?'<span class="rep">'+esc(rep)+'</span>':'')+stats
+    +'<span class="lvopen" data-lvopen="'+t+'">Open ›</span></div>'
+    +(rows||'<div class="lvnone">No visits planned.</div>')+'</div>';
+}
+function lvOverviewHTML(){
+  return lvWeeks().map(function(wk){
+    var s=lvWeekStats(wk);
+    var hasAny=s.n>0 || LOGI.some(function(it){return it.wk===wk;});
+    var bar='<div class="lvwkbar">Week '+wk+(wk===31?' · Kickoff':'')+' <span class="sub">'+WEEKDATES[wk]+'</span>'
+      +'<div class="lvpills">'
+      +'<span class="kpill total">'+fmtUSDk(s.rev)+'</span>'
+      +'<span class="kpill target">Loads: '+s.loads+'</span>'
+      +'<span class="kpill sub">'+s.conf+'/'+s.n+' confirmed · '+s.pct.toFixed(0)+'%</span>'
+      +(s.tpct!=null?('<span class="kpill sub" title="Confirmed revenue vs this week\'s share of the 2027 goal">'+s.tpct.toFixed(0)+'% of target</span>'):'')
+      +'</div></div>';
+    if(!hasAny) return '<div class="lvwk min">'+bar+'</div>';
+    return '<div class="lvwk">'+bar+'<div class="lvareas">'+TERRS.map(function(t){return lvAreaHTML(t,wk);}).join('')+'</div></div>';
+  }).join('');
+}
+function lvReps(){ var out=[]; TERRS.forEach(function(t){ var r=FLAT.tm[t]; if(r&&r!=='—'&&out.indexOf(r)<0) out.push(r); }); return out; }
+function lvDefaultWeek(){
+  var ws=lvWeeks();
+  for(var i=0;i<ws.length;i++){ var any=TERRS.some(function(t){ return lvVisits(ws[i],t).length; }); if(any) return ws[i]; }
+  return ws[1]||32;
+}
+function lvMapHTML(){
+  if(LV_WEEK==null) LV_WEEK=lvDefaultWeek();
+  var wk=LV_WEEK, s=lvWeekStats(wk);
+  var kpi=function(k,v,sub){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(sub?('<div class="k" style="margin-top:2px;text-transform:none;letter-spacing:0">'+sub+'</div>'):'')+'</div>'; };
+  var kpis='<div class="lvkpis">'
+    +kpi('Planned Revenue',fmtUSDk(s.rev))
+    +kpi('Planned Loads',s.loads)
+    +kpi('Dealer Visits',s.n)
+    +kpi('Confirmed Appointments',s.conf+' · '+s.pct.toFixed(0)+'%')
+    +kpi('Confirmed Revenue',fmtUSDk(s.confRev))
+    +kpi('Weekly Target',s.target>0?fmtUSDk(s.target):'—',s.target>0?'':'set the 2027 goal on the Master Sheet')
+    +kpi('% of Target Confirmed',s.tpct!=null?(s.tpct.toFixed(0)+'%'):'—')
+    +'</div>';
+  var wkOpts=lvWeeks().map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+  var repOpts='<option value="">All representatives</option>'+lvReps().map(function(r){return '<option value="'+esc(r)+'"'+(LV_REP===r?' selected':'')+'>'+esc(r)+'</option>';}).join('');
+  var ctl='<div class="lvctl"><select id="lvWeekSel" class="msearch" style="max-width:230px">'+wkOpts+'</select>'
+    +'<select id="lvRepSel" class="msearch" style="max-width:190px">'+repOpts+'</select>'
+    +'<button class="btn" id="lvAllBtn">Show All</button></div>';
+  var legend='<div class="lvlegend">'+TERRS.map(function(t){
+      return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';
+    }).join('')
+    +'<span style="font-size:10.5px;color:var(--muted-2)">Solid = road route · dashed blue = flight · click an area to hide/show it</span></div>';
+  /* area comparison table */
+  var tot={n:0,conf:0,rev:0};
+  var sumRows=TERRS.map(function(t){ var a=s.per[t]; tot.n+=a.n; tot.conf+=a.conf; tot.rev+=a.rev;
+    return '<tr><td><i class="lvdot" style="display:inline-block;margin-right:6px;background:'+AREA_COLOR[t]+'"></i>'+t+'</td>'
+      +'<td class="num">'+a.n+'</td><td class="num">'+a.conf+'</td><td class="num">'+fmtUSDk(a.rev)+'</td></tr>'; }).join('');
+  var sumTab='<table class="lvsumtab"><thead><tr><th>Area</th><th class="num">Planned</th><th class="num">Confirmed</th><th class="num">Revenue</th></tr></thead>'
+    +'<tbody>'+sumRows+'<tr class="tot"><td>Total</td><td class="num">'+tot.n+'</td><td class="num">'+tot.conf+'</td><td class="num">'+fmtUSDk(tot.rev)+'</td></tr></tbody></table>';
+  /* right sidebar: budget, week summary, schedule summary */
+  var exps=expensesFor('All',wk), bud=budgetFor(exps);
+  var CAT_LABEL={'Flights':'Flights','Hotels':'Hotels','Fuel':'Fuel','Rental Cars':'Rental Cars','Food':'Meals','Parking / Tolls':'Parking/Tolls','Other':'Other'};
+  var budRows=BUDGET_CATS.map(function(c){ var r=bud.rows[c]; var v=r.act-r.est;
+    return '<tr><td>'+CAT_LABEL[c]+'</td><td class="num">'+money(r.est)+'</td><td class="num">'+money(r.act)+'</td><td class="num '+varCls(v)+'">'+varTxt(v)+'</td></tr>'; }).join('');
+  var vTot=bud.total.act-bud.total.est;
+  var budCard='<div class="tcard"><div class="tch"><div class="tct">Week Budget</div></div><div class="tcb" style="padding-top:6px">'
+    +'<table class="lvsumtab" style="margin-top:0"><thead><tr><th></th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Var</th></tr></thead><tbody>'
+    +budRows+'<tr class="tot"><td>Total</td><td class="num">'+money(bud.total.est)+'</td><td class="num">'+money(bud.total.act)+'</td><td class="num '+varCls(vTot)+'">'+varTxt(vTot)+'</td></tr></tbody></table></div></div>';
+  var wsRow=function(k,v){ return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:var(--muted)">'+k+'</span><b>'+v+'</b></div>'; };
+  var wsCard='<div class="tcard" style="margin-top:12px"><div class="tch"><div class="tct">Week Summary</div></div><div class="tcb">'
+    +wsRow('Planned Revenue',fmtUSDk(s.rev))+wsRow('Planned Loads',s.loads)+wsRow('Dealer Visits',s.n)
+    +wsRow('Confirmed Appointments',s.conf)+wsRow('Confirmed %',s.pct.toFixed(0)+'%')+wsRow('Confirmed Revenue',fmtUSDk(s.confRev))
+    +wsRow('Target Revenue',s.target>0?fmtUSDk(s.target):'—')+wsRow('Target %',s.tpct!=null?(s.tpct.toFixed(0)+'%'):'—')
+    +'</div></div>';
+  var labs=dayLabels(wk);
+  var schedRows=labs.map(function(l,i){
+    var vis=0,cf=0,ho=0,legs=0;
+    TERRS.forEach(function(t){
+      if(!LV_AREAS[t]) return;
+      lvVisits(wk,t).forEach(function(d){ if(DAY[d.id]===i){ vis++; if(APPT[d.id])cf++; } });
+      LOGI.forEach(function(it){ if(it.terr===t&&it.wk===wk&&it.day===i){ if(it.type==='hotel')ho++; else if(/^(flight_|rental_)/.test(it.type))legs++; } });
+    });
+    if(!vis&&!ho&&!legs) return '';
+    return '<div style="padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:11.5px"><b>'+l[0]+' '+l[1]+'</b>'
+      +'<span style="color:var(--muted)"> — '+vis+' visit'+(vis!==1?'s':'')+' · '+cf+' confirmed'
+      +(ho?(' · '+ho+' hotel'+(ho>1?'s':'')):'')+(legs?(' · '+legs+' travel leg'+(legs>1?'s':'')):'')+'</span></div>';
+  }).join('');
+  var schedCard='<div class="tcard" style="margin-top:12px"><div class="tch"><div class="tct">Schedule Summary</div></div><div class="tcb">'
+    +(schedRows||'<div class="lvnone">Nothing scheduled this week.</div>')+'</div></div>';
+  return kpis+ctl+'<div class="lvmapgrid"><div><div id="leaderMap"></div>'+legend+sumTab+'</div><div>'+budCard+wsCard+schedCard+'</div></div>';
+}
+function renderLeaderSummary(){
+  var tabs='<div class="lvtabs"><div class="seg">'
+    +'<button class="segb'+(LV_TAB==='overview'?' on':'')+'" data-lvtab="overview">Overview</button>'
+    +'<button class="segb'+(LV_TAB==='map'?' on':'')+'" data-lvtab="map">Map</button></div></div>';
+  var host=document.getElementById('ganttWrap');
+  host.innerHTML=tabs+(LV_TAB==='map'?lvMapHTML():lvOverviewHTML());
+  host.querySelectorAll('[data-lvtab]').forEach(function(b){ b.onclick=function(){ LV_TAB=b.dataset.lvtab; renderLeaderSummary(); }; });
+  host.querySelectorAll('[data-lvopen]').forEach(function(b){ b.onclick=function(){
+    terr=b.dataset.lvopen; terrMode='plan';
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('active',x.dataset.t===terr); });
+    render();
+  }; });
+  if(LV_TAB==='map'){
+    var w=document.getElementById('lvWeekSel'); if(w) w.onchange=function(){ LV_WEEK=parseInt(w.value,10); renderLeaderSummary(); };
+    var r=document.getElementById('lvRepSel'); if(r) r.onchange=function(){ LV_REP=r.value; renderLeaderSummary(); };
+    var a=document.getElementById('lvAllBtn'); if(a) a.onclick=function(){ LV_REP=''; TERRS.forEach(function(t){LV_AREAS[t]=true;}); renderLeaderSummary(); };
+    host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderLeaderSummary(); }; });
+    lvDrawMap();
+  }
 }
 function dayTimeLabel(d){ var wk=ASSIGN[d.id]; var di=DAY[d.id]; var labs=(typeof wk==='number')?dayLabels(wk):[]; var dn=(di!=null&&labs[di])?labs[di][0]:''; var tm=TIME[d.id]?t12s(TIME[d.id]):''; return (dn+(tm?(' '+tm):'')).trim(); }
 function calendarHTML(tl){
@@ -1736,9 +1945,9 @@ const STOP_TYPES={
   dealer :{label:'Dealer' ,color:'#2563eb',glyph:'',   cat:'Other'},
   hotel  :{label:'Hotel'  ,color:'#7c3aed',glyph:'H',  cat:'Hotel'},
   airport:{label:'Airport',color:'#2563eb',glyph:'✈', cat:'Flights'},
-  meal   :{label:'Meal'   ,color:'#ea580c',glyph:'M',  cat:'Food'},
-  fuel   :{label:'Fuel'   ,color:'#dc2626',glyph:'F',  cat:'Fuel'},
-  rental :{label:'Rental' ,color:'#6b7280',glyph:'C',  cat:'Car Rental'},
+  meal   :{label:'Meal'   ,color:'#d97706',glyph:'M',  cat:'Food'},
+  fuel   :{label:'Fuel'   ,color:'#ea580c',glyph:'F',  cat:'Fuel'},
+  rental :{label:'Rental' ,color:'#16a34a',glyph:'C',  cat:'Car Rental'},
   other  :{label:'Other'  ,color:'#6b7280',glyph:'',   cat:'Other'}
 };
 /* Budget categories, exactly as specified. Dealer visits are NOT expenses and never
@@ -2088,21 +2297,168 @@ function popupHTML(s){
     +(s.notes?'<div style="margin-top:6px;font-style:italic">'+esc(s.notes)+'</div>':'')
     +'</div></div>';
 }
+/* ---------- road routing (OSRM) ----------
+   Ground legs follow real roads: geometry comes from the public OSRM router and
+   is cached (memory + localStorage), so each leg is fetched once. A straight
+   line is drawn immediately and swapped for the road polyline when it arrives;
+   if the router is unreachable the straight line simply stays. Airport→airport
+   legs are flights and are drawn as a curved dashed path instead. */
+var _rtMem={}, _rtQ=[], _rtBusy=0, _aqMapGen=0;
+function _rtStore(){ try{ return JSON.parse(localStorage.getItem('aqRoutes_v1')||'{}'); }catch(e){ return {}; } }
+function _rtPersist(k,v){ try{
+  var s=_rtStore(); s[k]=v;
+  var ks=Object.keys(s); if(ks.length>300){ ks.slice(0,ks.length-300).forEach(function(x){ delete s[x]; }); }
+  localStorage.setItem('aqRoutes_v1',JSON.stringify(s));
+}catch(e){} }
+function roadRoute(a,b){ /* [lat,lon],[lat,lon] -> Promise<{pts,km,min}|null> */
+  var k=a[0].toFixed(3)+','+a[1].toFixed(3)+'|'+b[0].toFixed(3)+','+b[1].toFixed(3);
+  if(_rtMem[k]) return Promise.resolve(_rtMem[k]);
+  var st=_rtStore(); if(st[k]){ _rtMem[k]=st[k]; return Promise.resolve(st[k]); }
+  return new Promise(function(res){ _rtQ.push({k:k,a:a,b:b,res:res}); _rtPump(); });
+}
+var _RT_OSRM=['https://router.project-osrm.org','https://routing.openstreetmap.de/routed-car'];
+function _rtSlim(pts){ /* cap cached geometry at ~200 points */
+  if(pts.length<=220) return pts;
+  var out=[], step=(pts.length-1)/199;
+  for(var i=0;i<200;i++) out.push(pts[Math.round(i*step)]);
+  out.push(pts[pts.length-1]); return out;
+}
+function decodePoly6(str){ /* Valhalla encoded polyline, 1e-6 precision */
+  var pts=[],i=0,lat=0,lon=0;
+  while(i<str.length){
+    var b,sh=0,r=0;
+    do{ b=str.charCodeAt(i++)-63; r|=(b&0x1f)<<sh; sh+=5; }while(b>=0x20);
+    lat+=((r&1)?~(r>>1):(r>>1)); sh=0; r=0;
+    do{ b=str.charCodeAt(i++)-63; r|=(b&0x1f)<<sh; sh+=5; }while(b>=0x20);
+    lon+=((r&1)?~(r>>1):(r>>1));
+    pts.push([lat/1e6,lon/1e6]);
+  }
+  return pts;
+}
+function _rtFetch(url,opts){ /* fetch with an 8s abort so a dead router can't stall the queue */
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  if(ctl){ opts=opts||{}; opts.signal=ctl.signal; setTimeout(function(){ try{ctl.abort();}catch(e){} },8000); }
+  return fetch(url,opts);
+}
+function _rtPump(){
+  if(_rtBusy>=2||!_rtQ.length) return;
+  var j=_rtQ.shift(); _rtBusy++;
+  var done=function(out){
+    if(out){ out.pts=_rtSlim(out.pts); _rtMem[j.k]=out; _rtPersist(j.k,out); }
+    _rtBusy--; setTimeout(_rtPump,120); try{ j.res(out); }catch(e){}
+  };
+  function tryOSRM(i){
+    if(i>=_RT_OSRM.length){ tryValhalla(); return; }
+    var url=_RT_OSRM[i]+'/route/v1/driving/'
+      +j.a[1]+','+j.a[0]+';'+j.b[1]+','+j.b[0]+'?overview=simplified&geometries=geojson&alternatives=false&steps=false';
+    _rtFetch(url).then(function(r){ return r.ok?r.json():null; }).then(function(x){
+      var rt=x&&x.routes&&x.routes[0];
+      if(rt&&rt.geometry&&rt.geometry.coordinates&&rt.geometry.coordinates.length>1){
+        done({pts:rt.geometry.coordinates.map(function(c){ return [c[1],c[0]]; }), km:rt.distance/1000, min:rt.duration/60});
+      } else tryOSRM(i+1);
+    }).catch(function(){ tryOSRM(i+1); });
+  }
+  function tryValhalla(){
+    _rtFetch('https://valhalla1.openstreetmap.de/route',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({locations:[{lat:j.a[0],lon:j.a[1]},{lat:j.b[0],lon:j.b[1]}],
+        costing:'auto', directions_options:{units:'kilometers'}})
+    }).then(function(r){ return r.ok?r.json():null; }).then(function(x){
+      var trip=x&&x.trip, leg=trip&&trip.legs&&trip.legs[0];
+      if(leg&&leg.shape){ done({pts:decodePoly6(leg.shape), km:trip.summary.length, min:trip.summary.time/60}); }
+      else done(null);
+    }).catch(function(){ done(null); });
+  }
+  tryOSRM(0);
+}
+function flightArc(a,b){ /* gently curved flight path between two points */
+  var mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+  var dx=b[0]-a[0], dy=b[1]-a[1], d=Math.sqrt(dx*dx+dy*dy)||1;
+  var cx=mx-dy/d*d*0.18, cy=my+dx/d*d*0.18;   /* control point offset ~18% of span */
+  var pts=[]; for(var i=0;i<=24;i++){ var t=i/24, u=1-t;
+    pts.push([u*u*a[0]+2*u*t*cx+t*t*b[0], u*u*a[1]+2*u*t*cy+t*t*b[1]]); }
+  return pts;
+}
+function legTip(meta,km,min){
+  var h='<b>'+esc(meta.from)+'</b> → <b>'+esc(meta.to)+'</b>';
+  if(meta.fly) h+='<br>Flight';
+  else if(km!=null) h+='<br>'+Math.round(km)+' km · ~'+fmtDur(min);
+  else h+='<br>Route loading…';
+  if(meta.rep) h+='<br>'+esc(meta.rep)+(meta.area?(' · '+esc(meta.area)):'');
+  else if(meta.area) h+='<br>'+esc(meta.area);
+  return h;
+}
+function drawLeg(map,gen,a,b,style,meta){
+  meta=meta||{};
+  if(meta.fly){
+    L.polyline(flightArc([a.lat,a.lon],[b.lat,b.lon]),
+      {color:'#2563eb',weight:2,dashArray:'2 7',opacity:.85}).addTo(map)
+      .bindTooltip(legTip(meta),{sticky:true});
+    return;
+  }
+  var line=L.polyline([[a.lat,a.lon],[b.lat,b.lon]],style).addTo(map);
+  line.bindTooltip(legTip(meta,null,null),{sticky:true});
+  roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
+    if(!rt||map._aqGen!==gen) return;
+    try{ line.setLatLngs(rt.pts); line.setTooltipContent(legTip(meta,rt.km,rt.min)); }catch(e){}
+  });
+}
 function drawTripMap(stops){
   var el=document.getElementById('tripMap'); if(!el||typeof L==='undefined')return;
   if(_tripMap){ try{_tripMap.remove();}catch(e){} _tripMap=null; }
   _tripMap=L.map(el,{zoomControl:true,scrollWheelZoom:false}).setView([43.5,-79],5);
+  var gen=++_aqMapGen; _tripMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
   var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
   pts.forEach(function(s){ L.marker([s.lat,s.lon],{icon:pinIcon(s)}).addTo(_tripMap).bindPopup(popupHTML(s)); });
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
     var both=(a.status==='Confirmed'&&b.status==='Confirmed');
-    L.polyline([[a.lat,a.lon],[b.lat,b.lon]],
-      both?{color:'#16a34a',weight:2.5}:{color:'#2563eb',weight:2,dashArray:'6 6'}).addTo(_tripMap);
+    var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+    drawLeg(_tripMap,gen,a,b,
+      both?{color:'#16a34a',weight:2.5}:{color:'#2563eb',weight:2,dashArray:'6 6'},
+      {from:a.name,to:b.name,area:terr,rep:FLAT.tm[terr]||'',fly:fly});
   }
   if(pts.length) _tripMap.fitBounds(L.latLngBounds(pts.map(function(s){return [s.lat,s.lon];})).pad(0.25));
   setTimeout(function(){ if(_tripMap)_tripMap.invalidateSize(); },60);
+}
+/* ---------- Leader Map (company-wide) ---------- */
+let _lvMap=null;
+function lvDrawMap(){
+  var el=document.getElementById('leaderMap'); if(!el||typeof L==='undefined')return;
+  if(_lvMap){ try{_lvMap.remove();}catch(e){} _lvMap=null; }
+  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:false}).setView([45,-98],4);
+  var gen=++_aqMapGen; _lvMap._aqGen=gen;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
+  var bounds=[];
+  TERRS.forEach(function(t){
+    if(!LV_AREAS[t]) return;
+    var rep=FLAT.tm[t]||'';
+    if(LV_REP && rep!==LV_REP) return;
+    var col=AREA_COLOR[t];
+    var stops=stopsForWeek(t,LV_WEEK).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
+    stops.forEach(function(s){
+      var st=STOP_TYPES[normType(s.type)];
+      var isDealer=(s.kind==='dealer');
+      var icon=L.divIcon({className:'', html:'<div class="pin" style="background:'+(isDealer?col:st.color)+'">'+(st.glyph||'')+'</div>',
+        iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-12]});
+      var tip=isDealer
+        ? ('<b>'+esc(s.name)+'</b><br>'+fmtUSDk(s.revenue)+' · '+s.loads+' loads<br>'
+           +(s.status==='Confirmed'?'✓ Confirmed':'Pending')+(rep?('<br>'+esc(rep)+' · '+t):('<br>'+t))
+           +'<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''))
+        : ('<b>'+esc(s.name)+'</b><br>'+st.label+' · '+t+'<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''));
+      L.marker([s.lat,s.lon],{icon:icon}).addTo(_lvMap).bindTooltip(tip).bindPopup(popupHTML(s));
+      bounds.push([s.lat,s.lon]);
+    });
+    for(var i=1;i<stops.length;i++){
+      var a=stops[i-1], b=stops[i];
+      var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+      drawLeg(_lvMap,gen,a,b,{color:col,weight:2.5,opacity:.8},
+        {from:a.name,to:b.name,area:t,rep:rep,fly:fly});
+    }
+  });
+  if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
+  setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
 }
 
 /* ---------- editing ---------- */
@@ -2675,8 +3031,36 @@ function importDealers(text){
   DEALERS.forEach(function(d){ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
   saveDealers();savePlan();terr='Master';renderMaster();alert('Imported '+arr.length+' dealers.');
 }
+/* Refreshing must not restart the app: the current tab/view/week is kept in
+   localStorage and restored on boot, so only the data reloads. */
+var _pbNavReady=false;   /* the boot render (pre-restore) must not clobber the saved state */
+function pbSaveNav(){
+  if(!_pbNavReady) return;
+  try{ localStorage.setItem('aqNavState', JSON.stringify({
+    terr:terr, terrMode:terrMode, allMode:allMode, mapWeek:mapWeek,
+    terrMapWeek:terrMapWeek, sbTab:SIDEBAR_TAB, lvTab:LV_TAB, lvWeek:LV_WEEK
+  })); }catch(e){}
+}
+function pbRestoreNav(){
+  try{
+    var ns=JSON.parse(localStorage.getItem('aqNavState')||'null');
+    _pbNavReady=true;
+    if(!ns) return;
+    var tabsOk=['All','East','South','Central','West','Exports','Master'];
+    if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
+    if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
+    if(['cal','map','leaders','leader'].indexOf(ns.allMode)>=0) allMode=ns.allMode;
+    if(typeof ns.mapWeek==='number') mapWeek=ns.mapWeek;
+    if(ns.terrMapWeek==='all'||typeof ns.terrMapWeek==='number') terrMapWeek=ns.terrMapWeek;
+    if(['overview','budget','files'].indexOf(ns.sbTab)>=0) SIDEBAR_TAB=ns.sbTab;
+    if(ns.lvTab==='overview'||ns.lvTab==='map') LV_TAB=ns.lvTab;
+    if(typeof ns.lvWeek==='number') LV_WEEK=ns.lvWeek;
+    document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active',b.dataset.t===terr); });
+  }catch(e){}
+}
 function render(){
   const isMaster=terr==='Master', isAll=terr==='All';
+  pbSaveNav();
   document.getElementById("cards").style.display=isMaster?'none':'';
   if(!isMaster) renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster)?'':'none';
@@ -2720,6 +3104,7 @@ document.getElementById("calBtn").addEventListener("click",function(){allMode='c
 document.getElementById("ganttWrap").addEventListener("click",function(e){var add=e.target.closest('.ldadd'); if(add){var c=add.closest('.ev'); if(c)c.classList.toggle('pickopen'); return;} var jb=e.target.closest('[data-jappt]'); if(jb){var pr=jb.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}});
 document.getElementById("mapBtn").addEventListener("click",function(){allMode='map';renderAllView();});
 document.getElementById("leadBtn").addEventListener("click",function(){allMode='leaders';renderAllView();});
+document.getElementById("lvBtn").addEventListener("click",function(){allMode='leader';renderAllView();});
 document.getElementById("leadSel").addEventListener("change",function(e){leaderFilter=e.target.value;renderAllView();});
 document.getElementById("mapWeekSel").addEventListener("change",function(e){mapWeek=parseInt(e.target.value,10);renderAllView();});
 document.getElementById("terrSeg").addEventListener("click",function(e){var b=e.target.closest(".segb"); if(!b)return; terrMode=b.dataset.tm; render();});
@@ -2767,59 +3152,117 @@ function pbStaleBanner(){
   document.body.appendChild(d);
   document.getElementById('pbStaleReload').onclick=function(){ location.reload(); };
 }
+/* Persistent save-failure bar. The 1.8s badge is easy to miss; a failed write
+   must stay on screen (with a retry) until a save actually succeeds. */
+var _pbPending={};   /* row id -> latest payload not yet acknowledged by the cloud */
+var _PB_TOKEN=null;  /* cached access token for keepalive flushes on page hide */
+function pbSaveErr(msg){
+  var d=document.getElementById('pbSaveErr');
+  if(!d){
+    d=document.createElement('div'); d.id='pbSaveErr';
+    d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:5000;background:#7f1d1d;color:#fff;'
+      +'font:600 13px "Open Sans",Arial,sans-serif;padding:10px 16px;display:flex;align-items:center;'
+      +'justify-content:center;gap:14px;box-shadow:0 -2px 12px rgba(0,0,0,.3);text-align:center';
+    d.innerHTML='<span id="pbSaveErrMsg"></span><button id="pbSaveRetry" style="background:#fff;color:#7f1d1d;border:0;'
+      +'border-radius:4px;padding:5px 12px;font:700 12px inherit;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;flex:0 0 auto">Retry</button>';
+    document.body.appendChild(d);
+    document.getElementById('pbSaveRetry').onclick=function(){ pbFlushPending(); };
+  }
+  var m=document.getElementById('pbSaveErrMsg'); if(m) m.textContent=msg||'Save failed — your latest change is NOT saved to the cloud.';
+  d.style.display='flex';
+}
+function pbSaveErrClear(){ var d=document.getElementById('pbSaveErr'); if(d) d.style.display='none'; }
 function cloudSave(key,obj){
   if(!SB)return;
   if(PB_READONLY) return;                                      /* verification never writes */
   if(PB_STALE){ pbStaleBanner(); return; }                     /* refuse to overwrite newer work */
-  var expected=PB_VER[key];
-  if(expected===undefined){                                    /* never loaded this row: don't guess */
-    cloudBadge('Not synced — reload'); pbLog('sync_failure',key,{reason:'no_version_loaded'}); return;
+  if(PB_VER[key]===undefined){                                 /* never loaded this row: don't guess */
+    cloudBadge('Not synced — reload');
+    pbSaveErr('Not synced with the cloud — reload this page before editing. Your latest change is NOT saved.');
+    pbLog('sync_failure',key,{reason:'no_version_loaded'}); return;
   }
+  _pbPending[key]=obj;
   _lastSelfSave=Date.now();
   clearTimeout(_cloudTimers[key]);
-  _cloudTimers[key]=setTimeout(function(){
-    _lastSelfSave=Date.now();
-    SB.rpc('pb_save_state',{
-      p_id:key, p_expected_version:expected, p_data:obj,
-      p_actor:pbActor(), p_territory:(typeof terr==='string'?terr:null), p_reason:'save'
-    }).then(function(r){
-      if(r&&r.error){ cloudBadge('Cloud save failed'); pbLog('sync_failure',key,{error:String(r.error.message||r.error)}); return; }
-      var out=r&&r.data;
-      if(out&&out.ok){ PB_VER[key]=out.version; cloudBadge('Saved to cloud'); return; }
-      if(out&&out.reason==='stale'){ PB_STALE=true; pbStaleBanner(); cloudBadge('Save rejected — plan changed'); return; }
-      cloudBadge('Cloud save failed');
-    },function(e){ cloudBadge('Cloud save failed'); pbLog('sync_failure',key,{error:String((e&&e.message)||e)}); });
-  },700);
+  _cloudTimers[key]=setTimeout(function(){ pbSendSave(key); },700);
 }
+function pbSendSave(key,keepalive){
+  var obj=_pbPending[key]; if(obj===undefined) return;
+  _lastSelfSave=Date.now();
+  var args={ p_id:key, p_expected_version:PB_VER[key], p_data:obj,
+    p_actor:pbActor(), p_territory:(typeof terr==='string'?terr:null), p_reason:'save' };
+  function ack(out){
+    if(out&&out.ok){ PB_VER[key]=out.version; if(_pbPending[key]===obj) delete _pbPending[key]; pbSaveErrClear(); cloudBadge('Saved to cloud'); return; }
+    if(out&&out.reason==='stale'){ PB_STALE=true; pbStaleBanner(); cloudBadge('Save rejected — plan changed'); return; }
+    cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((out&&out.reason)||'save_failed')});
+  }
+  if(keepalive && _PB_TOKEN){
+    /* page is being hidden/closed: fire a keepalive request the browser will finish */
+    try{
+      fetch(SB_URL+'/rest/v1/rpc/pb_save_state',{ method:'POST', keepalive:true,
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+_PB_TOKEN,'Content-Type':'application/json'},
+        body:JSON.stringify(args)
+      }).then(function(r){ return r.json(); }).then(ack).catch(function(){});
+    }catch(e){}
+    return;
+  }
+  SB.rpc('pb_save_state',args).then(function(r){
+    if(r&&r.error){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String(r.error.message||r.error)}); return; }
+    ack(r&&r.data);
+  },function(e){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((e&&e.message)||e)}); });
+}
+/* Debounced writes must not be lost to a refresh/close: flush anything pending
+   the moment the page is hidden. */
+function pbFlushPending(hidden){
+  if(!SB||PB_READONLY||PB_STALE) return;
+  Object.keys(_pbPending).forEach(function(k){
+    clearTimeout(_cloudTimers[k]);
+    pbSendSave(k,!!hidden);
+  });
+}
+window.addEventListener('pagehide',function(){ pbFlushPending(true); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
 function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
-    if(res&&res.error){ cloudBadge('Cloud load failed'); pbLog('sync_failure',null,{stage:'load',error:String(res.error.message||res.error)}); cb&&cb(); return; }
+    if(res&&res.error){
+      cloudBadge('Cloud load failed');
+      pbSaveErr('Could not load the shared Trip Plan from the cloud — check your connection and reload. Editing is disabled.');
+      pbLog('sync_failure',null,{stage:'load',error:String(res.error.message||res.error)}); cb&&cb(); return;
+    }
     var rows=(res&&res.data)||[];
+    /* RLS silently filters rows it won't show: an empty result here means THIS
+       SESSION cannot see the shared plan (expired/unapproved), NOT an empty
+       database. Never seed from it — that path once rejected every later save. */
+    if(rows.length===0){
+      cloudBadge('Cloud load failed');
+      pbSaveErr('The shared Trip Plan could not be read (no cloud access). Sign out and back in — editing is disabled until then.');
+      pbLog('sync_failure',null,{stage:'load',reason:'no_rows_visible'}); cb&&cb(); return;
+    }
     var hadDealers=false;
     rows.forEach(function(row){
       PB_VER[row.id]=row.version;                       /* the version this tab is now based on */
       if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true;
       applyCloudRow(row.id,row.data);
     });
-    /* Seed an EMPTY database only. Previously this pushed in-memory state whenever the
-       dealers row looked empty, which let a fresh tab overwrite a populated cloud plan. */
-    if(rows.length===0){
-      /* null expected version => RPC inserts if absent, rejects if the row exists */
-      PB_VER['dealers']=null; PB_VER['plan']=null;
-      cloudSave('dealers',DEALERS);
-      cloudSave('plan',planPayload());
-      cloudBadge('Cloud initialized');
-    } else if(!hadDealers){
+    /* A known row that is genuinely absent (others loaded fine) may be created:
+       null expected version => the RPC inserts if absent, rejects if it exists. */
+    ['dealers','plan','overlay_v1'].forEach(function(id){ if(PB_VER[id]===undefined) PB_VER[id]=null; });
+    if(PB_VER['plan']===null){ cloudSave('plan',planPayload()); }
+    if(!hadDealers){
       cloudBadge('Loaded from cloud');
       pbLog('sync_failure','dealers',{reason:'dealers_row_empty_no_autoseed'});
     } else {
       cloudBadge('Loaded from cloud');
     }
     cb&&cb();
-  },function(e){ cloudBadge('Cloud load failed'); pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb(); });
+  },function(e){
+    cloudBadge('Cloud load failed');
+    pbSaveErr('Could not load the shared Trip Plan from the cloud — check your connection and reload. Editing is disabled.');
+    pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb();
+  });
 }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ if(row.version!=null)PB_VER[row.id]=row.version; /* adopt teammate's version: we now hold their data */ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
@@ -2859,6 +3302,7 @@ function unlockApp(){
     /* legacy flight/hotel/rental records -> location-based travel items. In memory only:
        the migrated shape persists on the next real save, so loading never writes. */
     migrateTravel();
+    pbRestoreNav();     /* refresh returns to the same tab/view/week */
     render();
     mobBoot();          /* Trip Mode: phone widths only */
   });
@@ -2905,7 +3349,14 @@ async function pbLoadRole(){
 }
 async function pbBootAuth(){
   if(!SB){ gateErr('Cloud not configured.'); return; }
+  /* keep the access token cached for keepalive flushes, and return to the login
+     screen cleanly if the session genuinely ends (refresh failed / signed out). */
+  try{ SB.auth.onAuthStateChange(function(ev,s){
+    _PB_TOKEN=(s&&s.access_token)||null;
+    if(ev==='SIGNED_OUT'){ location.reload(); }
+  }); }catch(e){}
   var sess=await SB.auth.getSession();
+  _PB_TOKEN=(sess&&sess.data&&sess.data.session&&sess.data.session.access_token)||null;
   PB_USER=(sess&&sess.data&&sess.data.session&&sess.data.session.user)||null;
 
   if(PB_USER){
@@ -3018,8 +3469,14 @@ window.addEventListener('online', function(){ cloudBadge('Back online — syncin
 function pbRenderAcct(){
   var host=document.getElementById('aqAcct'); if(!host) return;
   if(!pbAuthed()){ host.innerHTML=''; return; }
-  var role=(PB_ROLE==='super_admin'?'Super Admin':(PB_ROLE==='admin'?'Admin':'Planner'));
-  host.innerHTML='<span class="aqWho">'+esc(PB_USER.email||'')+'</span><span class="aqRole">'+role+'</span>'
+  /* The shared service identity exists only for backend auth/RLS. It is never a
+     user account, so neither its email nor a default role badge is shown. */
+  var email=String(PB_USER.email||'');
+  var isSvc=/^tripmode@/i.test(email);
+  var who=isSvc?'':('<span class="aqWho">'+esc(email)+'</span>');
+  var badge=(PB_ROLE==='super_admin')?'<span class="aqRole">Super Admin</span>'
+           :(PB_ROLE==='admin'?'<span class="aqRole">Admin</span>':'');
+  host.innerHTML=who+badge
     +(pbIsSuperAdmin()?'<button id="aqUsers">Users</button>':'')
     +'<button id="aqSignout">Sign out</button>';
   var u=document.getElementById('aqUsers'); if(u) u.onclick=pbAdminUsers;
