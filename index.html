@@ -59,13 +59,9 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqAction--solid{background:#000;border:1px solid #000;color:#fff;padding:6px 14px;font-weight:900;font-size:12px;}
 .aqAction--solid:hover{background:#fff;color:#000;}
 .aqMainNav{background-color:#000;border-bottom:1px solid #000;}
-/* Logo visually centred: equal flex spacers either side (nav links right-align
-   inside theirs), so the mark sits mid-header without breaking navigation. */
-.aqNavContainer{display:flex;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
-.aqNavContainer::before{content:'';flex:1 1 0;}
+.aqNavContainer{display:flex;justify-content:space-between;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
 .aqLogoContainer{display:flex;align-items:center;}
-.aqNavLinks{flex:1 1 0;justify-content:flex-end;}
-.aqLogo{height:48px;width:auto;display:block;transition:opacity .2s;}
+.aqLogo{height:40px;width:auto;display:block;transition:opacity .2s;}
 .aqLogo:hover{opacity:.8;}
 .aqNavLinks{display:flex;align-items:center;gap:30px;height:100%;}
 .aqNavItem{display:flex;align-items:center;height:100%;position:relative;}
