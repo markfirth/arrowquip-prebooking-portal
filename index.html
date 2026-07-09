@@ -587,6 +587,31 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tmrow .t{flex:1 1 auto;min-width:0;}
 .tmrow .t b{display:block;font-size:14px;color:#111;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tmrow .t span{font-size:12px;color:#6b7280;}
+/* today timeline */
+.tl-summary{display:flex;gap:8px;margin:2px 2px 12px;}
+.tl-summary>div{flex:1;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 6px;text-align:center;}
+.tl-summary b{display:block;font-size:18px;font-weight:800;color:#111;line-height:1.1;}
+.tl-summary span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
+.tm-tl{position:relative;}
+.tl-item{position:relative;display:flex;gap:12px;}
+.tl-rail{position:relative;flex:0 0 46px;display:flex;flex-direction:column;align-items:center;padding-top:2px;}
+.tl-time{font-size:11px;font-weight:700;color:#6b7280;white-space:nowrap;margin-bottom:5px;}
+.tl-node{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;box-shadow:0 0 0 3px #fff;position:relative;z-index:2;}
+.tl-item:not(:last-child) .tl-rail::after{content:"";position:absolute;left:50%;transform:translateX(-50%);top:44px;bottom:-14px;width:2px;background:#e5e7eb;z-index:1;}
+.tl-body{flex:1 1 auto;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:11px 12px;margin-bottom:14px;}
+.tl-item.done .tl-body{background:#f9fafb;}
+.tl-item.done .tl-name{color:#6b7280;}
+.tl-item.next .tl-body{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb;}
+.tl-item.travel .tl-body{background:#fbfbfc;}
+.tl-kind{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;display:flex;align-items:center;gap:6px;}
+.tl-next{background:#2563eb;color:#fff;border-radius:20px;padding:1px 7px;font-size:9px;letter-spacing:.05em;}
+.tl-name{font-size:16px;font-weight:700;color:#111;margin-top:3px;word-break:break-word;}
+.tl-item.travel .tl-name{font-size:14px;font-weight:600;}
+.tl-sub{font-size:12px;color:#6b7280;margin-top:2px;}
+.tl-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;}
+.tl-chip{font-size:11px;font-weight:600;color:#374151;background:#f3f4f6;border-radius:16px;padding:3px 9px;display:inline-flex;align-items:center;gap:4px;}
+.tl-chip.ok{background:#e7f3ec;color:#16a34a;}
+.tl-actions{display:flex;gap:8px;margin-top:11px;}
 /* route */
 #tmMap{height:52vh;border-radius:12px;border:1px solid #e5e7eb;z-index:1;}
 .tm-seg{display:flex;background:#e5e7eb;border-radius:10px;padding:3px;margin-bottom:10px;}
@@ -3137,40 +3162,91 @@ function mobCard(i,wk){
   +'</div>';
 }
 
-/* ---------- TODAY ---------- */
+/* ---------- TODAY (vertical timeline) ---------- */
+/* One chronological rail for the selected day: dealer stops and travel legs in time
+   order. Dealer stops surface their visit state (notes / tasks / photos) as chips and
+   route straight into the visit sheet (report·notes·tasks·photos) via data-mobvisit. */
+function mobTLItem(i,wk,isNext){
+  var ic=mobIcon(i);
+  var dealer=(i.kind==='dealer');
+  var done=dealer?!!APPT[i.id]:(i.raw&&i.raw.done);
+  var dest=mobHasDest(i);
+  var cls='tl-item'+(dealer?'':' travel')+(done?' done':'')+(isNext?' next':'');
+  var sub=[i.address,(i.kind==='travel'&&i.raw&&i.raw.conf)?('Conf# '+i.raw.conf):''].filter(Boolean).join(' · ');
+  if(i.kind==='travel'&&(i.type==='flight_in'||i.type==='flight_out')&&i.raw&&(i.raw.airline||i.raw.flightNo))
+    sub=[sub,[i.raw.airline,i.raw.flightNo].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+  if(i.kind==='travel'&&i.type==='hotel'&&i.raw&&i.raw.day2!=null)
+    sub=[sub,'Check-out '+mobDayLabel(wk,i.raw.day2)].filter(Boolean).join(' · ');
+
+  var pill = done?'<span class="tm-pill ok">Done</span>'
+           : (i.located?'<span class="tm-pill pend">Planned</span>':'<span class="tm-pill bad">No address</span>');
+
+  var chips='';
+  if(dealer){
+    var v=VISIT[i.id]||null, dur=DUR[i.id]||90, cc=[];
+    cc.push('<span class="tl-chip">🕒 '+(Math.round(dur/60*10)/10)+'h</span>');
+    if(v&&v.actions&&v.actions.length){ var dn=v.actions.filter(function(a){return a.done;}).length;
+      cc.push('<span class="tl-chip'+(dn===v.actions.length?' ok':'')+'">✓ '+dn+'/'+v.actions.length+' tasks</span>'); }
+    if(v&&(v.notes||v.attendees||v.followUp||v.nextVisit)) cc.push('<span class="tl-chip">📝 Notes</span>');
+    /* photo count is cloud-backed → hydrated after render */
+    cc.push('<span class="tl-chip" data-phcount="'+i.id+'" style="display:none">📷</span>');
+    chips='<div class="tl-chips">'+cc.join('')+'</div>';
+  }
+
+  var actions='<div class="tl-actions">'
+    +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">➤ Navigate</a>')
+          :('<button class="tmbtn" disabled>➤ Navigate</button>'))
+    +(dealer?('<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">☰</button>')
+            :('<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>'))
+    +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="Mark complete">✓</button>'
+    +'</div>';
+
+  return '<div class="'+cls+'">'
+    +'<div class="tl-rail"><span class="tl-time">'+(i.time?t12s(i.time):'—')+'</span>'
+      +'<span class="tl-node" style="background:'+ic.c+'">'+ic.g+'</span></div>'
+    +'<div class="tl-body">'
+      +'<div class="tl-kind">'+esc(mobKind(i))+(isNext?'<span class="tl-next">NEXT</span>':'')
+        +'<span style="margin-left:auto">'+pill+'</span></div>'
+      +'<div class="tl-name">'+esc(i.name||mobKind(i))+'</div>'
+      +(sub?'<div class="tl-sub">'+esc(sub)+'</div>':'')
+      +chips+actions
+    +'</div>'
+  +'</div>';
+}
 function mobToday_render(){
   var wk=MOB.wk, t=MOB.terr;
   var items=itineraryFor(t,wk);
   var today=(MOB.day!=null)?MOB.day:mobToday(wk);
-  var pick=function(f){ return items.filter(f); };
-
   var todays=(today==null)?[]:items.filter(function(i){return i.day===today;});
-  var nextStop=todays.filter(function(i){return i.kind==='dealer' && !APPT[i.id];})[0]
-             || todays.filter(function(i){return i.kind==='dealer';})[0]
-             || todays[0];
-  var hotel=pick(function(i){return i.type==='hotel';})[0];
-  var rental=pick(function(i){return i.type==='rental_pickup'||i.type==='rental_return';})[0];
-  var flight=pick(function(i){return i.type==='flight_in'||i.type==='flight_out';})[0];
+  todays.sort(function(a,b){ return (a.time||'99:99').localeCompare(b.time||'99:99'); });
+
   var dealersToday=todays.filter(function(i){return i.kind==='dealer';});
+  var doneN=dealersToday.filter(function(d){return APPT[d.id];}).length;
+  var nextStop=dealersToday.filter(function(i){return !APPT[i.id];})[0];
+  var R=legsFor(todays);
 
   var h='<div class="tm-screen">';
-  h+='<div class="tm-h"><span>Today · '+esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span>'
+  h+='<div class="tm-h" style="font-size:13px;color:#111;margin-top:4px"><span>Today · '
+     +esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span>'
      +'<button class="tmbtn" style="min-height:32px;flex:0 0 auto;padding:0 12px;font-size:13px" id="mobChangeDay">Change day</button></div>';
 
-  if(nextStop) h+='<div class="tmc-kind" style="margin:0 4px 6px">Next stop</div>'+mobCard(nextStop,wk);
-  if(hotel)   h+='<div class="tmc-kind" style="margin:8px 4px 6px">Current hotel</div>'+mobCard(hotel,wk);
-  if(rental)  h+='<div class="tmc-kind" style="margin:8px 4px 6px">Rental car</div>'+mobCard(rental,wk);
-  if(flight)  h+='<div class="tmc-kind" style="margin:8px 4px 6px">Flight</div>'+mobCard(flight,wk);
-  if(!nextStop&&!hotel&&!rental&&!flight) h+='<div class="tm-empty">Nothing scheduled for this week yet.<br>Use + Add Quick Item.</div>';
+  if(today!=null){
+    h+='<div class="tl-summary">'
+      +'<div><b>'+dealersToday.length+'</b><span>Visits</span></div>'
+      +'<div><b>'+doneN+'</b><span>Done</span></div>'
+      +'<div><b>'+hrsLabel(R.totalHours)+'</b><span>Drive</span></div>'
+      +'</div>';
+  }
 
-  h+='<div class="tm-h"><span>Dealer visits today</span><span class="tm-count">'+dealersToday.length+'</span></div>';
-  h+= dealersToday.length
-    ? dealersToday.map(function(d,n){
-        return '<div class="tmrow"><span class="n">'+(n+1)+'</span><div class="t"><b>'+esc(d.name)+'</b>'
-          +'<span>'+(d.time?t12s(d.time):'—')+'</span></div>'
-          +(APPT[d.id]?'<span class="tm-pill ok">Done</span>':'<span class="tm-pill pend">Planned</span>')+'</div>';
-      }).join('')
-    : '<div class="tm-empty">No dealer visits today.</div>';
+  if(today==null){
+    h+='<div class="tm-empty">No day in this week matches today.<br>Pick a day with “Change day”.</div>';
+  } else if(!todays.length){
+    h+='<div class="tm-empty">Nothing scheduled for this day yet.<br>Use + Add Quick Item.</div>';
+  } else {
+    h+='<div class="tm-tl">'+todays.map(function(i){
+        return mobTLItem(i,wk,!!(nextStop&&i.kind==='dealer'&&i.id===nextStop.id));
+      }).join('')+'</div>';
+  }
 
   h+='<button class="tm-primary" id="mobAdd">+ Add Quick Item</button>';
   h+='</div>';
@@ -3369,6 +3445,8 @@ function wireMobile(){
     if(p[0]==='travel') mobEditSheet(p[1]); else mobDealerSheet(p[1]);
   };});
   q('[data-mobvisit]').forEach(function(b){ b.onclick=function(){ MOB._visitTab='report'; mobVisitDetail(b.dataset.mobvisit); };});
+  /* async: fill cloud-backed photo counts on the Today timeline chips */
+  q('[data-phcount]').forEach(function(el){ try{ pbPhotoCount(el.dataset.phcount).then(function(n){ if(n>0){ el.textContent='📷 '+n; el.style.display=''; } }); }catch(e){} });
 }
 
 /* ---------- sheets ---------- */
