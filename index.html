@@ -765,6 +765,15 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
 .lvsumtab .num{text-align:right;}
 .lvsumtab tr.tot td{font-weight:800;border-top:2px solid var(--line);}
+/* ---- No-overlap guarantees: dropdown arrows never sit on text ---- */
+#weeks select,.tv-in,.kc-ctl select,select.xvf{padding-right:18px !important;min-width:0;text-overflow:ellipsis;}
+select.cday,select.cdur{min-width:82px;}
+select.xvf{min-width:0;flex:1 1 auto;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:10px;padding:3px 18px 3px 5px;}
+input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size:10px;padding:3px 4px;min-width:0;}
+.tv-row{gap:6px;} .tv-row .tv-in{min-width:0;}
+.tv-lbl{min-width:60px;flex:0 0 auto;}
+/* subtle visit-tag pill: coloured dot + text, never a loud block */
+.xvpill{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;padding:1px 7px 1px 5px;font-size:9px;font-weight:700;letter-spacing:.03em;background:#fff;white-space:nowrap;}
 /* ---- Multiple visits: type tags, extra-visit cards, + Visit button ---- */
 .xvtag{display:inline-block;color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:8px;padding:1.5px 7px;vertical-align:1px;}
 .kcard.xv{border-left:3px solid var(--line);background:#fcfdff;}
@@ -884,10 +893,9 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
   <div id="reportsView" style="display:none;"></div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
-    <div id="execDash"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
-        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><input class="msearch" id="mSearch" placeholder="Search name, state…"></div></div>
+        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><button class="btn" id="t27cfgBtn" title="2027 tier bands and CAD→USD rate">⚙ 2027 Program</button><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><input class="msearch" id="mSearch" placeholder="Search name, state…"></div></div>
       <table>
         <thead>
         <tr class="grprow"><th class="grp-sf" colspan="9"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="8">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th><th></th></tr>
@@ -1140,14 +1148,19 @@ let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
    ADDITIONAL visit records, each fully independent:
    {id,dealer,terr,wk,day,time,dur,type,notes,done} */
 let XVISITS=[];
+/* Visit tags — small subtle pills, easy to change inside the visit box. */
 const XV_TYPES={
-  initial:{label:'Pre-Booking Visit',c:'#2563eb'}, followup:{label:'Follow-Up',c:'#0f766e'},
-  event:{label:'Event',c:'#9333ea'}, openhouse:{label:'Open House',c:'#c2410c'},
-  training:{label:'Dealer Training',c:'#15803d'}, demo:{label:'Demo Day',c:'#b45309'},
-  delivery:{label:'Delivery',c:'#4338ca'}, service:{label:'Service',c:'#dc2626'},
-  sales:{label:'Sales Meeting',c:'#1d4ed8'}, general:{label:'General Visit',c:'#0e7490'},
+  prebook:{label:'Pre-Book',c:'#2563eb'},
+  checkin:{label:'Check-In',c:'#16a34a'},
+  followup:{label:'Follow-Up',c:'#d97706'},
+  event:{label:'Dealer Event',c:'#7c3aed'},
+  issue:{label:'Issue/Support',c:'#dc2626'},
+  training:{label:'Training',c:'#0d9488'},
   other:{label:'Other',c:'#6b7280'}
 };
+/* visit types saved before this tag set stay valid */
+const XV_ALIAS={initial:'prebook',openhouse:'event',demo:'event',delivery:'other',service:'issue',sales:'other',general:'other'};
+function xvTypeKey(t){ return XV_TYPES[t]?t:(XV_ALIAS[t]||'other'); }
 /* ---- Centralized currency + 2027 target engine ----
    USA/UK/Exports: $75,000 USD per load. Canada: $85,000 CAD per load,
    converted with the editable FX rate. Everything that shows revenue reads
@@ -1156,9 +1169,9 @@ const XV_TYPES={
 const LOAD_USD=75000, LOAD_CAD=85000;
 let FX=0.73;                       /* CAD → USD, editable on the dashboard, saved in the plan */
 const CA_PROVS={ON:1,QC:1,MB:1,SK:1,AB:1,BC:1,NS:1,NB:1,PE:1,NL:1,YT:1,NT:1,NU:1};
-/* 7-tier dealer program bands: [minLoads, label], highest first. AWAITING the
-   official thresholds — fill these in and the Target Tier column goes live. */
-const T27_TIERS=[];                /* e.g. [[60,'Tier 1'],[40,'Tier 2'],[25,'Tier 3'],[15,'Tier 4'],[8,'Tier 5'],[4,'Tier 6'],[1,'Tier 7']] */
+/* 7-tier dealer program bands: [minLoads,label], highest first. Editable in
+   the ⚙ 2027 Program settings on the Master Sheet; saved in the shared plan. */
+let T27_TIERS=[];
 function dealerIsCA(d){ var sf=(typeof sfLookup==='function')?sfLookup(d):null; if(sf&&sf.country) return sf.country==='CA'; return !!CA_PROVS[d.loc]; }
 function loadUSD(d){ return dealerIsCA(d)?Math.round(LOAD_CAD*FX):LOAD_USD; }
 function t27Loads(d){ var ov=(d._accountId&&SF_OVERLAY[d._accountId])||null; var v=(d.t27loads!=null?d.t27loads:(ov&&ov.t27loads)); return +v||0; }
@@ -1170,7 +1183,7 @@ function recalcTargets(){
   invalidateUniverse();
 }
 function xvFor(id){ return XVISITS.filter(function(x){ return x.dealer===id; }); }
-function xvType(t){ return XV_TYPES[t]||XV_TYPES.other; }
+function xvType(t){ return XV_TYPES[xvTypeKey(t)]; }
 function xvWhen(x){
   var labs=(typeof x.wk==='number')?dayLabels(x.wk):[];
   return 'Wk '+x.wk+((x.day!=null&&labs[x.day])?(' · '+labs[x.day][0]+' '+labs[x.day][1]):' · day TBD')+(x.time?(' · '+t12s(x.time)):'');
@@ -1215,8 +1228,8 @@ function xvNextLabel(d){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(+p.fx>0)FX=+p.fx;}})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,fx:FX};}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}})();
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,fx:FX,t27tiers:T27_TIERS};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -1383,7 +1396,7 @@ function dealerCard(d){
      data-id "pool:" prefix tells the drop handler this drag creates a visit. */
   return `<div class="dcard" draggable="true" data-id="pool:${d.id}">
     <div class="dn">${d.name}</div>
-    <div class="dm"><span class="dloc">${d.territory} · ${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
+    <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
     <div class="db">${d.loads} loads</div></div>`;
 }
 function renderPlanner(){
@@ -1411,16 +1424,17 @@ function renderPlanner(){
   const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
   var schd=dealersIn(terr).filter(function(d){return ASSIGN[d.id]!=='pool';});
   var uw={}; schd.forEach(function(d){ if(typeof ASSIGN[d.id]==='number') uw[ASSIGN[d.id]]=1; });
-  /* territory planning metrics from the Master Sheet (single source of truth) */
+  /* area goal rolls up from the Master Sheet 2027 targets; progress is what's
+     actually scheduled into weeks against that rolled-up goal. */
   var allT=dealersIn(terr);
-  var tGoal=(typeof ttOf==='function'&&ttOf(terr))||0;
-  var tPlan=allT.reduce(function(s,d){return s+(+d.booking||0);},0);
+  var tGoal=allT.reduce(function(s,d){return s+(+d.booking||0);},0);   /* Master Sheet rollup */
   var tLoads=allT.reduce(function(s,d){return s+t27Loads(d);},0);
+  var tPlan=sumB(schd);                                                /* scheduled into weeks */
   var tPct=tGoal?Math.round(tPlan/tGoal*100):null;
   document.getElementById("planSummary").innerHTML=
-    '<div class="ps"><div class="pl">Territory Goal</div><div class="pv">'+(tGoal?fmtUSDk(tGoal):'—')+'</div></div>'
-    +'<div class="ps"><div class="pl">Planned Revenue</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
-    +'<div class="ps"><div class="pl">Loads Planned</div><div class="pv">'+(tLoads||sumL(allT))+'</div></div>'
+    '<div class="ps"><div class="pl">Area Goal (2027)</div><div class="pv">'+(tGoal?fmtUSDk(tGoal):'—')+'</div></div>'
+    +'<div class="ps"><div class="pl">Target Loads</div><div class="pv">'+(tLoads||sumL(allT))+'</div></div>'
+    +'<div class="ps"><div class="pl">Scheduled</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
     +'<div class="ps"><div class="pl">Goal %</div><div class="pv">'+(tPct!=null?tPct+'%':'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Gap</div><div class="pv">'+(tGoal?( (tGoal-tPlan)>0?fmtUSDk(tGoal-tPlan):'+'+fmtUSDk(tPlan-tGoal) ):'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+schd.filter(function(d){return APPT[d.id];}).length+'/'+schd.length+'</div></div>';
@@ -1696,10 +1710,12 @@ function travelCard(it,wk){
   /* --- place row: airport picker for flights, address + locate for everything else --- */
   var place;
   if(isFlight){
+    /* a real selector listing every available airport — no free-typing codes */
     place='<div class="tv-row">'
-      +'<input class="tv-in tv-code" data-tv="'+it.id+'" data-f="airportCode" list="apList" '
-        +'value="'+esc(it.airportCode||'')+'" placeholder="Airport code (YYZ)" maxlength="4">'
-      +'<span class="tv-place">'+(it.airportName?esc(it.airportName):'<i>choose an airport</i>')+'</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="airportCode">'
+      +'<option value="">— airport —</option>'
+      +AIRPORTS.map(function(a){ return '<option value="'+a[0]+'"'+(it.airportCode===a[0]?' selected':'')+'>'+a[0]+' — '+esc(a[2])+'</option>'; }).join('')
+      +'</select>'
       +'</div>';
   } else {
     place='<div class="tv-row">'
@@ -1725,16 +1741,9 @@ function travelCard(it,wk){
       +'</div>';
   }
 
-  /* --- flight detail --- */
-  var flight=isFlight?('<div class="tv-row">'
-      +'<input class="tv-in" data-tv="'+it.id+'" data-f="airline" value="'+esc(it.airline||'')+'" placeholder="Airline">'
-      +'<input class="tv-in" data-tv="'+it.id+'" data-f="flightNo" value="'+esc(it.flightNo||'')+'" placeholder="Flight #">'
-      +'</div>'):'';
-
-  var conf='<div class="tv-row">'
-    +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Confirmation #">'
-    +'</div>'
-    +'<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Notes"></div>';
+  /* airline / flight number / confirmation / notes removed — the box stays
+     compact: place + day + time (plus check-out for hotels). */
+  var flight='', conf='';
 
   var badge=located
     ? '<span class="tv-ok" title="Included in routing">Located</span>'
@@ -1821,22 +1830,32 @@ function cardHTML(d,wk){
   var frame=TIME[d.id]?('<div class="kc-frame">'+t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],dur))+' · '+fmtDur(dur)+'</div>'):'';
   var ctl=(wk==='remote')?'':'<div class="kc-ctl">'+daysel+'<input class="ctime" type="time" data-time="'+d.id+'" value="'+(TIME[d.id]||'')+'"><select class="cdur" data-dur="'+d.id+'">'+durOpts+'</select></div>'+frame;
   return '<div class="kcard '+(ok?'confirmed':'planned')+'" draggable="true" data-id="'+d.id+'">'
-    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div><div class="kc-rep">'+(FLAT.tm[terr]||'')+' · '+(d.loc||'—')+'</div></div><div class="kc-amt">'+fmtUSD(d.booking)+'</div></div>'
-    +'<div class="kc-bot"><span class="xvtag" style="background:#2563eb" title="Visit type">Pre-Book</span><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
+    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div><div class="kc-amt">'+fmtUSD(d.booking)+'</div></div>'
+    +'<div class="kc-bot"><span class="xvpill" style="color:#2563eb;border-color:#2563eb55" title="Visit type">●&nbsp;Pre-Book</span><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
     +ctl+'</div>';
 }
 /* The ALL tab is the company-wide version of a territory page: the same
    Overview | Map seg, the same week-card language, one shared filter state
    (week + areas) across both tabs. Read-only executive planning view. */
 /* ---- additional-visit card (read-light: edit via the sheet) ---- */
+/* visit box: dropped instantly, edited IN PLACE — tag, day and time inline;
+   ✎ opens the full sheet only when duration/notes are needed. */
 function xvCard(x){
   var d=byId[x.dealer]||uniById(x.dealer); if(!d) return '';
-  var ty=xvType(x.type);
-  var frame=x.time?(t12s(x.time)+'–'+t12s(addMin(x.time,x.dur||60))):'';
+  var tk=xvTypeKey(x.type), ty=XV_TYPES[tk];
+  var labs=(typeof x.wk==='number')?dayLabels(x.wk):[];
+  var dayOpts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(x.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
+  var typeOpts=Object.keys(XV_TYPES).map(function(k){return '<option value="'+k+'"'+(tk===k?' selected':'')+'>'+XV_TYPES[k].label+'</option>';}).join('');
+  var frame=x.time?('<div class="kc-frame">'+t12s(x.time)+'–'+t12s(addMin(x.time,x.dur||60))+' · '+fmtDur(x.dur||60)+'</div>'):'';
   return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'" draggable="true" data-id="xv:'+x.id+'">'
     +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div>'
-    +'<div class="kc-rep"><span class="xvtag" style="background:'+ty.c+'">'+ty.label+'</span>'+(frame?(' <span style="color:var(--muted)">'+frame+'</span>'):'')+'</div></div>'
-    +'<div style="display:flex;gap:4px;flex:0 0 auto"><button class="cx" data-xvedit="'+x.id+'" title="Edit this visit">✎</button><button class="cx" data-xvdel="'+x.id+'" title="Remove this visit only — the dealer is kept">✕</button></div></div>'
+    +'<div class="kc-rep"><span class="xvpill" style="color:'+ty.c+';border-color:'+ty.c+'55">●&nbsp;'+ty.label+'</span></div></div>'
+    +'<div style="display:flex;gap:4px;flex:0 0 auto"><button class="cx" data-xvedit="'+x.id+'" title="Duration &amp; notes">✎</button><button class="cx" data-xvdel="'+x.id+'" title="Remove this visit only — the dealer is kept">✕</button></div></div>'
+    +'<div class="kc-ctl">'
+      +'<select class="xvf" data-xv="'+x.id+'" data-f="type">'+typeOpts+'</select>'
+      +'<select class="xvf" data-xv="'+x.id+'" data-f="day">'+dayOpts+'</select>'
+      +'<input class="xvf" type="time" data-xv="'+x.id+'" data-f="time" value="'+esc(x.time||'')+'">'
+    +'</div>'+frame
     +(x.notes?('<div class="kc-frame">'+esc(x.notes)+'</div>'):'')
     +'</div>';
 }
@@ -1848,7 +1867,7 @@ function xvSheet(dealerId, x){
   x=x||{id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
     terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
     wk:(typeof ASSIGN[dealerId]==='number'?ASSIGN[dealerId]:FIELD_NUMS[0]),
-    day:null, time:'', dur:60, type:'followup', notes:'', done:false};
+    day:null, time:'', dur:60, type:'prebook', notes:'', done:false};
   var weeks=[31].concat(FIELD_NUMS);
   function dayOpts(wk,sel){ return '<option value="">— day —</option>'+dayLabels(wk).map(function(l,i){return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join(''); }
   var fld=function(lb,inner){ return '<label style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2)">'+lb+inner+'</label>'; };
@@ -3573,10 +3592,47 @@ function renderMaster(){
   /* totals reflect the VISIBLE (filtered) rows only, and recalculate on every filter change */
   var _fTot=rows.reduce(function(a,d){ a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.pb+=(+d.prebook2026||0); a.tl+=t27Loads(d); a.tgt+=(+d.booking||0); var sf=sfLookup(d); a.act+=((sf&&+sf.actual2027)||0); return a; },{rev:0,loads:0,pb:0,tl:0,tgt:0,act:0});
   document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td></td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
-  renderSFBanner(); renderExecDash();
+  renderSFBanner();
+  var tb=document.getElementById('t27cfgBtn'); if(tb) tb.onclick=t27Settings;
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
-/* ---- Executive 2027 Goal Dashboard (above the Master Sheet) ---- */
+/* ---- ⚙ 2027 Program settings: tier bands + CAD→USD rate (subtle modal) ---- */
+function t27Settings(){
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  var bands=T27_TIERS.slice();
+  var rowFor=function(i){
+    var b=bands[i]||[ '', 'Tier '+(i+1) ];
+    return '<div style="display:flex;gap:8px;align-items:center;font-size:12px">'
+      +'<span style="flex:0 0 52px;font-weight:700;color:var(--muted)">Tier '+(i+1)+'</span>'
+      +'<input class="t27min" data-i="'+i+'" type="number" min="0" value="'+(b[0]===''?'':b[0])+'" placeholder="min loads" style="width:96px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:400 12px \'Open Sans\',Arial,sans-serif">'
+      +'<span style="color:var(--muted-2);font-size:11px">loads and up</span></div>';
+  };
+  wrap.innerHTML='<div class="modalbox" style="width:min(400px,94vw)"><div class="mh"><div class="mt">2027 Program Settings</div><button class="mclose">×</button></div>'
+    +'<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:9px">'
+    +'<div style="font-size:11.5px;color:var(--muted)">Target formula: <b>Target Loads × '+fmtUSD(LOAD_USD)+'</b> (Canada: '+fmtUSD(LOAD_CAD)+' CAD × rate). Tier is forecast from Target Loads using the bands below.</div>'
+    +'<label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700">CAD → USD rate'
+    +'<input id="t27fx" type="number" step="0.01" min="0.1" max="2" value="'+FX+'" style="width:84px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:600 12px \'Open Sans\',Arial,sans-serif"></label>'
+    +'<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin-top:2px">Tier bands (minimum target loads)</div>'
+    +[0,1,2,3,4,5,6].map(rowFor).join('')
+    +'<button class="btn" id="t27save" style="background:#111;color:#fff;border-color:#111;margin-top:6px">Save program settings</button>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
+  wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
+  wrap.querySelector('#t27save').onclick=function(){
+    var v=parseFloat(wrap.querySelector('#t27fx').value); if(v>0) FX=v;
+    var out=[];
+    wrap.querySelectorAll('.t27min').forEach(function(inp){
+      var i=+inp.dataset.i, mv=parseFloat(inp.value);
+      if(isFinite(mv)&&mv>0) out.push([mv,'Tier '+(i+1)]);
+    });
+    out.sort(function(a,b){ return b[0]-a[0]; });   /* highest band first */
+    T27_TIERS=out;
+    recalcTargets(); saveDealers(); savePlan();
+    wrap.remove(); withPreservedScroll(renderMaster); cloudBadge('2027 program saved');
+  };
+}
+/* ---- Executive 2027 Goal Dashboard (retired from the Master Sheet) ---- */
 function renderExecDash(){
   var host=document.getElementById('execDash'); if(!host) return;
   var uni=buildMasterUniverse().filter(function(d){ return d.areaPlanning!==false; });
@@ -3680,7 +3736,7 @@ function wireDnD(){
         XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id,
           terr:(d.territory==='Exports'?'Exports':terr), wk:nw2,
           day:(parts2[1]!=null&&parts2[1]!=='none')?parseInt(parts2[1],10):null,
-          time:'', dur:60, type:'followup', notes:'', done:false});
+          time:'', dur:60, type:'prebook', notes:'', done:false});
         savePlan(); refreshPlanner(); return;
       }
       if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
@@ -3698,6 +3754,14 @@ function wireDnD(){
   document.querySelectorAll('[data-xvadd]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();xvSheet(b.dataset.xvadd);}));
   document.querySelectorAll('[data-xvedit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var x=XVISITS.filter(function(v){return v.id===b.dataset.xvedit;})[0];if(x)xvSheet(x.dealer,x);}));
   document.querySelectorAll('[data-xvdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(xvDelete(b.dataset.xvdel))refreshPlanner();}));
+  document.querySelectorAll('.xvf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    var x=XVISITS.filter(function(v){return v.id===el.dataset.xv;})[0]; if(!x)return;
+    var f=el.dataset.f;
+    if(f==='day') x.day=(el.value===''?null:parseInt(el.value,10));
+    else if(f==='type') x.type=xvTypeKey(el.value);
+    else x[f]=el.value;
+    savePlan(); refreshPlanner();
+  }));
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id);}));
   /* travel items: one delegated handler for every typed field */
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
@@ -4244,7 +4308,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(+p.fx>0)FX=+p.fx; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
