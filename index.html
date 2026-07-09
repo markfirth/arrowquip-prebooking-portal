@@ -1158,6 +1158,28 @@ function xvAll(id){
   return out;
 }
 function xvCount(d){ return xvAll(d.id).length; }
+/* per-visit task lists. Three separate stores, never mixed:
+   'dealer'  -> STOPX[id].tasks       (dealer-level, not tied to a visit)
+   'initial' -> VISIT[id].actions     (the Trip Mode initial-visit tasks)
+   <xv id>   -> that visit's own tasks array
+   All live inside the shared plan, so they sync and version like everything else. */
+function xvTaskList(key,id){
+  if(key==='dealer'){ var s=STOPX[id]=STOPX[id]||{}; s.tasks=s.tasks||[]; return s.tasks; }
+  if(key==='initial'){ var vv=VISIT[id]=VISIT[id]||{}; vv.actions=vv.actions||[]; return vv.actions; }
+  var x=XVISITS.filter(function(v){return v.id===key;})[0]; if(!x) return null;
+  x.tasks=x.tasks||[]; return x.tasks;
+}
+/* deleting a visit never silently loses its tasks: they move to dealer level */
+function xvDelete(xid){
+  var x=XVISITS.filter(function(v){return v.id===xid;})[0]; if(!x) return false;
+  var n=(x.tasks||[]).length;
+  var msg=n?('Remove this visit? Its '+n+' task'+(n>1?'s':'')+' will be moved to dealer-level tasks. The dealer and all other visits are kept.')
+           :'Remove this visit? The dealer and all other visits are kept.';
+  if(!confirm(msg)) return false;
+  if(n){ var s=STOPX[x.dealer]=STOPX[x.dealer]||{}; s.tasks=(s.tasks||[]).concat(x.tasks); }
+  XVISITS=XVISITS.filter(function(v){return v.id!==xid;});
+  savePlan(); return true;
+}
 function xvNextLabel(d){
   var c=xvAll(d.id).filter(function(v){ return !v.done && v.wk!=null; })[0]||xvAll(d.id).filter(function(v){return v.wk!=null;})[0];
   if(!c) return '—';
@@ -1830,9 +1852,8 @@ function xvSheet(dealerId, x){
   };
   var del=wrap.querySelector('#xv_del');
   if(del) del.onclick=function(){
-    if(!confirm('Remove this visit? The dealer and all other visits are kept.')) return;
-    XVISITS=XVISITS.filter(function(v){ return v.id!==x.id; });
-    savePlan(); close();
+    if(!xvDelete(x.id)) return;
+    close();
     try{ withPreservedScroll(render); }catch(e){}
   };
 }
@@ -2194,10 +2215,27 @@ function allDealerModal(id){
         +'<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2)">Visit notes</div>'
         +(xn.length?xn.map(function(x){ return '<div style="font-size:12px;padding:4px 0">'+typeTag(x.type)+' <span style="color:var(--muted)">'+esc(xvWhen(x))+'</span><br>'+esc(x.notes)+'</div>'; }).join(''):'<div style="color:var(--muted);font-size:12px;padding:4px 0">None.</div>');
     }
-    /* tasks */
-    var acts=(v.actions||[]);
-    return '<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2)">Visit follow-up tasks</div>'
-      +(acts.length?acts.map(function(a){ return '<div style="font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line-soft)">'+(a.done?'<span style="color:#15803d">✓</span> ':'○ ')+esc(a.t)+(a.due?(' <span style="color:var(--muted);font-size:11px">· due '+esc(a.due)+'</span>'):'')+'</div>'; }).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">No tasks yet. Add them on the dealer\'s visit sheet in Trip Mode.</div>');
+    /* tasks — grouped per visit, never one flat list */
+    var groups=[{key:'dealer',label:'Dealer tasks',sub:'not tied to a visit'},
+                {key:'initial',label:'Initial Visit',sub:(typeof ASSIGN[id]==='number'?xvWhen({wk:ASSIGN[id],day:DAY[id],time:TIME[id]||''}):(ASSIGN[id]==='remote'?'Remote / direct':''))}]
+      .concat(xvFor(id).map(function(x){ return {key:x.id,label:xvType(x.type).label,sub:xvWhen(x),c:xvType(x.type).c}; }));
+    return groups.map(function(g){
+      var list=xvTaskList(g.key,id)||[];
+      var rows=list.map(function(a,i){
+        var meta=[a.owner,(a.due?('due '+a.due):null),(a.status&&a.status!=='Open'&&!a.done?a.status:null),a.notes].filter(Boolean).map(esc).join(' · ');
+        return '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line-soft)">'
+          +'<button data-tskdone="'+g.key+'|'+i+'" style="width:16px;height:16px;border-radius:50%;border:2px solid '+(a.done?'#16a34a':'#d1d5db')+';background:'+(a.done?'#16a34a':'#fff')+';cursor:pointer;flex:0 0 auto;margin-top:2px;padding:0"></button>'
+          +'<div style="flex:1;min-width:0"><div style="font-size:12.5px;'+(a.done?'color:#9ca3af;text-decoration:line-through':'color:#111')+'">'+esc(a.t)+'</div>'
+          +(meta?('<div style="font-size:10.5px;color:var(--muted)">'+meta+'</div>'):'')+'</div>'
+          +'<button data-tskdel="'+g.key+'|'+i+'" title="Delete task" style="border:0;background:none;color:#cbced0;font-size:15px;cursor:pointer;flex:0 0 auto;padding:0 2px">×</button></div>';
+      }).join('')||'<div style="font-size:11.5px;color:var(--muted);padding:2px 0 4px">No tasks.</div>';
+      return '<div style="margin-bottom:14px">'
+        +'<div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin-bottom:2px">'
+        +(g.c?('<span class="xvtag" style="background:'+g.c+'">'+g.label+'</span>'):('<span>'+g.label+'</span>'))
+        +(g.sub?('<span style="font-weight:600;text-transform:none;letter-spacing:0">'+esc(g.sub)+'</span>'):'')
+        +'<button data-tskadd="'+g.key+'" class="xvadd" style="margin-left:auto">＋ Task</button></div>'
+        +rows+'<div id="tskform-'+g.key+'"></div></div>';
+    }).join('');
   }
   function paint(){
     var tabs=[['details','Details'],['history','Visit History'],['photos','Photos'],['receipts','Receipts'],['notes','Notes'],['tasks','Tasks']];
@@ -2209,6 +2247,36 @@ function allDealerModal(id){
     wrap.querySelectorAll('[data-dlgtab]').forEach(function(b){ b.onclick=function(){ TAB=b.dataset.dlgtab; paint(); }; });
     wrap.querySelectorAll('[data-xvopen]').forEach(function(b){ b.onclick=function(){ var x=XVISITS.filter(function(vv){return vv.id===b.dataset.xvopen;})[0]; if(x){ wrap.remove(); xvSheet(x.dealer,x); } }; });
     var av=wrap.querySelector('#dlgAddVisit'); if(av) av.onclick=function(){ wrap.remove(); xvSheet(id); };
+    if(TAB==='tasks'){
+      wrap.querySelectorAll('[data-tskdone]').forEach(function(b){ b.onclick=function(){
+        var p=b.dataset.tskdone.split('|'), list=xvTaskList(p[0],id); if(!list||!list[+p[1]]) return;
+        var a=list[+p[1]]; a.done=!a.done; if(a.done)a.status='Done'; else if(a.status==='Done')a.status='Open';
+        savePlan(); paint();
+      };});
+      wrap.querySelectorAll('[data-tskdel]').forEach(function(b){ b.onclick=function(){
+        var p=b.dataset.tskdel.split('|'), list=xvTaskList(p[0],id); if(!list) return;
+        list.splice(+p[1],1); savePlan(); paint();
+      };});
+      wrap.querySelectorAll('[data-tskadd]').forEach(function(b){ b.onclick=function(){
+        var key=b.dataset.tskadd, host=wrap.querySelector('#tskform-'+CSS.escape(key)); if(!host||host.innerHTML) return;
+        var inp='style="border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:400 12px \'Open Sans\',Arial,sans-serif;min-width:0"';
+        host.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;background:#f9fafb;border:1px solid var(--line-soft);border-radius:8px;padding:9px;margin-top:6px">'
+          +'<input class="tf-t" placeholder="Task title" '+inp+'>'
+          +'<div style="display:flex;gap:6px"><input class="tf-o" placeholder="Owner" '+inp+' style="flex:1"><input class="tf-d" placeholder="Due (e.g. Aug 20)" '+inp+' style="flex:1"></div>'
+          +'<div style="display:flex;gap:6px"><select class="tf-s" '+inp+' style="flex:0 0 auto"><option>Open</option><option>In Progress</option><option>Waiting</option></select>'
+          +'<input class="tf-n" placeholder="Notes" '+inp+' style="flex:1"></div>'
+          +'<div style="display:flex;gap:6px"><button class="btn tf-save" style="flex:1;background:#111;color:#fff;border-color:#111;font-size:11px">Add task</button>'
+          +'<button class="btn tf-cancel" style="font-size:11px">Cancel</button></div></div>';
+        host.querySelector('.tf-cancel').onclick=function(){ host.innerHTML=''; };
+        host.querySelector('.tf-save').onclick=function(){
+          var t=host.querySelector('.tf-t').value.trim(); if(!t){ alert('Enter a task title.'); return; }
+          var list=xvTaskList(key,id); if(!list) return;
+          list.push({t:t, owner:host.querySelector('.tf-o').value.trim(), due:host.querySelector('.tf-d').value.trim(),
+                     status:host.querySelector('.tf-s').value, notes:host.querySelector('.tf-n').value.trim(), done:false});
+          savePlan(); paint();
+        };
+      };});
+    }
     if(TAB==='photos'){
       pbCloudPhotoList(id).then(function(ps){
         var g=wrap.querySelector('#dlgPhotos'); if(!g) return;
@@ -3527,7 +3595,7 @@ function wireDnD(){
   document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-xvadd]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();xvSheet(b.dataset.xvadd);}));
   document.querySelectorAll('[data-xvedit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var x=XVISITS.filter(function(v){return v.id===b.dataset.xvedit;})[0];if(x)xvSheet(x.dealer,x);}));
-  document.querySelectorAll('[data-xvdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(!confirm('Remove this visit? The dealer and all other visits are kept.'))return;XVISITS=XVISITS.filter(function(v){return v.id!==b.dataset.xvdel;});savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-xvdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(xvDelete(b.dataset.xvdel))refreshPlanner();}));
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id);}));
   /* travel items: one delegated handler for every typed field */
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
