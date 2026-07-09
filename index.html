@@ -2838,6 +2838,7 @@ function unlockApp(){
     mobBoot();          /* Trip Mode: phone widths only */
   });
   initRealtime(); loadSFDealers();
+  try{ pbPhotoBackfill(); }catch(e){}   /* drain any photos captured while signed-out/offline */
 }
 /* ===================== Authentication (Supabase email magic link) ============
    The plaintext team passcode is gone. Access now requires BOTH:
@@ -2986,7 +2987,7 @@ function pbFlushOnline(){
   if(!SB) return;
   try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER['plan']!==undefined && !PB_READONLY && !PB_STALE){ cloudSave('plan', planPayload()); } }catch(e){}
 }
-window.addEventListener('online', function(){ cloudBadge('Back online — syncing'); pbFlushOnline(); });
+window.addEventListener('online', function(){ cloudBadge('Back online — syncing'); pbFlushOnline(); try{ pbPhotoBackfill(); }catch(e){} });
 
 /* ---- Account controls (utility bar): who's signed in, sign out, manage users --- */
 function pbRenderAcct(){
@@ -3488,7 +3489,12 @@ function mobEditSheet(id){
    Photos never leave the device until secure auth enables cloud sync — so no anon
    storage, no image bytes in the plan JSON. Receipts are explicitly NOT built here. */
 
-/* ---- device-local photo store (IndexedDB) ---- */
+/* ---- dealer visit photos: private 'visit-photos' bucket is the source of truth ----
+   The bucket (indexed by prebooking_documents) holds the authoritative copy so photos
+   follow the trip across devices and into pulled reports. IndexedDB is a local cache +
+   upload queue: every photo is written locally first (offline-first) and each local row
+   records its cloud storage_path once uploaded, so the cache and cloud never double-count.
+   Images never touch plan/report JSON. */
 var _pdb=null;
 function pbPhotoDB(){
   return new Promise(function(res,rej){
@@ -3505,37 +3511,134 @@ function pbPhotoDB(){
     r.onerror=function(){ rej('idb-open-failed'); };
   });
 }
+/* record the cloud storage_path back onto a local row once its upload succeeds */
+function pbPhotoSetRemote(localId, remotePath){
+  if(localId==null) return Promise.resolve();
+  return pbPhotoDB().then(function(db){ return new Promise(function(res){
+    var st=db.transaction('photos','readwrite').objectStore('photos'), g=st.get(localId);
+    g.onsuccess=function(){ var rec=g.result; if(rec){ rec.remotePath=remotePath; st.put(rec); } res(); };
+    g.onerror=function(){ res(); };
+  });}).catch(function(){});
+}
+/* upload one blob to the private bucket + index row, then link it to its local row */
+function pbPhotoUploadOne(dealer, blob, localId){
+  var d=uniById(dealer);
+  return pbUpload('visit-photos', blob, {kind:'visit_photo', stopKey:String(dealer),
+      title:(d&&d.name?('Visit photo — '+d.name):'Visit photo'), source:'visit'})
+    .then(function(r){ if(r&&r.ok) return pbPhotoSetRemote(localId, r.bucket+'/'+r.path); })
+    .catch(function(){});
+}
 function pbPhotoAdd(dealer, blob){
-  /* Authenticated: store the image in the private visit-photos bucket + index row.
-     The IndexedDB copy stays only as an offline/thumbnail cache — images are never
-     written into the plan/report JSON. */
-  if(pbAuthed()){
-    try{ var d=uniById(dealer); pbUpload('visit-photos', blob, {kind:'visit_photo', stopKey:String(dealer),
-      title:(d&&d.name?('Visit photo — '+d.name):'Visit photo'), source:'visit'}); }catch(e){}
-  }
+  /* write the local cache/queue row first (works offline & signed-out), then upload */
   return pbPhotoDB().then(function(db){ return new Promise(function(res,rej){
     var tx=db.transaction('photos','readwrite');
-    tx.objectStore('photos').add({dealer:dealer, blob:blob, at:Date.now()});
-    tx.oncomplete=res; tx.onerror=function(){rej('add-failed');};
-  });});
+    var req=tx.objectStore('photos').add({dealer:dealer, blob:blob, at:Date.now(), remotePath:null});
+    var newId=null; req.onsuccess=function(){ newId=req.result; };
+    tx.oncomplete=function(){ res(newId); }; tx.onerror=function(){ rej('add-failed'); };
+  });}).then(function(localId){
+    if(pbAuthed()) return pbPhotoUploadOne(dealer, blob, localId).then(function(){ return localId; });
+    return localId;
+  });
 }
-function pbPhotoList(dealer){
+/* cloud photos for a dealer: index rows -> short-lived signed URLs */
+function pbCloudPhotoList(dealer){
+  if(!pbAuthed() || !SB || (typeof navigator!=='undefined' && !navigator.onLine)) return Promise.resolve([]);
+  return SB.from('prebooking_documents')
+    .select('id,storage_path,created_at').eq('kind','visit_photo').eq('stop_key',String(dealer))
+    .order('created_at',{ascending:true})
+    .then(function(res){
+      var rows=(res&&res.data)||[]; if(!rows.length) return [];
+      return Promise.all(rows.map(function(row){
+        var sp=row.storage_path||'', i=sp.indexOf('/'); if(i<0) return null;
+        return SB.storage.from(sp.slice(0,i)).createSignedUrl(sp.slice(i+1), 3600).then(function(s){
+          return (s&&s.data&&s.data.signedUrl)
+            ? {kind:'cloud', docId:row.id, storagePath:sp, url:s.data.signedUrl, at:(new Date(row.created_at).getTime()||0)}
+            : null;
+        }).catch(function(){ return null; });
+      })).then(function(list){ return list.filter(Boolean); });
+    }, function(){ return []; });
+}
+/* local rows for a dealer as display items */
+function pbLocalPhotoRows(dealer){
   return pbPhotoDB().then(function(db){ return new Promise(function(res){
     var out=[], idx=db.transaction('photos','readonly').objectStore('photos').index('dealer').openCursor(IDBKeyRange.only(dealer));
-    idx.onsuccess=function(e){ var c=e.target.result; if(c){ out.push({id:c.value.id, url:URL.createObjectURL(c.value.blob), at:c.value.at}); c.continue(); } else res(out); };
+    idx.onsuccess=function(e){ var c=e.target.result; if(c){ out.push({kind:'local', localId:c.value.id, remotePath:c.value.remotePath||null, url:URL.createObjectURL(c.value.blob), at:c.value.at||0}); c.continue(); } else res(out); };
     idx.onerror=function(){ res(out); };
   });}).catch(function(){ return []; });
 }
-function pbPhotoDelete(id){
-  return pbPhotoDB().then(function(db){ return new Promise(function(res){
-    var tx=db.transaction('photos','readwrite'); tx.objectStore('photos').delete(id); tx.oncomplete=res; tx.onerror=res;
-  });});
+/* merged view: cloud is authoritative; a local row already uploaded (remotePath in the
+   cloud set) is hidden to avoid duplicates; local rows not yet uploaded still show. */
+function pbPhotoList(dealer){
+  return Promise.all([pbLocalPhotoRows(dealer), pbCloudPhotoList(dealer)]).then(function(r){
+    var loc=r[0], cloud=r[1], have={};
+    cloud.forEach(function(c){ have[c.storagePath]=true; });
+    var pending=loc.filter(function(l){ return !(l.remotePath && have[l.remotePath]); });
+    var all=cloud.concat(pending).sort(function(a,b){ return (a.at||0)-(b.at||0); });
+    return all.map(function(p){ return { id:(p.kind==='cloud'?('c:'+p.docId):('l:'+p.localId)), url:p.url, at:p.at }; });
+  });
 }
-function pbPhotoCount(dealer){
+function pbPhotoDeleteLocal(localId){
   return pbPhotoDB().then(function(db){ return new Promise(function(res){
-    var req=db.transaction('photos','readonly').objectStore('photos').index('dealer').count(IDBKeyRange.only(dealer));
-    req.onsuccess=function(){ res(req.result); }; req.onerror=function(){ res(0); };
+    var tx=db.transaction('photos','readwrite'); tx.objectStore('photos').delete(localId); tx.oncomplete=res; tx.onerror=res;
+  });}).catch(function(){});
+}
+function pbPhotoDeleteLocalByRemote(remotePath){
+  if(!remotePath) return Promise.resolve();
+  return pbPhotoDB().then(function(db){ return new Promise(function(res){
+    var st=db.transaction('photos','readwrite').objectStore('photos'), cur=st.openCursor();
+    cur.onsuccess=function(e){ var c=e.target.result; if(c){ if(c.value.remotePath===remotePath) st.delete(c.value.id); c.continue(); } else res(); };
+    cur.onerror=function(){ res(); };
+  });}).catch(function(){});
+}
+/* delete a merged item: id 'c:<docId>' removes the cloud object + index row (and any
+   cached local copy); 'l:<localId>' removes a local-only row. */
+function pbPhotoDelete(compositeId){
+  var s=String(compositeId);
+  if(s.indexOf('c:')===0){
+    var docId=s.slice(2);
+    return SB.from('prebooking_documents').select('storage_path').eq('id',docId).maybeSingle().then(function(res){
+      var sp=(res&&res.data&&res.data.storage_path)||'', i=sp.indexOf('/');
+      var rm=(i>=0) ? SB.storage.from(sp.slice(0,i)).remove([sp.slice(i+1)]) : Promise.resolve();
+      return rm.then(function(){ return SB.from('prebooking_documents').delete().eq('id',docId); })
+               .then(function(){ return pbPhotoDeleteLocalByRemote(sp); });
+    }).catch(function(){});
+  }
+  if(s.indexOf('l:')===0) return pbPhotoDeleteLocal(+s.slice(2));
+  return pbPhotoDeleteLocal(+s); /* legacy numeric ids */
+}
+/* one-time, idempotent backfill: push any local rows without a remotePath to the cloud.
+   Runs on login and when connectivity returns; already-uploaded rows are skipped, so it
+   is safe to call repeatedly and also drains photos captured while offline. */
+var _pbBackfilling=false;
+function pbPhotoBackfill(){
+  if(_pbBackfilling || !pbAuthed() || !SB || (typeof navigator!=='undefined' && !navigator.onLine)) return;
+  _pbBackfilling=true;
+  pbPhotoDB().then(function(db){ return new Promise(function(res){
+    var out=[], cur=db.transaction('photos','readonly').objectStore('photos').openCursor();
+    cur.onsuccess=function(e){ var c=e.target.result; if(c){ if(!c.value.remotePath) out.push({id:c.value.id, dealer:c.value.dealer, blob:c.value.blob}); c.continue(); } else res(out); };
+    cur.onerror=function(){ res(out); };
+  });}).then(function(pending){
+    if(!pending.length){ _pbBackfilling=false; return; }
+    try{ cloudBadge('Backing up '+pending.length+' photo'+(pending.length>1?'s':'')+'…'); }catch(e){}
+    var i=0, step=function(){
+      if(i>=pending.length){ _pbBackfilling=false; try{ cloudBadge('Photos backed up'); }catch(e){} return; }
+      var p=pending[i++]; pbPhotoUploadOne(p.dealer, p.blob, p.id).then(step, step);
+    };
+    step();
+  }, function(){ _pbBackfilling=false; });
+}
+/* union count (cloud rows + not-yet-uploaded local rows); no object URLs */
+function pbPhotoCount(dealer){
+  var cloudP=(pbAuthed() && SB && (typeof navigator==='undefined' || navigator.onLine))
+    ? SB.from('prebooking_documents').select('id',{count:'exact',head:true}).eq('kind','visit_photo').eq('stop_key',String(dealer))
+        .then(function(r){ return (r&&typeof r.count==='number')?r.count:0; }, function(){ return 0; })
+    : Promise.resolve(0);
+  var localP=pbPhotoDB().then(function(db){ return new Promise(function(res){
+    var n=0, cur=db.transaction('photos','readonly').objectStore('photos').index('dealer').openCursor(IDBKeyRange.only(dealer));
+    cur.onsuccess=function(e){ var c=e.target.result; if(c){ if(!c.value.remotePath) n++; c.continue(); } else res(n); };
+    cur.onerror=function(){ res(0); };
   });}).catch(function(){ return 0; });
+  return Promise.all([cloudP, localP]).then(function(r){ return r[0]+r[1]; }).catch(function(){ return 0; });
 }
 
 /* ---- VISIT accessors ---- */
@@ -3639,7 +3742,7 @@ function mobVisitDetail(id){
       grid.innerHTML = ps.length
         ? ps.map(function(p){ return '<div class="vd-ph"><img src="'+p.url+'" alt=""><button class="vd-phdel" data-phdel="'+p.id+'">×</button></div>'; }).join('')
         : '<div class="tm-empty" style="grid-column:1/-1">No photos yet. Tap Add photo.</div>';
-      grid.querySelectorAll('[data-phdel]').forEach(function(b){ b.onclick=function(){ pbPhotoDelete(+b.dataset.phdel).then(function(){ reopen('photos'); }); }; });
+      grid.querySelectorAll('[data-phdel]').forEach(function(b){ b.onclick=function(){ if(!confirm('Delete this photo? If it has synced, this removes it from cloud storage too.')) return; pbPhotoDelete(b.dataset.phdel).then(function(){ reopen('photos'); }); }; });
     });
     var cam=document.getElementById('vd_cam');
     if(cam) cam.onchange=function(){
