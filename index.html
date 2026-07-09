@@ -765,6 +765,27 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
 .lvsumtab .num{text-align:right;}
 .lvsumtab tr.tot td{font-weight:800;border-top:2px solid var(--line);}
+/* ---- Global cleanup: compact KPI strip, airy cards, no clipping ---- */
+.cards{gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.card{flex-direction:row;align-items:baseline;gap:8px;padding:.4rem .7rem .45rem;flex:1 1 auto;}
+.card .lbl{margin:0;font-size:.58rem;white-space:nowrap;}
+.card .val{font-size:.85rem;white-space:nowrap;}
+.card .sub{display:none;}                       /* label + value only: one slim summary bar */
+.plansum{gap:14px;}
+.plansum .ps .pl,.ps .pl{font-size:.55rem;}
+.plansum .ps .pv,.ps .pv{font-size:.82rem;}
+.kcard{overflow:hidden;}
+.kc-top{min-width:0;gap:6px;}
+.kc-top .kc-name{overflow:hidden;text-overflow:ellipsis;}
+.kc-bot{min-width:0;flex-wrap:nowrap;gap:5px;}
+.kc-bot .cx{flex:0 0 auto;margin-left:auto;}
+.kc-bot .apptbtn{flex:0 0 auto;}
+/* Master Sheet: tighter grid, narrow tier column, ellipsised address */
+#masterView th,#masterView td{padding:3px 6px;font-size:10.5px;}
+#masterView tr.colhdr th{padding-top:6px;padding-bottom:6px;font-size:9.5px;}
+#mBody td:nth-child(7){max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#mBody td:nth-child(13){width:40px;text-align:center;}
+#mBody input.ed{font-size:10.5px;}
 /* ---- No-overlap guarantees: dropdown arrows never sit on text ---- */
 #weeks select,.tv-in,.kc-ctl select,select.xvf{padding-right:18px !important;min-width:0;text-overflow:ellipsis;}
 select.cday,select.cdur{min-width:82px;}
@@ -818,10 +839,11 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
 .cloudbadge{position:fixed;bottom:10px;right:12px;z-index:500;font:11px 'Open Sans',Arial,sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:4px 9px;border-radius:12px;pointer-events:none;opacity:0;transition:opacity .3s;}
 .cloudbadge.show{opacity:1;}
 .aqAcct{display:inline-flex;align-items:center;gap:8px;margin-left:10px;font-size:12px;}
-.aqAcct .aqWho{color:#e5e7eb;opacity:.85;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aqAcct .aqWho{color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .aqAcct .aqRole{font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:#cf202f;color:#fff;padding:2px 6px;border-radius:9px;}
-.aqAcct button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;}
-.aqAcct button:hover{background:rgba(255,255,255,.12);}
+/* the utility bar is white — the account buttons must read on it */
+.aqAcct button{background:#fff;border:1px solid #d1d5db;color:#111;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 10px;border-radius:5px;cursor:pointer;transition:border-color .15s;}
+.aqAcct button:hover{border-color:#111;}
 .pbModal{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
 .pbModal .pbCard{background:#fff;border-radius:10px;width:560px;max-width:94vw;max-height:88vh;overflow:auto;padding:22px 24px;box-shadow:0 24px 70px rgba(0,0,0,.35);font-family:'Open Sans',Arial,sans-serif;}
 .pbModal h3{margin:0 0 4px;font-size:18px;}
@@ -846,7 +868,7 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
   <div class="aqUtilityBar">
     <div class="aqUtilityLeft"><span class="aqPortalLabel">Pre-Booking Portal</span></div>
     <div class="aqUtilityRight">
-      <button class="tab aqAction" data-t="Master">Master Sheet</button><button class="tab aqAction" data-t="Reports">Reports</button>
+      <button class="tab aqAction" data-t="Master">Master Sheet</button>
       <button id="exportBtn" class="aqAction aqAction--solid">Trip Plans</button>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
@@ -890,7 +912,6 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
-  <div id="reportsView" style="display:none;"></div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
@@ -1449,14 +1470,14 @@ function renderPlanner(){
    free-text label) are migrated in place on load — see migrateTravel().           */
 
 const TRAVEL_TYPES={
-  flight_in :{label:'Flight Arrival', icon:'✈', color:'#2563eb', place:'airport'},
-  flight_out:{label:'Flight Departure',icon:'✈', color:'#2563eb', place:'airport'},
-  rental_pickup:{label:'Rental Pickup', icon:'🚗', color:'#16a34a', place:'address'},
-  rental_return:{label:'Rental Return', icon:'🚗', color:'#16a34a', place:'address'},
+  flight_in :{label:'Arrival', icon:'✈', color:'#2563eb', place:'airport'},
+  flight_out:{label:'Depart',icon:'✈', color:'#2563eb', place:'airport'},
+  rental_pickup:{label:'Pickup', icon:'🚗', color:'#16a34a', place:'address'},
+  rental_return:{label:'Return', icon:'🚗', color:'#16a34a', place:'address'},
   hotel     :{label:'Hotel',         icon:'🏨', color:'#7c3aed', place:'address'},
   fuel      :{label:'Fuel',          icon:'⛽', color:'#ea580c', place:'address'},
   food      :{label:'Food',          icon:'🍴', color:'#d97706', place:'address'},
-  parking   :{label:'Parking / Toll',icon:'🅿',  color:'#6b7280', place:'address'},
+  parking   :{label:'Parking',icon:'🅿',  color:'#6b7280', place:'address'},
   other     :{label:'Other',         icon:'•',  color:'#6b7280', place:'address'}
 };
 /* which budget category an item's expenses default to */
@@ -1831,7 +1852,7 @@ function cardHTML(d,wk){
   var ctl=(wk==='remote')?'':'<div class="kc-ctl">'+daysel+'<input class="ctime" type="time" data-time="'+d.id+'" value="'+(TIME[d.id]||'')+'"><select class="cdur" data-dur="'+d.id+'">'+durOpts+'</select></div>'+frame;
   return '<div class="kcard '+(ok?'confirmed':'planned')+'" draggable="true" data-id="'+d.id+'">'
     +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div><div class="kc-amt">'+fmtUSD(d.booking)+'</div></div>'
-    +'<div class="kc-bot"><span class="xvpill" style="color:#2563eb;border-color:#2563eb55" title="Visit type">●&nbsp;Pre-Book</span><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
+    +'<div class="kc-bot"><span class="xvpill" style="color:#2563eb;border-color:#2563eb55" title="Visit type">●&nbsp;Pre-Book</span>'+(ok?'<span class="kbadge won">Confirmed</span>':'')+'<button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
     +ctl+'</div>';
 }
 /* The ALL tab is the company-wide version of a territory page: the same
@@ -3583,7 +3604,7 @@ function renderMaster(){
     ${t27Loads(d)>0
       ?`<td class="num" title="Auto-calculated: ${t27Loads(d)} loads × ${fmtUSD(loadUSD(d))}/load${dealerIsCA(d)?' ($'+LOAD_CAD.toLocaleString()+' CAD converted at '+FX+')':' USD'}" style="font-weight:600;color:#1f2937">${fmtUSD(+d.booking||0)}<span class="pmdot" style="background:#16a34a" title="Auto from Target Loads"></span></td>`
       :`<td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>`}
-    <td class="num" style="font-size:10.5px;color:var(--muted)">${t27Tier(t27Loads(d))||'—'}</td>
+    <td class="num" style="font-size:10.5px;color:var(--muted)">${(t27Tier(t27Loads(d))||'—').replace('Tier ','')}</td>
     ${d._sf?lockTD('num',fmtUSD((sfLookup(d)&&+sfLookup(d).actual2027)||0),'span','2027 Actual — Closed Won 2027 prebooking value from Salesforce. Read-only.'):'<td class="num" style="color:var(--muted-2)">—</td>'}
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
@@ -4107,29 +4128,26 @@ function pbRestoreNav(){
     var ns=JSON.parse(localStorage.getItem('aqNavState')||'null');
     _pbNavReady=true;
     if(!ns) return;
-    var tabsOk=['All','East','South','Central','West','Exports','Master','Reports'];
+    var tabsOk=['All','East','South','Central','West','Exports','Master'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
     allMode=(ns.allMode==='map')?'map':'overview';   /* legacy cal/leaders/leader → overview */
     if(typeof ns.mapWeek==='number') mapWeek=ns.mapWeek;
     if(ns.terrMapWeek==='all'||typeof ns.terrMapWeek==='number') terrMapWeek=ns.terrMapWeek;
     if(['overview','budget','files'].indexOf(ns.sbTab)>=0) SIDEBAR_TAB=ns.sbTab;
-    if(ns.allWk==='all'||typeof ns.allWk==='number') ALL_WK=ns.allWk;
     if(ns.areas&&typeof ns.areas==='object'){ TERRS.forEach(function(t){ if(typeof ns.areas[t]==='boolean') LV_AREAS[t]=ns.areas[t]; }); }
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active',b.dataset.t===terr); });
   }catch(e){}
 }
 function render(){
-  const isMaster=terr==='Master', isAll=terr==='All', isReports=terr==='Reports';
+  const isMaster=terr==='Master', isAll=terr==='All';
   pbSaveNav();
-  document.getElementById("cards").style.display=(isMaster||isReports)?'none':'';
-  if(!isMaster&&!isReports) renderCards();
-  document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isReports)?'':'none';
+  document.getElementById("cards").style.display=isMaster?'none':'';
+  if(!isMaster) renderCards();
+  document.getElementById("plannerView").style.display=(!isAll&&!isMaster)?'':'none';
   document.getElementById("allView").style.display=isAll?'':'none';
   document.getElementById("masterView").style.display=isMaster?'':'none';
-  document.getElementById("reportsView").style.display=isReports?'':'none';
   if(isMaster) renderMaster();
-  else if(isReports) renderReports();
   else if(isAll) renderAllView();
   else {
     document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
