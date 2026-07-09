@@ -763,6 +763,13 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
 .lvsumtab .num{text-align:right;}
 .lvsumtab tr.tot td{font-weight:800;border-top:2px solid var(--line);}
+/* ALL overview Kanban: territory board reused, read-only */
+.allboard{margin-top:2px;}
+.kdsub{float:right;font-weight:600;color:var(--muted-2);text-transform:none;letter-spacing:0;}
+.kbody .atags{margin:2px 0 4px;}
+.kbody .atag{max-width:100%;}
+/* planner-managed 2026 pre-booking marker (no Salesforce value found) */
+.pmdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:5px;vertical-align:1px;flex:0 0 auto;}
 /* ALL overview: daily summaries + compact area-coloured dealer tags */
 .aweek{padding:4px 12px 10px;}
 .aday{padding:7px 0 2px;border-bottom:1px solid var(--line-soft);}
@@ -1936,34 +1943,49 @@ function allTagHTML(t,d){
   return '<span class="atag'+(ok?' ok':'')+'" data-adealer="'+d.id+'" title="'+esc(d.name)+' · '+t+(TIME[d.id]?(' · '+t12(TIME[d.id])):'')+(ok?' · Confirmed':'')+'">'
     +'<i style="background:'+AREA_COLOR[t]+'">'+AREA_CODE[t]+'</i>'+esc(d.name)+(ok?' ✓':'')+'</span>';
 }
-function allOverviewWeekHTML(wk){
-  var vs=allVisits(wk);
-  var hasTravel=LOGI.some(function(it){return it.wk===wk&&LV_AREAS[it.terr];});
+/* ALL Overview uses the EXACT territory-planner Kanban: the same .wkcard week
+   columns, black .wkhead, .kday day rows, pills and scroll behaviour — only the
+   contents aggregate every selected area, as compact read-only dealer tags. */
+function allWeekCard(wk){
+  var isk=(wk==='remote')?false:(wk===31), isRemote=(wk==='remote');
+  var vs=[];
+  if(isRemote){ allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]==='remote') vs.push({t:t,d:d}); }); }); }
+  else vs=allVisits(wk);
   var rev=vs.reduce(function(a,v){return a+(+v.d.booking||0);},0);
   var loads=vs.reduce(function(a,v){return a+(+v.d.loads||0);},0);
-  var conf=vs.filter(function(v){return APPT[v.d.id];}).length;
-  var pct=vs.length?Math.round(conf/vs.length*100):0;
-  var bar='<div class="lvwkbar">Week '+wk+(wk===31?' · Kickoff':'')+' <span class="sub">'+WEEKDATES[wk]+'</span>'
-    +'<div class="lvpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSDk(rev)+'</span>'
-    +'<span class="kpill sub">'+vs.length+' dealers · '+conf+'/'+vs.length+' appts · '+pct+'%</span></div></div>';
-  if(!vs.length && !hasTravel) return '<div class="lvwk min">'+bar+'</div>';
-  var labs=dayLabels(wk), rows='';
-  labs.forEach(function(l,i){
-    var dd=vs.filter(function(v){return DAY[v.d.id]===i;}).sort(function(a,b){return (TIME[a.d.id]||'99').localeCompare(TIME[b.d.id]||'99');});
-    if(!dd.length) return;
-    var areas={}; dd.forEach(function(v){areas[v.t]=1;}); var an=Object.keys(areas).length;
-    rows+='<div class="aday"><div class="adayh">'+(l[0]+' '+l[1]).toUpperCase()
-      +'<span>'+dd.length+' Appointment'+(dd.length!==1?'s':'')+' • '+an+' Area'+(an!==1?'s':'')+'</span></div>'
-      +'<div class="atags">'+dd.map(function(v){return allTagHTML(v.t,v.d);}).join('')+'</div></div>';
-  });
-  var un=vs.filter(function(v){return DAY[v.d.id]==null||DAY[v.d.id]>=labs.length;});
-  if(un.length) rows+='<div class="aday"><div class="adayh">UNSCHEDULED<span>'+un.length+' dealer'+(un.length!==1?'s':'')+'</span></div><div class="atags">'+un.map(function(v){return allTagHTML(v.t,v.d);}).join('')+'</div></div>';
-  return '<div class="lvwk">'+bar+'<div class="aweek">'+(rows||'<div class="lvnone">No visits planned.</div>')+'</div></div>';
+  var apc=vs.filter(function(v){return APPT[v.d.id];}).length;
+  var pct=vs.length?Math.round(apc/vs.length*100):0;
+  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
+  var dates=isRemote?'book remotely':(WEEKDATES[wk]+', 2026');
+  var tags=function(list){ return '<div class="atags">'+list.map(function(v){return allTagHTML(v.t,v.d);}).join('')+'</div>'; };
+  var cards='';
+  if(isRemote){
+    cards=vs.length?tags(vs):'<div class="dcempty">no remote dealers</div>';
+  } else if(!vs.length){
+    cards='<div class="dcempty">no visits planned</div>';
+  } else {
+    var labs=dayLabels(wk);
+    var nod=vs.filter(function(v){return DAY[v.d.id]==null||DAY[v.d.id]>=labs.length;});
+    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+tags(nod); }
+    labs.forEach(function(l,i){
+      var dd=vs.filter(function(v){return DAY[v.d.id]===i;}).sort(function(a,b){return (TIME[a.d.id]||'99').localeCompare(TIME[b.d.id]||'99');});
+      var areas={}; dd.forEach(function(v){areas[v.t]=1;}); var an=Object.keys(areas).length;
+      cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]
+        +(dd.length?('<span class="kdsub">'+dd.length+' appt'+(dd.length!==1?'s':'')+' • '+an+' area'+(an!==1?'s':'')+'</span>'):'')+'</div>';
+      cards+= dd.length?tags(dd):'<div class="dcempty">—</div>';
+    });
+  }
+  return '<div class="wkcard'+(isk?' kick':'')+'">'
+    +'<div class="wkhead"><div class="wl">'+title+'</div>'
+    +'<div class="kpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSD(rev)+'</span><span class="kpill sub">'+apc+'/'+vs.length+' appts · '+pct+'%</span></div></div>'
+    +'<div class="wmeta"><div><b>Dates:</b> '+dates+'</div><div><b>Dealers:</b> '+vs.length+' &nbsp;·&nbsp; <b>Loads:</b> '+loads+'</div></div>'
+    +'<div class="kbody">'+cards+'</div></div>';
 }
 function renderAllOverview(){
   var host=document.getElementById('ganttWrap');
-  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
-  host.innerHTML=allFiltersHTML()+allKpiHTML()+wks.map(allOverviewWeekHTML).join('');
+  var wks=(ALL_WK==='all')?allWeeksList().concat(['remote']):[ALL_WK];
+  host.innerHTML=allFiltersHTML()+allKpiHTML()
+    +'<div class="boardscroll allboard"><div class="weeks">'+wks.map(allWeekCard).join('')+'</div></div>';
   allWireShared(host);
 }
 function allWireShared(host){
@@ -2052,7 +2074,7 @@ function renderAllMap(){
 function allDrawMap(){
   var el=document.getElementById('leaderMap'); if(!el||typeof L==='undefined')return;
   if(_lvMap){ try{_lvMap.remove();}catch(e){} _lvMap=null; }
-  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:false,preferCanvas:true}).setView([45,-98],4);
+  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:true,preferCanvas:true}).setView([45,-98],4);
   var gen=++_aqMapGen; _lvMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
   var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
@@ -2293,10 +2315,12 @@ function expensesFor(t,wk){
   return EXPENSES.filter(function(e){ return (t==='All'||e.terr===t) && e.wk===wk; });
 }
 function addExpense(t,wk,o){
-  EXPENSES.push({id:'E'+Date.now()+Math.floor(Math.random()*1000), terr:(t==='All'?'East':t), wk:wk,
+  var id='E'+Date.now()+Math.floor(Math.random()*1000);
+  EXPENSES.push({id:id, terr:(t==='All'?'East':t), wk:wk,
     cat:normCat(o.cat), vendor:o.vendor||'', date:(o.date===''||o.date==null)?null:parseInt(o.date,10),
     amount:num(o.amount), isEst:!!o.isEst, notes:o.notes||''});
   savePlan(); renderTerrMap();
+  return id;
 }
 function setExpenseField(id,field,val){
   var e=EXPENSES.filter(function(x){return x.id===id;})[0]; if(!e) return;
@@ -2704,7 +2728,7 @@ function drawLeg(map,gen,a,b,style,meta){
 function drawTripMap(stops){
   var el=document.getElementById('tripMap'); if(!el||typeof L==='undefined')return;
   if(_tripMap){ try{_tripMap.remove();}catch(e){} _tripMap=null; }
-  _tripMap=L.map(el,{zoomControl:true,scrollWheelZoom:false}).setView([43.5,-79],5);
+  _tripMap=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([43.5,-79],5);
   var gen=++_aqMapGen; _tripMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
   var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
@@ -2734,7 +2758,7 @@ let _lvMap=null;
 function lvDrawMap(){
   var el=document.getElementById('leaderMap'); if(!el||typeof L==='undefined')return;
   if(_lvMap){ try{_lvMap.remove();}catch(e){} _lvMap=null; }
-  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:false}).setView([45,-98],4);
+  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([45,-98],4);
   var gen=++_aqMapGen; _lvMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
   var bounds=[], legs=[];
@@ -3183,7 +3207,7 @@ function renderMaster(){
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
     ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','2026 Loads — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date). Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
-    ${sfLock(d,'prebook2026')?lockTD('num',fmtUSD(+d.prebook2026||0),'span','Original 2026 Pre-Booking — from Salesforce. Read-only.'):`<td class="num pln"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}"></td>`}
+    ${sfLock(d,'prebook2026')?lockTD('num',fmtUSD(+d.prebook2026||0),'span','Original 2026 Pre-Booking — from Salesforce. Read-only (0 is valid Salesforce data).'):`<td class="num pln" title="${d._sf?'Planner Managed — no Salesforce 2026 Pre-Booking found for this dealer':'Planner-managed commitment'}"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}">${d._sf?'<span class="pmdot" title="Planner Managed — no Salesforce 2026 Pre-Booking found"></span>':''}</td>`}
     <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
@@ -3781,17 +3805,63 @@ function pbPickFile(accept, useCamera, multiple, cb){
   inp.onchange=function(){ var fs=[].slice.call(inp.files||[]); inp.remove(); cb(fs); };
   inp.click();
 }
-/* Capture a receipt image -> receipt-photos bucket + document row (kind 'receipt'). */
+/* Capture a receipt image -> receipt-photos bucket + document row (kind 'receipt').
+   The saved image is then read by the AI endpoint (when configured) and a
+   review-first expense draft opens — bad OCR is never posted silently. */
 function pbCaptureReceipt(meta, done){
   if(!pbAuthed()){ alert('Sign in to capture receipts.'); return; }
   pbPickFile('image/*,application/pdf', true, false, function(fs){
     if(!fs.length) return;
+    var f=fs[0];
     cloudBadge('Uploading receipt…');
-    pbUpload('receipt-photos', fs[0], Object.assign({kind:'receipt',source:'receipt'}, meta||{})).then(function(r){
+    pbUpload('receipt-photos', f, Object.assign({kind:'receipt',source:'receipt'}, meta||{})).then(function(r){
       cloudBadge(r.ok?'Receipt saved':'Receipt upload failed');
       if(done) done(r);
+      if(r.ok&&r.docId) pbReceiptOcr(f, r.docId);
     });
   });
+}
+function pbDocStatus(docId,patch){
+  try{ SB.from('prebooking_documents').update(patch).eq('id',docId).then(function(){},function(){}); }catch(e){}
+}
+/* downscale to ~1200px JPEG so the OCR request stays small */
+function pbShrinkImage(file,maxW){
+  return new Promise(function(res){ try{
+    var img=new Image(); var url=URL.createObjectURL(file);
+    img.onload=function(){
+      var sc=Math.min(1,(maxW||1200)/Math.max(img.width,img.height));
+      var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.8));
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); res(null); };
+    img.src=url;
+  }catch(e){ res(null); } });
+}
+function pbReceiptOcr(file,docId){
+  if(!/^image\//.test(file.type||'')){ pbDocStatus(docId,{ocr_status:'needs_review'}); return; }
+  pbShrinkImage(file,1200).then(function(dataUrl){
+    if(!dataUrl){ pbDocStatus(docId,{ocr_status:'needs_review'}); return; }
+    cloudBadge('Reading receipt…');
+    return fetch('/api/receipt-ocr?k=aq-d3-4e8a1f60d9b2',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:dataUrl.split(',')[1], mime:'image/jpeg'})
+    }).then(function(r){ return r.json(); }).then(function(j){
+      if(!j||!j.ok){
+        pbDocStatus(docId,{ocr_status:'needs_review'});
+        cloudBadge((j&&j.reason==='not_configured')?'Receipt saved — AI reading needs setup':'Receipt saved — needs review');
+        return;
+      }
+      var conf=+j.confidence||0;
+      pbDocStatus(docId,{ocr_status:(conf>=0.6?'read':'needs_review'), ocr_fields:j, suggested_category:normCat(j.category||'Other')});
+      cloudBadge(conf>=0.6?'Receipt read — review the draft':'Receipt read — low confidence, review');
+      if(typeof mobIsPhone==='function'&&mobIsPhone()&&typeof mobExpenseSheet==='function'){
+        mobExpenseSheet({cat:normCat(j.category||'Other'), vendor:j.vendor||'', amount:(j.total!=null?j.total:''),
+          notes:'From receipt'+(j.date?(' · '+j.date):''), docId:docId});
+      }
+    });
+  }).catch(function(){ pbDocStatus(docId,{ocr_status:'needs_review'}); });
 }
 /* Capture general documents -> trip-documents bucket + document rows. */
 function pbCaptureDocuments(meta, done){
@@ -4136,7 +4206,7 @@ function mobDrawMap(){
   var el=document.getElementById('tmMap'); if(!el||typeof L==='undefined') return;
   if(MOB.map){ try{MOB.map.remove();}catch(e){} MOB.map=null; }
   var pts=mobRouteScope().filter(function(i){return i.located;});
-  MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:false,attributionControl:true}).setView([43.5,-79],5);
+  MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:true,attributionControl:true}).setView([43.5,-79],5);
   var gen=++_aqMapGen; MOB.map._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MOB.map);
   pts.forEach(function(i){
@@ -4215,10 +4285,85 @@ function mobFiles_render(){
     +'<div class="tm-h"><span>Trip documents</span></div>'
     +'<div style="font-size:12px;color:#6b7280;margin:2px 0 8px">Boarding passes, hotel and rental confirmations, agreements. Stored privately for '+esc(MOB.terr)+' · Week '+MOB.wk+'.</div>'
     +'<button class="tm-primary" id="mobUploadDoc">＋ Upload document</button>'
+    +'<div id="mobDocList" class="tm-empty" style="padding:12px 0">Loading…</div>'
     +'<div class="tm-h" style="margin-top:14px"><span>Receipts</span></div>'
-    +'<button class="tm-primary" id="mobUploadReceipt">📷 Capture receipt</button>'
+    +'<button class="tm-primary" id="mobUploadReceipt">'+tmIcon('camera',16)+' Capture receipt</button>'
+    +'<div id="mobRcptList" class="tm-empty" style="padding:12px 0">Loading…</div>'
+    +'<div class="tm-h" style="margin-top:14px"><span>Storefront / visit photos</span></div>'
+    +'<div style="font-size:11.5px;color:#6b7280;margin:2px 0 6px">Dealer visit photos from this week. Captured on each dealer\'s visit sheet.</div>'
+    +'<div id="mobSfList" class="tm-empty" style="padding:12px 0">Loading…</div>'
     +'<div style="font-size:11px;color:#9ca3af;margin-top:10px">Files are stored in private Supabase buckets with authenticated access only. Images are never saved inside the plan.</div>'
     +'</div>';
+}
+/* documents for the current area+week (all areas when Trip Mode shows All) */
+function pbListDocs(kind){
+  if(!SB||!pbAuthed()) return Promise.resolve([]);
+  var q=SB.from('prebooking_documents')
+    .select('id,title,storage_path,created_at,week,territory,stop_key,kind,mime_type,ocr_status,ocr_fields,suggested_category,expense_ids')
+    .eq('kind',kind).eq('week',MOB.wk).order('created_at',{ascending:false}).limit(60);
+  if(MOB.terr!=='All') q=q.eq('territory',MOB.terr);
+  return q.then(function(res){ return (res&&res.data)||[]; },function(){ return []; });
+}
+function pbSignedUrl(storagePath){
+  var i=(storagePath||'').indexOf('/'); if(i<0) return Promise.resolve(null);
+  return SB.storage.from(storagePath.slice(0,i)).createSignedUrl(storagePath.slice(i+1),3600)
+    .then(function(s){ return (s&&s.data&&s.data.signedUrl)||null; }).catch(function(){ return null; });
+}
+function pbRcptStatus(r){
+  if(r.expense_ids&&r.expense_ids.length) return ['Entered into Expenses','#15803d','#e7f3ec'];
+  if(r.ocr_status==='read') return ['Read by AI','#1d4ed8','#eff6ff'];
+  return ['Needs Review','#b45309','#fef3c7'];
+}
+function pbDocRowHTML(r,url,opts){
+  opts=opts||{};
+  var d=new Date(r.created_at);
+  var img=(url&&/^image\//.test(r.mime_type||''))
+    ? ('<img src="'+url+'" style="width:46px;height:46px;object-fit:cover;border-radius:8px;flex:0 0 auto;background:#f3f4f6" alt="">')
+    : ('<span style="width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;flex:0 0 auto;color:#9ca3af">'+tmIcon('folder',18)+'</span>');
+  var dealer=(r.stop_key&&byId[r.stop_key])?byId[r.stop_key].name:'';
+  var f=r.ocr_fields||{};
+  var meta=[esc(r.territory||'')+' · Week '+r.week, d.toLocaleDateString()];
+  if(dealer) meta.push(esc(dealer));
+  var sub2='';
+  if(opts.receipt){
+    var st=pbRcptStatus(r);
+    var amt=(f.total!=null&&f.total!=='')?('$'+f.total):'';
+    var cat=r.suggested_category||f.category||'';
+    sub2='<div style="margin-top:3px"><span style="font-size:9.5px;font-weight:700;color:'+st[1]+';background:'+st[2]+';border-radius:9px;padding:2px 7px">'+st[0]+'</span>'
+      +((cat||amt)?('<span style="font-size:10.5px;color:#6b7280;margin-left:6px">'+esc([cat,amt].filter(Boolean).join(' · '))+'</span>'):'')+'</div>';
+  }
+  if(opts.storefront) sub2='<div style="margin-top:3px;font-size:10px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Storefront / dealer visit photo</div>';
+  return '<div class="tmrow" style="align-items:center">'+img
+    +'<div class="t" style="min-width:0"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">'+esc(r.title||(opts.receipt?'Receipt':(opts.storefront?(dealer||'Visit photo'):'Document')))+'</b>'
+    +'<span>'+meta.join(' · ')+'</span>'+sub2+'</div>'
+    +(url?('<a class="tmbtn" style="flex:0 0 60px;min-height:36px;font-size:12px" href="'+url+'" target="_blank" rel="noopener">View</a>'):'')
+    +(opts.receipt&&!(r.expense_ids&&r.expense_ids.length)?('<button class="tmbtn" style="flex:0 0 88px;min-height:36px;font-size:12px" data-rcptexp="'+r.id+'">＋ Expense</button>'):'')
+    +'</div>';
+}
+var _rcptRows={};
+function mobFillFiles(){
+  if(MOB.tab!=='files'||!pbAuthed()) return;
+  function fill(kind,hostId,opts){
+    if(!document.getElementById(hostId)) return;
+    pbListDocs(kind).then(function(rows){
+      var h=document.getElementById(hostId); if(!h) return;
+      if(!rows.length){ h.textContent=(opts&&opts.receipt)?'No receipts for this week yet.':(kind==='visit_photo'?'No visit photos this week yet.':'No documents this week yet.'); return; }
+      Promise.all(rows.map(function(r){ return pbSignedUrl(r.storage_path).then(function(u){ return pbDocRowHTML(r,u,opts); }); }))
+        .then(function(parts){
+          var h2=document.getElementById(hostId); if(!h2) return;
+          h2.className=''; h2.style.padding='0'; h2.innerHTML=parts.join('');
+          rows.forEach(function(r){ _rcptRows[r.id]=r; });
+          h2.querySelectorAll('[data-rcptexp]').forEach(function(b){ b.onclick=function(){
+            var r=_rcptRows[b.dataset.rcptexp]||{}; var f=r.ocr_fields||{};
+            mobExpenseSheet({cat:normCat(r.suggested_category||f.category||'Other'), vendor:f.vendor||'', amount:(f.total!=null?f.total:''),
+              notes:'From receipt'+(f.date?(' · '+f.date):''), docId:r.id});
+          };});
+        });
+    });
+  }
+  fill('document','mobDocList');
+  fill('receipt','mobRcptList',{receipt:true});
+  fill('visit_photo','mobSfList',{storefront:true});
 }
 
 /* ---------- MORE ---------- */
@@ -4296,6 +4441,7 @@ function renderMobile(){
   if(MOB.tab==='route' && MOB.routeView==='map') mobDrawMap();
   wireMobile();
   if(MOB.tab==='route') mobUpdateDriveTotals();
+  if(MOB.tab==='files') mobFillFiles();
 }
 function wireMobile(){
   var q=function(s){return document.querySelectorAll('#tripmode '+s);};
@@ -4767,28 +4913,31 @@ function mobDealerSheet(id){
     savePlan(); w.remove(); renderMobile();
   };
 }
-function mobExpenseSheet(){
+function mobExpenseSheet(prefill){
+  prefill=prefill||{};
   var labs=dayLabels(MOB.wk);
-  var inner=mobField('Category','<select id="me_cat">'+BUDGET_CATS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>')
-    +mobField('Vendor','<input id="me_vendor" placeholder="Shell, Hampton Inn…">')
-    +mobField('Amount','<input id="me_amount" type="number" step="0.01" inputmode="decimal" placeholder="0.00">')
+  var inner=(prefill.docId?'<div style="font-size:12px;color:#1d4ed8;background:#eff6ff;border-radius:8px;padding:8px 10px;margin-bottom:10px">Draft from your receipt — review the details, then save. Nothing is final until you confirm.</div>':'')
+    +mobField('Category','<select id="me_cat">'+BUDGET_CATS.map(function(c){return '<option'+(normCat(prefill.cat||'')===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select>')
+    +mobField('Vendor','<input id="me_vendor" placeholder="Shell, Hampton Inn…" value="'+esc(prefill.vendor||'')+'">')
+    +mobField('Amount','<input id="me_amount" type="number" step="0.01" inputmode="decimal" placeholder="0.00" value="'+esc(prefill.amount!=null?String(prefill.amount):'')+'">')
     +mobField('Day','<select id="me_day"><option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'">'+l[0]+', '+l[1]+'</option>';}).join('')+'</select>')
     +mobField('Type','<select id="me_type"><option value="actual">Actual</option><option value="estimate">Estimate</option></select>')
-    +mobField('Notes','<input id="me_notes">')
-    +'<button class="tm-primary" id="me_save">Add expense</button>'
-    +'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:10px">Capture the receipt photo from the Budget tab — it uploads to secure storage.</div>';
-  var w=mobSheet('Add Expense', inner);
+    +mobField('Notes','<input id="me_notes" value="'+esc(prefill.notes||'')+'">')
+    +'<button class="tm-primary" id="me_save">'+(prefill.docId?'Confirm & add expense':'Add expense')+'</button>';
+  var w=mobSheet(prefill.docId?'Review Receipt':'Add Expense', inner);
   document.getElementById('me_save').onclick=function(){
     var amt=document.getElementById('me_amount').value;
     if(amt===''||!isFinite(parseFloat(amt))){ alert('Enter an amount.'); return; }
     var prevTerr=terr; terr=MOB.terr;
-    addExpense(MOB.terr, MOB.wk, {
+    var expId=addExpense(MOB.terr, MOB.wk, {
       cat:document.getElementById('me_cat').value,
       vendor:document.getElementById('me_vendor').value,
       date:document.getElementById('me_day').value,
       isEst:(document.getElementById('me_type').value==='estimate'),
       amount:amt, notes:document.getElementById('me_notes').value});
     terr=prevTerr;
+    /* the receipt image stays attached to the expense it created */
+    if(prefill.docId&&expId){ pbDocStatus(prefill.docId,{expense_ids:[expId],approval_status:'entered'}); }
     w.remove(); renderMobile();
   };
 }

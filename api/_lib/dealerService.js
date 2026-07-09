@@ -26,9 +26,10 @@ const TEAM_TO_AREA = {
   Exports: 'Exports',
 }
 
-// Territory is driven by the Salesforce Territory Manager. Managers not listed here
-// (e.g. Denver Logan, Jerry Langrell) yield a blank territory — the dealer still appears
-// in the Master Sheet, just without a territory assignment.
+// Territory is driven by the Salesforce Territory Manager. These five are the
+// ONLY approved Arrowquip planning owners: the Salesforce query itself excludes
+// accounts managed by anyone else (e.g. Randy Reid), so they never reach the
+// Master Sheet feed at all.
 const TM_TO_AREA = {
   'Mark Firth': 'East',
   'Dane Firth': 'South',
@@ -36,6 +37,7 @@ const TM_TO_AREA = {
   'Darren Brennan': 'West',
   'Andrew Firth': 'Exports',
 }
+const APPROVED_TMS = Object.keys(TM_TO_AREA)
 
 // Explicit HIGH-confidence aliases (approved). Ensures these accounts are always
 // returned even if untiered, so the frontend alias map resolves them by Id.
@@ -175,9 +177,11 @@ async function fetchAllDealers() {
   const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
   const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
 
+  const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
   const [accounts, opp27, opp26, pb26] = await Promise.all([
     queryAll(base, instanceUrl, accessToken,
-      `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer'`),
+      `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer' ` +
+      `AND Territory_Manager__c IN (${tmList})`),
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
     queryAll(base, instanceUrl, accessToken,
@@ -233,7 +237,7 @@ async function fetchAllDealers() {
     if (o.AccountId && (!by26any[o.AccountId] || num(o.Prebooked_Value__c) > num(by26any[o.AccountId].Prebooked_Value__c))) by26any[o.AccountId] = o
   })
 
-  // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
+  // Only Arrowquip Dealers managed by the five approved planning owners reach here.
   return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0, byContact[a.Id], by26any[a.Id]))
 }
 
