@@ -691,6 +691,8 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 #mBody td{background:#fff;}
 #mBody tr.plannerrow td{background:#fffdf6;}
 #mBody td.sflock{background:#f3f4f6;}
+/* narrower Status column */
+#mBody .statuscell select{max-width:104px;font-size:10px;}
 /* subtle amber Planner Only tag */
 .ponly{display:inline-block;margin-left:6px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:9px;padding:1px 6px;vertical-align:1px;white-space:nowrap;}
 #masterView td.dealer{white-space:nowrap;}
@@ -835,7 +837,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
   <div class="aqUtilityBar">
     <div class="aqUtilityLeft"><span class="aqPortalLabel">Pre-Booking Portal</span></div>
     <div class="aqUtilityRight">
-      <button class="tab aqAction" data-t="Master">Master Sheet</button>
+      <button class="tab aqAction" data-t="Master">Master Sheet</button><button class="tab aqAction" data-t="Reports">Reports</button>
       <button id="exportBtn" class="aqAction aqAction--solid">Trip Plans</button>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
@@ -879,26 +881,29 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
+  <div id="reportsView" style="display:none;"></div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
+    <div id="execDash"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
-        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><input class="msearch" id="mSearch" placeholder="Search name, state…"><button class="btn" id="impBtn">⬆ Import CSV</button><button class="btn" id="tplBtn">⬇ Template</button><input type="file" id="impFile" accept=".csv,text/csv" style="display:none"><button class="btn" id="addBtn">+ Add dealer</button><button class="btn" id="resetBtn">Reset edits</button></div></div>
+        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><input class="msearch" id="mSearch" placeholder="Search name, state…"></div></div>
       <table>
         <thead>
-        <tr class="grprow"><th class="grp-sf" colspan="9"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="9">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th><th></th></tr>
+        <tr class="grprow"><th class="grp-sf" colspan="9"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="8">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th><th></th></tr>
         <tr class="colhdr">
           <th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
           <th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>
           <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th>
           <th class="srt num" data-mk="loads">2026 Loads<span class="hsub">Confirmed</span><span class="hlock"></span></th>
           <th class="srt num" data-mk="prebook2026">2026 Pre-Booking<span class="hsub">Original Commitment</span><span class="hinfo" title="Planner-managed original commitment"> ⓘ</span></th>
-          <th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th>
+          <th class="srt num" data-mk="t27loads">2027 Target Loads<span class="hinfo" title="Editable forecast. Drives 2027 Target ($) and Target Tier automatically."> ⓘ</span></th>
+          <th class="srt num" data-mk="booking">2027 Target<span class="hsub">auto: loads × value</span></th>
+          <th>2027 Target Tier<span class="hinfo" title="Auto-calculated from Target Loads once the 7-tier program thresholds are configured."> ⓘ</span></th>
+          <th class="num">2027 Actual<span class="hlock"></span></th>
           <th class="srt" data-mk="areaPlanning">Area Planning<span class="hinfo" title="Show this dealer in East, West, South, Central or Export planning pages."> ⓘ</span></th>
-          <th class="srt" data-mk="visitConfirmed">Visit Required<span class="hinfo" title="A dealer visit is required/committed this pre-booking season. Distinct from per-appointment confirmations in the Travel Planner."> ⓘ</span></th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th>
-          <th class="srt" data-mk="status">Status</th>
-          <th>Next Visit<span class="hinfo" title="Earliest scheduled visit — initial or additional"> ⓘ</span></th>
-          <th>Visits<span class="hsub">Scheduled</span></th><th>Actions</th>
+          <th class="srt" data-mk="atKickoff">Kickoff</th>
+          <th class="srt" data-mk="status">Status</th><th>Actions</th>
         </tr></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
       </table>
@@ -1136,12 +1141,34 @@ let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
    {id,dealer,terr,wk,day,time,dur,type,notes,done} */
 let XVISITS=[];
 const XV_TYPES={
-  initial:{label:'Initial Visit',c:'#2563eb'}, followup:{label:'Follow-up',c:'#0f766e'},
+  initial:{label:'Pre-Booking Visit',c:'#2563eb'}, followup:{label:'Follow-Up',c:'#0f766e'},
   event:{label:'Event',c:'#9333ea'}, openhouse:{label:'Open House',c:'#c2410c'},
   training:{label:'Dealer Training',c:'#15803d'}, demo:{label:'Demo Day',c:'#b45309'},
   delivery:{label:'Delivery',c:'#4338ca'}, service:{label:'Service',c:'#dc2626'},
-  sales:{label:'Sales Meeting',c:'#1d4ed8'}, other:{label:'Other',c:'#6b7280'}
+  sales:{label:'Sales Meeting',c:'#1d4ed8'}, general:{label:'General Visit',c:'#0e7490'},
+  other:{label:'Other',c:'#6b7280'}
 };
+/* ---- Centralized currency + 2027 target engine ----
+   USA/UK/Exports: $75,000 USD per load. Canada: $85,000 CAD per load,
+   converted with the editable FX rate. Everything that shows revenue reads
+   d.booking, so recalcTargets() keeps booking derived from Target Loads and
+   the whole app (KPIs, planner, maps, dashboard) recalculates instantly. */
+const LOAD_USD=75000, LOAD_CAD=85000;
+let FX=0.73;                       /* CAD → USD, editable on the dashboard, saved in the plan */
+const CA_PROVS={ON:1,QC:1,MB:1,SK:1,AB:1,BC:1,NS:1,NB:1,PE:1,NL:1,YT:1,NT:1,NU:1};
+/* 7-tier dealer program bands: [minLoads, label], highest first. AWAITING the
+   official thresholds — fill these in and the Target Tier column goes live. */
+const T27_TIERS=[];                /* e.g. [[60,'Tier 1'],[40,'Tier 2'],[25,'Tier 3'],[15,'Tier 4'],[8,'Tier 5'],[4,'Tier 6'],[1,'Tier 7']] */
+function dealerIsCA(d){ var sf=(typeof sfLookup==='function')?sfLookup(d):null; if(sf&&sf.country) return sf.country==='CA'; return !!CA_PROVS[d.loc]; }
+function loadUSD(d){ return dealerIsCA(d)?Math.round(LOAD_CAD*FX):LOAD_USD; }
+function t27Loads(d){ var ov=(d._accountId&&SF_OVERLAY[d._accountId])||null; var v=(d.t27loads!=null?d.t27loads:(ov&&ov.t27loads)); return +v||0; }
+function t27Tier(loads){ if(!loads) return ''; for(var i=0;i<T27_TIERS.length;i++){ if(loads>=T27_TIERS[i][0]) return T27_TIERS[i][1]; } return T27_TIERS.length?T27_TIERS[T27_TIERS.length-1][1]:''; }
+/* keep booking (used app-wide as planned revenue) derived from Target Loads */
+function recalcTargets(){
+  DEALERS.forEach(function(d){ if(+d.t27loads>0) d.booking=Math.round((+d.t27loads)*loadUSD(d)); });
+  Object.keys(SF_OVERLAY).forEach(function(sid){ var ov=SF_OVERLAY[sid]; if(ov&&+ov.t27loads>0){ var sf=SF_BY_ID[sid]; var pseudo={loc:(sf&&sf.loc)||'', id:sid}; ov.booking=Math.round((+ov.t27loads)*(sf&&sf.country==='CA'?Math.round(LOAD_CAD*FX):(CA_PROVS[pseudo.loc]?Math.round(LOAD_CAD*FX):LOAD_USD))); } });
+  invalidateUniverse();
+}
 function xvFor(id){ return XVISITS.filter(function(x){ return x.dealer===id; }); }
 function xvType(t){ return XV_TYPES[t]||XV_TYPES.other; }
 function xvWhen(x){
@@ -1188,8 +1215,8 @@ function xvNextLabel(d){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;}})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS};}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(+p.fx>0)FX=+p.fx;}})();
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,fx:FX};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -1351,16 +1378,20 @@ function renderCards(){
   }).join("");
 }
 function dealerCard(d){
-  d=sfMasterMerge(d); /* territory tab: show Salesforce-corrected fields (same overlay as Master Sheet); id/booking/loads/scheduling unchanged */
-  return `<div class="dcard" draggable="true" data-id="${d.id}">
-    <div class="dn">${d.name}${d.visitConfirmed?'<span class="vmini ok">✓</span>':''}</div>
-    <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
-    <div class="db">${d.loads} loads · ${d.address}</div></div>`;
+  d=sfMasterMerge(d);
+  /* Dealer LIBRARY card: identity only — no planning badges, no visit counters.
+     data-id "pool:" prefix tells the drop handler this drag creates a visit. */
+  return `<div class="dcard" draggable="true" data-id="pool:${d.id}">
+    <div class="dn">${d.name}</div>
+    <div class="dm"><span class="dloc">${d.territory} · ${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
+    <div class="db">${d.loads} loads</div></div>`;
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
   const isExp=terr==='Exports';
-  let pool=dealersIn(terr).filter(d=>ASSIGN[d.id]==='pool'); const poolAll=pool.slice();
+  /* the Dealer Pool is a permanent library: it ALWAYS contains every dealer in
+     the territory. Scheduling never removes a dealer from here. */
+  let pool=dealersIn(terr).slice(); const poolAll=pool.slice();
   var stsel=document.getElementById("poolState");
   if(stsel){ var sts=[]; poolAll.forEach(function(d){ if(d.loc && d.loc!=='—' && sts.indexOf(d.loc)<0) sts.push(d.loc); }); sts.sort(function(a,b){return REGION_ORDER.indexOf(a)-REGION_ORDER.indexOf(b);});
     stsel.innerHTML='<option value="">All states</option>'+sts.map(function(s){return '<option value="'+s+'"'+(poolState===s?' selected':'')+'>'+s+'</option>';}).join('');
@@ -1370,21 +1401,28 @@ function renderPlanner(){
   if(poolSort==='pot_asc') pool.sort(function(a,b){return a.booking-b.booking;});
   else if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(b.booking-a.booking);});
   else pool.sort(function(a,b){return b.booking-a.booking;});
-  document.getElementById("sbTitle").textContent="Dealer Pool — "+terr;
-  document.getElementById("sbSub").textContent=pool.length+" of "+poolAll.length+" · "+fmtUSDk(sumB(pool))+" potential";
+  document.getElementById("sbTitle").textContent="Dealer Library — "+terr;
+  document.getElementById("sbSub").textContent=pool.length+" of "+poolAll.length+" dealers · drag into a week to schedule a visit (drag again for another visit)";
   let body="";
-  if(!pool.length){ body=`<div class="poolempty">${poolAll.length?'No matches.':'All dealers placed into weeks. Drag any back here to unplace.'}</div>`; }
+  if(!pool.length){ body=`<div class="poolempty">${poolAll.length?'No matches.':'No dealers in this territory yet.'}</div>`; }
   else if(poolSort==='state'){ let cur=null; pool.forEach(d=>{ if(d.loc!==cur){cur=d.loc; body+=`<div class="grp">${d.loc||'—'}</div>`;} body+=dealerCard(d); }); }
   else { body=pool.map(dealerCard).join(''); }
   document.getElementById("poolBody").innerHTML=body;
   const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
   var schd=dealersIn(terr).filter(function(d){return ASSIGN[d.id]!=='pool';});
   var uw={}; schd.forEach(function(d){ if(typeof ASSIGN[d.id]==='number') uw[ASSIGN[d.id]]=1; });
+  /* territory planning metrics from the Master Sheet (single source of truth) */
+  var allT=dealersIn(terr);
+  var tGoal=(typeof ttOf==='function'&&ttOf(terr))||0;
+  var tPlan=allT.reduce(function(s,d){return s+(+d.booking||0);},0);
+  var tLoads=allT.reduce(function(s,d){return s+t27Loads(d);},0);
+  var tPct=tGoal?Math.round(tPlan/tGoal*100):null;
   document.getElementById("planSummary").innerHTML=
-    '<div class="ps"><div class="pl">Weeks</div><div class="pv">'+Object.keys(uw).length+'</div></div>'
-    +'<div class="ps"><div class="pl">Dealers</div><div class="pv">'+schd.length+'</div></div>'
-    +'<div class="ps"><div class="pl">Loads</div><div class="pv">'+sumL(schd)+'</div></div>'
-    +'<div class="ps"><div class="pl">Revenue</div><div class="pv">'+fmtUSD(sumB(schd))+'</div></div>'
+    '<div class="ps"><div class="pl">Territory Goal</div><div class="pv">'+(tGoal?fmtUSDk(tGoal):'—')+'</div></div>'
+    +'<div class="ps"><div class="pl">Planned Revenue</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
+    +'<div class="ps"><div class="pl">Loads Planned</div><div class="pv">'+(tLoads||sumL(allT))+'</div></div>'
+    +'<div class="ps"><div class="pl">Goal %</div><div class="pv">'+(tPct!=null?tPct+'%':'—')+'</div></div>'
+    +'<div class="ps"><div class="pl">Gap</div><div class="pv">'+(tGoal?( (tGoal-tPlan)>0?fmtUSDk(tGoal-tPlan):'+'+fmtUSDk(tPlan-tGoal) ):'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+schd.filter(function(d){return APPT[d.id];}).length+'/'+schd.length+'</div></div>';
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
@@ -1784,7 +1822,7 @@ function cardHTML(d,wk){
   var ctl=(wk==='remote')?'':'<div class="kc-ctl">'+daysel+'<input class="ctime" type="time" data-time="'+d.id+'" value="'+(TIME[d.id]||'')+'"><select class="cdur" data-dur="'+d.id+'">'+durOpts+'</select></div>'+frame;
   return '<div class="kcard '+(ok?'confirmed':'planned')+'" draggable="true" data-id="'+d.id+'">'
     +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div><div class="kc-rep">'+(FLAT.tm[terr]||'')+' · '+(d.loc||'—')+'</div></div><div class="kc-amt">'+fmtUSD(d.booking)+'</div></div>'
-    +'<div class="kc-bot"><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="xvadd" data-xvadd="'+d.id+'" title="Schedule another visit to this dealer">+ Visit</button><button class="cx" data-remove="'+d.id+'">✕</button></div>'
+    +'<div class="kc-bot"><span class="xvtag" style="background:#2563eb" title="Visit type">Pre-Book</span><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
     +ctl+'</div>';
 }
 /* The ALL tab is the company-wide version of a territory page: the same
@@ -1795,7 +1833,7 @@ function xvCard(x){
   var d=byId[x.dealer]||uniById(x.dealer); if(!d) return '';
   var ty=xvType(x.type);
   var frame=x.time?(t12s(x.time)+'–'+t12s(addMin(x.time,x.dur||60))):'';
-  return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'">'
+  return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'" draggable="true" data-id="xv:'+x.id+'">'
     +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div>'
     +'<div class="kc-rep"><span class="xvtag" style="background:'+ty.c+'">'+ty.label+'</span>'+(frame?(' <span style="color:var(--muted)">'+frame+'</span>'):'')+'</div></div>'
     +'<div style="display:flex;gap:4px;flex:0 0 auto"><button class="cx" data-xvedit="'+x.id+'" title="Edit this visit">✎</button><button class="cx" data-xvdel="'+x.id+'" title="Remove this visit only — the dealer is kept">✕</button></div></div>'
@@ -3522,28 +3560,65 @@ function renderMaster(){
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
     ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','2026 Loads — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date). Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
     ${sfLock(d,'prebook2026')?lockTD('num',fmtUSD(+d.prebook2026||0),'span','Original 2026 Pre-Booking — from Salesforce. Read-only (0 is valid Salesforce data).'):`<td class="num pln" title="${d._sf?'Planner Managed — no Salesforce 2026 Pre-Booking found for this dealer':'Planner-managed commitment'}"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}">${d._sf?'<span class="pmdot" title="Planner Managed — no Salesforce 2026 Pre-Booking found"></span>':''}</td>`}
-    <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
+    <td class="num pln"><input class="ed num" data-f="t27loads" type="number" min="0" value="${t27Loads(d)||''}" placeholder="0"></td>
+    ${t27Loads(d)>0
+      ?`<td class="num" title="Auto-calculated: ${t27Loads(d)} loads × ${fmtUSD(loadUSD(d))}/load${dealerIsCA(d)?' ($'+LOAD_CAD.toLocaleString()+' CAD converted at '+FX+')':' USD'}" style="font-weight:600;color:#1f2937">${fmtUSD(+d.booking||0)}<span class="pmdot" style="background:#16a34a" title="Auto from Target Loads"></span></td>`
+      :`<td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>`}
+    <td class="num" style="font-size:10.5px;color:var(--muted)">${t27Tier(t27Loads(d))||'—'}</td>
+    ${d._sf?lockTD('num',fmtUSD((sfLookup(d)&&+sfLookup(d).actual2027)||0),'span','2027 Actual — Closed Won 2027 prebooking value from Salesforce. Read-only.'):'<td class="num" style="color:var(--muted-2)">—</td>'}
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
-    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
-    <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${(ASSIGN[d.id]==='remote'||d.remote)?'checked':''}></td>
     <td class="pln statuscell">${statusSel(d)}</td>
-    <td class="pln" style="white-space:nowrap;font-size:10.5px;color:var(--muted)">${xvNextLabel(d)}</td>
-    <td class="pln num">${xvCount(d)}</td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
   /* totals reflect the VISIBLE (filtered) rows only, and recalculate on every filter change */
-  var _fTot=rows.reduce(function(a,d){ a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.pb+=(+d.prebook2026||0); a.tgt+=(+d.booking||0); return a; },{rev:0,loads:0,pb:0,tgt:0});
-  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num">${rows.reduce((s,d)=>s+xvCount(d),0)}</td><td></td></tr>`;
-  renderSFBanner();
+  var _fTot=rows.reduce(function(a,d){ a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.pb+=(+d.prebook2026||0); a.tl+=t27Loads(d); a.tgt+=(+d.booking||0); var sf=sfLookup(d); a.act+=((sf&&+sf.actual2027)||0); return a; },{rev:0,loads:0,pb:0,tl:0,tgt:0,act:0});
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td></td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
+  renderSFBanner(); renderExecDash();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
+}
+/* ---- Executive 2027 Goal Dashboard (above the Master Sheet) ---- */
+function renderExecDash(){
+  var host=document.getElementById('execDash'); if(!host) return;
+  var uni=buildMasterUniverse().filter(function(d){ return d.areaPlanning!==false; });
+  var planned=uni.reduce(function(s,d){ return s+(+d.booking||0); },0);
+  var loadsP=uni.reduce(function(s,d){ return s+t27Loads(d); },0);
+  var goal=+GOAL2027||0, gap=goal-planned, pct=goal?Math.round(planned/goal*100):null;
+  var stat=function(k,v,sub){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(sub?('<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">'+sub+'</div>'):'')+'</div>'; };
+  var cards=TERRS.map(function(t){
+    var ds=uni.filter(function(d){ return d.territory===t; });
+    var rev=ds.reduce(function(s,d){ return s+(+d.booking||0); },0);
+    var lds=ds.reduce(function(s,d){ return s+t27Loads(d); },0);
+    var share=goal?(rev/goal*100):0;
+    var tt=(typeof ttOf==='function')?ttOf(t):0;
+    var ok=tt?rev>=tt:(share>=15);
+    return '<div class="lvkpi" style="border-top:2px solid '+AREA_COLOR[t]+'"><div class="k">'+t+'</div>'
+      +'<div class="v" style="font-size:.95rem">'+fmtUSDk(rev)+'</div>'
+      +'<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">'+lds+' loads · '+share.toFixed(1)+'% of goal · '
+      +'<span style="font-weight:700;color:'+(ok?'#15803d':'#b45309')+'">'+(ok?'On Track':'Behind Goal')+'</span></div></div>';
+  }).join('');
+  host.innerHTML='<div class="lvkpis" style="margin:10px 0 8px">'
+    +stat('2027 Goal (USD)',goal?fmtUSDk(goal):'—','set below in the toolbar')
+    +'<div class="lvkpi"><div class="k">CAD → USD Rate</div><div class="v" style="display:flex;align-items:center;gap:6px"><input id="fxRate" type="number" step="0.01" min="0.1" max="2" value="'+FX+'" style="width:74px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:600 14px inherit"></div>'
+    +'<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">CA loads: $'+LOAD_CAD.toLocaleString()+' CAD ≈ '+fmtUSD(Math.round(LOAD_CAD*FX))+'</div></div>'
+    +stat('Planned Contribution',fmtUSDk(planned),loadsP+' target loads')
+    +stat('Remaining Gap',goal?( gap>0?fmtUSDk(gap):('+'+fmtUSDk(-gap)+' over') ):'—')
+    +stat('% of Goal',pct!=null?(pct+'%'):'—')
+    +'</div><div class="lvkpis" style="margin:0 0 10px">'+cards+'</div>';
+  var fx=document.getElementById('fxRate');
+  if(fx) fx.onchange=function(){
+    var v=parseFloat(fx.value); if(!(v>0)) return;
+    FX=v; recalcTargets(); saveDealers(); savePlan();
+    withPreservedScroll(renderMaster);
+  };
 }
 function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
   if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
-    if(SF_BY_ID[id] && ['booking','prebook2026','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
+    if(SF_BY_ID[id] && ['booking','prebook2026','t27loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
       var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
       if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
+      if(f==='t27loads'&&+ov.t27loads>0){ var sfx=SF_BY_ID[id]; ov.booking=Math.round(ov.t27loads*((sfx&&(sfx.country==='CA'||CA_PROVS[sfx.loc]))?Math.round(LOAD_CAD*FX):LOAD_USD)); }
       invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
     }
     return;
@@ -3551,10 +3626,11 @@ function onMasterEdit(e){
   if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
-  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='prebook2026') v=Math.max(0,Math.round(parseFloat(el.value)||0));
+  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='prebook2026'||f==='t27loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
   else if(f==='loc') v=(el.value||'').trim().toUpperCase();
   else v=(el.value||'').trim();
   d[f]=v;
+  if(f==='t27loads'&&v>0){ d.booking=Math.round(v*loadUSD(d)); }   /* Target Loads drives 2027 Target */
   if(f==='loc'){ const c=COORD[v]; d.lat=c?c[0]:null; d.lon=c?c[1]:null; }
   if(f==='territory'){ ASSIGN[d.id]= d.atKickoff?31:(v==='Exports'?'remote':'pool'); DAY[d.id]=null; savePlan(); }
   if(f==='atKickoff'){ if(v){ASSIGN[d.id]=31;d.visitConfirmed=true;} else {ASSIGN[d.id]= d.territory==='Exports'?'remote':'pool';} DAY[d.id]=null; savePlan(); }
@@ -3579,8 +3655,34 @@ function wireDnD(){
     z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
     z.addEventListener('dragleave',()=>z.classList.remove('over'));
     z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');
-      const id=e.dataTransfer.getData('text/plain'); const d=uniById(id); if(!d)return;
+      /* Dealers are permanent, visits are temporary:
+         pool:<id>  = drag from the dealer library -> first drop schedules the
+                      initial visit; every later drop CREATES A NEW VISIT.
+         xv:<id>    = a scheduled additional visit -> moves that visit only.
+         <id>       = the scheduled initial-visit card -> moves that visit only. */
+      const raw=e.dataTransfer.getData('text/plain'); if(!raw) return;
       const t=z.dataset.drop;
+      if(raw.slice(0,3)==='xv:'){
+        var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
+        if(t==='pool'){ if(xvDelete(xv.id)) refreshPlanner(); return; }
+        if(t==='remote') return;
+        var pp=t.split('|'); xv.wk=parseInt(pp[0],10);
+        xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
+        savePlan(); refreshPlanner(); return;
+      }
+      const fromPool=raw.slice(0,5)==='pool:';
+      const id=fromPool?raw.slice(5):raw;
+      const d=uniById(id); if(!d)return;
+      if(fromPool && ASSIGN[id]!=='pool' && t!=='pool'){
+        /* already scheduled: dragging from the library again = a NEW visit */
+        if(t==='remote') return;
+        var parts2=t.split('|'); var nw2=parseInt(parts2[0],10);
+        XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id,
+          terr:(d.territory==='Exports'?'Exports':terr), wk:nw2,
+          day:(parts2[1]!=null&&parts2[1]!=='none')?parseInt(parts2[1],10):null,
+          time:'', dur:60, type:'followup', notes:'', done:false});
+        savePlan(); refreshPlanner(); return;
+      }
       if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
       else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
       else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
@@ -3701,6 +3803,233 @@ function importDealers(text){
 }
 /* Refreshing must not restart the app: the current tab/view/week is kept in
    localStorage and restored on boot, so only the data reloads. */
+/* =================== Reports + Visit Notes Inbox ============================
+   Dedicated reporting: Dealer / Weekly / Custom Range / Full Campaign, printed
+   via the existing trip-plan window (Print → Save as PDF) plus CSV export.
+   Budget is ONE section of a report. Raw transcripts NEVER enter reports —
+   only reviewed, report-ready notes do. */
+let RPT={type:'weekly', dealer:'', wk:32, from:31, to:44, terr:'All'};
+function rptAllDealers(){ var out=[]; TERRS.forEach(function(t){ dealersIn(t).forEach(function(d){ out.push(d); }); }); return out; }
+function rptVisits(o){
+  var out=[]; var scope=(o.terr&&o.terr!=='All')?[o.terr]:TERRS;
+  scope.forEach(function(t){ dealersIn(t).forEach(function(d){
+    if(o.dealer&&d.id!==o.dealer) return;
+    xvAll(d.id).forEach(function(v){
+      if(v.wk==null||v.wk<o.from||v.wk>o.to) return;
+      var isInit=!!v.primary;
+      var vv=(typeof VISIT!=='undefined'&&VISIT[d.id])||{};
+      out.push({d:d,terr:t,type:v.type,wk:v.wk,when:xvWhen(v),time:v.time,done:!!v.done,
+        notes:isInit?(vv.notes||''):(v.notes||''), plaud:isInit?vv.plaud:v.plaud,
+        tasks:isInit?(vv.actions||[]):(v.tasks||[])});
+    });
+  }); });
+  return out;
+}
+function rptRange(){ var o=RPT; return o.type==='weekly'?[o.wk,o.wk]:(o.type==='dealer'?[31,44]:[Math.min(o.from,o.to),Math.max(o.from,o.to)]); }
+function rptGenerate(){
+  var o=RPT, r=rptRange(), from=r[0], to=r[1];
+  var vs=rptVisits({terr:o.terr,dealer:(o.type==='dealer'?o.dealer:''),from:from,to:to});
+  var dealers={}; vs.forEach(function(v){ (dealers[v.d.id]=dealers[v.d.id]||{d:v.d,terr:v.terr,list:[]}).list.push(v); });
+  var comp=vs.filter(function(v){return v.done;}).length;
+  var acts=[]; vs.forEach(function(v){ (v.tasks||[]).forEach(function(a){ acts.push({dealer:v.d.name,visit:xvType(v.type).label,t:a.t,owner:a.owner||'',due:a.due||'',done:!!a.done}); }); });
+  var exps=EXPENSES.filter(function(e){ return (o.terr==='All'||e.terr===o.terr)&&e.wk>=from&&e.wk<=to; });
+  var bud=budgetFor(exps);
+  var title={dealer:'Dealer Report',weekly:'Weekly Report',range:'Custom Range Report',campaign:'Full Campaign Report'}[o.type];
+  var rangeLbl=(o.type==='weekly')?('Week '+o.wk+' · '+WEEKDATES[o.wk]):('Weeks '+from+'–'+to);
+  var card=function(k,v2){ return '<div style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;min-width:104px;display:inline-block;margin:0 8px 8px 0"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#777">'+k+'</div><div style="font-size:17px;font-weight:800">'+v2+'</div></div>'; };
+  var html='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+title
+    +((o.type==='dealer'&&o.dealer&&uniById(o.dealer))?(' — '+esc(uniById(o.dealer).name)):'')+'</div>'
+    +'<div class="pwk">'+rangeLbl+' · '+esc(o.terr)+' territories · generated '+new Date().toLocaleDateString()+'</div></div>'
+    +'<div style="margin:12px 0 16px">'+card('Visits',vs.length)+card('Completed',comp)
+    +card('Dealers Touched',Object.keys(dealers).length)+card('Action Items',acts.length)
+    +card('Open Follow-ups',acts.filter(function(a){return !a.done;}).length)
+    +card('Budget Actual',money(bud.total.act))+card('Budget Estimate',money(bud.total.est))+'</div>';
+  Object.keys(dealers).forEach(function(id){ var g=dealers[id];
+    html+='<div class="repsec"><h3 style="margin:14px 0 4px">'+esc(g.d.name)
+      +' <span style="font-weight:400;color:#777;font-size:11px">'+esc(g.terr)+' · '+esc(g.d.loc||'')+' · 2027 target '+fmtUSD(+g.d.booking||0)+'</span></h3>';
+    g.list.forEach(function(v){
+      var rn=(v.plaud&&(v.plaud.reportNotes||v.plaud.summary))||v.notes;   /* never the raw transcript */
+      html+='<div style="margin:4px 0 8px;padding:5px 10px;border-left:3px solid #ccc">'
+        +'<b>'+xvType(v.type).label+'</b> — '+esc(v.when)+(v.done?' · ✓ completed':' · planned')
+        +(rn?('<div style="font-size:11px;margin-top:3px;white-space:pre-wrap">'+esc(rn)+'</div>'):'')+'</div>';
+    });
+    html+='</div>';
+  });
+  if(!vs.length) html+='<p>No visits in this range.</p>';
+  if(acts.length){ html+='<h3>Action items</h3><table><tr><th>Dealer</th><th>Visit</th><th>Task</th><th>Owner</th><th>Due</th><th>Status</th></tr>'
+    +acts.map(function(a){return '<tr><td>'+esc(a.dealer)+'</td><td>'+esc(a.visit)+'</td><td>'+esc(a.t)+'</td><td>'+esc(a.owner)+'</td><td>'+esc(a.due)+'</td><td>'+(a.done?'Done':'Open')+'</td></tr>';}).join('')+'</table>'; }
+  html+='<h3>Budget</h3><table><tr><th>Category</th><th>Budget</th><th>Actual</th><th>Variance</th></tr>'
+    +BUDGET_CATS.map(function(c){var b=bud.rows[c];return '<tr><td>'+esc(c)+'</td><td>'+money(b.est)+'</td><td>'+money(b.act)+'</td><td>'+money(b.act-b.est)+'</td></tr>';}).join('')
+    +'<tr><td><b>Total</b></td><td><b>'+money(bud.total.est)+'</b></td><td><b>'+money(bud.total.act)+'</b></td><td><b>'+money(bud.total.act-bud.total.est)+'</b></td></tr></table>';
+  tpOpen(title+' — '+rangeLbl, html);
+}
+function rptCSV(){
+  var o=RPT, r=rptRange();
+  var vs=rptVisits({terr:o.terr,dealer:(o.type==='dealer'?o.dealer:''),from:r[0],to:r[1]});
+  var lines=['Dealer,Territory,Week,When,Type,Status,Time,Notes'];
+  vs.forEach(function(v){ lines.push([v.d.name,v.terr,v.wk,v.when,xvType(v.type).label,(v.done?'Completed':'Planned'),v.time||'',(v.plaud&&(v.plaud.reportNotes||v.plaud.summary))||v.notes||''].map(csvCell).join(',')); });
+  downloadCSV('arrowquip-report.csv', lines.join('\n'));
+}
+function renderReports(){
+  var host=document.getElementById('reportsView'); if(!host) return;
+  var wkOpts=function(sel){ return allWeeksList().map(function(w){return '<option value="'+w+'"'+(sel===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join(''); };
+  var dOpts='<option value="">— choose dealer —</option>'+rptAllDealers().map(function(d){return '<option value="'+d.id+'"'+(RPT.dealer===d.id?' selected':'')+'>'+esc(d.name)+' ('+esc(d.territory)+')</option>';}).join('');
+  var tOpts=['All'].concat(TERRS).map(function(t){return '<option'+(RPT.terr===t?' selected':'')+'>'+t+'</option>';}).join('');
+  host.innerHTML=
+    '<div class="tablecard" style="padding:14px 16px;margin-bottom:12px">'
+    +'<div class="h" style="margin-bottom:8px">Reports</div>'
+    +'<div class="lvctl">'
+    +'<select id="rptType" class="msearch" style="max-width:190px">'
+      +'<option value="dealer"'+(RPT.type==='dealer'?' selected':'')+'>Dealer Report</option>'
+      +'<option value="weekly"'+(RPT.type==='weekly'?' selected':'')+'>Weekly Report</option>'
+      +'<option value="range"'+(RPT.type==='range'?' selected':'')+'>Custom Range Report</option>'
+      +'<option value="campaign"'+(RPT.type==='campaign'?' selected':'')+'>Full Campaign Report</option></select>'
+    +(RPT.type==='dealer'?('<select id="rptDealer" class="msearch" style="max-width:240px">'+dOpts+'</select>'):'')
+    +(RPT.type==='weekly'?('<select id="rptWk" class="msearch" style="max-width:210px">'+wkOpts(RPT.wk)+'</select>'):'')
+    +(RPT.type==='range'||RPT.type==='campaign'?('<select id="rptFrom" class="msearch" style="max-width:180px">'+wkOpts(RPT.from)+'</select><select id="rptTo" class="msearch" style="max-width:180px">'+wkOpts(RPT.to)+'</select>'):'')
+    +'<select id="rptTerr" class="msearch" style="max-width:130px">'+tOpts+'</select>'
+    +'<span style="flex:1"></span>'
+    +'<button class="btn" id="rptCsvBtn">⬇ CSV</button>'
+    +'<button class="btn" id="rptPdfBtn" style="background:#111;color:#fff;border-color:#111">Generate PDF Report</button>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted-2)">PDF opens in a print window — choose "Save as PDF". Reports include visits, reviewed notes, action items and the budget section. Raw transcripts are never included.</div>'
+    +'</div>'
+    +'<div class="tablecard" style="padding:14px 16px">'
+    +'<div class="h" style="margin-bottom:2px">Visit Notes Inbox</div>'
+    +'<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Plaud recordings and transcripts land here first. Paste or import a transcript, let AI process it, review, then attach it to the right visit. Nothing reaches a report until you approve it.</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px;max-width:760px">'
+    +'<textarea id="nbText" rows="4" placeholder="Paste the Plaud transcript / meeting notes here…" style="border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:400 12px \'Open Sans\',Arial,sans-serif"></textarea>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="nbLink" placeholder="Plaud share link / Drive link (optional)" style="flex:1;min-width:220px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:400 12px \'Open Sans\',Arial,sans-serif">'
+    +'<button class="btn" id="nbSaveBtn">Save to Inbox</button></div></div>'
+    +'<div class="h" style="font-size:12px;margin:14px 0 4px">Inbox</div>'
+    +'<div id="nbList" style="font-size:12px;color:var(--muted)">Loading…</div>'
+    +'</div>';
+  var re=function(id,fn){ var el=document.getElementById(id); if(el) el.onchange=fn; };
+  re('rptType',function(){ RPT.type=this.value; renderReports(); });
+  re('rptDealer',function(){ RPT.dealer=this.value; });
+  re('rptWk',function(){ RPT.wk=parseInt(this.value,10); });
+  re('rptFrom',function(){ RPT.from=parseInt(this.value,10); });
+  re('rptTo',function(){ RPT.to=parseInt(this.value,10); });
+  re('rptTerr',function(){ RPT.terr=this.value; });
+  document.getElementById('rptPdfBtn').onclick=function(){ if(RPT.type==='dealer'&&!RPT.dealer){ alert('Choose a dealer.'); return; } rptGenerate(); };
+  document.getElementById('rptCsvBtn').onclick=rptCSV;
+  document.getElementById('nbSaveBtn').onclick=nbSave;
+  nbLoad();
+}
+/* ---- Notes Inbox: intake, auto-match, AI processing, review-first save ---- */
+function nbGuessDealer(txt){
+  var low=(txt||'').toLowerCase(); var best=null;
+  rptAllDealers().forEach(function(d){ var n=(d.name||'').toLowerCase(); if(n.length>3&&low.indexOf(n)>=0&&(!best||n.length>best.name.length)) best=d; });
+  return best;
+}
+function nbSave(){
+  var txt=(document.getElementById('nbText').value||'').trim();
+  if(!txt){ alert('Paste a transcript first.'); return; }
+  var link=(document.getElementById('nbLink').value||'').trim();
+  var g=nbGuessDealer(txt);
+  var suggest=null;
+  if(g){ var ups=xvAll(g.id).filter(function(v){return !v.done&&v.wk!=null;}); if(ups.length===1) suggest=(ups[0].primary?'initial':ups[0].id); }
+  SB.from('prebooking_documents').insert({
+    kind:'transcript', territory:(g&&g.territory)||null, week:null, stop_key:(g&&g.id)||null,
+    title:'Transcript'+(g?(' — '+g.name):''), storage_path:'transcripts/'+Date.now()+'-'+Math.random().toString(36).slice(2,7),
+    mime_type:'text/plain', source:(link?'plaud-link':'paste'), notes:link||null,
+    ocr_text:txt, ocr_status:'raw', metadata:{suggestVisit:suggest}, created_by:pbActor()
+  }).then(function(r){
+    if(r&&r.error){ alert('Could not save: '+r.error.message); return; }
+    document.getElementById('nbText').value=''; document.getElementById('nbLink').value='';
+    cloudBadge('Saved to Notes Inbox'); nbLoad();
+  });
+}
+function nbLoad(){
+  var host=document.getElementById('nbList'); if(!host||!SB) return;
+  SB.from('prebooking_documents').select('id,title,created_at,stop_key,notes,ocr_status,metadata')
+    .eq('kind','transcript').neq('ocr_status','done').order('created_at',{ascending:false}).limit(30)
+    .then(function(res){
+      var h=document.getElementById('nbList'); if(!h) return;
+      var rows=(res&&res.data)||[];
+      if(res&&res.error){ h.textContent='Could not load inbox.'; return; }
+      if(!rows.length){ h.textContent='Inbox is empty — new transcripts land here for matching and processing.'; return; }
+      h.innerHTML=rows.map(function(r){
+        var d=r.stop_key&&uniById(r.stop_key);
+        var match=d?('Matched dealer: <b>'+esc(d.name)+'</b>'+((r.metadata&&r.metadata.suggestVisit)?' · one open visit — suggested':' · choose the visit when attaching')):'No dealer match — attach manually';
+        return '<div class="tmrow" style="align-items:center"><div class="t" style="min-width:0"><b>'+esc(r.title||'Transcript')+'</b>'
+          +'<span>'+new Date(r.created_at).toLocaleString()+' · '+match+(r.notes?(' · <a href="'+esc(r.notes)+'" target="_blank" rel="noopener">source</a>'):'')+'</span></div>'
+          +'<button class="btn" data-nbproc="'+r.id+'" style="flex:0 0 auto">Process Notes</button></div>';
+      }).join('');
+      h.querySelectorAll('[data-nbproc]').forEach(function(b){ b.onclick=function(){ nbProcess(b.dataset.nbproc); }; });
+    });
+}
+function nbProcess(docId){
+  cloudBadge('Processing transcript…');
+  SB.from('prebooking_documents').select('id,ocr_text,stop_key,metadata,title').eq('id',docId).maybeSingle().then(function(r){
+    if(!r||!r.data){ alert('Transcript not found.'); return; }
+    var doc=r.data;
+    fetch('/api/process-notes?k=aq-d3-4e8a1f60d9b2',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({transcript:doc.ocr_text})})
+      .then(function(x){ return x.json(); })
+      .then(function(j){
+        if(!j||!j.ok){
+          if(j&&j.reason==='not_configured'){ alert('AI processing requires ANTHROPIC_API_KEY in the Vercel environment. The transcript stays safely in the inbox.'); }
+          else alert('Processing failed'+((j&&j.message)?(': '+j.message):'')+'. The transcript stays in the inbox.');
+          return;
+        }
+        nbReview(doc,j);
+      }).catch(function(){ alert('Processing failed — the transcript stays in the inbox.'); });
+  });
+}
+function nbReview(doc,j){
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  var g=doc.stop_key&&uniById(doc.stop_key);
+  var dOpts='<option value="">— dealer —</option>'+rptAllDealers().map(function(d){return '<option value="'+d.id+'"'+((g&&g.id===d.id)?' selected':'')+'>'+esc(d.name)+'</option>';}).join('');
+  var ta=function(id,lb,val,rows){ return '<label style="display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2)">'+lb
+    +'<textarea id="'+id+'" rows="'+(rows||2)+'" style="border:1px solid var(--line);border-radius:6px;padding:7px 8px;font:400 12px \'Open Sans\',Arial,sans-serif;color:#111">'+esc(val||'')+'</textarea></label>'; };
+  var actLines=(j.actions||[]).map(function(a){ return [a.t,a.owner||'',a.due||''].join(' | '); }).join('\n');
+  wrap.innerHTML='<div class="modalbox" style="width:min(620px,96vw)"><div class="mh"><div class="mt">Review Processed Notes</div><button class="mclose">×</button></div>'
+    +'<div style="padding:12px 20px 18px;display:flex;flex-direction:column;gap:9px;max-height:70vh;overflow:auto">'
+    +'<div style="font-size:11.5px;color:#1d4ed8;background:#eff6ff;border-radius:8px;padding:7px 10px">Review and edit before saving — nothing becomes part of the official visit record until you confirm. The raw transcript stays in the inbox archive and never appears in reports.</div>'
+    +ta('nb_sum','AI summary',j.summary,3)
+    +ta('nb_notes','Clean visit notes (report-ready)',(j.notes||[]).join('\n'),4)
+    +ta('nb_dec','Key decisions',(j.decisions||[]).join('\n'))
+    +ta('nb_conc','Dealer concerns',(j.concerns||[]).join('\n'))
+    +ta('nb_opp','Opportunities',(j.opportunities||[]).join('\n'))
+    +ta('nb_ca','Commitments — Arrowquip',(j.commitments_arrowquip||[]).join('\n'))
+    +ta('nb_cd','Commitments — Dealer',(j.commitments_dealer||[]).join('\n'))
+    +ta('nb_act','Action items (task | owner | due)',actLines,3)
+    +ta('nb_int','Internal-only notes','',2)
+    +'<div style="display:flex;gap:8px"><select id="nb_dealer" class="msearch" style="flex:1">'+dOpts+'</select><select id="nb_visit" class="msearch" style="flex:1"></select></div>'
+    +'<button class="btn" id="nb_save" style="background:#111;color:#fff;border-color:#111">Save to visit record</button>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
+  wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
+  function fillVisits(){
+    var id=wrap.querySelector('#nb_dealer').value, vsel=wrap.querySelector('#nb_visit');
+    if(!id){ vsel.innerHTML='<option value="">— visit —</option>'; return; }
+    var suggest=(doc.metadata&&doc.metadata.suggestVisit)||'';
+    vsel.innerHTML=xvAll(id).map(function(v){
+      var val=v.primary?'initial':v.id;
+      return '<option value="'+val+'"'+(val===suggest?' selected':'')+'>'+xvType(v.type).label+' · '+(v.wk!=null?xvWhen(v):'Remote')+(v.done?' (completed)':'')+'</option>';
+    }).join('')||'<option value="">no visits — schedule one first</option>';
+  }
+  wrap.querySelector('#nb_dealer').onchange=fillVisits; fillVisits();
+  wrap.querySelector('#nb_save').onclick=function(){
+    var did=wrap.querySelector('#nb_dealer').value, vid=wrap.querySelector('#nb_visit').value;
+    if(!did||!vid){ alert('Choose the dealer and the visit this recording belongs to.'); return; }
+    var gv=function(x){ return wrap.querySelector('#'+x).value; };
+    var plaud={ source:'plaud/transcript', link:doc.notes||null, docId:doc.id,
+      summary:gv('nb_sum'), reportNotes:gv('nb_notes'), decisions:gv('nb_dec'),
+      concerns:gv('nb_conc'), opportunities:gv('nb_opp'),
+      commitArrowquip:gv('nb_ca'), commitDealer:gv('nb_cd'),
+      internal:gv('nb_int'), savedAt:new Date().toISOString(), owner:pbActorLabel(pbActor()) };
+    var tasks=gv('nb_act').split('\n').map(function(l){ var p=l.split('|').map(function(s){return s.trim();});
+      return p[0]?{t:p[0],owner:p[1]||'',due:p[2]||'',status:'Open',notes:'',done:false}:null; }).filter(Boolean);
+    if(vid==='initial'){ var vv=VISIT[did]=VISIT[did]||{}; vv.plaud=plaud; vv.actions=(vv.actions||[]).concat(tasks); }
+    else { var x=XVISITS.filter(function(v){return v.id===vid;})[0]; if(!x){ alert('Visit not found.'); return; } x.plaud=plaud; x.tasks=(x.tasks||[]).concat(tasks); }
+    savePlan();
+    SB.from('prebooking_documents').update({ocr_status:'done',ocr_fields:plaud,stop_key:did,approval_status:'processed'}).eq('id',doc.id).then(function(){},function(){});
+    wrap.remove(); cloudBadge('Visit notes saved'); nbLoad();
+  };
+}
 var _pbNavReady=false;   /* the boot render (pre-restore) must not clobber the saved state */
 function pbSaveNav(){
   if(!_pbNavReady) return;
@@ -3714,7 +4043,7 @@ function pbRestoreNav(){
     var ns=JSON.parse(localStorage.getItem('aqNavState')||'null');
     _pbNavReady=true;
     if(!ns) return;
-    var tabsOk=['All','East','South','Central','West','Exports','Master'];
+    var tabsOk=['All','East','South','Central','West','Exports','Master','Reports'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
     allMode=(ns.allMode==='map')?'map':'overview';   /* legacy cal/leaders/leader → overview */
@@ -3727,14 +4056,16 @@ function pbRestoreNav(){
   }catch(e){}
 }
 function render(){
-  const isMaster=terr==='Master', isAll=terr==='All';
+  const isMaster=terr==='Master', isAll=terr==='All', isReports=terr==='Reports';
   pbSaveNav();
-  document.getElementById("cards").style.display=isMaster?'none':'';
-  if(!isMaster) renderCards();
-  document.getElementById("plannerView").style.display=(!isAll&&!isMaster)?'':'none';
+  document.getElementById("cards").style.display=(isMaster||isReports)?'none':'';
+  if(!isMaster&&!isReports) renderCards();
+  document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isReports)?'':'none';
   document.getElementById("allView").style.display=isAll?'':'none';
   document.getElementById("masterView").style.display=isMaster?'':'none';
+  document.getElementById("reportsView").style.display=isReports?'':'none';
   if(isMaster) renderMaster();
+  else if(isReports) renderReports();
   else if(isAll) renderAllView();
   else {
     document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
@@ -3762,11 +4093,8 @@ document.getElementById("mStatus").addEventListener("change",function(e){mFilter
 document.getElementById("goalInput").addEventListener("change",function(e){GOAL2027=Math.max(0,Math.round(parseFloat(e.target.value)||0));savePlan();renderMaster();});
 document.getElementById("mBody").addEventListener("change",onMasterEdit);
 document.getElementById("mBody").addEventListener("click",e=>{const x=e.target.closest('.delx'); if(x) deleteDealer(x.dataset.del);});
-document.getElementById("addBtn").addEventListener("click",addDealer);
-document.getElementById("resetBtn").addEventListener("click",resetEdits);
-document.getElementById("tplBtn").addEventListener("click",dealerTemplate);
-document.getElementById("impBtn").addEventListener("click",function(){document.getElementById("impFile").click();});
-document.getElementById("impFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{importDealers(String(rd.result));}catch(err){alert('Could not read file: '+err.message);} e.target.value='';};rd.readAsText(f);});
+
+
 document.getElementById("exportBtn").addEventListener("click",exportTripPlans);
 document.getElementById("allOvBtn").addEventListener("click",function(){allMode='overview';renderAllView();});
 document.getElementById("allMapBtn").addEventListener("click",function(){allMode='map';renderAllView();});
@@ -3916,7 +4244,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(+p.fx>0)FX=+p.fx; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
@@ -3995,6 +4323,7 @@ function unlockApp(){
     /* legacy flight/hotel/rental records -> location-based travel items. In memory only:
        the migrated shape persists on the next real save, so loading never writes. */
     migrateTravel();
+    recalcTargets();    /* booking stays derived from Target Loads + FX */
     pbRestoreNav();     /* refresh returns to the same tab/view/week */
     render();
     mobBoot();          /* Trip Mode: phone widths only */

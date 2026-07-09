@@ -166,6 +166,8 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
     // Prebooked_Value__c regardless of stage. null (not 0) when Salesforce has
     // no such opportunity — the planner-managed value stays editable then.
     sfPrebook2026: opp26any ? num(opp26any.Prebooked_Value__c) : null,
+    // 2027 Actual — the CLOSED WON 2027 prebooking value. Read-only in the app.
+    actual2027: (opp27 && opp27.StageName === 'Closed Won') ? num(opp27.Prebooked_Value__c) : null,
   }
 }
 
@@ -183,7 +185,7 @@ async function fetchAllDealers() {
       `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer' ` +
       `AND Territory_Manager__c IN (${tmList})`),
     queryAll(base, instanceUrl, accessToken,
-      `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
+      `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c, StageName FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026' AND StageName = 'Closed Won'`),
     // 2026 Pre-Booking Original Commitment = COUNT of Dealer Loads opportunities per dealer.
