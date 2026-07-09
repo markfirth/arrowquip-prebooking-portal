@@ -114,7 +114,7 @@ function computeGrowth(booking, lastYear) {
  * for future pages. booking/loads are null when the 2027 Salesforce value is
  * 0/null so the planner keeps its seed fallback.
  */
-function mapDealer(acc, opp27, opp26won, loadCount) {
+function mapDealer(acc, opp27, opp26won, loadCount, contact) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
   const area = TM_TO_AREA[acc.Territory_Manager__c] || null
@@ -154,6 +154,11 @@ function mapDealer(acc, opp27, opp26won, loadCount) {
     latitude: lat,
     longitude: lon,
     growth: computeGrowth(booking || 0, lastYear || 0),
+    // primary dealership contact (Contact query is best-effort; null when absent)
+    contactName: contact ? contact.Name || null : null,
+    contactMobile: contact ? contact.MobilePhone || null : null,
+    contactPhone: contact ? contact.Phone || null : null,
+    contactTitle: contact ? contact.Title || null : null,
   }
 }
 
@@ -187,12 +192,31 @@ async function fetchAllDealers() {
       `GROUP BY AccountId`),
   ])
 
+  // Primary dealership contact — best-effort. A schema/permission difference must
+  // never break the dealer feed, so this query fails soft to "no contacts".
+  let contacts = []
+  try {
+    contacts = await queryAll(base, instanceUrl, accessToken,
+      `SELECT AccountId, Name, Title, Phone, MobilePhone FROM Contact ` +
+      `WHERE Account.RecordType.Name = 'Arrowquip Dealer' ` +
+      `AND (Phone != null OR MobilePhone != null) ` +
+      `ORDER BY LastModifiedDate DESC`)
+  } catch { contacts = [] }
+
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
   const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
   const byLoads = {}; pb26.forEach((o) => { if (o.AccountId) byLoads[o.AccountId] = num(o.c) })
+  // one contact per account: prefer a record with a mobile number, else keep the
+  // most recently modified (query order) with any phone
+  const byContact = {}
+  contacts.forEach((c) => {
+    if (!c.AccountId) return
+    const cur = byContact[c.AccountId]
+    if (!cur || (!cur.MobilePhone && c.MobilePhone)) byContact[c.AccountId] = c
+  })
 
   // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
-  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0))
+  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0, byContact[a.Id]))
 }
 
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────

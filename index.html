@@ -59,9 +59,13 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqAction--solid{background:#000;border:1px solid #000;color:#fff;padding:6px 14px;font-weight:900;font-size:12px;}
 .aqAction--solid:hover{background:#fff;color:#000;}
 .aqMainNav{background-color:#000;border-bottom:1px solid #000;}
-.aqNavContainer{display:flex;justify-content:space-between;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
+/* Logo visually centred: equal flex spacers either side (nav links right-align
+   inside theirs), so the mark sits mid-header without breaking navigation. */
+.aqNavContainer{display:flex;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
+.aqNavContainer::before{content:'';flex:1 1 0;}
 .aqLogoContainer{display:flex;align-items:center;}
-.aqLogo{height:40px;width:auto;display:block;transition:opacity .2s;}
+.aqNavLinks{flex:1 1 0;justify-content:flex-end;}
+.aqLogo{height:48px;width:auto;display:block;transition:opacity .2s;}
 .aqLogo:hover{opacity:.8;}
 .aqNavLinks{display:flex;align-items:center;gap:30px;height:100%;}
 .aqNavItem{display:flex;align-items:center;height:100%;position:relative;}
@@ -677,6 +681,32 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .vd-ph img{width:100%;height:100%;object-fit:cover;display:block;}
 .vd-phdel{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
 
+/* ---- Dealer Visit summary (first screen) + consistent SVG icons ---- */
+.tmi{display:inline-block;vertical-align:-3px;flex:0 0 auto;}
+.tm-nav button .ni{display:flex;align-items:center;justify-content:center;height:20px;}
+.tmbtn .tmi{margin-right:5px;}
+.vd-num{font-size:11.5px;font-weight:600;color:#9ca3af;margin-top:1px;letter-spacing:.02em;}
+.vd-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.vd-badge{font-size:11.5px;font-weight:700;color:#374151;background:#f3f4f6;border-radius:14px;padding:4px 10px;}
+.vd-badge.ok{background:#e7f3ec;color:#15803d;}
+.vd-badge.pend{background:#fef3c7;color:#b45309;}
+.vd-badge.rt{background:#eef2ff;color:#4338ca;}
+.vd-contact{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;background:#f9fafb;border:1px solid #eceef0;border-radius:12px;}
+.vd-cinfo{flex:1 1 auto;min-width:0;}
+.vd-cname{font-size:13.5px;font-weight:700;color:#111;}
+.vd-cname span{font-weight:500;color:#6b7280;font-size:12px;}
+.vd-cnum{font-size:12.5px;color:#6b7280;margin-top:1px;}
+.vd-cbtn{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;color:#2563eb;display:flex;align-items:center;justify-content:center;flex:0 0 auto;text-decoration:none;}
+.vd-cbtn:active{background:#eff6ff;}
+.vd-money{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.vd-money>div{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:9px 12px;text-align:center;}
+.vd-money .k{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.vd-money b{display:block;font-size:19px;font-weight:800;color:#111;line-height:1.25;}
+.vd-money .s{display:block;font-size:11px;font-weight:600;color:#6b7280;}
+.vd-quick{display:flex;gap:10px;align-items:baseline;margin-top:10px;font-size:12px;color:#6b7280;min-width:0;}
+.vd-quick span:first-child{font-weight:700;color:#b45309;white-space:nowrap;}
+.vd-quick .n{font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
 /* ---- Leader View: compact all-areas weekly overview + company map ---- */
 .lvtabs{display:flex;gap:6px;margin:0 0 12px;}
 .lvwk{border:1px solid var(--line);border-radius:var(--radius);background:#fff;margin-bottom:10px;overflow:hidden;}
@@ -725,6 +755,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 #gate{position:fixed;inset:0;z-index:99999;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Open Sans',Arial,sans-serif;}
 #gate .gbox{background:#1b1b1b;border:1px solid #2c2c2c;border-radius:10px;padding:40px 44px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
 #gate .glogo{color:#fff;font-weight:800;letter-spacing:3px;font-size:22px;text-transform:uppercase;}
+#gate .glogoimg{height:46px;width:auto;display:block;margin:0 auto;}
 #gate .gtag{color:#9a9a9a;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:6px 0 26px;}
 #gate input{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #3a3a3a;background:#101010;color:#fff;border-radius:6px;font-size:15px;outline:none;}
 #gate input:focus{border-color:#cf202f;}
@@ -756,7 +787,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 <body>
 <datalist id="apList"></datalist>
 <div id="tripmode"></div>
-<div id="gate"><div class="gbox"><div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" inputmode="text" placeholder="Team passcode" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
+<div id="gate"><div class="gbox"><img class="glogoimg" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" inputmode="text" placeholder="Team passcode" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
   <div class="aqUtilityBar">
@@ -1802,6 +1833,8 @@ function lvMapHTML(){
     +wsRow('Planned Revenue',fmtUSDk(s.rev))+wsRow('Planned Loads',s.loads)+wsRow('Dealer Visits',s.n)
     +wsRow('Confirmed Appointments',s.conf)+wsRow('Confirmed %',s.pct.toFixed(0)+'%')+wsRow('Confirmed Revenue',fmtUSDk(s.confRev))
     +wsRow('Target Revenue',s.target>0?fmtUSDk(s.target):'—')+wsRow('Target %',s.tpct!=null?(s.tpct.toFixed(0)+'%'):'—')
+    +wsRow('Total Drive Distance','<span id="lvTotKm">calculating…</span>')
+    +wsRow('Total Drive Time','<span id="lvTotHrs">—</span>')
     +'</div></div>';
   var labs=dayLabels(wk);
   var schedRows=labs.map(function(l,i){
@@ -1894,7 +1927,14 @@ function mapHTML(tl, weekSel, colorBy){
       var col=(colorBy==='week')?weekColor(+k):(MAPTERR_COLOR[t]||'#6c7073');
       var lk=(colorBy==='week')?('Wk '+k):t; if(!leg[lk]){leg[lk]={c:col,n:0,lab:(colorBy==='week')?('Week '+k+' · '+WEEKDATES[k]):(t+' · '+(FLAT.tm[t]||'—'))};order.push(lk);} leg[lk].n+=g.length;
       var pts=g.map(function(d){var j=jit(d.id); var xy=proj(d.lon+j[1],d.lat+j[0]); return {d:d,x:xy[0],y:xy[1]};});
-      if(pts.length>1){ svg+='<polyline points="'+pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="1.7" opacity="0.55"/>'; }
+      /* one element PER LEG so each segment routes and hovers individually */
+      for(var pi=1;pi<pts.length;pi++){ var A=pts[pi-1], B=pts[pi];
+        svg+='<polyline class="svgleg" data-al="'+A.d.lat+'" data-an="'+A.d.lon+'" data-bl="'+B.d.lat+'" data-bn="'+B.d.lon+'"'
+          +' data-from="'+esc(A.d.name)+'" data-to="'+esc(B.d.name)+'" data-terr="'+t+'" data-rep="'+esc(FLAT.tm[t]||'')+'" data-day="'+esc(dayTimeLabel(B.d))+'"'
+          +' points="'+A.x.toFixed(1)+','+A.y.toFixed(1)+' '+B.x.toFixed(1)+','+B.y.toFixed(1)+'"'
+          +' fill="none" stroke="'+col+'" stroke-width="1.7" opacity="0.55" pointer-events="stroke">'
+          +'<title>'+esc(A.d.name)+' → '+esc(B.d.name)+' · Drive · route loading… · '+t+'</title></polyline>';
+      }
       pts.forEach(function(p){var ok=!!APPT[p.d.id]; var dt=dayTimeLabel(p.d); var wlab=(weekSel==='all'&&colorBy!=='week')?('W'+k+' '):'';
         svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="5" fill="'+(ok?col:'#ffffff')+'" stroke="'+col+'" stroke-width="2"><title>'+esc(p.d.name)+' (Wk '+k+', '+t+') — '+esc(p.d.loc)+(dt?(' · '+dt):'')+(ok?' · CONFIRMED':'')+'</title></circle>';
         var nm=esc(p.d.name); nm=nm.length>15?nm.slice(0,14)+'…':nm;
@@ -1910,10 +1950,31 @@ function mapHTML(tl, weekSel, colorBy){
   return '<div class="maphd">'+legend+note+'</div><div class="mapwrap">'+body+'</div>';
 }
 function renderCalendar(){ document.getElementById('ganttWrap').innerHTML=calendarHTML(["East","South","Central","West","Exports"]); }
+/* same projection constants as mapHTML — used to re-project routed geometry */
+function allMapProj(lon,lat){
+  var W=940,H=560,PAD=18,LON0=-125,LON1=-66,LAT0=53,LAT1=24.5;
+  var sx=(W-2*PAD)/(LON1-LON0), sy=(H-2*PAD)/(LAT0-LAT1);
+  return [PAD+(lon-LON0)*sx, PAD+(LAT0-lat)*sy];
+}
+/* swap each schematic leg for the real road geometry once the router answers */
+function allMapRouteLegs(){
+  document.querySelectorAll('#ganttWrap polyline.svgleg').forEach(function(pl){
+    var a=[+pl.dataset.al,+pl.dataset.an], b=[+pl.dataset.bl,+pl.dataset.bn];
+    if(!isFinite(a[0])||!isFinite(a[1])||!isFinite(b[0])||!isFinite(b[1])) return;
+    roadRoute(a,b).then(function(rt){
+      if(!rt||!document.body.contains(pl)) return;
+      pl.setAttribute('points', rt.pts.map(function(p){ var xy=allMapProj(p[1],p[0]); return xy[0].toFixed(1)+','+xy[1].toFixed(1); }).join(' '));
+      var t=pl.querySelector('title');
+      if(t) t.textContent=pl.dataset.from+' → '+pl.dataset.to+' · Drive · '+Math.round(rt.km)+' km · ~'+fmtDur(rt.min)
+        +(pl.dataset.day?(' · '+pl.dataset.day):'')+' · '+(pl.dataset.rep?pl.dataset.rep+' · ':'')+pl.dataset.terr;
+    });
+  });
+}
 function renderMap(){ var sel=document.getElementById('mapWeekSel');
   if(sel && !sel.dataset.init){ sel.innerHTML=FIELD_NUMS.map(function(wk){return '<option value="'+wk+'">Week '+wk+' · '+WEEKDATES[wk]+'</option>';}).join(''); sel.dataset.init='1'; }
   if(sel) sel.value=mapWeek;
-  document.getElementById('ganttWrap').innerHTML=mapHTML(["East","South","Central","West"], mapWeek, "terr"); }
+  document.getElementById('ganttWrap').innerHTML=mapHTML(["East","South","Central","West"], mapWeek, "terr");
+  allMapRouteLegs(); }
 function tripDetailHTML(terr,wk){
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
   var labs=dayLabels(wk); var md=settingsFor(terr).maxDrive;
@@ -2169,8 +2230,8 @@ function renderTerrMap(){
     +'<div class="tcb"><div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">'
       +stops.length+' stops · '+loads+' loads · $'+revenue.toLocaleString()+' · '+confirmed+'/'+stops.length+' confirmed</div>'
     +'<div style="display:flex;gap:28px;margin-bottom:12px">'
-      +'<div><div style="'+lbl+'">Total drive time</div><div style="font-size:15px;font-weight:600">'+hrsLabel(rm.hours)+'</div></div>'
-      +'<div><div style="'+lbl+'">Planned distance</div><div style="font-size:15px;font-weight:600">'+plannedKm.toLocaleString()+' km</div></div>'
+      +'<div><div style="'+lbl+'">Total drive time</div><div id="rtTotHrs" style="font-size:15px;font-weight:600">'+hrsLabel(rm.hours)+'</div></div>'
+      +'<div><div style="'+lbl+'">Planned distance</div><div id="rtTotKm" style="font-size:15px;font-weight:600">'+plannedKm.toLocaleString()+' km</div></div>'
     +'</div>'
     +'<div style="border-top:1px solid var(--line-soft);padding-top:10px">'
       +'<div style="'+lbl+';margin-bottom:6px">Mileage</div>'
@@ -2306,23 +2367,27 @@ function popupHTML(s){
 var _rtMem={}, _rtQ=[], _rtBusy=0, _aqMapGen=0;
 function _rtStore(){ try{ return JSON.parse(localStorage.getItem('aqRoutes_v1')||'{}'); }catch(e){ return {}; } }
 function _rtPersist(k,v){ try{
+  /* geometry is stored EXACTLY as the engine returned it; very long routes are
+     kept in memory only so the cache never blows the localStorage quota */
+  if(JSON.stringify(v).length>30000) return;
   var s=_rtStore(); s[k]=v;
-  var ks=Object.keys(s); if(ks.length>300){ ks.slice(0,ks.length-300).forEach(function(x){ delete s[x]; }); }
+  var ks=Object.keys(s); if(ks.length>120){ ks.slice(0,ks.length-120).forEach(function(x){ delete s[x]; }); }
   localStorage.setItem('aqRoutes_v1',JSON.stringify(s));
-}catch(e){} }
+}catch(e){ try{ localStorage.removeItem('aqRoutes_v1'); }catch(e2){} } }
+var _rtPending={};   /* leg key -> in-flight promise (dedupes concurrent maps) */
+var _rtDead={};      /* router index -> consecutive failures; 2+ = skip this session */
 function roadRoute(a,b){ /* [lat,lon],[lat,lon] -> Promise<{pts,km,min}|null> */
-  var k=a[0].toFixed(3)+','+a[1].toFixed(3)+'|'+b[0].toFixed(3)+','+b[1].toFixed(3);
+  var ka=a[0].toFixed(3)+','+a[1].toFixed(3), kb=b[0].toFixed(3)+','+b[1].toFixed(3);
+  if(ka===kb) return Promise.resolve({pts:[a,b],km:0,min:0});   /* same spot: no network call */
+  var k=ka+'|'+kb;
   if(_rtMem[k]) return Promise.resolve(_rtMem[k]);
   var st=_rtStore(); if(st[k]){ _rtMem[k]=st[k]; return Promise.resolve(st[k]); }
-  return new Promise(function(res){ _rtQ.push({k:k,a:a,b:b,res:res}); _rtPump(); });
+  if(_rtPending[k]) return _rtPending[k];
+  _rtPending[k]=new Promise(function(res){ _rtQ.push({k:k,a:a,b:b,res:res}); _rtPump(); });
+  _rtPending[k].then(function(){ delete _rtPending[k]; },function(){ delete _rtPending[k]; });
+  return _rtPending[k];
 }
 var _RT_OSRM=['https://router.project-osrm.org','https://routing.openstreetmap.de/routed-car'];
-function _rtSlim(pts){ /* cap cached geometry at ~200 points */
-  if(pts.length<=220) return pts;
-  var out=[], step=(pts.length-1)/199;
-  for(var i=0;i<200;i++) out.push(pts[Math.round(i*step)]);
-  out.push(pts[pts.length-1]); return out;
-}
 function decodePoly6(str){ /* Valhalla encoded polyline, 1e-6 precision */
   var pts=[],i=0,lat=0,lon=0;
   while(i<str.length){
@@ -2344,19 +2409,21 @@ function _rtPump(){
   if(_rtBusy>=2||!_rtQ.length) return;
   var j=_rtQ.shift(); _rtBusy++;
   var done=function(out){
-    if(out){ out.pts=_rtSlim(out.pts); _rtMem[j.k]=out; _rtPersist(j.k,out); }
+    if(out){ _rtMem[j.k]=out; _rtPersist(j.k,out); }   /* geometry kept exactly as returned */
     _rtBusy--; setTimeout(_rtPump,120); try{ j.res(out); }catch(e){}
   };
   function tryOSRM(i){
     if(i>=_RT_OSRM.length){ tryValhalla(); return; }
+    if((_rtDead[i]||0)>=2){ tryOSRM(i+1); return; }   /* unreachable this session: don't pay the timeout again */
     var url=_RT_OSRM[i]+'/route/v1/driving/'
-      +j.a[1]+','+j.a[0]+';'+j.b[1]+','+j.b[0]+'?overview=simplified&geometries=geojson&alternatives=false&steps=false';
+      +j.a[1]+','+j.a[0]+';'+j.b[1]+','+j.b[0]+'?overview=full&geometries=geojson&alternatives=false&steps=false';
     _rtFetch(url).then(function(r){ return r.ok?r.json():null; }).then(function(x){
       var rt=x&&x.routes&&x.routes[0];
       if(rt&&rt.geometry&&rt.geometry.coordinates&&rt.geometry.coordinates.length>1){
+        _rtDead[i]=0;
         done({pts:rt.geometry.coordinates.map(function(c){ return [c[1],c[0]]; }), km:rt.distance/1000, min:rt.duration/60});
       } else tryOSRM(i+1);
-    }).catch(function(){ tryOSRM(i+1); });
+    }).catch(function(){ _rtDead[i]=(_rtDead[i]||0)+1; tryOSRM(i+1); });
   }
   function tryValhalla(){
     _rtFetch('https://valhalla1.openstreetmap.de/route',{method:'POST',
@@ -2381,26 +2448,31 @@ function flightArc(a,b){ /* gently curved flight path between two points */
 }
 function legTip(meta,km,min){
   var h='<b>'+esc(meta.from)+'</b> → <b>'+esc(meta.to)+'</b>';
-  if(meta.fly) h+='<br>Flight';
-  else if(km!=null) h+='<br>'+Math.round(km)+' km · ~'+fmtDur(min);
-  else h+='<br>Route loading…';
-  if(meta.rep) h+='<br>'+esc(meta.rep)+(meta.area?(' · '+esc(meta.area)):'');
-  else if(meta.area) h+='<br>'+esc(meta.area);
+  h+='<br>'+(meta.fly?'Flight':'Drive');
+  if(!meta.fly) h+=(km!=null)?(' · '+Math.round(km)+' km · ~'+fmtDur(min)):' · route loading…';
+  if(meta.day) h+='<br>'+esc(meta.day)+(meta.time?(' · '+t12s(meta.time)):'');
+  if(meta.rep||meta.area) h+='<br>'+[meta.rep,meta.area].filter(Boolean).map(esc).join(' · ');
   return h;
 }
+/* Draw ONE leg. Returns a promise with the leg's routed distance/time so callers
+   can build routed trip totals ({est:true} when the engine was unreachable). */
 function drawLeg(map,gen,a,b,style,meta){
   meta=meta||{};
   if(meta.fly){
     L.polyline(flightArc([a.lat,a.lon],[b.lat,b.lon]),
       {color:'#2563eb',weight:2,dashArray:'2 7',opacity:.85}).addTo(map)
       .bindTooltip(legTip(meta),{sticky:true});
-    return;
+    return Promise.resolve({fly:true,km:0,min:0});
   }
   var line=L.polyline([[a.lat,a.lon],[b.lat,b.lon]],style).addTo(map);
   line.bindTooltip(legTip(meta,null,null),{sticky:true});
-  roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
-    if(!rt||map._aqGen!==gen) return;
-    try{ line.setLatLngs(rt.pts); line.setTooltipContent(legTip(meta,rt.km,rt.min)); }catch(e){}
+  var estMi=roadMi([a.lat,a.lon],[b.lat,b.lon])||0;
+  return roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
+    if(rt&&map._aqGen===gen){
+      try{ line.setLatLngs(rt.pts); line.setTooltipContent(legTip(meta,rt.km,rt.min)); }catch(e){}
+    }
+    if(rt) return {km:rt.km,min:rt.min};
+    return {km:estMi*1.60934,min:estMi/55*60,est:true};
   });
 }
 function drawTripMap(stops){
@@ -2411,14 +2483,23 @@ function drawTripMap(stops){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
   var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
   pts.forEach(function(s){ L.marker([s.lat,s.lon],{icon:pinIcon(s)}).addTo(_tripMap).bindPopup(popupHTML(s)); });
+  var legs=[];
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
     var both=(a.status==='Confirmed'&&b.status==='Confirmed');
     var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
-    drawLeg(_tripMap,gen,a,b,
+    legs.push(drawLeg(_tripMap,gen,a,b,
       both?{color:'#16a34a',weight:2.5}:{color:'#2563eb',weight:2,dashArray:'6 6'},
-      {from:a.name,to:b.name,area:terr,rep:FLAT.tm[terr]||'',fly:fly});
+      {from:a.name,to:b.name,area:terr,rep:FLAT.tm[terr]||'',fly:fly,day:b.dayLabel,time:b.time}));
   }
+  /* routed trip totals for the Overview card (falls back to the estimate) */
+  Promise.all(legs).then(function(rs){
+    if(!_tripMap||_tripMap._aqGen!==gen) return;
+    var km=0,min=0; rs.forEach(function(r){ if(r&&!r.fly){ km+=r.km; min+=r.min; } });
+    var ek=document.getElementById('rtTotKm'), eh=document.getElementById('rtTotHrs');
+    if(ek) ek.textContent=Math.round(km).toLocaleString()+' km';
+    if(eh) eh.textContent=hrsLabel(min/60);
+  });
   if(pts.length) _tripMap.fitBounds(L.latLngBounds(pts.map(function(s){return [s.lat,s.lon];})).pad(0.25));
   setTimeout(function(){ if(_tripMap)_tripMap.invalidateSize(); },60);
 }
@@ -2430,7 +2511,7 @@ function lvDrawMap(){
   _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:false}).setView([45,-98],4);
   var gen=++_aqMapGen; _lvMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
-  var bounds=[];
+  var bounds=[], legs=[];
   TERRS.forEach(function(t){
     if(!LV_AREAS[t]) return;
     var rep=FLAT.tm[t]||'';
@@ -2453,9 +2534,16 @@ function lvDrawMap(){
     for(var i=1;i<stops.length;i++){
       var a=stops[i-1], b=stops[i];
       var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
-      drawLeg(_lvMap,gen,a,b,{color:col,weight:2.5,opacity:.8},
-        {from:a.name,to:b.name,area:t,rep:rep,fly:fly});
+      legs.push(drawLeg(_lvMap,gen,a,b,{color:col,weight:2.5,opacity:.8},
+        {from:a.name,to:b.name,area:t,rep:rep,fly:fly,day:b.dayLabel,time:b.time}));
     }
+  });
+  Promise.all(legs).then(function(rs){
+    if(!_lvMap||_lvMap._aqGen!==gen) return;
+    var km=0,min=0; rs.forEach(function(r){ if(r&&!r.fly){ km+=r.km; min+=r.min; } });
+    var ek=document.getElementById('lvTotKm'), eh=document.getElementById('lvTotHrs');
+    if(ek) ek.textContent=Math.round(km).toLocaleString()+' km';
+    if(eh) eh.textContent=hrsLabel(min/60);
   });
   if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
   setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
@@ -3331,7 +3419,7 @@ function gateErr(msg){ var e=document.getElementById('gerr'); if(e){ e.style.col
 function gateMsg(msg){ var e=document.getElementById('gerr'); if(e){ e.style.color='#9ca3af'; e.textContent=msg||''; } }
 function gateBlocked(email){
   var box=document.querySelector('#gate .gbox'); if(!box) return;
-  box.innerHTML='<div class="glogo">Arrowquip</div><div class="gtag">Pre-Booking Portal</div>'
+  box.innerHTML='<img class="glogoimg" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"><div class="gtag">Pre-Booking Portal</div>'
     +'<div style="color:#ff6b6b;font-size:13px;line-height:1.6;margin:10px 0 14px">This email is not approved for access. Contact Mark.</div>'
     +'<div style="color:#9ca3af;font-size:11px;margin-bottom:14px">Signed in as '+esc(email||'')+'</div>'
     +'<button id="gsignout">Sign out</button>';
@@ -3609,10 +3697,10 @@ function mobCard(i,wk){
       +'</div>'
     +'</div>'
     +'<div class="tmc-actions">'
-      +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">➤ Navigate</a>')
-            :('<button class="tmbtn" disabled>➤ Navigate</button>'))
+      +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">'+tmIcon('nav',15)+' Navigate</a>')
+            :('<button class="tmbtn" disabled>'+tmIcon('nav',15)+' Navigate</button>'))
       +(i.kind==='dealer'
-        ? '<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">☰</button>'
+        ? '<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">'+tmIcon('clipboard',17)+'</button>'
         : '<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>')
       +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="Mark complete">✓</button>'
     +'</div>'
@@ -3651,9 +3739,9 @@ function mobTLItem(i,wk,isNext){
   }
 
   var actions='<div class="tl-actions">'
-    +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">➤ Navigate</a>')
-          :('<button class="tmbtn" disabled>➤ Navigate</button>'))
-    +(dealer?('<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">☰</button>')
+    +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">'+tmIcon('nav',15)+' Navigate</a>')
+          :('<button class="tmbtn" disabled>'+tmIcon('nav',15)+' Navigate</button>'))
+    +(dealer?('<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">'+tmIcon('clipboard',17)+'</button>')
             :('<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>'))
     +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="Mark complete">✓</button>'
     +'</div>';
@@ -3711,11 +3799,36 @@ function mobToday_render(){
 }
 
 /* ---------- ROUTE ---------- */
+function mobRouteScope(){
+  var all=itineraryFor(MOB.terr,MOB.wk);
+  var today=(MOB.day!=null)?MOB.day:mobToday(MOB.wk);
+  return (MOB.routeScope==='week'||today==null)?all:all.filter(function(i){return i.day===today;});
+}
+/* routed totals for the drive footer: real road km/time when the router answers */
+function mobUpdateDriveTotals(){
+  var el=document.getElementById('tmDriveTot'); if(!el) return;
+  var pts=mobRouteScope().filter(function(i){return i.located;});
+  if(pts.length<2) return;
+  var jobs=[];
+  for(var i=1;i<pts.length;i++){
+    (function(a,b){
+      var fly=(String(a.type).indexOf('flight')===0&&String(b.type).indexOf('flight')===0);
+      if(fly){ jobs.push(Promise.resolve({km:0,min:0})); return; }
+      var estMi=roadMi([a.lat,a.lon],[b.lat,b.lon])||0;
+      jobs.push(roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
+        return rt?{km:rt.km,min:rt.min}:{km:estMi*1.60934,min:estMi/55*60};
+      }));
+    })(pts[i-1],pts[i]);
+  }
+  Promise.all(jobs).then(function(rs){
+    var el2=document.getElementById('tmDriveTot'); if(!el2) return;
+    var km=0,min=0; rs.forEach(function(r){ km+=r.km; min+=r.min; });
+    el2.textContent=hrsLabel(min/60)+' · '+Math.round(km).toLocaleString()+' km';
+  });
+}
 function mobRoute_render(){
   var wk=MOB.wk, t=MOB.terr;
-  var all=itineraryFor(t,wk);
-  var today=(MOB.day!=null)?MOB.day:mobToday(wk);
-  var scope=(MOB.routeScope==='week'||today==null)?all:all.filter(function(i){return i.day===today;});
+  var scope=mobRouteScope();
   var R=legsFor(scope);
   var h='<div class="tm-screen">'
     +'<div class="tm-seg">'
@@ -3737,7 +3850,7 @@ function mobRoute_render(){
       }).join('') : '<div class="tm-empty">Nothing to route.</div>';
 
   h+='<div class="tm-drive"><div class="d1">'+(MOB.routeScope==='week'?"This week's drive":"Today's drive")+'</div>'
-    +'<div class="d2">'+hrsLabel(R.totalHours)+' · '+Math.round(R.totalKm).toLocaleString()+' km</div>'
+    +'<div class="d2" id="tmDriveTot">'+hrsLabel(R.totalHours)+' · '+Math.round(R.totalKm).toLocaleString()+' km</div>'
     +(R.unlocated?('<div style="font-size:12px;color:#dc2626;margin-top:6px">'+R.unlocated+' stop'+(R.unlocated===1?'':'s')+' excluded — no address</div>'):'')
     +'</div>';
   h+='</div>';
@@ -3746,19 +3859,23 @@ function mobRoute_render(){
 function mobDrawMap(){
   var el=document.getElementById('tmMap'); if(!el||typeof L==='undefined') return;
   if(MOB.map){ try{MOB.map.remove();}catch(e){} MOB.map=null; }
-  var all=itineraryFor(MOB.terr,MOB.wk);
-  var today=(MOB.day!=null)?MOB.day:mobToday(MOB.wk);
-  var scope=(MOB.routeScope==='week'||today==null)?all:all.filter(function(i){return i.day===today;});
-  var pts=scope.filter(function(i){return i.located;});
+  var pts=mobRouteScope().filter(function(i){return i.located;});
   MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:false,attributionControl:true}).setView([43.5,-79],5);
+  var gen=++_aqMapGen; MOB.map._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MOB.map);
   pts.forEach(function(i){
     var ic=mobIcon(i);
     L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+'">'+ic.g+'</div>',iconSize:[26,26],iconAnchor:[13,13]})})
       .addTo(MOB.map).bindPopup('<b>'+esc(i.name||mobKind(i))+'</b><br>'+esc(mobKind(i)));
   });
-  if(pts.length>1){
-    L.polyline(pts.map(function(i){return [i.lat,i.lon];}),{color:'#2563eb',weight:4,opacity:.85}).addTo(MOB.map);
+  /* one routed leg per consecutive pair — each individually tappable */
+  var labs=dayLabels(MOB.wk);
+  for(var i=1;i<pts.length;i++){
+    var a=pts[i-1], b=pts[i];
+    var fly=(String(a.type).indexOf('flight')===0&&String(b.type).indexOf('flight')===0);
+    drawLeg(MOB.map,gen,a,b,{color:'#2563eb',weight:4,opacity:.85},
+      {from:a.name||mobKind(a),to:b.name||mobKind(b),area:MOB.terr,rep:FLAT.tm[MOB.terr]||'',fly:fly,
+       day:(b.day!=null&&labs[b.day])?(labs[b.day][0]+', '+labs[b.day][1]):'',time:b.time});
   }
   if(pts.length) MOB.map.fitBounds(L.latLngBounds(pts.map(function(i){return [i.lat,i.lon];})).pad(0.25));
   setTimeout(function(){ if(MOB.map) MOB.map.invalidateSize(); },80);
@@ -3842,6 +3959,23 @@ function mobMore_render(){
 }
 
 /* ---------- shell ---------- */
+/* One consistent icon set (Lucide outlines, 24-unit grid, stroke 2) so nothing
+   in Trip Mode looks hand-drawn or mismatched. */
+var TM_ICONS={
+  home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  map:'<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>',
+  wallet:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
+  folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  clipboard:'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  nav:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>'
+};
+function tmIcon(n,sz){
+  return '<svg class="tmi" width="'+(sz||20)+'" height="'+(sz||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(TM_ICONS[n]||'')+'</svg>';
+}
 function renderMobile(){
   var host=document.getElementById('tripmode'); if(!host) return;
   var weeks=mobWeeks(MOB.terr); if(!weeks.length) weeks=FIELD_NUMS;
@@ -3869,12 +4003,13 @@ function renderMobile(){
      +'</div>'
      +body
      +'<div class="tm-nav">'
-       +tab('today','⌂','Today')+tab('route','⛗','Route')+tab('budget','▤','Budget')
-       +tab('files','🗎','Files')+tab('more','⋯','More')
+       +tab('today',tmIcon('home'),'Today')+tab('route',tmIcon('map'),'Route')+tab('budget',tmIcon('wallet'),'Budget')
+       +tab('files',tmIcon('folder'),'Files')+tab('more',tmIcon('more'),'More')
      +'</div>';
 
   if(MOB.tab==='route' && MOB.routeView==='map') mobDrawMap();
   wireMobile();
+  if(MOB.tab==='route') mobUpdateDriveTotals();
 }
 function wireMobile(){
   var q=function(s){return document.querySelectorAll('#tripmode '+s);};
@@ -4226,19 +4361,56 @@ function mobVisitDetail(id){
       +'<button class="tm-primary" id="vd_addt">Add action item</button>';
   } else { /* photos */
     pane='<div id="vd_photos" class="vd-grid"><div class="tm-empty" style="grid-column:1/-1">Loading…</div></div>'
-      +'<label class="tm-primary" style="display:block;text-align:center;cursor:pointer">📷 Add photo'
+      +'<label class="tm-primary" style="display:block;text-align:center;cursor:pointer">'+tmIcon('camera',16)+' Add photo'
       +'<input id="vd_cam" type="file" accept="image/*" capture="environment" multiple style="display:none"></label>'
       +'<div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">'+(pbAuthed()?'Photos upload to private storage and are kept on this device for offline viewing. They are never stored inside the plan.':'Photos are saved on this device and become part of the visit report. Sign in to store them privately in the cloud.')+'</div>';
+  }
+
+  /* ---- Dealer Summary: the first screen. Who, when, status, one-touch call/
+     text, and the two money numbers — readable in one second from a truck. ---- */
+  var sf=sfLookup(d)||{};
+  var cName=sf.contactName||'', cMob=sf.contactMobile||'', cBiz=sf.contactPhone||d.phone||'';
+  var callNum=cMob||cBiz;
+  var pb26=d.lastYear||0, loads26=d.loads||0;
+  var fc=d.booking||0, fcLoads=fc?Math.round(fc/75000):0;
+  var openTasks=(v.actions||[]).filter(function(a){return !a.done;}).length;
+  var routeStatus=done?'Visit complete':(DAY[id]!=null?('On route · '+mobDayLabel(wk,DAY[id])):'Not routed yet');
+  var notePrev=(v.notes||'').trim();
+  if(notePrev.length>70) notePrev=notePrev.slice(0,69)+'…';
+
+  var contactRow='';
+  if(cName||callNum){
+    contactRow='<div class="vd-contact">'
+      +'<div class="vd-cinfo">'
+        +(cName?'<div class="vd-cname">'+esc(cName)+(sf.contactTitle?('<span> · '+esc(sf.contactTitle)+'</span>'):'')+'</div>':'')
+        +(callNum?'<div class="vd-cnum">'+esc(callNum)+(cMob?' (mobile)':'')+'</div>':'')
+      +'</div>'
+      +(callNum?('<a class="vd-cbtn" href="tel:'+encodeURIComponent(callNum)+'">'+tmIcon('phone',18)+'</a>'
+                +'<a class="vd-cbtn" href="sms:'+encodeURIComponent(callNum)+'">'+tmIcon('msg',18)+'</a>'):'')
+      +'</div>';
   }
 
   var inner=''
     +'<div class="vd-head">'
       +'<div class="vd-name">'+esc(d.name)+'</div>'
-      +'<div class="vd-meta">'+esc(when)+'</div>'
+      +'<div class="vd-num">Dealer '+esc(d.id)+(d.tier?(' · '+esc(d.tier)):'')+'</div>'
       +(d.address?'<div class="vd-meta">'+esc(d.address)+(d.loc?', '+esc(d.loc):'')+'</div>':'')
+      +'<div class="vd-badges">'
+        +'<span class="vd-badge">'+esc(when)+'</span>'
+        +'<span class="vd-badge '+(done?'ok':'pend')+'">'+(done?'Confirmed':'Pending')+'</span>'
+        +'<span class="vd-badge rt">'+esc(routeStatus)+'</span>'
+      +'</div>'
+      +contactRow
+      +'<div class="vd-money">'
+        +'<div><span class="k">2026 Pre-Booked</span><b>'+(pb26?fmtUSDk(pb26):'—')+'</b><span class="s">'+loads26+' load'+(loads26!==1?'s':'')+'</span></div>'
+        +'<div><span class="k">Forecast Pre-Book</span><b>'+(fc?fmtUSDk(fc):'—')+'</b><span class="s">'+(fc?fcLoads+' load'+(fcLoads!==1?'s':''):'—')+'</span></div>'
+      +'</div>'
+      +((openTasks||notePrev)?('<div class="vd-quick">'
+        +(openTasks?('<span>'+openTasks+' open task'+(openTasks>1?'s':'')+'</span>'):'')
+        +(notePrev?('<span class="n">'+esc(notePrev)+'</span>'):'')
+      +'</div>'):'')
       +'<div class="vd-actions">'
-        +(mobHasDest(d)?'<a class="tmbtn nav" href="'+navUrl(d)+'" target="_blank" rel="noopener">➤ Navigate</a>':'<button class="tmbtn" disabled>➤ Navigate</button>')
-        +(d.phone?'<a class="tmbtn" href="tel:'+encodeURIComponent(d.phone)+'">✆ Call</a>':'')
+        +(mobHasDest(d)?'<a class="tmbtn nav" href="'+navUrl(d)+'" target="_blank" rel="noopener">'+tmIcon('nav',16)+' Navigate</a>':'<button class="tmbtn" disabled>'+tmIcon('nav',16)+' Navigate</button>')
       +'</div>'
     +'</div>'
     +'<div class="vd-tabs">'+tab('report','Report')+tab('notes','Notes')+tab('tasks','Tasks',(v.actions||[]).length)+tab('photos','Photos')+'</div>'
@@ -4313,7 +4485,7 @@ function mobExpenseSheet(){
     +mobField('Type','<select id="me_type"><option value="actual">Actual</option><option value="estimate">Estimate</option></select>')
     +mobField('Notes','<input id="me_notes">')
     +'<button class="tm-primary" id="me_save">Add expense</button>'
-    +'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:10px">Receipt capture requires secure login.</div>';
+    +'<div style="font-size:12px;color:#9ca3af;text-align:center;margin-top:10px">Capture the receipt photo from the Budget tab — it uploads to secure storage.</div>';
   var w=mobSheet('Add Expense', inner);
   document.getElementById('me_save').onclick=function(){
     var amt=document.getElementById('me_amount').value;
