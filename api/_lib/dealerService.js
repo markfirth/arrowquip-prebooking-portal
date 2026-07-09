@@ -114,7 +114,7 @@ function computeGrowth(booking, lastYear) {
  * for future pages. booking/loads are null when the 2027 Salesforce value is
  * 0/null so the planner keeps its seed fallback.
  */
-function mapDealer(acc, opp27, opp26won, loadCount, contact) {
+function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
   const bookingRaw = opp27 ? num(opp27.Prebooked_Value__c) : 0
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
   const area = TM_TO_AREA[acc.Territory_Manager__c] || null
@@ -124,7 +124,8 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact) {
   if (!loc) loc = acc.BillingState || ''
 
   const booking = bookingRaw > 0 ? bookingRaw : null
-  const lastYear = lastYearRaw > 0 ? lastYearRaw : null
+  // 2026 Revenue is Salesforce-owned and LOCKED even at zero — 0 is valid data.
+  const lastYear = lastYearRaw
   const lat = acc.BillingLatitude != null ? Number(acc.BillingLatitude) : null
   const lon = acc.BillingLongitude != null ? Number(acc.BillingLongitude) : null
 
@@ -159,6 +160,10 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact) {
     contactMobile: contact ? contact.MobilePhone || null : null,
     contactPhone: contact ? contact.Phone || null : null,
     contactTitle: contact ? contact.Title || null : null,
+    // Original 2026 Pre-Booking commitment: the 2026 prebooking Opportunity's
+    // Prebooked_Value__c regardless of stage. null (not 0) when Salesforce has
+    // no such opportunity — the planner-managed value stays editable then.
+    sfPrebook2026: opp26any ? num(opp26any.Prebooked_Value__c) : null,
   }
 }
 
@@ -203,6 +208,15 @@ async function fetchAllDealers() {
       `ORDER BY LastModifiedDate DESC`)
   } catch { contacts = [] }
 
+  // Original 2026 Pre-Booking commitment: 2026 prebooking opportunities at ANY
+  // stage (the commitment made at prebooking time, independent of fulfilment).
+  // Best-effort — a schema difference must never break the dealer feed.
+  let opp26all = []
+  try {
+    opp26all = await queryAll(base, instanceUrl, accessToken,
+      `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026'`)
+  } catch { opp26all = [] }
+
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })
   const by26 = {}; opp26.forEach((o) => { if (o.AccountId && (!by26[o.AccountId] || num(o.Prebooked_Value__c) > num(by26[o.AccountId].Prebooked_Value__c))) by26[o.AccountId] = o })
   const byLoads = {}; pb26.forEach((o) => { if (o.AccountId) byLoads[o.AccountId] = num(o.c) })
@@ -214,9 +228,13 @@ async function fetchAllDealers() {
     const cur = byContact[c.AccountId]
     if (!cur || (!cur.MobilePhone && c.MobilePhone)) byContact[c.AccountId] = c
   })
+  const by26any = {}
+  opp26all.forEach((o) => {
+    if (o.AccountId && (!by26any[o.AccountId] || num(o.Prebooked_Value__c) > num(by26any[o.AccountId].Prebooked_Value__c))) by26any[o.AccountId] = o
+  })
 
   // Return ALL Arrowquip Dealers — including those with an unmapped manager (blank territory).
-  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0, byContact[a.Id]))
+  return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0, byContact[a.Id], by26any[a.Id]))
 }
 
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────

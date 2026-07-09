@@ -677,6 +677,27 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .vd-ph img{width:100%;height:100%;object-fit:cover;display:block;}
 .vd-phdel{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
 
+/* ---- Master Sheet: sticky header, frozen Dealer/Territory columns, tags ---- */
+#masterView .tablecard{max-height:calc(100vh - 250px);overflow:auto;position:relative;}
+#masterView thead th{position:sticky;z-index:40;}
+#masterView tr.grprow th{top:0;height:34px;box-sizing:border-box;}
+#masterView tr.colhdr th{top:34px;background:#fff;}
+#masterView tfoot td{position:sticky;bottom:0;background:#fff;z-index:35;box-shadow:0 -1px 0 var(--line);}
+/* frozen #, Dealer and Territory columns during horizontal scrolling */
+#masterView tr.colhdr th:nth-child(1),#mBody td:nth-child(1),#mFoot td:nth-child(1){position:sticky;left:0;z-index:45;min-width:34px;}
+#masterView tr.colhdr th:nth-child(2),#mBody td:nth-child(2),#mFoot td:nth-child(2){position:sticky;left:34px;z-index:45;min-width:190px;max-width:230px;}
+#masterView tr.colhdr th:nth-child(3),#mBody td:nth-child(3),#mFoot td:nth-child(3){position:sticky;left:224px;z-index:45;box-shadow:2px 0 4px -2px rgba(0,0,0,.12);}
+#masterView tr.colhdr th:nth-child(-n+3){z-index:55;}
+#mBody td{background:#fff;}
+#mBody tr.plannerrow td{background:#fffdf6;}
+#mBody td.sflock{background:#f3f4f6;}
+/* subtle amber Planner Only tag */
+.ponly{display:inline-block;margin-left:6px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:9px;padding:1px 6px;vertical-align:1px;white-space:nowrap;}
+#masterView td.dealer{white-space:nowrap;}
+/* spacing refinements — keep the existing layout, just breathe a little more */
+#masterView tr.colhdr th{padding-top:8px;padding-bottom:8px;}
+#mBody td{padding-top:5px;padding-bottom:5px;}
+
 /* ---- Dealer Visit summary (first screen) + consistent SVG icons ---- */
 .tmi{display:inline-block;vertical-align:-3px;flex:0 0 auto;}
 .tm-nav button .ni{display:flex;align-items:center;justify-content:center;height:20px;}
@@ -742,6 +763,17 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
 .lvsumtab .num{text-align:right;}
 .lvsumtab tr.tot td{font-weight:800;border-top:2px solid var(--line);}
+/* ALL overview: daily summaries + compact area-coloured dealer tags */
+.aweek{padding:4px 12px 10px;}
+.aday{padding:7px 0 2px;border-bottom:1px solid var(--line-soft);}
+.aday:last-child{border-bottom:0;}
+.adayh{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:#111;}
+.adayh span{font-weight:600;color:var(--muted-2);margin-left:8px;letter-spacing:.02em;text-transform:none;}
+.atags{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 8px;}
+.atag{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px 0 3px;background:#fff;border:1px solid var(--line);border-radius:12px;font-size:11px;font-weight:600;color:#374151;cursor:pointer;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.atag:hover{border-color:#9ca3af;}
+.atag.ok{background:#f2faf5;}
+.atag i{width:16px;height:16px;border-radius:50%;color:#fff;font-style:normal;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
 @media(max-width:1100px){.lvmapgrid{grid-template-columns:1fr;} #leaderMap{height:420px;}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -829,7 +861,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
   </div>
   <div id="allView" style="display:none;">
     <div class="tablecard">
-      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Calendar · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="calBtn" class="segb on">Calendar</button><button id="mapBtn" class="segb">Map</button><button id="leadBtn" class="segb">Leaders</button><button id="lvBtn" class="segb">Leader View</button></div><span id="mapWeekWrap" style="display:none"><select id="mapWeekSel" class="msearch" style="max-width:180px"></select></span><span id="leadWrap" style="display:none"><select id="leadSel" class="msearch" style="max-width:160px"></select></span></div></div>
+      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button></div></div></div>
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
@@ -849,7 +881,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
           <th class="srt num" data-mk="prebook2026">2026 Pre-Booking<span class="hsub">Original Commitment</span><span class="hinfo" title="Planner-managed original commitment"> ⓘ</span></th>
           <th class="srt num" data-mk="booking">2027 Target<span class="hinfo" title="Planner-managed 2027 target"> ⓘ</span></th>
           <th class="srt" data-mk="areaPlanning">Area Planning<span class="hinfo" title="Show this dealer in East, West, South, Central or Export planning pages."> ⓘ</span></th>
-          <th class="srt" data-mk="visitConfirmed">Visit</th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th>
+          <th class="srt" data-mk="visitConfirmed">Visit Required<span class="hinfo" title="A dealer visit is required/committed this pre-booking season. Distinct from per-appointment confirmations in the Travel Planner."> ⓘ</span></th><th class="srt" data-mk="atKickoff">Kickoff</th><th>Remote</th>
           <th class="srt" data-mk="status">Status</th><th>Actions</th>
         </tr></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
@@ -907,14 +939,17 @@ function sfMasterMerge(d){
     /* 2026 Loads: Salesforce-derived Dealer-Loads count. Salesforce-owned — locked and
        read-only; overrides any saved planner value. Always a number (0..n) for SF dealers. */
     if(sf.loads!=null){ o.loads=+sf.loads; src.loads='salesforce'; } else { src.loads='planner-fallback'; }
+    /* Original 2026 Pre-Booking commitment straight from Salesforce when it
+       exists there — read-only and locked; otherwise stays planner-managed. */
+    if(sf.sfPrebook2026!=null){ o.prebook2026=+sf.sfPrebook2026; src.prebook2026='salesforce'; }
     o._sfId=sf.id; o._sf=true;
   } else {
     src.name=src.territory=src.tm=src.loc=src.address=src.tier=src.lastYear=src.lat=src.lon='planner-fallback';
     src.loads='planner-fallback';   /* local-only dealer: no Salesforce loads, planner may enter one */
     o._sf=false;
   }
-  /* planner-owned, editable: 2027 Target + 2026 Pre-Booking Original Commitment */
-  src.booking='planner-fallback'; src.prebook2026='planner-fallback';
+  /* planner-owned, editable: 2027 Target (+ 2026 commitment when SF lacks it) */
+  src.booking='planner-fallback'; if(!src.prebook2026) src.prebook2026='planner-fallback';
   /* local planner-owned */
   src.visitConfirmed='local'; src.atKickoff='local';
   o._sources=src; /* internal metadata only — not persisted, not displayed */
@@ -954,14 +989,15 @@ function renderSFBanner(){
   var SYNC='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>';
   if(s && s.connected){
     var t=new Date(s.at), h=t.getHours(), mm=('0'+t.getMinutes()).slice(-2), ap=h<12?'AM':'PM', h12=((h+11)%12)+1;
+    var uni=[]; try{ uni=buildMasterUniverse(); }catch(e){}
+    var inPlanning=uni.filter(function(d){ return d.areaPlanning!==false; }).length;
     el.className='sfbanner online';
     el.innerHTML='<div class="sfb-lead"><div class="sfb-ico">'+CLOUD+'</div><div><div class="sfb-title">Salesforce Connected</div>'
       +'<div class="sfb-desc">Grey locked fields come from Salesforce and update automatically. White editable fields are managed in the Travel Planner.</div></div></div>'
       +'<div class="sfb-metrics">'
-      +sfbMetric('sync','Last Sync',h12+':'+mm+' '+ap,'Today')
-      +sfbMetric('users','Dealers Loaded',s.loaded,'Total')
-      +sfbMetric('check','Dealers Matched',s.matched,'Connected to Salesforce')
-      +sfbMetric('user','Planner-Only',s.fallback,'Not in Salesforce')
+      +sfbMetric('users','Arrowquip Dealers Loaded',s.loaded,'From Salesforce')
+      +sfbMetric('check','Dealers Included in Planning',inPlanning,'Area planning on')
+      +sfbMetric('sync','Last Successful Sync',h12+':'+mm+' '+ap,'Today')
       +'</div><div class="sfb-action"><button class="btn sfb-sync" id="sfSyncBtn">'+SYNC+' Sync Salesforce</button></div>';
   } else if(s && !s.connected){
     el.className='sfbanner offline';
@@ -1083,7 +1119,6 @@ function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return
 function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
-  if(PB_STALE){ pbStaleBanner(); return; }      /* don't cache locally what the cloud rejected */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
   cloudSave('plan',planPayload());
 }
@@ -1667,13 +1702,17 @@ function cardHTML(d,wk){
     +'<div class="kc-bot"><span class="kbadge '+(ok?'won':'booked')+'">'+(ok?'Confirmed':'Planned')+'</span><button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'">✕</button></div>'
     +ctl+'</div>';
 }
+/* The ALL tab is the company-wide version of a territory page: the same
+   Overview | Map seg, the same week-card language, one shared filter state
+   (week + areas) across both tabs. Read-only executive planning view. */
 function renderAllView(){
-  var cb=document.getElementById('calBtn'),mb=document.getElementById('mapBtn'),lb=document.getElementById('leadBtn'),vb=document.getElementById('lvBtn');
-  if(cb)cb.classList.toggle('on',allMode==='cal'); if(mb)mb.classList.toggle('on',allMode==='map'); if(lb)lb.classList.toggle('on',allMode==='leaders'); if(vb)vb.classList.toggle('on',allMode==='leader');
-  var ww=document.getElementById('mapWeekWrap'); if(ww)ww.style.display=allMode==='map'?'':'none';
-  var lw=document.getElementById('leadWrap'); if(lw)lw.style.display=allMode==='leaders'?'':'none';
-  var sub=document.getElementById('allSub'); if(sub)sub.textContent=allMode==='map'?('Map — Week '+mapWeek+' · '+WEEKDATES[mapWeek]):(allMode==='leaders'?('Leader trips — '+leaderFilter+' · filter by leader'):(allMode==='leader'?'Leader View — every area, week by week · read-only overview':'Calendar · Week 31 (Kickoff) through Week 44 · tap + on a stop to add leaders joining'));
-  if(allMode==='map') renderMap(); else if(allMode==='leaders') renderLeaderView(); else if(allMode==='leader') renderLeaderSummary(); else renderCalendar();
+  if(allMode!=='map') allMode='overview';
+  var ob=document.getElementById('allOvBtn'),mb=document.getElementById('allMapBtn');
+  if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map');
+  var sub=document.getElementById('allSub');
+  if(sub)sub.textContent=(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
+    +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]))+' · read-only';
+  if(allMode==='map') renderAllMap(); else renderAllOverview();
 }
 function renderLeaderView(){
   var sel=document.getElementById('leadSel');
@@ -1868,6 +1907,197 @@ function renderLeaderSummary(){
     host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderLeaderSummary(); }; });
     lvDrawMap();
   }
+}
+/* =================== ALL territory — executive planning view ================ */
+const AREA_CODE={East:'E',South:'S',Central:'C',West:'W',Exports:'X'};
+let ALL_WK='all';   /* 'all' or a week number — ONE filter state shared by Overview and Map */
+let LV_TYPES={dealer:true,hotel:true,airport:true,rental:true,other:true,routes:true};
+function allAreas(){ return TERRS.filter(function(t){ return LV_AREAS[t]; }); }
+function allWeeksList(){ return [31].concat(FIELD_NUMS); }
+function allVisits(wk){ var out=[]; allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]===wk) out.push({t:t,d:d}); }); }); return out; }
+function allFiltersHTML(){
+  var wkOpts='<option value="all"'+(ALL_WK==='all'?' selected':'')+'>All weeks</option>'
+    +allWeeksList().map(function(w){return '<option value="'+w+'"'+(ALL_WK===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+  return '<div class="lvctl"><select id="allWkSel" class="msearch" style="max-width:230px">'+wkOpts+'</select>'
+    +'<span class="lvlegend" style="margin:0">'+TERRS.map(function(t){
+        return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('')+'</span>'
+    +'<button class="btn" id="allShowAll">Show All</button></div>';
+}
+function allKpiHTML(){
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  var n=0,loads=0,rev=0,conf=0;
+  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; loads+=(+v.d.loads||0); rev+=(+v.d.booking||0); if(APPT[v.d.id])conf++; }); });
+  var kpi=function(k,v){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; };
+  return '<div class="lvkpis">'+kpi('Dealers',n)+kpi('Loads',loads)+kpi('Revenue',fmtUSDk(rev))
+    +kpi('Appointments',conf+(n?(' · '+Math.round(conf/n*100)+'%'):''))+'</div>';
+}
+function allTagHTML(t,d){
+  var ok=!!APPT[d.id];
+  return '<span class="atag'+(ok?' ok':'')+'" data-adealer="'+d.id+'" title="'+esc(d.name)+' · '+t+(TIME[d.id]?(' · '+t12(TIME[d.id])):'')+(ok?' · Confirmed':'')+'">'
+    +'<i style="background:'+AREA_COLOR[t]+'">'+AREA_CODE[t]+'</i>'+esc(d.name)+(ok?' ✓':'')+'</span>';
+}
+function allOverviewWeekHTML(wk){
+  var vs=allVisits(wk);
+  var hasTravel=LOGI.some(function(it){return it.wk===wk&&LV_AREAS[it.terr];});
+  var rev=vs.reduce(function(a,v){return a+(+v.d.booking||0);},0);
+  var loads=vs.reduce(function(a,v){return a+(+v.d.loads||0);},0);
+  var conf=vs.filter(function(v){return APPT[v.d.id];}).length;
+  var pct=vs.length?Math.round(conf/vs.length*100):0;
+  var bar='<div class="lvwkbar">Week '+wk+(wk===31?' · Kickoff':'')+' <span class="sub">'+WEEKDATES[wk]+'</span>'
+    +'<div class="lvpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSDk(rev)+'</span>'
+    +'<span class="kpill sub">'+vs.length+' dealers · '+conf+'/'+vs.length+' appts · '+pct+'%</span></div></div>';
+  if(!vs.length && !hasTravel) return '<div class="lvwk min">'+bar+'</div>';
+  var labs=dayLabels(wk), rows='';
+  labs.forEach(function(l,i){
+    var dd=vs.filter(function(v){return DAY[v.d.id]===i;}).sort(function(a,b){return (TIME[a.d.id]||'99').localeCompare(TIME[b.d.id]||'99');});
+    if(!dd.length) return;
+    var areas={}; dd.forEach(function(v){areas[v.t]=1;}); var an=Object.keys(areas).length;
+    rows+='<div class="aday"><div class="adayh">'+(l[0]+' '+l[1]).toUpperCase()
+      +'<span>'+dd.length+' Appointment'+(dd.length!==1?'s':'')+' • '+an+' Area'+(an!==1?'s':'')+'</span></div>'
+      +'<div class="atags">'+dd.map(function(v){return allTagHTML(v.t,v.d);}).join('')+'</div></div>';
+  });
+  var un=vs.filter(function(v){return DAY[v.d.id]==null||DAY[v.d.id]>=labs.length;});
+  if(un.length) rows+='<div class="aday"><div class="adayh">UNSCHEDULED<span>'+un.length+' dealer'+(un.length!==1?'s':'')+'</span></div><div class="atags">'+un.map(function(v){return allTagHTML(v.t,v.d);}).join('')+'</div></div>';
+  return '<div class="lvwk">'+bar+'<div class="aweek">'+(rows||'<div class="lvnone">No visits planned.</div>')+'</div></div>';
+}
+function renderAllOverview(){
+  var host=document.getElementById('ganttWrap');
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  host.innerHTML=allFiltersHTML()+allKpiHTML()+wks.map(allOverviewWeekHTML).join('');
+  allWireShared(host);
+}
+function allWireShared(host){
+  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){ ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); renderAllView(); pbSaveNav(); };
+  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; renderAllView(); pbSaveNav(); };
+  host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderAllView(); pbSaveNav(); }; });
+  host.querySelectorAll('[data-lvtype]').forEach(function(b){ b.onclick=function(){ LV_TYPES[b.dataset.lvtype]=!LV_TYPES[b.dataset.lvtype]; renderAllView(); }; });
+  host.querySelectorAll('[data-adealer]').forEach(function(el){ el.onclick=function(){ allDealerModal(el.dataset.adealer); }; });
+}
+function allDealerModal(id){
+  var d=uniById(id); if(!d) return;
+  d=sfMasterMerge(d);
+  var sf=sfLookup(d)||{};
+  var wk=ASSIGN[id], labs=(typeof wk==='number')?dayLabels(wk):[];
+  var when=(typeof wk==='number')?('Week '+wk+((DAY[id]!=null&&labs[DAY[id]])?(' · '+labs[DAY[id]][0]+' '+labs[DAY[id]][1]):'')+(TIME[id]?(' · '+t12(TIME[id])):'')):'—';
+  var x=STOPX[id]||{};
+  var row=function(k,v){ return v?('<div style="display:flex;justify-content:space-between;gap:14px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px"><span style="color:var(--muted);flex:0 0 auto">'+k+'</span><b style="text-align:right;min-width:0">'+v+'</b></div>'):''; };
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(460px,94vw)"><div class="mh"><div class="mt">'+esc(d.name)+'</div><button class="mclose">×</button></div>'
+    +'<div style="padding:14px 20px 18px">'
+    +row('Territory','<span><i class="lvdot" style="display:inline-block;margin-right:6px;background:'+(AREA_COLOR[d.territory]||'#999')+'"></i>'+esc(d.territory||'—')+'</span>')
+    +row('Representative',esc(d.tm||'—'))
+    +row('Revenue (2027 Target)',fmtUSD(+d.booking||0))
+    +row('Loads',String(+d.loads||0))
+    +row('Visit',esc(when))
+    +row('Appointment',(APPT[id]?'<span style="color:#15803d">Confirmed</span>':'Pending'))
+    +row('Primary Contact',esc(sf.contactName||''))
+    +row('Phone',esc(sf.contactMobile||sf.contactPhone||''))
+    +row('Address',esc(d.address||''))
+    +(x.notes?('<div style="margin-top:10px;font-size:12px;color:var(--muted)"><b style="color:#111">Notes</b><br>'+esc(x.notes)+'</div>'):'')
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
+  wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
+}
+function renderAllMap(){
+  var host=document.getElementById('ganttWrap');
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  var st={n:0,loads:0,rev:0,conf:0,confRev:0,per:{}};
+  TERRS.forEach(function(t){ st.per[t]={n:0,loads:0,rev:0}; });
+  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){
+    var s=st.per[v.t]; s.n++; s.loads+=(+v.d.loads||0); s.rev+=(+v.d.booking||0);
+    st.n++; st.loads+=(+v.d.loads||0); st.rev+=(+v.d.booking||0);
+    if(APPT[v.d.id]){ st.conf++; st.confRev+=(+v.d.booking||0); }
+  }); });
+  var typeLegend='<div class="lvlegend">'
+    +[['dealer','Dealers'],['hotel','Hotels'],['airport','Airports'],['rental','Rental Cars'],['other','Stops'],['routes','Routes']].map(function(p){
+        return '<span class="lga'+(LV_TYPES[p[0]]?'':' off')+'" data-lvtype="'+p[0]+'">'+p[1]+'</span>';}).join('')
+    +'<span style="font-size:10.5px;color:var(--muted-2)">Solid = road route · dashed blue = flight · click to hide/show</span></div>';
+  var tot={n:0,loads:0,rev:0};
+  var sumRows=allAreas().map(function(t){ var a=st.per[t]; tot.n+=a.n; tot.loads+=a.loads; tot.rev+=a.rev;
+    return '<tr><td><i class="lvdot" style="display:inline-block;margin-right:6px;background:'+AREA_COLOR[t]+'"></i>'+t+'</td><td class="num">'+a.n+'</td><td class="num">'+a.loads+'</td><td class="num">'+fmtUSDk(a.rev)+'</td></tr>'; }).join('');
+  var sumTab='<table class="lvsumtab"><thead><tr><th>Area</th><th class="num">Dealers</th><th class="num">Loads</th><th class="num">Revenue</th></tr></thead><tbody>'
+    +sumRows+'<tr class="tot"><td>Total</td><td class="num">'+tot.n+'</td><td class="num">'+tot.loads+'</td><td class="num">'+fmtUSDk(tot.rev)+'</td></tr></tbody></table>';
+  var exps=EXPENSES.filter(function(e){ return LV_AREAS[e.terr] && (ALL_WK==='all'||e.wk===ALL_WK); });
+  var bud=budgetFor(exps);
+  var CAT_LABEL={'Flights':'Flights','Hotels':'Hotels','Food':'Meals','Fuel':'Fuel','Rental Cars':'Rental Cars','Parking / Tolls':'Parking/Tolls','Other':'Other'};
+  var budRows=BUDGET_CATS.map(function(c){ var r=bud.rows[c]; var v=r.act-r.est;
+    return '<tr><td>'+CAT_LABEL[c]+'</td><td class="num">'+money(r.est)+'</td><td class="num">'+money(r.act)+'</td><td class="num '+varCls(v)+'">'+varTxt(v)+'</td></tr>'; }).join('');
+  var vTot=bud.total.act-bud.total.est;
+  var budCard='<div class="tcard"><div class="tch"><div class="tct">Week Budget</div></div><div class="tcb" style="padding-top:6px">'
+    +'<table class="lvsumtab" style="margin-top:0"><thead><tr><th></th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Var</th></tr></thead><tbody>'
+    +budRows+'<tr class="tot"><td>Total</td><td class="num">'+money(bud.total.est)+'</td><td class="num">'+money(bud.total.act)+'</td><td class="num '+varCls(vTot)+'">'+varTxt(vTot)+'</td></tr></tbody></table></div></div>';
+  var logi=LOGI.filter(function(it){ return LV_AREAS[it.terr] && (ALL_WK==='all'||it.wk===ALL_WK); });
+  var hotelN=0; logi.forEach(function(it){ if(it.type==='hotel'){ hotelN+=(it.day!=null&&it.day2!=null&&it.day2>it.day)?(it.day2-it.day):1; } });
+  var target=lvWeekTarget()*((ALL_WK==='all')?allWeeksList().length:1);
+  var wsRow=function(k,v){ return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:var(--muted)">'+k+'</span><b>'+v+'</b></div>'; };
+  var wsCard='<div class="tcard" style="margin-top:12px"><div class="tch"><div class="tct">Week Summary</div></div><div class="tcb">'
+    +wsRow('Planned Revenue',fmtUSDk(st.rev))+wsRow('Planned Loads',st.loads)+wsRow('Dealer Visits',st.n)
+    +wsRow('Confirmed Appointments',st.conf)+wsRow('Confirmation %',(st.n?Math.round(st.conf/st.n*100):0)+'%')
+    +wsRow('Confirmed Revenue',fmtUSDk(st.confRev))+wsRow('Target Revenue',target>0?fmtUSDk(target):'—')
+    +wsRow('Areas Included',allAreas().join(' · ')||'—')
+    +wsRow('Total Drive Distance','<span id="lvTotKm">calculating…</span>')
+    +wsRow('Average Drive Time','<span id="lvAvgHrs">—</span>')
+    +wsRow('Total Drive Time','<span id="lvTotHrs">—</span>')
+    +wsRow('Total Flight Hours','<span id="lvFlyHrs">—</span>')
+    +wsRow('Hotel Nights',hotelN)
+    +wsRow('Estimated Budget',money(bud.total.est))+wsRow('Actual Budget',money(bud.total.act))
+    +wsRow('Budget Variance','<span class="'+varCls(vTot)+'">'+varTxt(vTot)+'</span>')
+    +'</div></div>';
+  host.innerHTML=allFiltersHTML()+allKpiHTML()
+    +'<div class="lvmapgrid"><div><div id="leaderMap"></div>'+typeLegend+sumTab+'</div><div>'+budCard+wsCard+'</div></div>';
+  allWireShared(host);
+  allDrawMap();
+}
+function allDrawMap(){
+  var el=document.getElementById('leaderMap'); if(!el||typeof L==='undefined')return;
+  if(_lvMap){ try{_lvMap.remove();}catch(e){} _lvMap=null; }
+  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:false,preferCanvas:true}).setView([45,-98],4);
+  var gen=++_aqMapGen; _lvMap._aqGen=gen;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  var bounds=[], legs=[], flyHrs=0;
+  function typeKey(s){ var ty=normType(s.type); if(ty==='meal'||ty==='fuel'||ty==='other')return 'other'; return ty; }
+  allAreas().forEach(function(t){
+    var col=AREA_COLOR[t], rep=FLAT.tm[t]||'';
+    wks.forEach(function(wk){
+      var all=stopsForWeek(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
+      var stops=all.filter(function(s){ return LV_TYPES[typeKey(s)]!==false; });
+      stops.forEach(function(s){
+        var stt=STOP_TYPES[normType(s.type)];
+        var isDealer=(s.kind==='dealer');
+        var icon=L.divIcon({className:'', html:'<div class="pin" style="background:'+(isDealer?col:stt.color)+'">'+(stt.glyph||'')+'</div>',
+          iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-12]});
+        var tip=isDealer
+          ? ('<b>'+esc(s.name)+'</b><br>'+fmtUSDk(s.revenue)+' · '+s.loads+' loads<br>'
+             +(s.status==='Confirmed'?'✓ Confirmed':'Pending')+(rep?('<br>'+esc(rep)+' · '+t):('<br>'+t))
+             +'<br>Week '+wk+' · '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''))
+          : ('<b>'+esc(s.name)+'</b><br>'+stt.label+' · '+t+'<br>Week '+wk+' · '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''));
+        L.marker([s.lat,s.lon],{icon:icon}).addTo(_lvMap).bindTooltip(tip).bindPopup(popupHTML(s));
+        bounds.push([s.lat,s.lon]);
+      });
+      if(LV_TYPES.routes!==false){
+        for(var i=1;i<all.length;i++){
+          var a=all[i-1], b=all[i];
+          var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+          if(fly){ var mi=hav([a.lat,a.lon],[b.lat,b.lon])||0; flyHrs+=(mi*1.60934)/750+0.5; }
+          legs.push(drawLeg(_lvMap,gen,a,b,{color:col,weight:2.5,opacity:.8},
+            {from:a.name,to:b.name,area:t,rep:rep,fly:fly,day:b.dayLabel,time:b.time}));
+        }
+      }
+    });
+  });
+  Promise.all(legs).then(function(rs){
+    if(!_lvMap||_lvMap._aqGen!==gen) return;
+    var km=0,min=0,n=0; rs.forEach(function(r){ if(r&&!r.fly){ km+=r.km; min+=r.min; n++; } });
+    var ek=document.getElementById('lvTotKm'), eh=document.getElementById('lvTotHrs'), ea=document.getElementById('lvAvgHrs'), ef=document.getElementById('lvFlyHrs');
+    if(ek) ek.textContent=Math.round(km).toLocaleString()+' km';
+    if(eh) eh.textContent=hrsLabel(min/60);
+    if(ea) ea.textContent=n?hrsLabel(min/60/n)+' / leg':'—';
+    if(ef) ef.textContent=flyHrs?(flyHrs.toFixed(1)+' h'):'0 h';
+  });
+  if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
+  setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
 }
 function dayTimeLabel(d){ var wk=ASSIGN[d.id]; var di=DAY[d.id]; var labs=(typeof wk==='number')?dayLabels(wk):[]; var dn=(di!=null&&labs[di])?labs[di][0]:''; var tm=TIME[d.id]?t12s(TIME[d.id]):''; return (dn+(tm?(' '+tm):'')).trim(); }
 function calendarHTML(tl){
@@ -2887,13 +3117,14 @@ function newSFRow(sf){
     loc:sf.loc||'', address:sf.address||'',
     lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
     booking:0, loads:(sf.loads!=null?+sf.loads:0), visitConfirmed:false, atKickoff:false, remote:false,
-    prebook2026:0, areaPlanning:true, status:'Not Started' };
+    prebook2026:(sf.sfPrebook2026!=null?+sf.sfPrebook2026:0), areaPlanning:true, status:'Not Started' };
   o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
     tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
     loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
     lastYear:(sf.lastYear!=null?'salesforce':'planner-fallback'), lat:(sf.lat!=null?'salesforce':'planner-fallback'),
     lon:(sf.lon!=null?'salesforce':'planner-fallback'), booking:'planner-fallback',
-    loads:(sf.loads!=null?'salesforce':'planner-fallback'), prebook2026:'planner-fallback',
+    loads:(sf.loads!=null?'salesforce':'planner-fallback'),
+    prebook2026:(sf.sfPrebook2026!=null?'salesforce':'planner-fallback'),
     visitConfirmed:'local', atKickoff:'local' };
   return o;
 }
@@ -2906,7 +3137,7 @@ function buildMasterUniverse(){
   ids.forEach(function(sid){
     var p=plannerBySf[sid];
     if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
-    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.prebook2026=+ov.prebook2026||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
+    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; if(nr._sources.prebook2026!=='salesforce') nr.prebook2026=+ov.prebook2026||0; nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
   });
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
@@ -2944,7 +3175,7 @@ function renderMaster(){
   document.getElementById("mSub").textContent=rows.length+" of "+_allMerged.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
   document.getElementById("mBody").innerHTML=rows.map((d,i)=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
     <td class="rownum">${i+1}</td>
-    ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"></td>`}
+    ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"><span class="ponly" title="Not in Salesforce — planner-managed until linked to an Arrowquip Dealer">Planner Only</span></td>`}
     ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
     ${sfLock(d,'tm')?lockTD('',d.tm,'span',sfLockTitle(d)):`<td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'tier')?lockTD('',d.tier,'span',sfLockTitle(d)):`<td><select class="ed" data-f="tier">${selOpts(TIERS,d.tier)}</select></td>`}
@@ -2952,7 +3183,7 @@ function renderMaster(){
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
     ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','2026 Loads — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date). Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
-    <td class="num pln"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}"></td>
+    ${sfLock(d,'prebook2026')?lockTD('num',fmtUSD(+d.prebook2026||0),'span','Original 2026 Pre-Booking — from Salesforce. Read-only.'):`<td class="num pln"><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||0}"></td>`}
     <td class="num pln"><input class="ed num" data-f="booking" type="number" value="${d.booking||0}"></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="visitConfirmed" ${d.visitConfirmed?'checked':''}></td>
@@ -2960,7 +3191,9 @@ function renderMaster(){
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="remote" ${(ASSIGN[d.id]==='remote'||d.remote)?'checked':''}></td>
     <td class="pln statuscell">${statusSel(d)}</td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_allMerged.reduce((s,d)=>s+(+d.lastYear||0),0))}</td><td class="num">${_allMerged.reduce((s,d)=>s+(+d.loads||0),0)}</td><td class="num">${_allMerged.reduce((s,d)=>s+(+d.prebook2026||0),0)}</td><td class="num">${fmtUSD(grandTot())}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+  /* totals reflect the VISIBLE (filtered) rows only, and recalculate on every filter change */
+  var _fTot=rows.reduce(function(a,d){ a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.pb+=(+d.prebook2026||0); a.tgt+=(+d.booking||0); return a; },{rev:0,loads:0,pb:0,tgt:0});
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
@@ -3063,6 +3296,11 @@ function exportWeek(t,wk){
 }
 function exportTripPlans(){
   var terrs=["East","South","Central","West","Exports"]; var weeks=[31].concat(FIELD_NUMS); var body='';
+  /* exporting from the ALL executive view respects its active filters */
+  if(terr==='All'){
+    terrs=terrs.filter(function(t){ return LV_AREAS[t]; });
+    if(ALL_WK!=='all') weeks=[ALL_WK];
+  }
   terrs.forEach(function(t){
     var wh=''; weeks.forEach(function(wk){
       var vs=dealersIn(t).filter(function(d){return ASSIGN[d.id]===wk;});
@@ -3122,7 +3360,7 @@ function pbSaveNav(){
   if(!_pbNavReady) return;
   try{ localStorage.setItem('aqNavState', JSON.stringify({
     terr:terr, terrMode:terrMode, allMode:allMode, mapWeek:mapWeek,
-    terrMapWeek:terrMapWeek, sbTab:SIDEBAR_TAB, lvTab:LV_TAB, lvWeek:LV_WEEK
+    terrMapWeek:terrMapWeek, sbTab:SIDEBAR_TAB, allWk:ALL_WK, areas:LV_AREAS
   })); }catch(e){}
 }
 function pbRestoreNav(){
@@ -3133,12 +3371,12 @@ function pbRestoreNav(){
     var tabsOk=['All','East','South','Central','West','Exports','Master'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
-    if(['cal','map','leaders','leader'].indexOf(ns.allMode)>=0) allMode=ns.allMode;
+    allMode=(ns.allMode==='map')?'map':'overview';   /* legacy cal/leaders/leader → overview */
     if(typeof ns.mapWeek==='number') mapWeek=ns.mapWeek;
     if(ns.terrMapWeek==='all'||typeof ns.terrMapWeek==='number') terrMapWeek=ns.terrMapWeek;
     if(['overview','budget','files'].indexOf(ns.sbTab)>=0) SIDEBAR_TAB=ns.sbTab;
-    if(ns.lvTab==='overview'||ns.lvTab==='map') LV_TAB=ns.lvTab;
-    if(typeof ns.lvWeek==='number') LV_WEEK=ns.lvWeek;
+    if(ns.allWk==='all'||typeof ns.allWk==='number') ALL_WK=ns.allWk;
+    if(ns.areas&&typeof ns.areas==='object'){ TERRS.forEach(function(t){ if(typeof ns.areas[t]==='boolean') LV_AREAS[t]=ns.areas[t]; }); }
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active',b.dataset.t===terr); });
   }catch(e){}
 }
@@ -3184,13 +3422,8 @@ document.getElementById("tplBtn").addEventListener("click",dealerTemplate);
 document.getElementById("impBtn").addEventListener("click",function(){document.getElementById("impFile").click();});
 document.getElementById("impFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{importDealers(String(rd.result));}catch(err){alert('Could not read file: '+err.message);} e.target.value='';};rd.readAsText(f);});
 document.getElementById("exportBtn").addEventListener("click",exportTripPlans);
-document.getElementById("calBtn").addEventListener("click",function(){allMode='cal';renderAllView();});
-document.getElementById("ganttWrap").addEventListener("click",function(e){var add=e.target.closest('.ldadd'); if(add){var c=add.closest('.ev'); if(c)c.classList.toggle('pickopen'); return;} var jb=e.target.closest('[data-jappt]'); if(jb){var pr=jb.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}});
-document.getElementById("mapBtn").addEventListener("click",function(){allMode='map';renderAllView();});
-document.getElementById("leadBtn").addEventListener("click",function(){allMode='leaders';renderAllView();});
-document.getElementById("lvBtn").addEventListener("click",function(){allMode='leader';renderAllView();});
-document.getElementById("leadSel").addEventListener("change",function(e){leaderFilter=e.target.value;renderAllView();});
-document.getElementById("mapWeekSel").addEventListener("change",function(e){mapWeek=parseInt(e.target.value,10);renderAllView();});
+document.getElementById("allOvBtn").addEventListener("click",function(){allMode='overview';renderAllView();});
+document.getElementById("allMapBtn").addEventListener("click",function(){allMode='map';renderAllView();});
 document.getElementById("terrSeg").addEventListener("click",function(e){var b=e.target.closest(".segb"); if(!b)return; terrMode=b.dataset.tm; render();});
 document.getElementById("terrMap").addEventListener("click",function(e){var b=e.target.closest('[data-trip]'); if(!b)return; terrMapWeek=(b.dataset.trip==='all')?'all':parseInt(b.dataset.trip,10); render();});
 document.querySelectorAll('th.srt').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.mk;if(msort.key===k)msort.dir*=-1;else msort={key:k,dir:(k==='booking'||k==='loads'||k==='lastYear')?-1:1};renderMaster();}));
@@ -3203,7 +3436,6 @@ function cloudBadge(msg){try{var b=document.getElementById('cloudBadge');if(!b)r
    A tab that has fallen behind is rejected rather than silently overwriting newer
    work — the failure mode that destroyed the 2027 plan. */
 var PB_VER={};              /* row id -> version this tab loaded / last wrote */
-var PB_STALE=false;         /* once a save is rejected, this tab may not write again */
 /* verification mode: ?readonly=1 blocks every write path. Initialised here, at the
    declaration — assigning it earlier in the file is undone when this var executes. */
 var PB_READONLY=(function(){ try{ return /[?&]readonly=1/.test(location.search); }catch(e){ return false; } })();
@@ -3222,19 +3454,51 @@ function pbLog(kind,rowId,detail){
   if(!SB)return;
   try{ SB.rpc('pb_log_event',{p_kind:kind,p_row_id:rowId,p_actor:pbActor(),p_detail:detail||{}}); }catch(e){}
 }
-/* Blocking, non-dismissable notice. This tab is read-only until reloaded. */
-function pbStaleBanner(){
-  if(document.getElementById('pbStale'))return;
-  var d=document.createElement('div');
-  d.id='pbStale';
-  d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:5000;background:#7f1d1d;color:#fff;'
-    +'font:600 13px "Open Sans",Arial,sans-serif;padding:12px 20px;display:flex;align-items:center;'
-    +'justify-content:center;gap:16px;box-shadow:0 2px 12px rgba(0,0,0,.35)';
-  d.innerHTML='<span>This Trip Plan has changed since you opened it. Please reload before saving.</span>'
-    +'<button id="pbStaleReload" style="background:#fff;color:#7f1d1d;border:0;border-radius:4px;'
-    +'padding:6px 14px;font:700 12px inherit;text-transform:uppercase;letter-spacing:.5px;cursor:pointer">Reload</button>';
+/* Stale-save reconciliation. A rejected save no longer locks the tab behind a
+   blocking banner: fetch the newer row, silently adopt it when this tab has no
+   unsaved edits, otherwise offer a small keep-mine / reload-latest choice. The
+   view (tab, area, week, scroll) is preserved either way. */
+function pbHandleStale(key){
+  SB.from('prebooking_state').select('data,version').eq('id',key).maybeSingle().then(function(r){
+    if(!r||r.error||!r.data){ pbSaveErr('Could not fetch the latest Trip Plan — check your connection and press Retry.'); return; }
+    var latest=r.data;
+    if(_pbPending[key]===undefined){
+      PB_VER[key]=latest.version;
+      applyCloudRow(key,latest.data);
+      try{ withPreservedScroll(render); }catch(e){ try{ render(); }catch(e2){} }
+      cloudBadge('Updated to latest plan');
+      return;
+    }
+    pbConflictNotice(key,latest);
+  },function(){ pbSaveErr('Could not fetch the latest Trip Plan — check your connection and press Retry.'); });
+}
+function pbConflictNotice(key,latest){
+  var d=document.getElementById('pbConflict'); if(d) d.remove();
+  d=document.createElement('div'); d.id='pbConflict';
+  d.style.cssText='position:fixed;right:16px;bottom:16px;z-index:5000;background:#fff;border:1px solid #e5e7eb;'
+    +'border-left:4px solid #b45309;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);'
+    +'padding:12px 14px;max-width:340px;font:400 12.5px "Open Sans",Arial,sans-serif;color:#374151';
+  d.innerHTML='<div style="font-weight:700;color:#111;margin-bottom:4px">Plan updated in another session</div>'
+    +'<div>A teammate saved a newer Trip Plan while you were editing.</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button id="pbcKeep" style="flex:1;background:#111;color:#fff;border:0;border-radius:6px;padding:8px 10px;font:700 11px inherit;cursor:pointer">Keep my changes</button>'
+    +'<button id="pbcReload" style="flex:1;background:#fff;color:#111;border:1px solid #d1d5db;border-radius:6px;padding:8px 10px;font:700 11px inherit;cursor:pointer">Reload latest</button>'
+    +'</div>';
   document.body.appendChild(d);
-  document.getElementById('pbStaleReload').onclick=function(){ location.reload(); };
+  document.getElementById('pbcKeep').onclick=function(){
+    d.remove();
+    PB_VER[key]=latest.version;          /* rebase onto the newer version, retry the save */
+    if(key==='plan') _pbPending[key]=planPayload();
+    pbSendSave(key);
+  };
+  document.getElementById('pbcReload').onclick=function(){
+    d.remove();
+    delete _pbPending[key];
+    PB_VER[key]=latest.version;
+    applyCloudRow(key,latest.data);
+    try{ withPreservedScroll(render); }catch(e){ try{ render(); }catch(e2){} }
+    cloudBadge('Reloaded latest plan');
+  };
 }
 /* Persistent save-failure bar. The 1.8s badge is easy to miss; a failed write
    must stay on screen (with a retry) until a save actually succeeds. */
@@ -3259,7 +3523,6 @@ function pbSaveErrClear(){ var d=document.getElementById('pbSaveErr'); if(d) d.s
 function cloudSave(key,obj){
   if(!SB)return;
   if(PB_READONLY) return;                                      /* verification never writes */
-  if(PB_STALE){ pbStaleBanner(); return; }                     /* refuse to overwrite newer work */
   if(PB_VER[key]===undefined){                                 /* never loaded this row: don't guess */
     cloudBadge('Not synced — reload');
     pbSaveErr('Not synced with the cloud — reload this page before editing. Your latest change is NOT saved.');
@@ -3277,7 +3540,7 @@ function pbSendSave(key,keepalive){
     p_actor:pbActor(), p_territory:(typeof terr==='string'?terr:null), p_reason:'save' };
   function ack(out){
     if(out&&out.ok){ PB_VER[key]=out.version; if(_pbPending[key]===obj) delete _pbPending[key]; pbSaveErrClear(); cloudBadge('Saved to cloud'); return; }
-    if(out&&out.reason==='stale'){ PB_STALE=true; pbStaleBanner(); cloudBadge('Save rejected — plan changed'); return; }
+    if(out&&out.reason==='stale'){ pbHandleStale(key); return; }
     cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((out&&out.reason)||'save_failed')});
   }
   if(keepalive && _PB_TOKEN){
@@ -3298,7 +3561,7 @@ function pbSendSave(key,keepalive){
 /* Debounced writes must not be lost to a refresh/close: flush anything pending
    the moment the page is hidden. */
 function pbFlushPending(hidden){
-  if(!SB||PB_READONLY||PB_STALE) return;
+  if(!SB||PB_READONLY) return;
   Object.keys(_pbPending).forEach(function(k){
     clearTimeout(_cloudTimers[k]);
     pbSendSave(k,!!hidden);
@@ -3348,7 +3611,7 @@ function cloudLoad(cb){
     pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb();
   });
 }
-function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ if(row.version!=null)PB_VER[row.id]=row.version; /* adopt teammate's version: we now hold their data */ applyCloudRow(row.id,row.data); render(); cloudBadge('Updated by teammate'); } }).subscribe(); }catch(e){} }
+function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ if(row.version!=null)PB_VER[row.id]=row.version; /* adopt teammate's version */ if(_pbPending[row.id]!==undefined){ /* we hold unsaved edits: keep them and rebase the pending save onto the newer version */ if(row.id==='plan')_pbPending[row.id]=planPayload(); cloudBadge('Teammate saved — rebasing your edit'); } else { applyCloudRow(row.id,row.data); withPreservedScroll(render); cloudBadge('Updated by teammate'); } } }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
    withPreservedScroll captures/restores scroll of the planner + master scroll containers and
    the window across a re-render. refreshPlanner re-renders only the planner + KPI (conservative:
@@ -3545,7 +3808,7 @@ function pbCaptureDocuments(meta, done){
    (savePlan) so they persist offline; push to cloud when connectivity returns. --- */
 function pbFlushOnline(){
   if(!SB) return;
-  try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER['plan']!==undefined && !PB_READONLY && !PB_STALE){ cloudSave('plan', planPayload()); } }catch(e){}
+  try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER['plan']!==undefined && !PB_READONLY){ cloudSave('plan', planPayload()); } }catch(e){}
 }
 window.addEventListener('online', function(){ cloudBadge('Back online — syncing'); pbFlushOnline(); try{ pbPhotoBackfill(); }catch(e){} });
 
@@ -3631,7 +3894,19 @@ async function pbAdminUsers(){
    itineraryFor()/legsFor()/budgetFor(); writes through addTravel/setTravelField/
    addExpense, so optimistic concurrency, history and the stale guard all still apply.
    Receipt/document capture stays disabled: passcode mode has no secure auth. */
-var MOB={terr:'East', wk:32, tab:'today', day:null, routeView:'map', map:null};
+/* Trip Mode opens personal and automatic: the user's saved "My Area" (per
+   user/device) and the pre-booking week that contains today. */
+var MOB=(function(){
+  var area='East';
+  try{ var a=localStorage.getItem('aqMyArea'); if(a&&(a==='All'||TERRS.indexOf(a)>=0)) area=a; }catch(e){}
+  return {terr:area, wk:32, tab:'today', day:null, routeView:'map', map:null};
+})();
+/* the pre-booking week whose dates contain today (31..44), or null out of season */
+function mobCurrentWeek(){
+  var ws=[31].concat(FIELD_NUMS);
+  for(var i=0;i<ws.length;i++){ if(mobToday(ws[i])!=null) return ws[i]; }
+  return null;
+}
 
 function mobIsPhone(){ return window.matchMedia('(max-width:820px)').matches; }
 function mobWeeks(t){ return FIELD_NUMS.filter(function(w){ return mapScope(t).some(function(d){return ASSIGN[d.id]===w;}); }); }
@@ -3780,7 +4055,12 @@ function mobToday_render(){
   }
 
   if(today==null){
-    h+='<div class="tm-empty">No day in this week matches today.<br>Pick a day with “Change day”.</div>';
+    var curWk=mobCurrentWeek();
+    h+='<div class="tm-empty">No items scheduled for today in this week.'
+      +(curWk!=null&&curWk!==wk
+        ? ('<br><button class="tmbtn" id="mobJumpCur" style="margin-top:12px;min-height:40px;padding:0 16px">Jump to current week (Week '+curWk+')</button>')
+        : '<br>Pick a day with “Change day”.')
+      +'</div>';
   } else if(!todays.length){
     h+='<div class="tm-empty">Nothing scheduled for this day yet.<br>Use + Add Quick Item.</div>';
   } else {
@@ -3949,6 +4229,12 @@ function mobMore_render(){
     +'<div class="tm-h"><span>Desktop</span></div>'
     +'<div class="tm-lock"><div class="ls">The full planner — Schedule board, Master Sheet and trip reports — '
       +'is available on a larger screen. Trip Mode shows the current week only.</div></div>'
+    +'<div class="tm-h"><span>My Area</span></div>'
+    +'<div class="tmrow"><div class="t"><b>Default area</b><span>Trip Mode opens here automatically on this device</span></div>'
+      +'<select id="mobMyArea" style="flex:0 0 110px;min-height:38px;border:1px solid #e5e7eb;border-radius:8px;font:600 13px inherit;padding:0 8px;background:#fff">'
+      +['All'].concat(TERRS).map(function(t){var sv='';try{sv=localStorage.getItem('aqMyArea')||'East';}catch(e){sv='East';}
+         return '<option'+(t===sv?' selected':'')+'>'+t+'</option>';}).join('')
+      +'</select></div>'
     +'<div class="tm-h"><span>Session</span></div>'
     +'<button class="tm-primary" style="background:#fff;color:#dc2626;border:1px solid #e5e7eb" id="mobSignOut">Sign out</button>'
     +'</div>';
@@ -3974,8 +4260,12 @@ function tmIcon(n,sz){
 }
 function renderMobile(){
   var host=document.getElementById('tripmode'); if(!host) return;
-  var weeks=mobWeeks(MOB.terr); if(!weeks.length) weeks=FIELD_NUMS;
-  if(weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0];
+  var weeks=mobWeeks(MOB.terr); if(!weeks.length) weeks=FIELD_NUMS.slice();
+  /* keep the current (today's) week selectable even when it has no visits yet */
+  if(weeks.indexOf(MOB.wk)<0){
+    if(WEEKDATES[MOB.wk]) weeks=[MOB.wk].concat(weeks).sort(function(a,b){return a-b;});
+    else MOB.wk=weeks[0];
+  }
 
   var body = MOB.tab==='today'  ? mobToday_render()
            : MOB.tab==='route'  ? mobRoute_render()
@@ -3992,7 +4282,7 @@ function renderMobile(){
       +'<div class="tm-brand"><img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>'
       +'<div class="tm-mode">Trip Mode</div>'
       +'<div class="tm-week">'
-        +'<select id="mobTerr">'+TERRS.map(function(t){return '<option'+(t===MOB.terr?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'
+        +'<select id="mobTerr">'+['All'].concat(TERRS).map(function(t){return '<option'+(t===MOB.terr?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'
         +'<select id="mobWeek">'+weeks.map(function(w){return '<option value="'+w+'"'+(w===MOB.wk?' selected':'')+'>Week '+w+'</option>';}).join('')+'</select>'
       +'</div>'
       +'<div class="tm-dates">'+esc(WEEKDATES[MOB.wk]||'')+', 2026</div>'
@@ -4021,6 +4311,11 @@ function wireMobile(){
   var ud=document.getElementById('mobUploadDoc'); if(ud) ud.onclick=function(){ pbCaptureDocuments({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); };
   var ur=document.getElementById('mobUploadReceipt'); if(ur) ur.onclick=function(){ pbCaptureReceipt({territory:MOB.terr, week:MOB.wk}, function(){ renderMobile(); }); };
   var so=document.getElementById('mobSignOut'); if(so) so.onclick=function(){ pbSignOut(); };
+  var jc=document.getElementById('mobJumpCur'); if(jc) jc.onclick=function(){ var c=mobCurrentWeek(); if(c!=null){ MOB.wk=c; MOB.day=null; renderMobile(); } };
+  var ma=document.getElementById('mobMyArea'); if(ma) ma.onchange=function(){
+    try{ localStorage.setItem('aqMyArea',ma.value); }catch(e){}
+    MOB.terr=ma.value; MOB.day=null; renderMobile(); cloudBadge('My Area saved');
+  };
 
   q('[data-mobdone]').forEach(function(b){ b.onclick=function(){
     var p=b.dataset.mobdone.split(':'), kind=p[0], id=p[1];
@@ -4501,8 +4796,9 @@ function mobExpenseSheet(){
 /* boot: only on phone widths, and only after the passcode gate unlocks */
 function mobBoot(){
   if(!mobIsPhone()) return;
-  var weeks=mobWeeks(MOB.terr);
-  if(weeks.length && weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0];
+  var cur=mobCurrentWeek();
+  if(cur!=null) MOB.wk=cur;                    /* always open on the week containing today */
+  else { var weeks=mobWeeks(MOB.terr); if(weeks.length && weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0]; }
   renderMobile();
 }
 window.addEventListener('resize',function(){
