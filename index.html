@@ -286,7 +286,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .plansum .pl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
 .plansum .pv{font-size:15px;font-weight:600;color:var(--aq-black);margin-top:2px;}
 
-.wkcard{flex:0 0 224px;width:224px;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.wkcard{flex:0 0 264px;width:264px;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .wkcard.confirmed{background:#fff;border-color:var(--green-bd);}
 .wkhead{background:var(--aq-charcoal);color:#fff;padding:8px 10px 10px;border:0;display:block;text-align:center;}
 .wkcard.kick .wkhead{background:#3a2326;} .wkcard.confirmed .wkhead{background:#1f5c3a;}
@@ -301,7 +301,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .kbody{padding:7px;min-height:50px;flex:1 1 auto;}
 .kbody.over{background:#fdf4f5;outline:2px dashed var(--aq-red);outline-offset:-3px;}
 .kcard{border:1px solid var(--line);border-left:3px solid #9aa0a3;border-radius:6px;padding:6px 7px;margin-bottom:6px;background:#fff;cursor:grab;}
-.kcard.confirmed{border-left-color:var(--green);background:#f5faf7;} .kcard.planned{border-left-color:#3a7bd5;}
+.kcard.confirmed{background:#f5faf7;}
 .kcard.drag{opacity:.45;}
 .kc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
 .kc-name{font-size:11px;font-weight:600;color:var(--aq-black);line-height:1.2;}
@@ -825,22 +825,64 @@ body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3p
 .dcard .db{display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .dadd{border:1px dashed var(--line);background:#fff;color:var(--muted);border-radius:9px;font-size:9px;font-weight:700;padding:1px 7px;cursor:pointer;white-space:nowrap;}
 .dadd:hover{color:var(--aq-red);border-color:var(--aq-red);}
-.avweeks{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.avwk{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:6px 9px;font:700 11.5px 'Open Sans',Arial,sans-serif;color:#111;cursor:pointer;text-align:left;}
-.avwk span{font-weight:400;font-size:9.5px;color:var(--muted);}
-.avwk:hover{border-color:var(--aq-red);}
+/* ---- placement mode (the popup-free click path for + Pre-book / + Visit) ---- */
+#placeHint{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100002;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:600 12px 'Open Sans',Arial,sans-serif;color:#111;box-shadow:0 8px 26px rgba(0,0,0,.16);}
+#placeHint .ph-sub{font-weight:400;color:var(--muted);font-size:11px;}
+#placeHint button{border:1px solid var(--line);border-radius:5px;background:#fff;font:700 10.5px 'Open Sans',Arial,sans-serif;padding:3px 8px;cursor:pointer;color:#111;}
+body.placing #weeks [data-drop].placetgt{outline:2px dashed #3a7bd5;outline-offset:-3px;background:#f5f8fd;cursor:copy;min-height:26px;}
+body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].placetgt:focus{background:#eaf1fb;outline-color:#2563eb;}
+/* ---- travel rows: quiet drive/flight strips between consecutive stops ---- */
+.legrow{display:flex;align-items:center;gap:6px;margin:1px 2px 5px;padding:2px 6px;font-size:10px;color:var(--muted);line-height:1.5;border-left:3px solid var(--line);min-height:16px;flex-wrap:wrap;}
+.legrow .ltxt{min-width:0;}
+.legrow.fly{border-left-color:#7c3aed;color:#5b5470;}
+.legrow.lwarn{border-left-color:#d97706;}
+.legrow.lfail{border-left-color:#cbd0d6;font-style:italic;}
+.lwarnTag{color:#b45309;font-weight:700;font-style:normal;white-space:nowrap;}
+.legrow button{border:1px solid var(--line);border-radius:4px;background:#fff;font:700 9px 'Open Sans',Arial,sans-serif;padding:1px 6px;cursor:pointer;color:#374151;}
+.legrow button:hover{border-color:#111;}
+.lsug{color:#92610a;white-space:nowrap;}
+.lsug .lsugx{border:0;background:none;padding:0 2px;color:#c2b49a;font-size:11px;}
+/* ---- undo toast ---- */
+#aqToast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100003;background:#1f2937;color:#fff;border-radius:9px;padding:9px 14px;font:600 12px 'Open Sans',Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;transition:opacity .3s;}
+#aqToast.out{opacity:0;}
+#aqToast button{border:1px solid #4b5563;border-radius:5px;background:transparent;color:#93c5fd;font:700 11px 'Open Sans',Arial,sans-serif;padding:3px 10px;cursor:pointer;}
+#aqToast button:hover{border-color:#93c5fd;}
+/* ---- territory utilities: quiet text buttons ---- */
+.tctl{display:flex;gap:8px;margin-left:auto;align-items:center;}
+.tbtn{border:1px solid transparent;border-radius:5px;background:none;font:600 10px 'Open Sans',Arial,sans-serif;color:var(--muted-2);padding:3px 7px;cursor:pointer;white-space:nowrap;}
+.tbtn:hover{border-color:var(--line);color:#111;}
+.tbtn.arm{border-color:#dc2626;color:#dc2626;font-weight:700;}
+/* ---- card selection (Delete key) ---- */
+.kcard.vc.sel{box-shadow:0 0 0 2px #3a7bd5aa;}
+/* ---- activity-type ribbons: scan the week by colour ---- */
+.kcard.vc.pre{border-left:3px solid #3a7bd5;}
+.kcard.vc.vis{border-left:3px solid #16a34a;}
+.kcard.vc.confirmed{background:#f5faf7;}
+.tvcard.t-flight_in,.tvcard.t-flight_out{border-left-color:#7c3aed;}
+.tvcard.t-hotel{border-left-color:#ea580c;}
+.tvcard.t-rental_pickup,.tvcard.t-rental_return{border-left-color:#0d9488;}
+.tvcard.t-fuel,.tvcard.t-food,.tvcard.t-parking,.tvcard.t-other{border-left-color:#9aa0a3;}
+/* ---- dealer name gets the layout priority ---- */
+.kcard.vc .kc-name{font-size:12.5px;}
+.kcard.vc .vok{padding:2.5px 6px;}
+.kcard.vc .cx.vdel{padding:0 3px;}
+.kc-name:focus{outline:1px dashed var(--line);outline-offset:1px;}
+/* day sections are drop zones — give them a little landing room */
+.kdaybody{min-height:10px;padding-bottom:2px;}
+body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;background:#fdf5f6;}
 /* ---- THE dealer card: identical layout for Pre-book and Visit; only the
         badge colour + icon differ. Compact, fixed structure, inline editing. ---- */
 .kcard.vc{padding:7px 8px;}
-.kcard.vc .kc-top{display:flex;align-items:center;gap:6px;min-width:0;}
-.vbadge{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;font-size:8px;font-weight:800;letter-spacing:.06em;border-radius:4px;padding:2.5px 6px;line-height:1;}
+.kcard.vc .kc-top{display:flex;align-items:center;gap:4px;min-width:0;}
+.kcard.vc .kc-top .vok{margin-left:auto;}
+.vbadge{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;font-size:7.5px;font-weight:800;letter-spacing:.03em;border-radius:4px;padding:2px 4px;line-height:1;}
 .vbadge svg{flex:0 0 auto;}
 .vbadge.pre{color:#2563eb;background:#eef3fb;border:1px solid #2563eb33;}
 .vbadge.vis{color:#15803d;background:#edf7f0;border:1px solid #16a34a33;}
-.kcard.vc .kc-name{flex:1 1 auto;font-weight:700;color:var(--aq-black);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.kcard.vc .kc-name{display:block;width:100%;font-weight:700;color:var(--aq-black);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;margin-top:4px;}
 /* appointment confirmation: quiet outline until confirmed, then green.
    Un-confirming is a second-click ("Unconfirm?") — no permanent X. */
-.vok{flex:0 0 auto;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font:600 8.5px 'Open Sans',Arial,sans-serif;letter-spacing:.02em;line-height:1;cursor:pointer;padding:3px 7px;white-space:nowrap;}
+.vok{flex:0 0 auto;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font:600 8px 'Open Sans',Arial,sans-serif;letter-spacing:0;line-height:1;cursor:pointer;padding:2.5px 5px;white-space:nowrap;}
 .vok:hover{border-color:var(--green);color:var(--green);}
 .vok.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;}
 .vok.arm{background:#fff;border-color:#d97706;color:#d97706;}
@@ -1247,6 +1289,108 @@ function minOf(t){var x=(t||'0:0').split(':');return (+x[0])*60+(+x[1]);}
 function fmtDur(m){m=Math.round(m); if(m<60)return m+'m'; var hh=Math.floor(m/60),mm=m%60; return hh+'h'+(mm?(' '+mm+'m'):'');}
 function addMin(t,m){var x=minOf(t)+m; x=((x%1440)+1440)%1440; var hh=Math.floor(x/60),mm=x%60; return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;}
 function travelRow(a,b,md){ var mi=roadMi([a.lat,a.lon],[b.lat,b.lon]); if(mi==null)mi=0; var dmin=Math.max(15,Math.round(mi/55*60)); var ta=TIME[a.id],tb=TIME[b.id]; var gap=(ta&&tb)?(minOf(tb)-minOf(ta)):null; var warn=(dmin/60>md)||(gap!=null&&dmin>gap); var txt='↓ drive ~'+fmtDur(dmin)+(mi>=1?(' · ~'+Math.round(mi)+' mi'):' · local'); return '<div class="distrow'+(warn?' warn':'')+'">'+txt+(warn?' ⚠':'')+'</div>'; }
+
+/* ============ PLANNER TRAVEL ROWS ============
+   Drive time lives IN the planner, between every pair of consecutive physical
+   stops in a week (dealer cards, hotels, airports, rentals) — including
+   across day boundaries. Rows are generated from one ordered week sequence
+   (stable stop keys, sorted by day+time), so each journey exists exactly
+   once. Drives hydrate asynchronously from the cached road router; flights
+   render immediately. Never a straight-line estimate shown as a road time. */
+function wkStopSeq(t,wk){
+  var out=[];
+  if(typeof wk!=='number') return out;
+  dealersIn(t).forEach(function(d){
+    if(ASSIGN[d.id]!==wk||DAY[d.id]==null) return;
+    var m=sfMasterMerge(d);
+    if(m.lat==null||m.lon==null) return;
+    out.push({key:'d:'+d.id,name:m.name,lat:m.lat,lon:m.lon,day:DAY[d.id],time:TIME[d.id]||'',dur:DUR[d.id]||(wk===31?60:90),ty:'dealer'});
+  });
+  XVISITS.forEach(function(x){
+    if(x.terr!==t||x.wk!==wk||x.day==null) return;
+    var d=byId[x.dealer]||uniById(x.dealer); if(!d) return;
+    var m=sfMasterMerge(d);
+    if(m.lat==null||m.lon==null) return;
+    out.push({key:'x:'+x.id,name:m.name,lat:m.lat,lon:m.lon,day:x.day,time:x.time||'',dur:x.dur||60,ty:'dealer'});
+  });
+  LOGI.forEach(function(it){
+    if(it.terr!==t||it.wk!==wk||it.day==null||!travelHasLocation(it)) return;
+    out.push({key:'m:'+it.id,name:travelPlaceLabel(it)||TRAVEL_TYPES[travelType(it)].label,
+      lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:0,
+      ty:normType(it.type),code:(it.airportCode||'').toUpperCase()});
+  });
+  out.sort(function(a,b){ return (a.day-b.day)||String(a.time||'99').localeCompare(String(b.time||'99'))||a.key.localeCompare(b.key); });
+  return out;
+}
+function legMins(s){ return (s.day||0)*1440+(s.time?minOf(s.time):null); }
+function legArriveWarn(endMin,startStop,travelMin){
+  if(endMin==null||!startStop.time) return '';
+  var arrive=endMin+travelMin;
+  var start=(startStop.day||0)*1440+minOf(startStop.time);
+  if(arrive<=start) return '';
+  return ' <span class="lwarnTag">⚠ Arrival '+t12s(addMin('00:00',((arrive%1440)+1440)%1440))+' · starts '+t12s(startStop.time)+'</span>';
+}
+var _hotelDx=(function(){ try{ return JSON.parse(localStorage.getItem('aqHotelDismiss')||'{}'); }catch(e){ return {}; } })();
+function hotelDismiss(k){ _hotelDx[k]=1; try{ localStorage.setItem('aqHotelDismiss',JSON.stringify(_hotelDx)); }catch(e){} }
+function legRowHTML(a,b,wk){
+  if(wk===31) return '';                              /* kickoff: head office, no travel */
+  var endA=(a.time?((a.day||0)*1440+minOf(a.time)+(a.dur||0)):null);
+  if(sameSpot(a,b)){
+    /* same physical place: no journey — but flag a time overlap */
+    if(endA!=null&&b.time&&endA>((b.day||0)*1440+minOf(b.time)))
+      return '<div class="legrow lwarn"><span class="ltxt">⚠ Overlaps the previous appointment</span></div>';
+    return '';
+  }
+  if(a.ty==='airport'&&b.ty==='airport'){
+    var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
+    var fmin=Math.round(gk/750*60+30);
+    return '<div class="legrow fly" title="'+esc(a.name)+' → '+esc(b.name)+'">'
+      +'<span class="ltxt">✈ Flight · '+esc(a.code||a.name)+' → '+esc(b.code||b.name)+' · ~'+fmtDur(fmin)
+      +legArriveWarn(endA,b,fmin)+'</span></div>';
+  }
+  /* drive: placeholder now — hydrated from the road router (cached) */
+  return '<div class="legrow drv" data-lkey="'+esc(a.key+'>'+b.key)+'"'
+    +' data-la="'+a.lat+','+a.lon+'" data-lb="'+b.lat+','+b.lon+'"'
+    +' data-ea="'+(endA==null?'':endA)+'" data-tb="'+(b.day||0)+'|'+esc(b.time||'')+'"'
+    +' data-names="'+esc(a.name)+'|'+esc(b.name)+'" data-hotel="'+((a.ty==='hotel'||b.ty==='hotel')?1:0)+'"'
+    +' data-wk="'+wk+'" title="'+esc(a.name)+' → '+esc(b.name)+'">'
+    +'<span class="ltxt">🚗 Calculating drive…</span></div>';
+}
+function legFill(row){
+  var A=row.dataset.la.split(','), B=row.dataset.lb.split(',');
+  roadRoute([+A[0],+A[1]],[+B[0],+B[1]]).then(function(rt){
+    if(!row.isConnected) return;
+    var tx=row.querySelector('.ltxt'); if(!tx) return;
+    if(!rt){
+      tx.innerHTML='🚗 Drive time unavailable · <button class="lretry">Retry</button>';
+      row.classList.add('lfail');
+      return;
+    }
+    var dm=Math.max(1,Math.round(rt.min)), mi=Math.round(rt.km/1.60934);
+    var names=row.dataset.names.split('|');
+    var lbl=(row.dataset.hotel==='1')
+      ? ('🚗 '+esc(names[0])+' → '+esc(names[1])+' · '+fmtDur(dm)+' · '+mi+' mi')
+      : ('🚗 Drive · '+fmtDur(dm)+' · '+mi+' mi');
+    var warn='';
+    var ea=row.dataset.ea, tb=row.dataset.tb.split('|');
+    if(ea!==''&&tb[1]) warn=legArriveWarn(+ea,{day:+tb[0],time:tb[1]},dm);
+    var sug='';
+    var thr=((settingsFor(terr).maxDrive||3))*60;
+    if(dm>thr && row.dataset.hotel!=='1' && !_hotelDx[row.dataset.lkey]){
+      sug=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+row.dataset.wk+'">Add hotel?</button>'
+        +'<button class="lsugx" data-lkey="'+esc(row.dataset.lkey)+'" title="Don’t suggest again for this leg">×</button></span>';
+    }
+    row.classList.remove('lfail');
+    if(warn) row.classList.add('lwarn');
+    tx.innerHTML=lbl+warn+sug;
+  });
+}
+function hydrateDriveRows(){
+  document.querySelectorAll('#weeks .legrow.drv').forEach(function(row){
+    if(row._hy) return; row._hy=true;
+    legFill(row);
+  });
+}
 let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
 /* ---- Multiple visits per dealer ----
    The dealer record stays single (Master Sheet unchanged). ASSIGN/DAY/TIME/APPT
@@ -1584,7 +1728,8 @@ function renderPlanner(){
     +'<div class="ps"><div class="pl">Pre-booked</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
     +'<div class="ps"><div class="pl">Goal %</div><div class="pv">'+(tPct!=null?tPct+'%':'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Gap</div><div class="pv">'+(tGoal?( (tGoal-tPlan)>0?fmtUSDk(tGoal-tPlan):'+'+fmtUSDk(tPlan-tGoal) ):'—')+'</div></div>'
-    +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+pbDs.filter(function(d){return pbConfirmed(d.id);}).length+'/'+pbDs.length+'</div></div>';
+    +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+pbDs.filter(function(d){return pbConfirmed(d.id);}).length+'/'+pbDs.length+'</div></div>'
+    +((terr!=='All'&&terr!=='Master')?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -2418,23 +2563,40 @@ function weekCard(wk){
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
   var cards;
   if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag + Pre-book here from the library</div>'; }
-  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag + Pre-book or + Visit here from the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
+    if(!ds.length && !wlogi.length && !xw.length) cards+='<div class="dcempty">drag + Pre-book or + Visit here from the library</div>';
+    /* one ordered, located stop sequence for the whole week: the single
+       source of truth for the travel rows woven between the cards below */
+    var seq=wkStopSeq(terr,wk);
+    var seqIdx={}; seq.forEach(function(s,i){ seqIdx[s.key]=i; });
+    var entryKey=function(e){ return e.k==='v'?('d:'+e.d.id):(e.k==='x'?('x:'+e.x.id):('m:'+e.x.id)); };
+    var legBefore=function(e){
+      var i=seqIdx[entryKey(e)];
+      if(i==null||i===0) return '';
+      return legRowHTML(seq[i-1],seq[i],wk);
+    };
     var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
     var nodl=wlogi.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'l',x:x};});
     var nodx=xw.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'x',x:x};});
     var nod=nodv.concat(nodl).concat(nodx);
-    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+nod.map(function(e){return e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk));}).join(''); }
+    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'
+      +'<div class="kdaybody" data-drop="'+wk+'|none">'
+      +nod.map(function(e){return e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk));}).join('')+'</div>'; }
     labs.forEach(function(l,i){
       var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
       var el=wlogi.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',x:x,t:x.time||'99'};});
       var ex=xw.filter(function(x){return x.day===i;}).map(function(x){return {k:'x',x:x,t:x.time||'99'};});
       var entries=ev.concat(el).concat(ex).sort(function(a,b){return a.t.localeCompare(b.t);});
       cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
-      if(!entries.length){ cards+='<div class="dcempty">—</div>'; return; }
-      entries.forEach(function(e,j){ cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk)));
-        if(wk!==31 && j<entries.length-1 && e.k==='v' && entries[j+1].k==='v'){ cards+=travelRow(e.d,entries[j+1].d,md); } });
+      /* each day is its own drop zone — the card's day comes from where it sits */
+      cards+='<div class="kdaybody" data-drop="'+wk+'|'+i+'">';
+      if(!entries.length){ cards+='<div class="dcempty">—</div>'; }
+      else entries.forEach(function(e){
+        cards+=legBefore(e);
+        cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk)));
+      });
+      cards+='</div>';
     });
   }
   var confBtn='<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>';
@@ -2494,30 +2656,22 @@ function dvViewX(x){
 function dvCard(v){
   if(!v) return '';
   var B=VBADGE[v.type]||VBADGE.prebook;
-  var labs=(typeof v.wk==='number')?dayLabels(v.wk):[];
-  var wkOpts=[31].concat(FIELD_NUMS).map(function(w){
-    return '<option value="'+w+'"'+(v.wk===w?' selected':'')+'>Wk '+w+'</option>';}).join('')
-    +(v.ref.slice(0,2)==='i:'?('<option value="remote"'+(v.remote?' selected':'')+'>Remote</option>'):'');
-  var dayOpts='<option value="">— day —</option>'+labs.map(function(l,i){
-    return '<option value="'+i+'"'+(v.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
   var da='data-vref="'+v.ref+'"';
   var days=v.dur>=1440?Math.floor(v.dur/1440):0;
   var frame=(v.time&&!v.remote)?('<div class="kc-frame">'+t12s(v.time)+'–'+t12s(addMin(v.time,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
-  var ctl=v.remote
-    ? '<div class="kc-ctl"><select class="vf" '+da+' data-f="wk">'+wkOpts+'</select></div>'
-    : '<div class="kc-ctl">'
-      +'<select class="vf" '+da+' data-f="wk" title="Week">'+wkOpts+'</select>'
-      +'<select class="vf" '+da+' data-f="day" title="Day">'+dayOpts+'</select>'
+  /* week + day come from WHERE the card sits — moving it is the only way to
+     change them. The card edits only time, duration and notes inline. */
+  var ctl=v.remote?'':'<div class="kc-ctl">'
       +'<input class="vf vtime" type="time" '+da+' data-f="time" title="Start time" value="'+esc(v.time)+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
     +'</div>';
-  return '<div class="kcard vc '+(v.done?'confirmed':'planned')+'" data-drag="1" data-id="'+v.dragId+'">'
+  return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+'" data-drag="1" data-id="'+v.dragId+'">'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
-      +'<div class="kc-name">'+esc(v.name)+'</div>'
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'">'+(v.done?'✓ Conf.':'○ Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
+    +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)+'</div>'
     +ctl+frame
     +'<input class="vnote" '+da+' data-f="notes" placeholder="Notes" value="'+esc(v.notes)+'">'
     +'</div>';
@@ -2563,20 +2717,23 @@ function deleteVisit(ref){
   }
   savePlan(); refreshPlanner();
 }
-/* create a card. Type is chosen here and is permanent for the card's life. */
-function createVisit(dealerId,type,wk){
+/* create a card. Type is chosen here and is permanent for the card's life.
+   day is optional — set when the card was dropped/placed on a specific day. */
+function createVisit(dealerId,type,wk,day){
   var d=uniById(dealerId); if(!d) return;
   if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return;
   type=(type==='visit')?'visit':'prebook';
+  day=(day==null||day===''||day==='none')?null:parseInt(day,10);
+  if(day!=null&&!isFinite(day)) day=null;
   if(ASSIGN[dealerId]==='pool'||ASSIGN[dealerId]==null){
     ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
-    DAY[dealerId]=null; TIME[dealerId]='';
+    DAY[dealerId]=day; TIME[dealerId]='';
     if(type==='visit') PTYPE[dealerId]='visit'; else delete PTYPE[dealerId];
   } else {
     if(wk==='remote') return;
     XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
-      wk:parseInt(wk,10), day:null, time:'', dur:60, type:type, notes:'', done:false});
+      wk:parseInt(wk,10), day:day, time:'', dur:60, type:type, notes:'', done:false});
   }
   savePlan(); refreshPlanner();
 }
@@ -2986,8 +3143,8 @@ function allDealerModal(id){
       +'</div><div style="padding:12px 20px 18px;max-height:min(58vh,520px);overflow:auto">'+pane()+'</div></div>';
     wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
     wrap.querySelectorAll('[data-dlgtab]').forEach(function(b){ b.onclick=function(){ TAB=b.dataset.dlgtab; paint(); }; });
-    var apb=wrap.querySelector('#dlgAddPB'); if(apb) apb.onclick=function(){ wrap.remove(); addVisitSheet(id,'prebook'); };
-    var avv=wrap.querySelector('#dlgAddVis'); if(avv) avv.onclick=function(){ wrap.remove(); addVisitSheet(id,'visit'); };
+    var apb=wrap.querySelector('#dlgAddPB'); if(apb) apb.onclick=function(){ wrap.remove(); startPlacement(id,'prebook'); };
+    var avv=wrap.querySelector('#dlgAddVis'); if(avv) avv.onclick=function(){ wrap.remove(); startPlacement(id,'visit'); };
     if(TAB==='tasks'){
       wrap.querySelectorAll('[data-tskdone]').forEach(function(b){ b.onclick=function(){
         var p=b.dataset.tskdone.split('|'), list=xvTaskList(p[0],id); if(!list||!list[+p[1]]) return;
@@ -3670,7 +3827,7 @@ function _rtPersist(k,v){ try{
      kept in memory only so the cache never blows the localStorage quota */
   if(JSON.stringify(v).length>30000) return;
   var s=_rtStore(); s[k]=v;
-  var ks=Object.keys(s); if(ks.length>120){ ks.slice(0,ks.length-120).forEach(function(x){ delete s[x]; }); }
+  var ks=Object.keys(s); if(ks.length>300){ ks.slice(0,ks.length-300).forEach(function(x){ delete s[x]; }); }
   localStorage.setItem('aqRoutes_v1',JSON.stringify(s));
 }catch(e){ try{ localStorage.removeItem('aqRoutes_v1'); }catch(e2){} } }
 var _rtPending={};   /* leg key -> in-flight promise (dedupes concurrent maps) */
@@ -4419,7 +4576,9 @@ function performDrop(raw,t){
   if(raw.slice(0,3)==='mk:'){
     var pr=raw.slice(3).split('|');
     if(t==='pool') return;                       /* dropped back on the library: nothing */
-    createVisit(pr[0], pr[1], t==='remote'?'remote':parseInt(String(t).split('|')[0],10));
+    if(t==='remote'){ createVisit(pr[0],pr[1],'remote'); return; }
+    var tp=String(t).split('|');
+    createVisit(pr[0], pr[1], parseInt(tp[0],10), tp[1]);
     return;
   }
   if(raw.slice(0,3)==='xv:'){
@@ -4541,37 +4700,164 @@ function dndInit(){
   document.addEventListener('contextmenu',function(e){ if(DND.src||DND.active) e.preventDefault(); });
   window.addEventListener('blur',function(){ if(DND.src) dndEnd(null); });
 }
-/* creation week picker — the no-drag path for + Pre-book / + Visit. The type
-   is fixed by the button that opened it; only the week is chosen here. */
-function addVisitSheet(dealerId,type){
+/* ---------- placement mode: the click / keyboard path for + Pre-book and
+   + Visit. NO popup: arming an action highlights every week and day zone in
+   the planner; clicking (or focusing and pressing Enter on) a zone places
+   the card there. Esc, clicking the action again, or clicking outside the
+   planner cancels. Works everywhere dragging doesn't. ---------- */
+var PLACE=null;
+function markPlacementZones(){
+  if(!PLACE) return;
+  document.querySelectorAll('#weeks [data-drop]').forEach(function(z){
+    z.classList.add('placetgt'); z.setAttribute('tabindex','0');
+  });
+}
+function cancelPlacement(){
+  if(!PLACE) return;
+  PLACE=null;
+  document.body.classList.remove('placing');
+  var h=document.getElementById('placeHint'); if(h)h.remove();
+  document.querySelectorAll('.placetgt').forEach(function(z){ z.classList.remove('placetgt'); z.removeAttribute('tabindex'); });
+}
+function startPlacement(dealerId,type){
   var d=uniById(dealerId); if(!d) return;
   type=(type==='visit')?'visit':'prebook';
+  if(PLACE&&PLACE.id===dealerId&&PLACE.type===type){ cancelPlacement(); return; }   /* second click = cancel */
+  cancelPlacement();
+  if(d.territory==='Exports'){ createVisit(dealerId,type,'remote'); return; }        /* Exports book remotely */
+  PLACE={id:dealerId,type:type};
+  document.body.classList.add('placing');
   var B=VBADGE[type];
-  var isExp=(d.territory==='Exports');
-  var weeks=isExp?['remote']:[31].concat(FIELD_NUMS);
-  var wrap=document.createElement('div'); wrap.className='modalbg';
-  wrap.innerHTML='<div class="modalbox" style="width:min(360px,94vw)"><div class="mh"><div class="mt">New '+(type==='visit'?'Visit':'Pre-book')+'</div><button class="mclose">×</button></div>'
-    +'<div style="padding:12px 18px 16px">'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span><span style="font-size:13px;font-weight:700">'+esc(d.name)+'</span></div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pick the week — everything else edits on the card.</div>'
-    +'<div class="avweeks">'+weeks.map(function(w){
-        return '<button class="avwk" data-avwk="'+w+'">'+(w==='remote'?'Remote / Direct':('Wk '+w+(w===31?' · Kickoff':'')+'<span>'+(WEEKDATES[w]||'')+'</span>'))+'</button>';
-      }).join('')+'</div>'
-    +'</div></div>';
-  document.body.appendChild(wrap);
-  var close=function(){ wrap.remove(); };
-  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
-  wrap.querySelector('.mclose').onclick=close;
-  wrap.querySelectorAll('[data-avwk]').forEach(function(b){ b.onclick=function(){
-    var w=b.dataset.avwk; close();
-    createVisit(dealerId, type, w);
-  };});
+  var hint=document.createElement('div'); hint.id='placeHint';
+  hint.innerHTML='<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
+    +'<b>'+esc(d.name)+'</b><span class="ph-sub">click a week or day to place</span>'
+    +'<button id="placeCancel">Cancel · Esc</button>';
+  document.body.appendChild(hint);
+  hint.querySelector('#placeCancel').onclick=cancelPlacement;
+  markPlacementZones();
+  var z=document.querySelector('#weeks [data-drop]'); if(z) z.focus();
+}
+function placeAt(zone){
+  if(!PLACE||!zone) return;
+  var t=zone.dataset.drop, p=PLACE;
+  cancelPlacement();
+  if(t==='pool') return;
+  if(t==='remote'){ createVisit(p.id,p.type,'remote'); return; }
+  var tp=String(t).split('|');
+  createVisit(p.id, p.type, parseInt(tp[0],10), tp[1]);
+}
+/* ---------- undo: snapshot the plan before destructive actions ---------- */
+var UNDO=[];
+function undoSnap(label){
+  try{ UNDO.push({label:label,p:JSON.parse(JSON.stringify(planPayload()))}); if(UNDO.length>10) UNDO.shift(); }catch(e){}
+}
+function applyPlanSnapshot(p){
+  ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
+  SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
+  GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
+  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{};
+  if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
+  ensureAssignDefaults(); invalidateUniverse();
+}
+function undoRestore(){
+  var u=UNDO.pop(); if(!u) return;
+  applyPlanSnapshot(u.p); savePlan();
+  withPreservedScroll(render);
+  aqToast('Restored');
+}
+/* small transient toast, optionally with Undo (kept ~10s) */
+function aqToast(msg,withUndo){
+  var old=document.getElementById('aqToast'); if(old) old.remove();
+  var t=document.createElement('div'); t.id='aqToast';
+  t.innerHTML=esc(msg)+(withUndo?' <button id="aqUndoBtn">Undo</button>':'');
+  document.body.appendChild(t);
+  if(withUndo) t.querySelector('#aqUndoBtn').onclick=function(){ t.remove(); undoRestore(); };
+  setTimeout(function(){ if(t.isConnected){ t.classList.add('out'); setTimeout(function(){ t.remove(); },300); } },10000);
+}
+/* ---------- Reset / Clear for ONE territory (never on the ALL tab) ----------
+   Reset Visits: removes this territory's Pre-book and Visit cards (travel
+   rows are generated, so they disappear with the cards). Clear Planner also
+   removes flights, hotels, rentals and other stops. The Dealer Library,
+   master data, targets and forecasts are never touched. */
+function resetTerritory(mode){
+  if(terr==='All'||terr==='Master') return;
+  undoSnap(mode==='planner'?'Planner cleared':'Visits reset');
+  dealersIn(terr).forEach(function(d){ var id=d.id;
+    ASSIGN[id]=(d.territory==='Exports')?'remote':'pool';
+    DAY[id]=null; TIME[id]=''; delete PTYPE[id]; delete APPT[id]; delete DUR[id];
+  });
+  XVISITS=XVISITS.filter(function(x){ return x.terr!==terr; });
+  Object.keys(CONF).forEach(function(k){ if(k.indexOf(terr+'|')===0) delete CONF[k]; });
+  if(mode==='planner'){
+    LOGI=LOGI.filter(function(x){ return x.terr!==terr; });
+    Object.keys(ACTKM).forEach(function(k){ if(k.indexOf(terr+'|')===0) delete ACTKM[k]; });
+  }
+  savePlan(); refreshPlanner();
+  aqToast((mode==='planner'?'Planner cleared':'Visits reset')+' — '+terr, true);
+}
+/* one-time global UI wiring: placement clicks, leg-row buttons, selection,
+   keyboard shortcuts. Delegated, so re-renders never detach anything. */
+function uiInit(){
+  if(uiInit.done) return; uiInit.done=true;
+  document.addEventListener('click',function(e){
+    /* placement mode: click a highlighted week/day zone to place the card */
+    if(PLACE){
+      var z=e.target.closest&&e.target.closest('#weeks [data-drop]');
+      if(z){ placeAt(z); return; }
+      if(!e.target.closest('#placeHint')&&!e.target.closest('[data-mk]')) cancelPlacement();
+    }
+    /* travel-row actions */
+    var rb=e.target.closest&&e.target.closest('.lretry');
+    if(rb){ _rtDead={}; var row=rb.closest('.legrow'); if(row){ row.querySelector('.ltxt').innerHTML='🚗 Calculating drive…'; legFill(row); } return; }
+    var hb=e.target.closest&&e.target.closest('.laddh');
+    if(hb){ addTravel('hotel', hb.dataset.wk); return; }
+    var xb=e.target.closest&&e.target.closest('.lsugx');
+    if(xb){ hotelDismiss(xb.dataset.lkey); var s=xb.closest('.lsug'); if(s)s.remove(); return; }
+    /* card selection (for the Delete key): click empty card area */
+    var kc=e.target.closest&&e.target.closest('#weeks .kcard.vc');
+    if(kc&&!e.target.closest('input,select,button,textarea,.kc-name')){
+      var was=kc.classList.contains('sel');
+      document.querySelectorAll('.kcard.sel').forEach(function(c){ c.classList.remove('sel'); });
+      if(!was) kc.classList.add('sel');
+    } else if(!kc&&!e.target.closest('input,select,button,textarea')){
+      document.querySelectorAll('.kcard.sel').forEach(function(c){ c.classList.remove('sel'); });
+    }
+  });
+  document.addEventListener('keydown',function(e){
+    var typing=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||'');
+    if(e.key==='Escape'){
+      if(DND.src){ dndEnd(null); return; }
+      if(PLACE){ cancelPlacement(); return; }
+      /* disarm any inline second-step confirmations */
+      document.querySelectorAll('.vdel.arm').forEach(function(b){ clearTimeout(b._t); b.classList.remove('arm'); b.textContent='✕'; });
+      document.querySelectorAll('.vok.arm').forEach(function(b){ clearTimeout(b._t); b.classList.remove('arm'); b.textContent='✓ Conf.'; });
+      document.querySelectorAll('.tbtn.arm').forEach(function(b){ clearTimeout(b._t); b.classList.remove('arm'); b.textContent=b.dataset.lbl||b.textContent; });
+      if(typing) e.target.blur();
+      return;
+    }
+    if(typing){
+      /* Enter commits the inline edit (fires the change on blur) */
+      if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('vf')||e.target.classList.contains('vnote'))){ e.preventDefault(); e.target.blur(); }
+      return;
+    }
+    if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ e.preventDefault(); undoRestore(); return; }
+    if(e.key==='Delete'){
+      var sel=document.querySelector('#weeks .kcard.vc.sel');
+      if(sel){ var id=sel.dataset.id; var ref=(id.slice(0,3)==='xv:')?('x:'+id.slice(3)):('i:'+id);
+        undoSnap('Card deleted'); deleteVisit(ref); aqToast('Deleted',true); }
+      return;
+    }
+    if(e.key==='Enter'&&PLACE){
+      var z=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#weeks [data-drop]');
+      if(z){ e.preventDefault(); placeAt(z); }
+    }
+  });
 }
 function wireDnD(){
-  dndInit(); apInit();
+  dndInit(); apInit(); uiInit();
   /* library creation controls — type is chosen here and never changes.
-     Click opens the week picker; drag creates directly (never both). */
-  document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(DND.justDragged)return;var pr=b.dataset.mk.split('|');addVisitSheet(pr[0],pr[1]);}));
+     Click arms inline placement (no popup); drag creates directly. */
+  document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(DND.justDragged)return;var pr=b.dataset.mk.split('|');startPlacement(pr[0],pr[1]);}));
   /* inline card fields: one writer for both card kinds. Notes never re-render
      the planner (no scroll jumps, no per-keystroke work) — they just persist. */
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
@@ -4579,10 +4865,21 @@ function wireDnD(){
     if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
     refreshPlanner();
   }));
-  document.querySelectorAll('.vnote').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
-    setVisitField(el.dataset.vref,'notes',el.value);
-    el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
-  }));
+  document.querySelectorAll('.vnote').forEach(el=>{
+    /* notes persist debounced while typing and on blur — never a re-render */
+    el.addEventListener('input',e=>{
+      clearTimeout(el._nt);
+      el._nt=setTimeout(function(){
+        setVisitField(el.dataset.vref,'notes',el.value);
+        el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
+      },600);
+    });
+    el.addEventListener('change',e=>{e.stopPropagation();
+      clearTimeout(el._nt);
+      setVisitField(el.dataset.vref,'notes',el.value);
+      el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
+    });
+  });
   /* confirming is one click; un-confirming asks once, inline (no modal, no permanent X) */
   document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
     if(!b.classList.contains('on')){ toggleVisitConf(b.dataset.vconf); return; }
@@ -4593,14 +4890,25 @@ function wireDnD(){
     }
     clearTimeout(b._t); toggleVisitConf(b.dataset.vconf);
   }));
-  /* delete: lightweight second-click confirmation, never a modal */
+  /* delete: lightweight second-click confirmation + a 10s Undo toast */
   document.querySelectorAll('[data-vdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
     if(!b.classList.contains('arm')){
       b.classList.add('arm'); b.textContent='sure?';
       b._t=setTimeout(function(){ b.classList.remove('arm'); b.textContent='✕'; },2500);
       return;
     }
-    clearTimeout(b._t); deleteVisit(b.dataset.vdel);
+    clearTimeout(b._t);
+    undoSnap('Card deleted'); deleteVisit(b.dataset.vdel); aqToast('Deleted',true);
+  }));
+  /* territory utilities: compact inline confirm, then Undo toast */
+  document.querySelectorAll('[data-treset]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    if(!b.classList.contains('arm')){
+      b.dataset.lbl=b.textContent;
+      b.classList.add('arm'); b.textContent=(b.dataset.treset==='planner'?'Clear everything?':'Reset all visits?');
+      b._t=setTimeout(function(){ b.classList.remove('arm'); b.textContent=b.dataset.lbl; },3000);
+      return;
+    }
+    clearTimeout(b._t); resetTerritory(b.dataset.treset);
   }));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
@@ -4609,9 +4917,11 @@ function wireDnD(){
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
-  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();undoSnap('Travel item deleted');LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();aqToast('Travel item deleted',true);}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
+  hydrateDriveRows();          /* fill the drive rows from the cached router */
+  markPlacementZones();        /* keep placement highlights across re-renders */
 }
 const TP_CSS='body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:0;padding:20px 26px;font-size:11px;}.phead{display:flex;align-items:center;gap:14px;border-bottom:3px solid #cf202f;padding-bottom:8px;margin-bottom:6px;}.phead .brand{font-weight:800;letter-spacing:1px;font-size:17px;color:#111;}.phead .ptitle{font-size:15px;font-weight:700;}.phead .pwk{margin-left:auto;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.05em;}.meta{font-size:11px;color:#444;margin:4px 0 10px;}.lead{color:#1f7a46;font-weight:bold;}.wbar{background:#292828;color:#fff;font-size:11.5px;font-weight:700;padding:5px 9px;border-radius:4px 4px 0 0;margin-top:12px;}.wbar span{font-weight:400;color:#cfd2d3;font-size:10.5px;}table.sched{width:100%;border-collapse:collapse;margin-bottom:8px;}.sched th{background:#4a4848;color:#fff;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:4px 7px;}.sched td{border-bottom:1px solid #e6e6e6;padding:4px 7px;vertical-align:top;font-size:10.5px;}.sched tr.dh td{background:#f2f2f2;font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#333;}.sched .tm{white-space:nowrap;font-weight:700;}.sched .du{white-space:nowrap;color:#666;}.sched .ty{white-space:nowrap;}.sched .nm{font-weight:600;}.sched .lo{color:#555;}.sched tr.dr td{padding:1px 7px 1px 26px;font-size:9px;color:#999;border-bottom:0;}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;}.dot.v{background:#cf202f;}.dot.flight{background:#e08a00;}.dot.hotel{background:#8e24aa;}.dot.rental{background:#00897b;}.ok{color:#1f7a46;font-weight:700;}.tag{color:#888;font-weight:400;font-size:9.5px;}.sched a{color:#2f63a8;}.repsec{page-break-inside:avoid;}.noprint{margin:0 0 12px;}.noprint button{font-size:13px;padding:8px 16px;background:#cf202f;color:#fff;border:0;border-radius:5px;cursor:pointer;}@media print{.noprint{display:none;}body{padding:0 14px;}.repsec{page-break-before:always;}.repsec:first-of-type{page-break-before:avoid;}}';
 function tpVRange(d){return TIME[d.id]?(t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],DUR[d.id]||90))):'TBD';}
