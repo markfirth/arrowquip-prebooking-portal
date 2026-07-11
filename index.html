@@ -1685,7 +1685,8 @@ function renderCards(){
 function dealerCard(d){
   d=sfMasterMerge(d);
   /* Dealer LIBRARY card: identity only — no planning badges, no visit counters.
-     data-id "pool:" prefix tells the drop handler this drag creates a visit. */
+     The card itself is not draggable — the + Pre-book / + Visit actions
+     (click to place, or drag into a week/day) are the only creation paths. */
   return `<div class="dcard">
     <div class="dn">${d.name}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
