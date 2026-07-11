@@ -100,7 +100,7 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .sbbody{padding:10px 12px 14px;overflow-y:auto;flex:1 1 auto;}
 .sbbody.over{background:#fdf4f5;}
 .grp{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 4px 6px;}
-.dcard{border:1px solid var(--line);border-radius:var(--radius);padding:9px 11px;margin-bottom:7px;background:#fff;cursor:grab;transition:border-color .15s;}
+.dcard{border:1px solid var(--line);border-radius:var(--radius);padding:9px 11px;margin-bottom:7px;background:#fff;transition:border-color .15s;}
 .dcard:hover{border-color:var(--muted-2);}
 .dcard.drag{opacity:.45;}
 .dcard .dn{font-weight:700;color:var(--aq-black);font-size:12.5px;}
@@ -817,6 +817,8 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
 /* inline inputs inside a draggable card: normal text selection, never a drag */
 [data-drag] input,[data-drag] textarea,[data-drag] select{user-select:text;-webkit-user-select:text;touch-action:auto;}
 .dndghost{position:fixed;z-index:100000;pointer-events:none;opacity:.9;box-shadow:0 10px 28px rgba(0,0,0,.22);transform:rotate(.6deg);margin:0;}
+/* creating from the library: the ghost is a mini card showing name + type */
+.mkghost{width:200px;background:#fff;border:1px solid var(--line);border-left:3px solid #3a7bd5;border-radius:6px;padding:7px 8px;}
 body.dnd-on{cursor:grabbing;}
 body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3px;background:#fdf5f6;}
 /* library card: quiet "+ Add visit" fallback next to the loads line */
@@ -836,9 +838,12 @@ body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3p
 .vbadge.pre{color:#2563eb;background:#eef3fb;border:1px solid #2563eb33;}
 .vbadge.vis{color:#15803d;background:#edf7f0;border:1px solid #16a34a33;}
 .kcard.vc .kc-name{flex:1 1 auto;font-weight:700;color:var(--aq-black);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.vok{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:transparent;font-size:9px;line-height:1;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+/* appointment confirmation: quiet outline until confirmed, then green.
+   Un-confirming is a second-click ("Unconfirm?") — no permanent X. */
+.vok{flex:0 0 auto;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font:600 8.5px 'Open Sans',Arial,sans-serif;letter-spacing:.02em;line-height:1;cursor:pointer;padding:3px 7px;white-space:nowrap;}
 .vok:hover{border-color:var(--green);color:var(--green);}
-.vok.on{background:var(--green);border-color:var(--green);color:#fff;}
+.vok.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;}
+.vok.arm{background:#fff;border-color:#d97706;color:#d97706;}
 .vdel{flex:0 0 auto;}
 .vdel.arm{color:#fff;background:#dc2626;border-color:#dc2626;font-size:8.5px;font-weight:700;width:auto;padding:2px 6px;border-radius:4px;}
 .kcard.vc .kc-ctl{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:nowrap;min-width:0;}
@@ -1537,10 +1542,10 @@ function dealerCard(d){
   d=sfMasterMerge(d);
   /* Dealer LIBRARY card: identity only — no planning badges, no visit counters.
      data-id "pool:" prefix tells the drop handler this drag creates a visit. */
-  return `<div class="dcard" data-drag="1" data-id="pool:${d.id}">
+  return `<div class="dcard">
     <div class="dn">${d.name}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
-    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd" data-mk="${d.id}|prebook" title="Schedule a Pre-book (counts in forecast)">+ Pre-book</button><button class="dadd dvis" data-mk="${d.id}|visit" title="Schedule a relationship Visit (no forecast impact)">+ Visit</button></span></div></div>`;
+    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd" data-mk="${d.id}|prebook" data-drag="1" data-id="mk:${d.id}|prebook" title="Pre-book — click to pick a week, or drag into a week">+ Pre-book</button><button class="dadd dvis" data-mk="${d.id}|visit" data-drag="1" data-id="mk:${d.id}|visit" title="Visit — click to pick a week, or drag into a week">+ Visit</button></span></div></div>`;
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
@@ -1558,7 +1563,7 @@ function renderPlanner(){
   else if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(b.booking-a.booking);});
   else pool.sort(function(a,b){return b.booking-a.booking;});
   document.getElementById("sbTitle").textContent="Dealer Library — "+terr;
-  document.getElementById("sbSub").textContent=pool.length+" of "+poolAll.length+" dealers · drag into a week to schedule a visit (drag again for another visit)";
+  document.getElementById("sbSub").textContent=pool.length+" of "+poolAll.length+" dealers · click or drag + Pre-book / + Visit to schedule";
   let body="";
   if(!pool.length){ body=`<div class="poolempty">${poolAll.length?'No matches.':'No dealers in this territory yet.'}</div>`; }
   else if(poolSort==='state'){ let cur=null; pool.forEach(d=>{ if(d.loc!==cur){cur=d.loc; body+=`<div class="grp">${d.loc||'—'}</div>`;} body+=dealerCard(d); }); }
@@ -2412,8 +2417,8 @@ function weekCard(wk){
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
   var cards;
-  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag a dealer here, or use + Pre-book in the library</div>'; }
-  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag a dealer here, or use + Pre-book / + Visit in the library</div>'; }
+  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag + Pre-book here from the library</div>'; }
+  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag + Pre-book or + Visit here from the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
     var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
@@ -2510,7 +2515,7 @@ function dvCard(v){
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +'<div class="kc-name">'+esc(v.name)+'</div>'
-      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Confirmed — click to unconfirm':'Mark confirmed')+'">✓</button>'
+      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'">'+(v.done?'✓ Conf.':'○ Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
     +ctl+frame
@@ -2561,6 +2566,7 @@ function deleteVisit(ref){
 /* create a card. Type is chosen here and is permanent for the card's life. */
 function createVisit(dealerId,type,wk){
   var d=uniById(dealerId); if(!d) return;
+  if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return;
   type=(type==='visit')?'visit':'prebook';
   if(ASSIGN[dealerId]==='pool'||ASSIGN[dealerId]==null){
     ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
@@ -4402,14 +4408,20 @@ function deleteDealer(id){ const i=DEALERS.findIndex(d=>d.id===id); if(i<0)retur
 function resetEdits(){ if(!confirm('Reset all Master Sheet edits back to the original data?'))return; DEALERS=ORIG.map(d=>Object.assign({},d)); reindex(); localStorage.removeItem('aq2027dealersv1'); renderMaster(); }
 /* autoPlan() and its helper driveHrs() were removed together with the
    Auto-plan / Clear controls. Nothing else called either function. */
-/* Dealers are permanent, visits are temporary:
-   pool:<id>  = from the dealer library -> first drop schedules the initial
-                visit; every later drop CREATES A NEW VISIT.
-   xv:<id>    = a scheduled additional visit -> moves that visit only.
-   <id>       = the scheduled initial-visit card -> moves that visit only.
-   Shared by drag-and-drop AND the "+ Add visit" fallback. */
+/* Dealers are permanent, cards are temporary:
+   mk:<id>|<type> = a + Pre-book / + Visit action dragged from the library ->
+                    CREATES a card of that type in the target week.
+   xv:<id>        = a scheduled additional card -> moves that card only.
+   <id>           = the dealer's initial card -> moves that card only.
+   Shared by drag-and-drop AND the click week-picker (via createVisit). */
 function performDrop(raw,t){
   if(!raw||t==null) return;
+  if(raw.slice(0,3)==='mk:'){
+    var pr=raw.slice(3).split('|');
+    if(t==='pool') return;                       /* dropped back on the library: nothing */
+    createVisit(pr[0], pr[1], t==='remote'?'remote':parseInt(String(t).split('|')[0],10));
+    return;
+  }
   if(raw.slice(0,3)==='xv:'){
     var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
     if(t==='pool'){ deleteVisit('x:'+xv.id); return; }
@@ -4418,26 +4430,11 @@ function performDrop(raw,t){
     xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
     savePlan(); refreshPlanner(); return;
   }
-  const fromPool=raw.slice(0,5)==='pool:';
-  const id=fromPool?raw.slice(5):raw;
+  const id=raw;
   const d=uniById(id); if(!d)return;
-  if(fromPool && ASSIGN[id]!=='pool' && t!=='pool'){
-    /* already scheduled: scheduling from the library again = a NEW visit */
-    if(t==='remote') return;
-    var parts2=t.split('|'); var nw2=parseInt(parts2[0],10);
-    XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id,
-      terr:(d.territory==='Exports'?'Exports':terr), wk:nw2,
-      day:(parts2[1]!=null&&parts2[1]!=='none')?parseInt(parts2[1],10):null,
-      time:'', dur:60, type:'prebook', notes:'', done:false});
-    savePlan(); refreshPlanner(); return;
-  }
   if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;delete PTYPE[id];}
-  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;if(fromPool)delete PTYPE[id];}
-  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;}
-    /* dragging from the library CREATES a card — drag creation is always a
-       Pre-book (the primary workflow); + Visit in the library covers visits */
-    if(fromPool) delete PTYPE[id];
-  }
+  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
+  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
   savePlan(); refreshPlanner();
 }
 /* ---------- unified drag engine (Pointer Events) ----------
@@ -4455,11 +4452,25 @@ function dndZoneAt(x,y){
 function dndStart(x,y){
   if(DND.active||!DND.src) return;
   DND.active=true;
-  var r=DND.src.getBoundingClientRect();
-  DND.gdx=Math.min(x-r.left,r.width-8); DND.gdy=Math.min(y-r.top,r.height-8);
-  var g=DND.src.cloneNode(true);
-  g.className+=' dndghost';
-  g.style.width=r.width+'px';
+  var g;
+  if(DND.raw&&DND.raw.slice(0,3)==='mk:'){
+    /* creating from the library: the ghost is a mini card — dealer name + type */
+    var pr=DND.raw.slice(3).split('|');
+    var d=uniById(pr[0]);
+    var B=VBADGE[pr[1]==='visit'?'visit':'prebook'];
+    g=document.createElement('div');
+    g.className='kcard vc dndghost mkghost';
+    g.innerHTML='<div class="kc-top"><span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
+      +'<div class="kc-name">'+esc(d?d.name:'')+'</div></div>';
+    g.style.borderLeftColor=(pr[1]==='visit'?'#16a34a':'#3a7bd5');
+    DND.gdx=18; DND.gdy=14;
+  } else {
+    var r=DND.src.getBoundingClientRect();
+    DND.gdx=Math.min(x-r.left,r.width-8); DND.gdy=Math.min(y-r.top,r.height-8);
+    g=DND.src.cloneNode(true);
+    g.className+=' dndghost';
+    g.style.width=r.width+'px';
+  }
   g.style.left=(x-DND.gdx)+'px'; g.style.top=(y-DND.gdy)+'px';
   document.body.appendChild(g);
   DND.ghost=g;
@@ -4496,7 +4507,11 @@ function dndEnd(drop){
   document.body.classList.remove('dnd-on');
   var raw=DND.raw, was=DND.active;
   DND.src=null; DND.raw=null; DND.ghost=null; DND.zone=null; DND.active=false; DND.touch=false;
-  if(was && drop) performDrop(raw, drop.dataset.drop);
+  if(was){
+    /* a completed drag must not also fire the action's click (week picker) */
+    DND.justDragged=true; setTimeout(function(){ DND.justDragged=false; },0);
+    if(drop) performDrop(raw, drop.dataset.drop);
+  }
 }
 function dndInit(){
   if(dndInit.done) return; dndInit.done=true;
@@ -4505,7 +4520,10 @@ function dndInit(){
     if(DND.src) dndEnd(null);
     var card=e.target&&e.target.closest&&e.target.closest('[data-drag]');
     if(!card||!card.dataset.id) return;
-    if(e.target.closest('select,input,button,textarea,a,label,.ldpick')) return;
+    /* interactive children never start a drag — but a creation action that is
+       itself the draggable element (+ Pre-book / + Visit) may */
+    var ctl=e.target.closest('select,input,button,textarea,a,label,.ldpick');
+    if(ctl&&ctl!==card) return;
     DND.src=card; DND.raw=card.dataset.id;
     DND.sx=e.clientX; DND.sy=e.clientY;
     DND.touch=(e.pointerType==='touch');
@@ -4551,8 +4569,9 @@ function addVisitSheet(dealerId,type){
 }
 function wireDnD(){
   dndInit(); apInit();
-  /* library creation controls — type is chosen here and never changes */
-  document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.mk.split('|');addVisitSheet(pr[0],pr[1]);}));
+  /* library creation controls — type is chosen here and never changes.
+     Click opens the week picker; drag creates directly (never both). */
+  document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(DND.justDragged)return;var pr=b.dataset.mk.split('|');addVisitSheet(pr[0],pr[1]);}));
   /* inline card fields: one writer for both card kinds. Notes never re-render
      the planner (no scroll jumps, no per-keystroke work) — they just persist. */
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
@@ -4564,7 +4583,16 @@ function wireDnD(){
     setVisitField(el.dataset.vref,'notes',el.value);
     el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
   }));
-  document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleVisitConf(b.dataset.vconf);}));
+  /* confirming is one click; un-confirming asks once, inline (no modal, no permanent X) */
+  document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    if(!b.classList.contains('on')){ toggleVisitConf(b.dataset.vconf); return; }
+    if(!b.classList.contains('arm')){
+      b.classList.add('arm'); b.textContent='Unconfirm?';
+      b._t=setTimeout(function(){ b.classList.remove('arm'); b.textContent='✓ Conf.'; },2500);
+      return;
+    }
+    clearTimeout(b._t); toggleVisitConf(b.dataset.vconf);
+  }));
   /* delete: lightweight second-click confirmation, never a modal */
   document.querySelectorAll('[data-vdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
     if(!b.classList.contains('arm')){
