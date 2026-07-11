@@ -157,8 +157,6 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .dchip .cctl{display:flex;align-items:center;gap:6px;}
 .cday{flex:1 1 auto;min-width:0;font-family:inherit;font-size:11px;border:1px solid var(--line);border-radius:5px;padding:5px 6px;background:#fff;color:var(--ink);cursor:pointer;}
 .ctime{width:98px;font-family:inherit;font-size:11px;border:1px solid var(--line);border-radius:5px;padding:4px 6px;}
-.apptbtn{appearance:none;font-family:inherit;font-size:8.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:3px 7px;border-radius:4px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;}
-.apptbtn:hover{border-color:var(--green);color:var(--green);} .apptbtn.on{background:var(--green);border-color:var(--green);color:#fff;}
 .distrow{font-size:9px;color:#a8acae;text-align:center;margin:1px 0 5px;letter-spacing:.03em;} .distrow b{color:#8a8e90;font-weight:700;}
 .tablecard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
 .tabletools{padding:1.25rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -308,11 +306,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .kc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
 .kc-name{font-size:11px;font-weight:600;color:var(--aq-black);line-height:1.2;}
 .kc-rep{font-size:9px;color:var(--muted);margin-top:1px;}
-.kc-amt{font-size:10.5px;font-weight:600;color:var(--aq-black);white-space:nowrap;}
-.kc-bot{display:flex;align-items:center;gap:6px;margin-top:7px;}
-.kbadge{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
-.kbadge.won{background:#e7f3ec;color:var(--green);} .kbadge.booked{background:#e8f0fb;color:#2f63a8;}
-.kc-bot .apptbtn{margin-left:auto;} .kc-ctl{display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap;}
+.kc-ctl{display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap;}
 .kc-ctl .cdur{font-family:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:4px 4px;background:#fff;}
 .kc-frame{font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:.02em;}
 .kc-ctl .cday{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:4px 5px;background:#fff;}
@@ -777,9 +771,6 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .kcard{overflow:hidden;}
 .kc-top{min-width:0;gap:6px;}
 .kc-top .kc-name{overflow:hidden;text-overflow:ellipsis;}
-.kc-bot{min-width:0;flex-wrap:nowrap;gap:5px;}
-.kc-bot .cx{flex:0 0 auto;margin-left:auto;}
-.kc-bot .apptbtn{flex:0 0 auto;}
 /* Master Sheet: tighter grid, narrow tier column, ellipsised address */
 #masterView th,#masterView td{padding:3px 6px;font-size:10.5px;}
 #masterView tr.colhdr th{padding-top:6px;padding-bottom:6px;font-size:9.5px;}
@@ -823,6 +814,8 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
 @media(max-width:1100px){.lvmapgrid{grid-template-columns:1fr;} #leaderMap{height:420px;}}
 /* ---- unified pointer drag & drop ---- */
 [data-drag]{touch-action:pan-y;user-select:none;-webkit-user-select:none;}
+/* inline inputs inside a draggable card: normal text selection, never a drag */
+[data-drag] input,[data-drag] textarea,[data-drag] select{user-select:text;-webkit-user-select:text;touch-action:auto;}
 .dndghost{position:fixed;z-index:100000;pointer-events:none;opacity:.9;box-shadow:0 10px 28px rgba(0,0,0,.22);transform:rotate(.6deg);margin:0;}
 body.dnd-on{cursor:grabbing;}
 body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3px;background:#fdf5f6;}
@@ -834,13 +827,31 @@ body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3p
 .avwk{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:6px 9px;font:700 11.5px 'Open Sans',Arial,sans-serif;color:#111;cursor:pointer;text-align:left;}
 .avwk span{font-weight:400;font-size:9.5px;color:var(--muted);}
 .avwk:hover{border-color:var(--aq-red);}
-/* ---- Pre-book | Visit — compact segmented control inside the visit card ---- */
-.pseg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:0 0 auto;background:#fff;}
-.psg{border:0;background:transparent;color:var(--muted);font:700 8.5px 'Open Sans',Arial,sans-serif;letter-spacing:.03em;padding:2px 7px;cursor:pointer;line-height:1.4;}
-.psg+.psg{border-left:1px solid var(--line);}
-.psg.on{background:#eef3fb;color:#2563eb;}
-.psg.on:last-child{background:#f3f4f6;color:#374151;}
-.kcard.novalue .kc-amt{color:var(--muted-2);font-weight:400;}
+/* ---- THE dealer card: identical layout for Pre-book and Visit; only the
+        badge colour + icon differ. Compact, fixed structure, inline editing. ---- */
+.kcard.vc{padding:7px 8px;}
+.kcard.vc .kc-top{display:flex;align-items:center;gap:6px;min-width:0;}
+.vbadge{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;font-size:8px;font-weight:800;letter-spacing:.06em;border-radius:4px;padding:2.5px 6px;line-height:1;}
+.vbadge svg{flex:0 0 auto;}
+.vbadge.pre{color:#2563eb;background:#eef3fb;border:1px solid #2563eb33;}
+.vbadge.vis{color:#15803d;background:#edf7f0;border:1px solid #16a34a33;}
+.kcard.vc .kc-name{flex:1 1 auto;font-weight:700;color:var(--aq-black);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.vok{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:transparent;font-size:9px;line-height:1;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+.vok:hover{border-color:var(--green);color:var(--green);}
+.vok.on{background:var(--green);border-color:var(--green);color:#fff;}
+.vdel{flex:0 0 auto;}
+.vdel.arm{color:#fff;background:#dc2626;border-color:#dc2626;font-size:8.5px;font-weight:700;width:auto;padding:2px 6px;border-radius:4px;}
+.kcard.vc .kc-ctl{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:nowrap;min-width:0;}
+.kcard.vc .vf{min-width:0;font-family:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:3px 4px;background:#fff;color:var(--ink);}
+.kcard.vc select.vf{flex:1 1 auto;padding-right:14px;text-overflow:ellipsis;}
+.kcard.vc .vtime{flex:0 0 76px;width:76px;}
+.kcard.vc .vdur{flex:0 0 56px;width:56px;text-align:center;}
+.vnote{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid transparent;border-radius:5px;padding:3px 5px;font:400 10.5px 'Open Sans',Arial,sans-serif;color:var(--muted);background:transparent;transition:border-color .15s,background .15s;}
+.vnote:hover{border-color:var(--line-soft);}
+.vnote:focus{border-color:var(--line);background:#fff;color:var(--ink);outline:none;}
+.vnote.saved{border-color:#bfe3cd;background:#f4faf6;}
+.dmk{display:inline-flex;gap:4px;flex:0 0 auto;}
+.dadd.dvis:hover{color:#15803d;border-color:#15803d;}
 /* ---- airport typeahead dropdown ---- */
 #apDrop{position:fixed;z-index:100001;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.14);overflow:hidden;max-width:min(360px,94vw);}
 #apDrop .api{display:flex;align-items:baseline;gap:7px;padding:6px 10px;font-size:11.5px;cursor:pointer;white-space:nowrap;overflow:hidden;}
@@ -849,6 +860,19 @@ body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3p
 #apDrop .api .apn{font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;}
 #apDrop .api .apc{color:var(--muted);font-size:10px;margin-left:auto;padding-left:8px;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;}
 #apDrop .api.sel,#apDrop .api:hover{background:#f5f7fb;}
+#apDrop .apst{padding:5px 10px;font-size:10px;color:var(--muted-2);border-top:1px solid var(--line-soft);}
+#apDrop .apmanlink{color:var(--muted);font-size:10.5px;border-top:1px solid var(--line-soft);}
+#apDrop .apman{display:flex;flex-direction:column;gap:6px;padding:10px;}
+#apDrop .apmh{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);}
+#apDrop .apman input{border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:400 11.5px 'Open Sans',Arial,sans-serif;min-width:0;}
+#apDrop .apmrow{display:flex;gap:6px;}
+#apDrop .apmrow input{flex:1;}
+#apDrop .apmrow button,#apDrop #apm_save{border:1px solid var(--line);border-radius:5px;background:#fff;font:700 10.5px 'Open Sans',Arial,sans-serif;padding:5px 9px;cursor:pointer;color:#111;}
+#apDrop #apm_save{background:#111;color:#fff;border-color:#111;}
+/* quiet routing-unavailable notice on maps */
+.aq-rtfail{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:600 10.5px 'Open Sans',Arial,sans-serif;color:var(--muted);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.aq-rtfail button{margin-left:6px;border:1px solid var(--line);border-radius:4px;background:#fff;font:700 10px 'Open Sans',Arial,sans-serif;padding:2px 7px;cursor:pointer;color:#111;}
+.aq-rtfail button:hover{border-color:#111;}
 /* ---- executive summary cards ---- */
 #cards.cards{align-items:stretch;}
 .xc{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:.7rem .9rem .75rem;display:flex;flex-direction:column;}
@@ -1230,27 +1254,55 @@ let XVISITS=[];
    visit   — relationship visit only: still on the planner/trip/map, zero forecast. */
 const XV_TYPES={
   prebook:{label:'Pre-book',c:'#2563eb'},
-  visit:{label:'Visit',c:'#6b7280'}
+  visit:{label:'Visit',c:'#16a34a'}
 };
-/* every legacy tag collapses onto the two planning types */
-const XV_ALIAS={initial:'prebook',checkin:'visit',followup:'visit',event:'visit',issue:'visit',
-  training:'visit',other:'visit',openhouse:'visit',demo:'visit',delivery:'visit',service:'visit',
-  sales:'visit',general:'visit'};
-function xvTypeKey(t){ return XV_TYPES[t]?t:(XV_ALIAS[t]||'visit'); }
-/* planning type of the dealer's INITIAL visit (XVISITS carry their own .type) */
+function xvTypeKey(t){ return XV_TYPES[t]?t:'visit'; }
+/* planning type of the dealer's INITIAL card (additional cards carry their own
+   .type). A card's type is fixed at creation — there is no switching UI. */
 let PTYPE={};
 function vType(id){ return PTYPE[id]==='visit'?'visit':'prebook'; }
-/* forecast contribution: a "visit"-type initial visit carries zero dollars/loads */
-function fcB(d){ return vType(d.id)==='visit'?0:(+d.booking||0); }
-function fcL(d){ return vType(d.id)==='visit'?0:(+d.loads||0); }
+/* one-time safe normalization of legacy saved data (old tag set, old durations).
+   Runs after every local/cloud load; never exposed in the UI. */
+function normalizeVisitData(){
+  XVISITS.forEach(function(x){
+    x.type=(x.type==='prebook'||x.type==='initial')?'prebook':'visit';
+    var n=normDur(x.dur); x.dur=(n==null?60:n);
+    if(x.notes==null) x.notes='';
+  });
+  Object.keys(PTYPE).forEach(function(k){ if(PTYPE[k]!=='visit') delete PTYPE[k]; });
+  Object.keys(DUR).forEach(function(k){ var n=normDur(DUR[k]); if(n==null) delete DUR[k]; else DUR[k]=n; });
+}
+/* ============ FORECAST OWNERSHIP ============
+   Dollars and loads belong to the DEALER, deduplicated by stable dealer id —
+   never to a particular card. A dealer counts once, in full, if they have at
+   least one scheduled Pre-book card (initial or additional, any week, or
+   remote). Visit cards contribute nothing. For weekly rollups the dealer's
+   value is shown once, in their earliest pre-book week. */
+function pbCardsOf(id){
+  var out=[];
+  if((typeof ASSIGN[id]==='number'||ASSIGN[id]==='remote') && vType(id)==='prebook')
+    out.push({wk:(typeof ASSIGN[id]==='number'?ASSIGN[id]:'remote'), initial:true, done:!!APPT[id]});
+  XVISITS.forEach(function(x){ if(x.dealer===id && x.type!=='visit' && typeof x.wk==='number') out.push({wk:x.wk, xv:x, done:!!x.done}); });
+  return out;
+}
+function hasPB(id){ return pbCardsOf(id).length>0; }
+function pbConfirmed(id){ return pbCardsOf(id).some(function(c){return c.done;}); }
+/* weekly attribution: earliest numeric pre-book week, else 'remote' */
+function pbWeek(id){
+  var cs=pbCardsOf(id); if(!cs.length) return null;
+  var ws=cs.map(function(c){return c.wk;}).filter(function(w){return typeof w==='number';});
+  return ws.length?Math.min.apply(null,ws):'remote';
+}
+function fcB(d){ return hasPB(d.id)?(+d.booking||0):0; }
+function fcL(d){ return hasPB(d.id)?(+d.loads||0):0; }
+function fbWk(d,wk){ return pbWeek(d.id)===wk?fcB(d):0; }
+function flWk(d,wk){ return pbWeek(d.id)===wk?fcL(d):0; }
 const sumFB=a=>a.reduce((s,d)=>s+fcB(d),0);
 const sumFL=a=>a.reduce((s,d)=>s+fcL(d),0);
-/* compact segmented control — fits inside the visit card without adding height */
-function ptSeg(cur,attr,val){
-  return '<span class="pseg">'
-    +'<button class="psg'+(cur!=='visit'?' on':'')+'" '+attr+'="'+val+'|prebook">Pre-book</button>'
-    +'<button class="psg'+(cur==='visit'?' on':'')+'" '+attr+'="'+val+'|visit">Visit</button>'
-    +'</span>';
+/* week rollup over UNIQUE dealers in a territory (never over cards) */
+function wkForecast(t,wk){
+  var b=0,l=0; dealersIn(t).forEach(function(d){ b+=fbWk(d,wk); l+=flWk(d,wk); });
+  return {b:b,l:l};
 }
 /* ---- Centralized currency + 2027 target engine ----
    USA/UK/Exports: $75,000 USD per load. Canada: $85,000 CAD per load,
@@ -1282,8 +1334,8 @@ function xvWhen(x){
 /* every scheduled visit for a dealer (initial + additional), earliest first */
 function xvAll(id){
   var out=[];
-  if(typeof ASSIGN[id]==='number') out.push({wk:ASSIGN[id],day:DAY[id],time:TIME[id]||'',type:'initial',done:!!APPT[id],primary:true});
-  else if(ASSIGN[id]==='remote') out.push({wk:null,day:null,time:'',type:'initial',done:!!APPT[id],primary:true,remote:true});
+  if(typeof ASSIGN[id]==='number') out.push({wk:ASSIGN[id],day:DAY[id],time:TIME[id]||'',type:vType(id),done:!!APPT[id],primary:true});
+  else if(ASSIGN[id]==='remote') out.push({wk:null,day:null,time:'',type:vType(id),done:!!APPT[id],primary:true,remote:true});
   xvFor(id).forEach(function(x){ out.push(x); });
   out.sort(function(a,b){ return ((a.wk==null?99:a.wk)-(b.wk==null?99:b.wk))||((a.day==null?9:a.day)-(b.day==null?9:b.day))||String(a.time||'99').localeCompare(String(b.time||'99')); });
   return out;
@@ -1300,17 +1352,6 @@ function xvTaskList(key,id){
   var x=XVISITS.filter(function(v){return v.id===key;})[0]; if(!x) return null;
   x.tasks=x.tasks||[]; return x.tasks;
 }
-/* deleting a visit never silently loses its tasks: they move to dealer level */
-function xvDelete(xid){
-  var x=XVISITS.filter(function(v){return v.id===xid;})[0]; if(!x) return false;
-  var n=(x.tasks||[]).length;
-  var msg=n?('Remove this visit? Its '+n+' task'+(n>1?'s':'')+' will be moved to dealer-level tasks. The dealer and all other visits are kept.')
-           :'Remove this visit? The dealer and all other visits are kept.';
-  if(!confirm(msg)) return false;
-  if(n){ var s=STOPX[x.dealer]=STOPX[x.dealer]||{}; s.tasks=(s.tasks||[]).concat(x.tasks); }
-  XVISITS=XVISITS.filter(function(v){return v.id!==xid;});
-  savePlan(); return true;
-}
 function xvNextLabel(d){
   var c=xvAll(d.id).filter(function(v){ return !v.done && v.wk!=null; })[0]||xvAll(d.id).filter(function(v){return v.wk!=null;})[0];
   if(!c) return '—';
@@ -1319,7 +1360,8 @@ function xvNextLabel(d){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}})();
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}
+normalizeVisitData();})();
 function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
@@ -1445,47 +1487,49 @@ function ringSVG(pct,color){
     +'</svg><div class="xringpct">'+Math.round(pct)+'%</div></div>';
 }
 function renderCards(){
-  /* Executive summary — three visual cards, minimal text.
-     Sourced from the same Salesforce-merged dealer list as the Master Sheet. */
+  /* Executive summary — three visual cards, minimal text. All counts are
+     UNIQUE DEALERS (stable dealer id); cards are never counted. Visit-only
+     dealers contribute nothing and stay Unplanned. */
   const _md=planningUniverse().filter(function(d){return d.areaPlanning!==false;});
   const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
   var tl=function(d){return t27Loads(d)||(+d.loads||0);};
-  var ftl=function(d){return vType(d.id)==='visit'?0:tl(d);};
-  /* --- Card 1: 2027 Target — confirmed / planned / remaining --- */
+  /* --- Card 1: 2027 Target — confirmed / planned / remaining ($ and loads) --- */
   const target=sumB(ds);
   const targetLoads=ds.reduce(function(s,d){return s+tl(d);},0);
-  const sched=ds.filter(function(d){return ASSIGN[d.id]!=='pool';});
-  const conf=sched.filter(function(d){return APPT[d.id];});
-  const plan=sched.filter(function(d){return !APPT[d.id];});
-  const confB=sumFB(conf), planB=sumFB(plan);
-  const confL=conf.reduce(function(s,d){return s+ftl(d);},0);
-  const planL=plan.reduce(function(s,d){return s+ftl(d);},0);
+  const pbDs=ds.filter(function(d){return hasPB(d.id);});          /* >=1 Pre-book card */
+  const conf=pbDs.filter(function(d){return pbConfirmed(d.id);});  /* ...and confirmed  */
+  const plan=pbDs.filter(function(d){return !pbConfirmed(d.id);});
+  const confB=sumB(conf), planB=sumB(plan);
+  const confL=conf.reduce(function(s,d){return s+tl(d);},0);
+  const planL=plan.reduce(function(s,d){return s+tl(d);},0);
   const remB=Math.max(0,target-confB-planB), remL=Math.max(0,targetLoads-confL-planL);
-  const cPct=target?confB/target*100:0, pPct=target?planB/target*100:0;
+  const overB=Math.max(0,confB+planB-target);
+  const base=Math.max(target,confB+planB)||1;                      /* over-target never hides */
+  const cPct=confB/base*100, pPct=planB/base*100;
   var seg=function(cls,lbl,b,l){return '<div class="xls '+cls+'"><span class="xld"></span><div class="xlt"><span class="xll">'+lbl+'</span><b>'+fmtUSDk(b)+'</b><span class="xlk">'+Math.round(l)+' loads</span></div></div>';};
   var card1='<div class="xc xc-target">'
     +'<div class="xch">2027 Target</div>'
-    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads</span></div>'
-    +'<div class="xbar"><i class="c" style="width:'+Math.min(100,cPct).toFixed(1)+'%"></i><i class="p" style="width:'+Math.min(100-Math.min(100,cPct),pPct).toFixed(1)+'%"></i></div>'
+    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads</span>'
+      +(overB>0?('<span class="xover">+'+fmtUSDk(overB)+' over target</span>'):'')+'</div>'
+    +'<div class="xbar"><i class="c" style="width:'+cPct.toFixed(1)+'%"></i><i class="p" style="width:'+pPct.toFixed(1)+'%"></i></div>'
     +'<div class="xleg">'+seg('c','Confirmed',confB,confL)+seg('p','Planned',planB,planL)+seg('r','Remaining',remB,remL)+'</div>'
     +'</div>';
-  /* --- Card 2: Planning Progress — dealers scheduled vs still in the library --- */
-  var hasVisit=function(d){return ASSIGN[d.id]!=='pool' || xvFor(d.id).length>0;};
-  var nSched=ds.filter(hasVisit).length;
-  var sPct=ds.length?nSched/ds.length*100:0;
+  /* --- Card 2: Planning Progress — unique dealers with >=1 Pre-book card.
+         A dealer scheduled only as a Visit stays Unplanned. --- */
+  var sPct=ds.length?pbDs.length/ds.length*100:0;
   var card2='<div class="xc">'
     +'<div class="xch">Planning Progress</div>'
     +'<div class="xcb">'+ringSVG(sPct,'#2563eb')
-    +'<div class="xstats"><div class="xs"><b>'+Math.round(sPct)+'%</b><span>Scheduled</span></div>'
-    +'<div class="xs muted"><b>'+Math.round(100-sPct)+'%</b><span>Unscheduled</span></div></div></div>'
+    +'<div class="xstats"><div class="xs"><b>'+Math.round(sPct)+'%</b><span>Planned</span></div>'
+    +'<div class="xs muted"><b>'+Math.round(100-sPct)+'%</b><span>Unplanned</span></div></div></div>'
     +'</div>';
-  /* --- Card 3: Confirmation Progress — dealer confirmations on scheduled visits --- */
-  var cfPct=sched.length?conf.length/sched.length*100:0;
+  /* --- Card 3: Confirmation Progress — unique pre-book dealers, confirmed vs not --- */
+  var cfPct=pbDs.length?conf.length/pbDs.length*100:0;
   var card3='<div class="xc">'
     +'<div class="xch">Confirmation Progress</div>'
     +'<div class="xcb">'+ringSVG(cfPct,'#16a34a')
     +'<div class="xstats"><div class="xs"><b>'+Math.round(cfPct)+'%</b><span>Confirmed</span></div>'
-    +'<div class="xs muted"><b>'+Math.round(100-cfPct)+'%</b><span>Pending</span></div></div></div>'
+    +'<div class="xs muted"><b>'+Math.round(100-cfPct)+'%</b><span>Not Confirmed</span></div></div></div>'
     +'</div>';
   document.getElementById("cards").innerHTML=card1+card2+card3;
 }
@@ -1496,7 +1540,7 @@ function dealerCard(d){
   return `<div class="dcard" data-drag="1" data-id="pool:${d.id}">
     <div class="dn">${d.name}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
-    <div class="db">${d.loads} loads<button class="dadd" data-schedule="${d.id}" title="Add a visit without dragging">+ Add visit</button></div></div>`;
+    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd" data-mk="${d.id}|prebook" title="Schedule a Pre-book (counts in forecast)">+ Pre-book</button><button class="dadd dvis" data-mk="${d.id}|visit" title="Schedule a relationship Visit (no forecast impact)">+ Visit</button></span></div></div>`;
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
@@ -1521,22 +1565,21 @@ function renderPlanner(){
   else { body=pool.map(dealerCard).join(''); }
   document.getElementById("poolBody").innerHTML=body;
   const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
-  var schd=dealersIn(terr).filter(function(d){return ASSIGN[d.id]!=='pool';});
-  var uw={}; schd.forEach(function(d){ if(typeof ASSIGN[d.id]==='number') uw[ASSIGN[d.id]]=1; });
   /* area goal rolls up from the Master Sheet 2027 targets; progress is what's
      actually scheduled into weeks against that rolled-up goal. */
   var allT=dealersIn(terr);
   var tGoal=allT.reduce(function(s,d){return s+(+d.booking||0);},0);   /* Master Sheet rollup */
   var tLoads=allT.reduce(function(s,d){return s+t27Loads(d);},0);
-  var tPlan=sumFB(schd);                                               /* scheduled into weeks (pre-book only) */
+  var tPlan=sumFB(allT);                            /* unique dealers with >=1 Pre-book card */
+  var pbDs=allT.filter(function(d){return hasPB(d.id);});
   var tPct=tGoal?Math.round(tPlan/tGoal*100):null;
   document.getElementById("planSummary").innerHTML=
     '<div class="ps"><div class="pl">Area Goal (2027)</div><div class="pv">'+(tGoal?fmtUSDk(tGoal):'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Target Loads</div><div class="pv">'+(tLoads||sumL(allT))+'</div></div>'
-    +'<div class="ps"><div class="pl">Scheduled</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
+    +'<div class="ps"><div class="pl">Pre-booked</div><div class="pv">'+fmtUSDk(tPlan)+'</div></div>'
     +'<div class="ps"><div class="pl">Goal %</div><div class="pv">'+(tPct!=null?tPct+'%':'—')+'</div></div>'
     +'<div class="ps"><div class="pl">Gap</div><div class="pv">'+(tGoal?( (tGoal-tPlan)>0?fmtUSDk(tGoal-tPlan):'+'+fmtUSDk(tPlan-tGoal) ):'—')+'</div></div>'
-    +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+schd.filter(function(d){return APPT[d.id];}).length+'/'+schd.length+'</div></div>';
+    +'<div class="ps"><div class="pl">Confirmed</div><div class="pv">'+pbDs.filter(function(d){return pbConfirmed(d.id);}).length+'/'+pbDs.length+'</div></div>';
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -1891,33 +1934,123 @@ const AIRPORTS=[
   ['CHC','Christchurch Intl','Christchurch',-43.4894,172.5320,'NZCH','New Zealand'],
   ['NAN','Nadi Intl','Nadi',-17.7554,177.4434,'NFFN','Fiji']
 ];
+/* ============ WORLDWIDE AIRPORT DIRECTORY ============
+   Full dataset: OurAirports (public domain, ~80k records — commercial,
+   regional, municipal and ICAO-only airfields worldwide), fetched once as
+   CSV, filtered to real airports, cached in IndexedDB, searched in memory.
+   The curated list above is only the instant seed while the directory loads
+   and the offline fallback. Row shape everywhere:
+   [iata, name, city, lat, lon, icao, region, hayLower, rankWeight]        */
+var AP_ROWS=null, AP_STATE='idle';   /* idle | loading | ready | failed */
+var _AP_URLS=['https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv',
+              'https://davidmegginson.github.io/ourairports-data/airports.csv'];
+function apIdb(cb){
+  try{
+    var rq=indexedDB.open('aqAirports',1);
+    rq.onupgradeneeded=function(){ rq.result.createObjectStore('kv'); };
+    rq.onsuccess=function(){ cb(rq.result); };
+    rq.onerror=function(){ cb(null); };
+  }catch(e){ cb(null); }
+}
+function apIdbGet(cb){ apIdb(function(db){ if(!db){cb(null);return;}
+  try{ var r=db.transaction('kv').objectStore('kv').get('v2');
+    r.onsuccess=function(){ cb(r.result||null); }; r.onerror=function(){ cb(null); };
+  }catch(e){ cb(null); } }); }
+function apIdbPut(val){ apIdb(function(db){ if(!db)return;
+  try{ db.transaction('kv','readwrite').objectStore('kv').put(val,'v2'); }catch(e){} }); }
+/* ISO-3166 → common country name, so "fiji" or "germany" match in search */
+var ISO_COUNTRY={AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AS:'American Samoa',AD:'Andorra',AO:'Angola',AI:'Anguilla',AQ:'Antarctica',AG:'Antigua and Barbuda',AR:'Argentina',AM:'Armenia',AW:'Aruba',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BS:'Bahamas',BH:'Bahrain',BD:'Bangladesh',BB:'Barbados',BY:'Belarus',BE:'Belgium',BZ:'Belize',BJ:'Benin',BM:'Bermuda',BT:'Bhutan',BO:'Bolivia',BA:'Bosnia and Herzegovina',BW:'Botswana',BR:'Brazil',VG:'British Virgin Islands',BN:'Brunei',BG:'Bulgaria',BF:'Burkina Faso',BI:'Burundi',KH:'Cambodia',CM:'Cameroon',CA:'Canada',CV:'Cape Verde',KY:'Cayman Islands',CF:'Central African Republic',TD:'Chad',CL:'Chile',CN:'China',CO:'Colombia',KM:'Comoros',CG:'Congo',CD:'DR Congo',CK:'Cook Islands',CR:'Costa Rica',CI:'Ivory Coast',HR:'Croatia',CU:'Cuba',CW:'Curacao',CY:'Cyprus',CZ:'Czechia',DK:'Denmark',DJ:'Djibouti',DM:'Dominica',DO:'Dominican Republic',EC:'Ecuador',EG:'Egypt',SV:'El Salvador',GQ:'Equatorial Guinea',ER:'Eritrea',EE:'Estonia',SZ:'Eswatini',ET:'Ethiopia',FK:'Falkland Islands',FO:'Faroe Islands',FJ:'Fiji',FI:'Finland',FR:'France',GF:'French Guiana',PF:'French Polynesia',GA:'Gabon',GM:'Gambia',GE:'Georgia',DE:'Germany',GH:'Ghana',GI:'Gibraltar',GR:'Greece',GL:'Greenland',GD:'Grenada',GP:'Guadeloupe',GU:'Guam',GT:'Guatemala',GG:'Guernsey',GN:'Guinea',GW:'Guinea-Bissau',GY:'Guyana',HT:'Haiti',HN:'Honduras',HK:'Hong Kong',HU:'Hungary',IS:'Iceland',IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IM:'Isle of Man',IL:'Israel',IT:'Italy',JM:'Jamaica',JP:'Japan',JE:'Jersey',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',KI:'Kiribati',KW:'Kuwait',KG:'Kyrgyzstan',LA:'Laos',LV:'Latvia',LB:'Lebanon',LS:'Lesotho',LR:'Liberia',LY:'Libya',LI:'Liechtenstein',LT:'Lithuania',LU:'Luxembourg',MO:'Macau',MG:'Madagascar',MW:'Malawi',MY:'Malaysia',MV:'Maldives',ML:'Mali',MT:'Malta',MH:'Marshall Islands',MQ:'Martinique',MR:'Mauritania',MU:'Mauritius',MX:'Mexico',FM:'Micronesia',MD:'Moldova',MC:'Monaco',MN:'Mongolia',ME:'Montenegro',MS:'Montserrat',MA:'Morocco',MZ:'Mozambique',MM:'Myanmar',NA:'Namibia',NR:'Nauru',NP:'Nepal',NL:'Netherlands',NC:'New Caledonia',NZ:'New Zealand',NI:'Nicaragua',NE:'Niger',NG:'Nigeria',KP:'North Korea',MK:'North Macedonia',NO:'Norway',OM:'Oman',PK:'Pakistan',PW:'Palau',PS:'Palestine',PA:'Panama',PG:'Papua New Guinea',PY:'Paraguay',PE:'Peru',PH:'Philippines',PL:'Poland',PT:'Portugal',PR:'Puerto Rico',QA:'Qatar',RE:'Reunion',RO:'Romania',RU:'Russia',RW:'Rwanda',KN:'Saint Kitts and Nevis',LC:'Saint Lucia',VC:'Saint Vincent',WS:'Samoa',SM:'San Marino',ST:'Sao Tome',SA:'Saudi Arabia',SN:'Senegal',RS:'Serbia',SC:'Seychelles',SL:'Sierra Leone',SG:'Singapore',SX:'Sint Maarten',SK:'Slovakia',SI:'Slovenia',SB:'Solomon Islands',SO:'Somalia',ZA:'South Africa',KR:'South Korea',SS:'South Sudan',ES:'Spain',LK:'Sri Lanka',SD:'Sudan',SR:'Suriname',SE:'Sweden',CH:'Switzerland',SY:'Syria',TW:'Taiwan',TJ:'Tajikistan',TZ:'Tanzania',TH:'Thailand',TL:'Timor-Leste',TG:'Togo',TO:'Tonga',TT:'Trinidad and Tobago',TN:'Tunisia',TR:'Turkiye',TM:'Turkmenistan',TC:'Turks and Caicos',TV:'Tuvalu',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',GB:'United Kingdom',US:'United States',UY:'Uruguay',UZ:'Uzbekistan',VU:'Vanuatu',VE:'Venezuela',VN:'Vietnam',VI:'US Virgin Islands',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'};
+function parseCSV(text){ /* minimal RFC-4180 state machine */
+  var rows=[],row=[],f='',q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(f); f=''; }
+    else if(c==='\n'){ row.push(f); f=''; rows.push(row); row=[]; }
+    else if(c!=='\r') f+=c;
+  }
+  if(f!==''||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function apBuildRows(csv){
+  /* OurAirports columns: 1 ident, 2 type, 3 name, 4 lat, 5 lon,
+     8 iso_country, 9 iso_region, 10 municipality, 11 scheduled_service,
+     12 gps_code, 13 iata_code */
+  var out=[];
+  for(var i=1;i<csv.length;i++){
+    var r=csv[i]; if(!r||r.length<14) continue;
+    var ty=r[2];
+    if(ty!=='large_airport'&&ty!=='medium_airport'&&ty!=='small_airport') continue;
+    var lat=parseFloat(r[4]), lon=parseFloat(r[5]);
+    if(!isFinite(lat)||!isFinite(lon)) continue;
+    var iata=(r[13]||'').toUpperCase();
+    var icao=((r[12]||r[1])||'').toUpperCase();
+    var name=r[3]||'', city=r[10]||'';
+    var ctry=ISO_COUNTRY[r[8]]||r[8]||'';
+    var region=((r[9]||'').replace(/^[A-Z]{2}-/,''))+(ctry?(', '+ctry):'');
+    var w=(ty==='large_airport'?30:(ty==='medium_airport'?15:0))+(r[11]==='yes'?12:0)+(iata?6:0);
+    out.push([iata,name,city,lat,lon,icao,region,
+      (iata+' '+icao+' '+name+' '+city+' '+region+' '+(r[8]||'')).toLowerCase(), w]);
+  }
+  return out;
+}
+function apEnsureDB(onReady){
+  if(AP_STATE==='ready'||AP_STATE==='loading') return;
+  AP_STATE='loading';
+  var done=function(rows){ AP_ROWS=rows; AP_STATE='ready'; try{ onReady&&onReady(); }catch(e){} };
+  apIdbGet(function(cached){
+    if(cached&&Array.isArray(cached.rows)&&cached.rows.length>1000
+       &&(Date.now()-(cached.t||0))<30*864e5){ done(cached.rows); return; }
+    var tryUrl=function(i){
+      if(i>=_AP_URLS.length){ AP_STATE='failed'; try{ onReady&&onReady(); }catch(e){} return; }
+      fetch(_AP_URLS[i]).then(function(r){ return r.ok?r.text():null; }).then(function(txt){
+        if(!txt){ tryUrl(i+1); return; }
+        var rows=apBuildRows(parseCSV(txt));
+        if(rows.length<1000){ tryUrl(i+1); return; }
+        apIdbPut({t:Date.now(),rows:rows});
+        done(rows);
+      }).catch(function(){ tryUrl(i+1); });
+    };
+    tryUrl(0);
+  });
+}
+function apSeedRows(){
+  if(!apSeedRows._c) apSeedRows._c=AIRPORTS.map(function(a){
+    return [a[0],a[1],a[2],a[3],a[4],a[5]||'',a[6]||'',
+      (a[0]+' '+(a[5]||'')+' '+a[1]+' '+a[2]+' '+(a[6]||'')).toLowerCase(), 20];
+  });
+  return apSeedRows._c;
+}
+function apRows(){ return (AP_STATE==='ready'&&AP_ROWS)?AP_ROWS:apSeedRows(); }
 function airportByCode(code){
-  code=(code||'').toUpperCase();
-  var a=AIRPORTS.filter(function(x){return x[0]===code||x[5]===code;})[0];
+  code=(code||'').toUpperCase(); if(!code) return null;
+  var rows=apRows(), a=null;
+  for(var i=0;i<rows.length;i++){ if(rows[i][0]===code||rows[i][5]===code){ a=rows[i]; break; } }
   return a?{code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''}:null;
 }
-/* intelligent airport search: every token must match code, ICAO, name, city or
-   region; exact/prefix code matches rank first. Pure in-memory scan — instant. */
+/* ranked typeahead: every token must match IATA, ICAO, name, city/municipality
+   or region/country; exact codes first, word-starts next, weighted by airport
+   size. Pure in-memory scan — instant even over the full worldwide directory. */
 function airportSearch(q){
   q=(q||'').trim().toLowerCase();
   if(!q) return [];
   var toks=q.split(/[\s,\-\/]+/).filter(Boolean);
   if(!toks.length) return [];
-  var scored=[];
-  for(var i=0;i<AIRPORTS.length;i++){
-    var a=AIRPORTS[i];
-    var code=a[0].toLowerCase(), icao=(a[5]||'').toLowerCase();
-    var name=a[1].toLowerCase(), city=a[2].toLowerCase(), region=(a[6]||'').toLowerCase();
-    var hay=code+' '+icao+' '+name+' '+city+' '+region;
-    var score=0, ok=true;
+  var rows=apRows(), scored=[];
+  for(var i=0;i<rows.length;i++){
+    var a=rows[i];
+    var code=a[0].toLowerCase(), icao=(a[5]||'').toLowerCase(), hay=a[7];
+    var score=a[8]||0, ok=true;
     for(var t=0;t<toks.length;t++){
       var tk=toks[t];
-      if(code===tk||icao===tk) score+=100;
-      else if(code.indexOf(tk)===0||icao.indexOf(tk)===0) score+=60;
-      else if(name.indexOf(tk)===0||city.indexOf(tk)===0) score+=45;
-      else { var ix=hay.indexOf(tk);
-        if(ix<0){ ok=false; break; }
-        score+=(ix===0||hay.charAt(ix-1)===' '||hay.charAt(ix-1)==='(')?25:8; }
+      if(code===tk||icao===tk){ score+=100; continue; }
+      var ix=hay.indexOf(tk);
+      if(ix<0){ ok=false; break; }
+      var atStart=(ix===0||hay.charAt(ix-1)===' '||hay.charAt(ix-1)==='(');
+      if(atStart&&(code.indexOf(tk)===0||icao.indexOf(tk)===0)) score+=55;
+      else if(atStart) score+=30;
+      else score+=6;
     }
     if(ok) scored.push([score,a]);
   }
@@ -1926,34 +2059,78 @@ function airportSearch(q){
     return {code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''};
   });
 }
+/* write a picked (or manually entered) airport onto a travel item */
+function setTravelAirport(id,ap){
+  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!ap) return;
+  it.airportCode=ap.code||ap.icao||'';
+  it.airportName=ap.name||'';
+  it.lat=(ap.lat!=null?+ap.lat:null); it.lon=(ap.lon!=null?+ap.lon:null);
+  it.address=[ap.city,ap.region].filter(Boolean).join(', ');
+  savePlan(); refreshPlanner();
+}
 /* ---- airport typeahead: one shared dropdown for every .ap-in input ----
    Delegated listeners, so re-rendered inputs need no re-wiring. Picking a
-   result writes through setTravelField (inputs with data-tv) or just fills
-   the input with the IATA code (mobile sheets). */
-var _apInput=null;
+   result writes the full airport (code, name, coordinates) onto the travel
+   item, or fills mobile-sheet inputs with the code. A manual-entry row covers
+   airfields the directory doesn't know. */
+var _apInput=null, _apResults=[];
 function apInit(){
   if(apInit.done) return; apInit.done=true;
   var box=document.createElement('div'); box.id='apDrop'; box.style.display='none';
   document.body.appendChild(box);
-  function hide(){ box.style.display='none'; box.innerHTML=''; _apInput=null; }
-  function pick(code){
-    var inp=_apInput; hide(); if(!inp) return;
-    if(inp.dataset.tv){ setTravelField(inp.dataset.tv,'airportCode',code); }
-    else { inp.value=code; inp.dispatchEvent(new Event('change',{bubbles:true})); }
+  function hide(){ box.style.display='none'; box.innerHTML=''; _apInput=null; _apResults=[]; }
+  function pick(i){
+    var inp=_apInput, ap=_apResults[i]; hide(); if(!inp||!ap) return;
+    if(inp.dataset.tv){ setTravelAirport(inp.dataset.tv,ap); }
+    else { inp.value=ap.code||ap.icao||''; inp.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+  function manualForm(){
+    var inp=_apInput; if(!inp) return;
+    box.innerHTML='<div class="apman">'
+      +'<div class="apmh">Manual airport / airfield</div>'
+      +'<input id="apm_name" placeholder="Airport or location name">'
+      +'<input id="apm_city" placeholder="City / municipality">'
+      +'<input id="apm_ctry" placeholder="Country or region">'
+      +'<div class="apmrow"><input id="apm_lat" placeholder="Latitude"><input id="apm_lon" placeholder="Longitude">'
+      +'<button id="apm_geo" title="Find coordinates from name + city">Locate</button></div>'
+      +'<button id="apm_save">Use this airport</button>'
+      +'</div>';
+    var g=function(k){ var el=box.querySelector('#apm_'+k); return el?el.value.trim():''; };
+    box.querySelector('#apm_geo').onclick=function(ev){ ev.preventDefault();
+      geocodeAddress([g('name'),g('city'),g('ctry')].filter(Boolean).join(', '),function(res){
+        if(!res){ cloudBadge('Location not found'); return; }
+        box.querySelector('#apm_lat').value=res.lat.toFixed(4);
+        box.querySelector('#apm_lon').value=res.lon.toFixed(4);
+      });
+    };
+    box.querySelector('#apm_save').onclick=function(ev){ ev.preventDefault();
+      var lat=parseFloat(g('lat')), lon=parseFloat(g('lon'));
+      if(!g('name')){ cloudBadge('Enter a name'); return; }
+      if(!isFinite(lat)||!isFinite(lon)){ cloudBadge('Coordinates needed — use Locate'); return; }
+      var ap={code:'',icao:'',name:g('name'),city:g('city'),region:g('ctry'),lat:lat,lon:lon};
+      var inp2=_apInput; hide();
+      if(inp2&&inp2.dataset.tv) setTravelAirport(inp2.dataset.tv,ap);
+    };
   }
   function show(inp){
-    var rs=airportSearch(inp.value);
-    if(!rs.length){ hide(); return; }
     _apInput=inp;
+    apEnsureDB(function(){ if(_apInput===inp) show(inp); });   /* lazy full-directory load */
+    var rs=airportSearch(inp.value);
+    _apResults=rs;
+    if(!rs.length&&!inp.value.trim()){ hide(); return; }
+    var status=(AP_STATE==='loading')?'<div class="apst">Loading worldwide airport directory…</div>'
+              :(AP_STATE==='failed')?'<div class="apst">Offline — searching the built-in list</div>':'';
     box.innerHTML=rs.map(function(a,i){
-      return '<div class="api'+(i===0?' sel':'')+'" data-code="'+a.code+'">'
-        +'<b>'+esc(a.code)+'</b><span class="apn">'+esc(a.name)+'</span>'
-        +'<span class="apc">'+esc(a.city)+(a.region?(' · '+esc(a.region)):'')+'</span></div>';
-    }).join('');
+      return '<div class="api'+(i===0?' sel':'')+'" data-i="'+i+'">'
+        +'<b>'+esc(a.code||a.icao)+'</b><span class="apn">'+esc(a.name)+'</span>'
+        +'<span class="apc">'+esc([a.code&&a.icao?a.icao:'',a.city,a.region].filter(Boolean).join(' · '))+'</span></div>';
+    }).join('')
+      +status
+      +(inp.dataset.tv?'<div class="api apmanlink" data-man="1">Can’t find it? Enter manually…</div>':'');
     var r=inp.getBoundingClientRect();
-    box.style.left=Math.round(Math.min(r.left,innerWidth-320))+'px';
+    box.style.left=Math.round(Math.min(r.left,innerWidth-330))+'px';
     box.style.top=Math.round(r.bottom+2)+'px';
-    box.style.minWidth=Math.max(240,Math.round(r.width))+'px';
+    box.style.minWidth=Math.max(260,Math.round(r.width))+'px';
     box.style.display='block';
   }
   document.addEventListener('input',function(e){
@@ -1966,18 +2143,21 @@ function apInit(){
   });
   document.addEventListener('keydown',function(e){
     if(!_apInput||e.target!==_apInput) return;
-    var items=box.querySelectorAll('.api'); if(!items.length) return;
+    var items=box.querySelectorAll('.api[data-i]'); if(!items.length) return;
     var idx=-1; items.forEach(function(x,i){ if(x.classList.contains('sel')) idx=i; });
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){
       e.preventDefault();
       var ni=(e.key==='ArrowDown')?Math.min(items.length-1,idx+1):Math.max(0,idx-1);
       items.forEach(function(x,i){ x.classList.toggle('sel',i===ni); });
-    } else if(e.key==='Enter'){ e.preventDefault(); pick(items[idx>=0?idx:0].dataset.code); }
+    } else if(e.key==='Enter'){ e.preventDefault(); pick(+(items[idx>=0?idx:0].dataset.i)); }
     else if(e.key==='Escape'){ hide(); }
   });
   document.addEventListener('pointerdown',function(e){
-    var item=e.target.closest&&e.target.closest('#apDrop .api');
-    if(item){ e.preventDefault(); pick(item.dataset.code); return; }
+    var man=e.target.closest&&e.target.closest('#apDrop [data-man]');
+    if(man){ e.preventDefault(); manualForm(); return; }
+    if(e.target.closest&&e.target.closest('#apDrop .apman')) return;   /* typing in the manual form */
+    var item=e.target.closest&&e.target.closest('#apDrop .api[data-i]');
+    if(item){ e.preventDefault(); pick(+item.dataset.i); return; }
     if(_apInput&&e.target!==_apInput&&!box.contains(e.target)) hide();
   },true);
   window.addEventListener('resize',function(){ if(_apInput) hide(); });
@@ -2075,7 +2255,7 @@ function itineraryFor(t,wk){
       items.push({kind:'dealer', id:d.id, type:'dealer', name:d.name,
         address:d.address||'', lat:d.lat, lon:d.lon,
         day:(DAY[d.id]==null?null:DAY[d.id]), time:TIME[d.id]||'',
-        located:(d.lat!=null&&d.lon!=null), revenue:fcB(d), loads:fcL(d),
+        located:(d.lat!=null&&d.lon!=null), revenue:fbWk(d,wk), loads:flWk(d,wk),
         status:(APPT[d.id]?'Confirmed':'Pending')});
     }
   });
@@ -2106,13 +2286,17 @@ function itineraryFor(t,wk){
   return items;
 }
 /* legs between consecutive LOCATED items; unlocated items break no legs, they're skipped */
+function sameSpot(a,b){ return a&&b&&a.lat!=null&&b.lat!=null
+  &&Math.abs(a.lat-b.lat)<0.0005&&Math.abs(a.lon-b.lon)<0.0005; }
 function legsFor(items){
   var pts=items.filter(function(i){return i.located;});
   var legs=[], totalMi=0;
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
-    /* between every pair of physical stops there is a travel segment:
-       airport→airport is a flight, anything else is a drive */
+    /* identical consecutive locations: no meaningless drive */
+    if(sameSpot(a,b)) continue;
+    /* between every pair of differing physical stops there is a travel
+       segment: airport→airport is a flight, anything else is a drive */
     var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
     if(fly){
       var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
@@ -2219,7 +2403,8 @@ function logiRowDetail(x){
 function weekCard(wk){
   var isk=wk===31, isRemote=wk==='remote';
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;}).sort(function(a,b){return b.booking-a.booking;});
-  var rev=sumFB(ds),loads=sumFL(ds),pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
+  var wf=wkForecast(terr,wk);
+  var rev=wf.b,loads=wf.l,pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
   var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
   var dates=isRemote?'book remotely':(WEEKDATES[wk]+', 2026');
@@ -2227,15 +2412,15 @@ function weekCard(wk){
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
   var cards;
-  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return cardHTML(d,wk);}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag a dealer here, or use + Add visit in the library</div>'; }
-  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag a dealer here, or use + Add visit in the library</div>'; }
+  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag a dealer here, or use + Pre-book in the library</div>'; }
+  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag a dealer here, or use + Pre-book / + Visit in the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
     var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
     var nodl=wlogi.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'l',x:x};});
     var nodx=xw.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'x',x:x};});
     var nod=nodv.concat(nodl).concat(nodx);
-    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+nod.map(function(e){return e.k==='v'?cardHTML(e.d,wk):(e.k==='x'?xvCard(e.x):travelCard(e.x,wk));}).join(''); }
+    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+nod.map(function(e){return e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk));}).join(''); }
     labs.forEach(function(l,i){
       var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
       var el=wlogi.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',x:x,t:x.time||'99'};});
@@ -2243,7 +2428,7 @@ function weekCard(wk){
       var entries=ev.concat(el).concat(ex).sort(function(a,b){return a.t.localeCompare(b.t);});
       cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
       if(!entries.length){ cards+='<div class="dcempty">—</div>'; return; }
-      entries.forEach(function(e,j){ cards+=(e.k==='v'?cardHTML(e.d,wk):(e.k==='x'?xvCard(e.x):travelCard(e.x,wk)));
+      entries.forEach(function(e,j){ cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk)));
         if(wk!==31 && j<entries.length-1 && e.k==='v' && entries[j+1].k==='v'){ cards+=travelRow(e.d,entries[j+1].d,md); } });
     });
   }
@@ -2262,99 +2447,132 @@ function weekCard(wk){
     +'</div>'
     +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
 }
-function cardHTML(d,wk){
-  d=sfMasterMerge(d); /* territory tab: show Salesforce-corrected fields; id/booking/loads/scheduling unchanged */
-  var ok=!!APPT[d.id];
-  var labs=(typeof wk==='number')?dayLabels(wk):[];
-  var opts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(DAY[d.id]===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
-  var daysel=(wk==='remote')?'':'<select class="cday" data-day="'+d.id+'">'+opts+'</select>';
-  var dur=DUR[d.id]||(wk===31?60:90);
-  var durOpts=[30,45,60,90,120,150,180,210,240].map(function(m){return '<option value="'+m+'"'+(dur===m?' selected':'')+'>'+fmtDur(m)+'</option>';}).join('');
-  var frame=TIME[d.id]?('<div class="kc-frame">'+t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],dur))+' · '+fmtDur(dur)+'</div>'):'';
-  var ctl=(wk==='remote')?'':'<div class="kc-ctl">'+daysel+'<input class="ctime" type="time" data-time="'+d.id+'" value="'+(TIME[d.id]||'')+'"><select class="cdur" data-dur="'+d.id+'">'+durOpts+'</select></div>'+frame;
-  var pt=vType(d.id);
-  return '<div class="kcard '+(ok?'confirmed':'planned')+(pt==='visit'?' novalue':'')+'" data-drag="1" data-id="'+d.id+'">'
-    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div><div class="kc-amt">'+(pt==='visit'?'—':fmtUSD(d.booking))+'</div></div>'
-    +'<div class="kc-bot">'+ptSeg(pt,'data-pt',d.id)+(ok?'<span class="kbadge won">Confirmed</span>':'')+'<button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
-    +ctl+'</div>';
+/* ============ THE dealer scheduling card ============
+   ONE component for every Pre-book and every Visit, everywhere. The badge
+   (blue PRE-BOOK / green VISIT) is the first visual signal; everything else
+   is identical. All fields edit inline on the card — there is no edit modal.
+   A card's type is chosen at creation and never changes.
+   ref: 'i:<dealerId>' = the dealer's initial card (ASSIGN/DAY/TIME/DUR/STOPX)
+        'x:<visitId>'  = an additional card (its XVISITS record)            */
+var VBADGE={
+  prebook:{label:'PRE-BOOK',cls:'pre',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="9" height="8" rx="1"/><path d="M1.5 5h9M4 1v2.5M8 1v2.5"/></svg>'},
+  visit  :{label:'VISIT',cls:'vis',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 11S2 7.4 2 4.8A4 4 0 0 1 10 4.8C10 7.4 6 11 6 11z"/><circle cx="6" cy="4.8" r="1.3"/></svg>'}
+};
+/* flexible duration: "45m", "1h 30m", "8h", "2:30", "36h", bare numbers
+   (≤12 = hours, otherwise minutes). Normalized to whole minutes, min 15. */
+function parseDur(s){
+  s=String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+  if(!s) return null;
+  var m;
+  if((m=s.match(/^(\d+(?:\.\d+)?) ?h(?:ours?|rs?)? ?(?:(\d+) ?m(?:ins?)?)?$/))) return Math.round(parseFloat(m[1])*60+(m[2]?+m[2]:0));
+  if((m=s.match(/^(\d+(?:\.\d+)?) ?m(?:ins?|inutes?)?$/))) return Math.round(parseFloat(m[1]));
+  if((m=s.match(/^(\d+):([0-5]\d)$/))) return (+m[1])*60+(+m[2]);
+  if((m=s.match(/^(\d+(?:\.\d+)?)$/))){ var n=parseFloat(m[1]); return Math.round(n<=12?n*60:n); }
+  if((m=s.match(/^(\d+(?:\.\d+)?) ?d(?:ays?)?$/))) return Math.round(parseFloat(m[1])*1440);
+  return null;
 }
-/* The ALL tab is the company-wide version of a territory page: the same
-   Overview | Map seg, the same week-card language, one shared filter state
-   (week + areas) across both tabs. Read-only executive planning view. */
-/* ---- additional-visit card (read-light: edit via the sheet) ---- */
-/* visit box: dropped instantly, edited IN PLACE — tag, day and time inline;
-   ✎ opens the full sheet only when duration/notes are needed. */
-function xvCard(x){
-  var d=byId[x.dealer]||uniById(x.dealer); if(!d) return '';
-  var tk=xvTypeKey(x.type), ty=XV_TYPES[tk];
-  var labs=(typeof x.wk==='number')?dayLabels(x.wk):[];
-  var dayOpts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(x.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
-  var frame=x.time?('<div class="kc-frame">'+t12s(x.time)+'–'+t12s(addMin(x.time,x.dur||60))+' · '+fmtDur(x.dur||60)+'</div>'):'';
-  return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'" data-drag="1" data-id="xv:'+x.id+'">'
-    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div>'
-    +'<div style="display:flex;gap:4px;flex:0 0 auto"><button class="cx" data-xvedit="'+x.id+'" title="Duration &amp; notes">✎</button><button class="cx" data-xvdel="'+x.id+'" title="Remove this visit only — the dealer is kept">✕</button></div></div>'
-    +'<div class="kc-ctl">'
-      +ptSeg(tk,'data-ptx',x.id)
-      +'<select class="xvf" data-xv="'+x.id+'" data-f="day">'+dayOpts+'</select>'
-      +'<input class="xvf" type="time" data-xv="'+x.id+'" data-f="time" value="'+esc(x.time||'')+'">'
-    +'</div>'+frame
-    +(x.notes?('<div class="kc-frame">'+esc(x.notes)+'</div>'):'')
+function normDur(mins){ mins=Math.round(+mins); if(!isFinite(mins)||mins<=0) return null; return Math.max(15,mins); }
+/* normalized view of one card */
+function dvViewInitial(d,wk){
+  d=sfMasterMerge(d);
+  return {ref:'i:'+d.id, dragId:d.id, dealer:d, name:d.name,
+    type:vType(d.id), wk:wk, day:DAY[d.id], time:TIME[d.id]||'',
+    dur:DUR[d.id]||(wk===31?60:90), notes:(STOPX[d.id]&&STOPX[d.id].notes)||'',
+    done:!!APPT[d.id], remote:(wk==='remote')};
+}
+function dvViewX(x){
+  var d=byId[x.dealer]||uniById(x.dealer); if(!d) return null;
+  return {ref:'x:'+x.id, dragId:'xv:'+x.id, dealer:d, name:d.name,
+    type:(x.type==='visit'?'visit':'prebook'), wk:x.wk, day:x.day, time:x.time||'',
+    dur:x.dur||60, notes:x.notes||'', done:!!x.done, remote:false};
+}
+function dvCard(v){
+  if(!v) return '';
+  var B=VBADGE[v.type]||VBADGE.prebook;
+  var labs=(typeof v.wk==='number')?dayLabels(v.wk):[];
+  var wkOpts=[31].concat(FIELD_NUMS).map(function(w){
+    return '<option value="'+w+'"'+(v.wk===w?' selected':'')+'>Wk '+w+'</option>';}).join('')
+    +(v.ref.slice(0,2)==='i:'?('<option value="remote"'+(v.remote?' selected':'')+'>Remote</option>'):'');
+  var dayOpts='<option value="">— day —</option>'+labs.map(function(l,i){
+    return '<option value="'+i+'"'+(v.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
+  var da='data-vref="'+v.ref+'"';
+  var days=v.dur>=1440?Math.floor(v.dur/1440):0;
+  var frame=(v.time&&!v.remote)?('<div class="kc-frame">'+t12s(v.time)+'–'+t12s(addMin(v.time,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
+  var ctl=v.remote
+    ? '<div class="kc-ctl"><select class="vf" '+da+' data-f="wk">'+wkOpts+'</select></div>'
+    : '<div class="kc-ctl">'
+      +'<select class="vf" '+da+' data-f="wk" title="Week">'+wkOpts+'</select>'
+      +'<select class="vf" '+da+' data-f="day" title="Day">'+dayOpts+'</select>'
+      +'<input class="vf vtime" type="time" '+da+' data-f="time" title="Start time" value="'+esc(v.time)+'">'
+      +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
+    +'</div>';
+  return '<div class="kcard vc '+(v.done?'confirmed':'planned')+'" data-drag="1" data-id="'+v.dragId+'">'
+    +'<div class="kc-top">'
+      +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
+      +'<div class="kc-name">'+esc(v.name)+'</div>'
+      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Confirmed — click to unconfirm':'Mark confirmed')+'">✓</button>'
+      +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
+    +'</div>'
+    +ctl+frame
+    +'<input class="vnote" '+da+' data-f="notes" placeholder="Notes" value="'+esc(v.notes)+'">'
     +'</div>';
 }
-/* schedule / edit an additional visit. Every visit record is independent:
-   saving or deleting one never touches the dealer or any other visit. */
-function xvSheet(dealerId, x){
-  var d=byId[dealerId]||uniById(dealerId); if(!d) return;
-  var isNew=!x;
-  x=x||{id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
-    terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
-    wk:(typeof ASSIGN[dealerId]==='number'?ASSIGN[dealerId]:FIELD_NUMS[0]),
-    day:null, time:'', dur:60, type:'prebook', notes:'', done:false};
-  var weeks=[31].concat(FIELD_NUMS);
-  function dayOpts(wk,sel){ return '<option value="">— day —</option>'+dayLabels(wk).map(function(l,i){return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join(''); }
-  var fld=function(lb,inner){ return '<label style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-2)">'+lb+inner+'</label>'; };
-  var inp='style="border:1px solid var(--line);border-radius:6px;padding:7px 8px;font:400 12.5px \'Open Sans\',Arial,sans-serif;color:#111"';
-  var wrap=document.createElement('div'); wrap.className='modalbg';
-  wrap.innerHTML='<div class="modalbox" style="width:min(430px,94vw)"><div class="mh"><div class="mt">'+(isNew?'Schedule Another Visit':'Edit Visit')+'</div><button class="mclose">×</button></div>'
-    +'<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:10px">'
-    +'<div style="font-size:13px;font-weight:700">'+esc(d.name)+' <span style="color:var(--muted);font-weight:400">· '+esc(d.loc||'')+' · '+esc(d.territory||'')+'</span></div>'
-    +fld('Planning type','<select id="xv_type" '+inp+'>'+Object.keys(XV_TYPES).map(function(k){return '<option value="'+k+'"'+(xvTypeKey(x.type)===k?' selected':'')+'>'+XV_TYPES[k].label+'</option>';}).join('')+'</select>')
-    +'<div style="display:flex;gap:8px">'
-      +fld('Week','<select id="xv_wk" '+inp+'>'+weeks.map(function(w){return '<option value="'+w+'"'+(x.wk===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+'</option>';}).join('')+'</select>')
-      +fld('Day','<select id="xv_day" '+inp+'>'+dayOpts(x.wk,x.day)+'</select>')
-    +'</div>'
-    +'<div style="display:flex;gap:8px">'
-      +fld('Time','<input id="xv_time" type="time" value="'+esc(x.time||'')+'" '+inp+'>')
-      +fld('Duration','<select id="xv_dur" '+inp+'>'+[30,45,60,90,120,150,180].map(function(m){return '<option value="'+m+'"'+((x.dur||60)===m?' selected':'')+'>'+fmtDur(m)+'</option>';}).join('')+'</select>')
-    +'</div>'
-    +fld('Notes','<input id="xv_notes" value="'+esc(x.notes||'')+'" placeholder="agenda, attendees…" '+inp+'>')
-    +'<div style="display:flex;gap:8px;margin-top:4px">'
-      +'<button class="btn" id="xv_save" style="flex:1;background:#111;color:#fff;border-color:#111">'+(isNew?'Schedule visit':'Save changes')+'</button>'
-      +(isNew?'':'<button class="btn" id="xv_del" style="color:#dc2626">Remove visit</button>')
-    +'</div></div></div>';
-  document.body.appendChild(wrap);
-  var close=function(){ wrap.remove(); };
-  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
-  wrap.querySelector('.mclose').onclick=close;
-  wrap.querySelector('#xv_wk').onchange=function(){ wrap.querySelector('#xv_day').innerHTML=dayOpts(parseInt(this.value,10),null); };
-  wrap.querySelector('#xv_save').onclick=function(){
-    x.type=wrap.querySelector('#xv_type').value;
-    x.wk=parseInt(wrap.querySelector('#xv_wk').value,10);
-    var dv=wrap.querySelector('#xv_day').value; x.day=(dv===''?null:parseInt(dv,10));
-    x.time=wrap.querySelector('#xv_time').value;
-    x.dur=parseInt(wrap.querySelector('#xv_dur').value,10)||60;
-    x.notes=wrap.querySelector('#xv_notes').value;
-    if(isNew) XVISITS.push(x);
-    savePlan(); close();
-    try{ withPreservedScroll(render); }catch(e){}
-    try{ if(mobIsPhone()) renderMobile(); }catch(e){}
-  };
-  var del=wrap.querySelector('#xv_del');
-  if(del) del.onclick=function(){
-    if(!xvDelete(x.id)) return;
-    close();
-    try{ withPreservedScroll(render); }catch(e){}
-  };
+/* one writer for every inline field on either card kind */
+function setVisitField(ref,f,val){
+  var kind=ref.slice(0,1), id=ref.slice(2);
+  if(kind==='i'){
+    if(f==='wk'){ var prev=ASSIGN[id]; ASSIGN[id]=(val==='remote')?'remote':parseInt(val,10); if(ASSIGN[id]!==prev) DAY[id]=null; }
+    else if(f==='day') DAY[id]=(val===''?null:parseInt(val,10));
+    else if(f==='time') TIME[id]=val;
+    else if(f==='dur'){ var n=normDur(parseDur(val)); if(n==null) return false; DUR[id]=n; }
+    else if(f==='notes'){ var s=STOPX[id]=STOPX[id]||{}; s.notes=val; }
+  } else {
+    var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return false;
+    if(f==='wk'){ var nw=parseInt(val,10); if(!isFinite(nw)) return false; if(x.wk!==nw) x.day=null; x.wk=nw; }
+    else if(f==='day') x.day=(val===''?null:parseInt(val,10));
+    else if(f==='time') x.time=val;
+    else if(f==='dur'){ var n2=normDur(parseDur(val)); if(n2==null) return false; x.dur=n2; }
+    else if(f==='notes') x.notes=val;
+  }
+  savePlan(); return true;
+}
+function toggleVisitConf(ref){
+  var kind=ref.slice(0,1), id=ref.slice(2);
+  if(kind==='i'){ APPT[id]=!APPT[id]; if(!APPT[id])delete APPT[id]; }
+  else { var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return; x.done=!x.done; }
+  savePlan(); refreshPlanner();
+}
+/* delete ONE card. The dealer always stays in the library; any tasks on an
+   additional card move to dealer level so nothing is silently lost. */
+function deleteVisit(ref){
+  var kind=ref.slice(0,1), id=ref.slice(2);
+  if(kind==='i'){
+    var d=uniById(id);
+    ASSIGN[id]=(d&&d.territory==='Exports')?'remote':'pool';
+    DAY[id]=null; TIME[id]=''; delete PTYPE[id];
+    if(d&&d.territory==='Exports') ASSIGN[id]='pool';
+  } else {
+    var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return;
+    if((x.tasks||[]).length){ var s=STOPX[x.dealer]=STOPX[x.dealer]||{}; s.tasks=(s.tasks||[]).concat(x.tasks); }
+    XVISITS=XVISITS.filter(function(v){return v.id!==x.id;});
+  }
+  savePlan(); refreshPlanner();
+}
+/* create a card. Type is chosen here and is permanent for the card's life. */
+function createVisit(dealerId,type,wk){
+  var d=uniById(dealerId); if(!d) return;
+  type=(type==='visit')?'visit':'prebook';
+  if(ASSIGN[dealerId]==='pool'||ASSIGN[dealerId]==null){
+    ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
+    DAY[dealerId]=null; TIME[dealerId]='';
+    if(type==='visit') PTYPE[dealerId]='visit'; else delete PTYPE[dealerId];
+  } else {
+    if(wk==='remote') return;
+    XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
+      terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
+      wk:parseInt(wk,10), day:null, time:'', dur:60, type:type, notes:'', done:false});
+  }
+  savePlan(); refreshPlanner();
 }
 function renderAllView(){
   if(allMode!=='map') allMode='overview';
@@ -2392,7 +2610,7 @@ function renderJoin(){
   var head='<tr><th>Trip</th><th class="num">Stops</th><th class="num">Revenue</th><th>Leaders joining</th></tr>';
   var body=rows.length?rows.map(function(r){ 
     var chips=LEADERS.map(function(n){var on=r.ds.length&&r.ds.every(function(d){return (JOINA[d.id]||[]).indexOf(n)>=0;}); return '<button class="joinchip'+(on?' on':'')+'" data-join="'+r.t+'|'+r.wk+'|'+n+'" style="'+(on?('background:'+LEADER_COLOR[n]+';border-color:'+LEADER_COLOR[n]+';color:#fff'):'')+'">'+n+'</button>';}).join('');
-    return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(sumFB(r.ds))+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
+    return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(wkForecast(r.t,r.wk).b)+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
   }).join(''):'<tr><td colspan="4" class="empty" style="padding:30px">No trips scheduled yet — plan some weeks first.</td></tr>';
   document.getElementById('ganttWrap').innerHTML='<div class="joinhd">Tap a name to confirm they will join that trip. Saved automatically.</div><table class="cal jtab"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
@@ -2412,8 +2630,9 @@ function lvWeekStats(wk){
   var per={}, rev=0, loads=0, n=0, conf=0, confRev=0;
   TERRS.forEach(function(t){
     var ds=lvVisits(wk,t);
-    var s={n:ds.length, rev:sumFB(ds), loads:sumFL(ds), conf:apptCount(ds),
-           confRev:ds.reduce(function(a,d){return a+(APPT[d.id]?fcB(d):0);},0)};
+    var wf=wkForecast(t,wk);
+    var confRev=0; dealersIn(t).forEach(function(d){ if(pbWeek(d.id)===wk&&pbConfirmed(d.id)) confRev+=(+d.booking||0); });
+    var s={n:ds.length, rev:wf.b, loads:wf.l, conf:apptCount(ds), confRev:confRev};
     per[t]=s; rev+=s.rev; loads+=s.loads; n+=s.n; conf+=s.conf; confRev+=s.confRev;
   });
   return {per:per, rev:rev, loads:loads, n:n, conf:conf, confRev:confRev,
@@ -2449,7 +2668,7 @@ function lvAreaHTML(t,wk){
   var unChips=un.map(function(d){ var ok=!!APPT[d.id];
     return '<span class="lvchip'+(ok?' ok':'')+'">'+esc(d.name)+(ok?' ✓':'')+'</span>'; }).join('')+lvTravelChips(t,wk,null);
   if(unChips) rows+='<div class="lvday lvunsch"><span class="lvd">TBD</span><div class="lvvis">'+unChips+'</div></div>';
-  var stats=ds.length?('<span class="lvastats">'+ds.length+' visits · '+sumFL(ds)+' loads · '+fmtUSDk(sumFB(ds))+' · '+apptCount(ds)+'/'+ds.length+' conf</span>'):'';
+  var stats=ds.length?(function(){var wf=wkForecast(t,wk);return '<span class="lvastats">'+ds.length+' visits · '+wf.l+' loads · '+fmtUSDk(wf.b)+' · '+apptCount(ds)+'/'+ds.length+' conf</span>';})():'';
   return '<div class="lvarea"><div class="lvah"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t
     +(rep&&rep!=='—'?'<span class="rep">'+esc(rep)+'</span>':'')+stats
     +'<span class="lvopen" data-lvopen="'+t+'">Open ›</span></div>'
@@ -2586,12 +2805,29 @@ function allFiltersHTML(){
         return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('')+'</span>'
     +'<button class="btn" id="allShowAll">Show All</button></div>';
 }
+/* dealer-unique $/loads for the ALL views: one week = that week's attribution,
+   the full span = every pre-booked dealer once. Never a per-card sum. */
+function allForecast(wks){
+  var single=(wks&&wks.length===1)?wks[0]:null;
+  var st={rev:0,loads:0,confRev:0,per:{}};
+  allAreas().forEach(function(t){
+    var p={rev:0,loads:0};
+    dealersIn(t).forEach(function(d){
+      p.rev+=(single!=null?fbWk(d,single):fcB(d));
+      p.loads+=(single!=null?flWk(d,single):fcL(d));
+      if(pbConfirmed(d.id)&&(single!=null?pbWeek(d.id)===single:hasPB(d.id))) st.confRev+=(+d.booking||0);
+    });
+    st.per[t]=p; st.rev+=p.rev; st.loads+=p.loads;
+  });
+  return st;
+}
 function allKpiHTML(){
   var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
-  var n=0,loads=0,rev=0,conf=0;
-  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; loads+=fcL(v.d); rev+=fcB(v.d); if(avConf(v))conf++; }); });
+  var n=0,conf=0;
+  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; if(avConf(v))conf++; }); });
+  var af=allForecast(wks);
   var kpi=function(k,v){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; };
-  return '<div class="lvkpis">'+kpi('Dealers',n)+kpi('Loads',loads)+kpi('Revenue',fmtUSDk(rev))
+  return '<div class="lvkpis">'+kpi('Visits',n)+kpi('Loads',af.loads)+kpi('Revenue',fmtUSDk(af.rev))
     +kpi('Appointments',conf+(n?(' · '+Math.round(conf/n*100)+'%'):''))+'</div>';
 }
 function allTagHTML(t,d,okOverride){
@@ -2607,8 +2843,9 @@ function allWeekCard(wk){
   var vs=[];
   if(isRemote){ allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]==='remote') vs.push({t:t,d:d}); }); }); }
   else vs=allVisits(wk);
-  var rev=vs.reduce(function(a,v){return a+fcB(v.d);},0);
-  var loads=vs.reduce(function(a,v){return a+(+v.d.loads||0);},0);
+  var wkKey=isRemote?'remote':wk;
+  var rev=0,loads=0;
+  allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ rev+=fbWk(d,wkKey); loads+=flWk(d,wkKey); }); });
   var apc=vs.filter(avConf).length;
   var pct=vs.length?Math.round(apc/vs.length*100):0;
   var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
@@ -2672,7 +2909,6 @@ function allDealerModal(id){
       +'<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">'+esc(when)+'</div>'
       +'<div style="margin-top:2px">'+typeTag(vv.type)+(vv.done?' <span style="font-size:10px;color:#15803d;font-weight:700">✓ Completed</span>':'')+'</div>'
       +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+esc(FLAT.tm[d.territory]||'')+(vv.notes?(' · '+esc(vv.notes)):'')+'</div></div>'
-      +(vv.primary?'':('<button class="btn" data-xvopen="'+vv.id+'" style="padding:3px 8px;font-size:10px;flex:0 0 auto">Open</button>'))
       +'</div>';
   }
   function pane(){
@@ -2698,7 +2934,7 @@ function allDealerModal(id){
         +(all.map(visitLine).join('')||'<div style="color:var(--muted);font-size:12px;padding:8px 0">No visits scheduled yet.</div>')
         +'<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin:14px 0 4px">Upcoming visits</div>'
         +(up.length?up.map(function(vv){ return '<div style="font-size:12px;padding:3px 0">'+esc(vv.wk!=null?xvWhen(vv):'Remote')+' — '+xvType(vv.type).label+'</div>'; }).join(''):'<div style="color:var(--muted);font-size:12px">None.</div>')
-        +'<button class="btn" id="dlgAddVisit" style="margin-top:12px;width:100%">+ Add Another Visit</button>';
+        +'<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="dlgAddPB" style="flex:1">+ Pre-book</button><button class="btn" id="dlgAddVis" style="flex:1">+ Visit</button></div>';
     }
     if(TAB==='photos'){
       return '<div id="dlgPhotos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><div style="grid-column:1/-1;color:var(--muted);font-size:12px">Loading…</div></div>'
@@ -2744,8 +2980,8 @@ function allDealerModal(id){
       +'</div><div style="padding:12px 20px 18px;max-height:min(58vh,520px);overflow:auto">'+pane()+'</div></div>';
     wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
     wrap.querySelectorAll('[data-dlgtab]').forEach(function(b){ b.onclick=function(){ TAB=b.dataset.dlgtab; paint(); }; });
-    wrap.querySelectorAll('[data-xvopen]').forEach(function(b){ b.onclick=function(){ var x=XVISITS.filter(function(vv){return vv.id===b.dataset.xvopen;})[0]; if(x){ wrap.remove(); xvSheet(x.dealer,x); } }; });
-    var av=wrap.querySelector('#dlgAddVisit'); if(av) av.onclick=function(){ wrap.remove(); xvSheet(id); };
+    var apb=wrap.querySelector('#dlgAddPB'); if(apb) apb.onclick=function(){ wrap.remove(); addVisitSheet(id,'prebook'); };
+    var avv=wrap.querySelector('#dlgAddVis'); if(avv) avv.onclick=function(){ wrap.remove(); addVisitSheet(id,'visit'); };
     if(TAB==='tasks'){
       wrap.querySelectorAll('[data-tskdone]').forEach(function(b){ b.onclick=function(){
         var p=b.dataset.tskdone.split('|'), list=xvTaskList(p[0],id); if(!list||!list[+p[1]]) return;
@@ -2796,41 +3032,15 @@ function allDealerModal(id){
   }
   paint();
 }
-function allDealerModal_v1(id){
-  var d=uniById(id); if(!d) return;
-  d=sfMasterMerge(d);
-  var sf=sfLookup(d)||{};
-  var wk=ASSIGN[id], labs=(typeof wk==='number')?dayLabels(wk):[];
-  var when=(typeof wk==='number')?('Week '+wk+((DAY[id]!=null&&labs[DAY[id]])?(' · '+labs[DAY[id]][0]+' '+labs[DAY[id]][1]):'')+(TIME[id]?(' · '+t12(TIME[id])):'')):'—';
-  var x=STOPX[id]||{};
-  var row=function(k,v){ return v?('<div style="display:flex;justify-content:space-between;gap:14px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px"><span style="color:var(--muted);flex:0 0 auto">'+k+'</span><b style="text-align:right;min-width:0">'+v+'</b></div>'):''; };
-  var wrap=document.createElement('div'); wrap.className='modalbg';
-  wrap.innerHTML='<div class="modalbox" style="width:min(460px,94vw)"><div class="mh"><div class="mt">'+esc(d.name)+'</div><button class="mclose">×</button></div>'
-    +'<div style="padding:14px 20px 18px">'
-    +row('Territory','<span><i class="lvdot" style="display:inline-block;margin-right:6px;background:'+(AREA_COLOR[d.territory]||'#999')+'"></i>'+esc(d.territory||'—')+'</span>')
-    +row('Representative',esc(d.tm||'—'))
-    +row('Revenue (2027 Target)',fmtUSD(+d.booking||0))
-    +row('Loads',String(+d.loads||0))
-    +row('Visit',esc(when))
-    +row('Appointment',(APPT[id]?'<span style="color:#15803d">Confirmed</span>':'Pending'))
-    +row('Primary Contact',esc(sf.contactName||''))
-    +row('Phone',esc(sf.contactMobile||sf.contactPhone||''))
-    +row('Address',esc(d.address||''))
-    +(x.notes?('<div style="margin-top:10px;font-size:12px;color:var(--muted)"><b style="color:#111">Notes</b><br>'+esc(x.notes)+'</div>'):'')
-    +'</div></div>';
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
-  wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
-}
 function renderAllMap(){
   var host=document.getElementById('ganttWrap');
   var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
-  var st={n:0,loads:0,rev:0,conf:0,confRev:0,per:{}};
-  TERRS.forEach(function(t){ st.per[t]={n:0,loads:0,rev:0}; });
+  var af=allForecast(wks);
+  var st={n:0,loads:af.loads,rev:af.rev,conf:0,confRev:af.confRev,per:{}};
+  TERRS.forEach(function(t){ var p=af.per[t]||{rev:0,loads:0}; st.per[t]={n:0,loads:p.loads,rev:p.rev}; });
   wks.forEach(function(wk){ allVisits(wk).forEach(function(v){
-    var s=st.per[v.t]; s.n++; s.loads+=fcL(v.d); s.rev+=fcB(v.d);
-    st.n++; st.loads+=fcL(v.d); st.rev+=fcB(v.d);
-    if(APPT[v.d.id]){ st.conf++; st.confRev+=fcB(v.d); }
+    st.per[v.t].n++; st.n++;
+    if(avConf(v)) st.conf++;
   }); });
   var typeLegend='<div class="lvlegend">'
     +[['dealer','Dealers'],['hotel','Hotels'],['airport','Airports'],['rental','Rental Cars'],['other','Stops'],['routes','Routes']].map(function(p){
@@ -2912,6 +3122,7 @@ function allDrawMap(){
     if(eh) eh.textContent=hrsLabel(min/60);
     if(ea) ea.textContent=n?hrsLabel(min/60/n)+' / leg':'—';
     if(ef) ef.textContent=flyHrs?(flyHrs.toFixed(1)+' h'):'0 h';
+    routeStatusCtl(_lvMap,gen,rs,allDrawMap);
   });
   if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
   setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
@@ -3022,7 +3233,7 @@ function tripDetailHTML(terr,wk){
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
   var labs=dayLabels(wk); var md=settingsFor(terr).maxDrive;
   var jn=[]; ds.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});}); var jline=jn.length?('<div class="tsub" style="color:var(--green)">Joining: '+jn.join(', ')+'</div>'):'';
-  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+sumFL(ds)+' loads · '+fmtUSD(sumFB(ds))+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
+  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+wkForecast(terr,wk).l+' loads · '+fmtUSD(wkForecast(terr,wk).b)+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
   if(!ds.length && !LOGI.some(function(x){return x.terr===terr&&x.wk===wk;})) return head+'<div class="empty" style="padding:20px">No visits.</div>';
   function row(d){var ok=!!APPT[d.id]; return '<div class="tstop '+(ok?'ok':'')+'"><div class="tst"><span class="ttime">'+(TIME[d.id]?(t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],DUR[d.id]||90))):'—')+'</span><span class="tnm">'+esc(d.name)+'</span><span class="tamt">'+fmtUSD(d.booking)+'</span></div><div class="tloc">'+(d.loc||'—')+' · '+esc(d.address)+(ok?' · <b style="color:var(--green)">confirmed</b>':'')+'</div>'+'</div>';}
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
@@ -3093,12 +3304,12 @@ function dealerStop(d,wk){
     time:TIME[d.id]||'', address:d.address||'', city:'', state:d.loc||'', county:d.county||'',
     lat:d.lat, lon:d.lon, status:(APPT[d.id]?'Confirmed':'Pending'),
     notes:x.notes||'', conf:x.conf||'', ptype:vType(d.id),
-    loads:fcL(d), revenue:fcB(d)};
+    loads:flWk(d,wk), revenue:fbWk(d,wk)};
 }
 function manualStop(it,wk){
   var labs=dayLabels(wk), di=it.day, di2=it.day2, ty=normType(it.type);
   return {key:'m:'+it.id, id:it.id, kind:'manual', name:it.name||it.airportName||it.airportCode||it.label||STOP_TYPES[ty].label, type:ty,
-    rawType:it.type,
+    rawType:it.type, code:it.airportCode||'',
     dayIdx:(di==null?null:di), dayLabel:(di!=null&&labs[di])?(labs[di][0]+', '+labs[di][1]):'—',
     dayLabel2:(di2!=null&&labs[di2])?(labs[di2][0]+', '+labs[di2][1]):'', time2:it.time2||'',
     time:it.time||'', address:it.address||'', city:it.city||'', state:it.state||'', county:it.county||'',
@@ -3412,11 +3623,12 @@ function stopTip(s){
   if(s.kind==='dealer'||s.kind==='xvisit'){
     if(s.state) h+='<br>'+esc(s.state);
     h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
-    h+='<br>'+(s.ptype==='visit'?'Visit':'Pre-book');
+    h+='<br>'+(s.ptype==='visit'?'VISIT':'PRE-BOOK');
   } else if(s.rawType==='hotel'){
     h+='<br>Check-in: '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
     if(s.dayLabel2||s.time2) h+='<br>Check-out: '+esc(s.dayLabel2||'—')+(s.time2?(' · '+t12s(s.time2)):'');
   } else if(normType(s.type)==='airport'){
+    h+=(s.code?(' <span style="color:#9ca3af">'+esc(s.code)+'</span>'):'');
     h+='<br>'+(s.rawType==='flight_in'?'Arrival':(s.rawType==='flight_out'?'Departure':'Airport'));
     h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
   } else {
@@ -3547,6 +3759,7 @@ function legHover(map,pts,tip){
    can build routed trip totals ({est:true} when the engine was unreachable). */
 function drawLeg(map,gen,a,b,style,meta){
   meta=meta||{};
+  if(sameSpot(a,b)) return Promise.resolve({km:0,min:0});   /* same place: nothing to draw */
   if(meta.fly){
     var arc=flightArc([a.lat,a.lon],[b.lat,b.lon]);
     var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
@@ -3567,6 +3780,24 @@ function drawLeg(map,gen,a,b,style,meta){
     }
     return {km:rt.km,min:rt.min};
   });
+}
+/* When the routing engine is unreachable some legs stay undrawn (never a
+   misleading straight line). Show a quiet notice on the map with a Retry
+   that clears the dead-router memory and redraws. */
+function routeStatusCtl(map,gen,rs,redraw){
+  if(!map||map._aqGen!==gen) return;
+  var n=0; (rs||[]).forEach(function(r){ if(r&&r.est) n++; });
+  if(!n) return;
+  var div=L.DomUtil.create('div','aq-rtfail');
+  div.innerHTML=n+' route'+(n>1?'s':'')+' unavailable <button>Retry</button>';
+  var ctl=L.control({position:'bottomleft'});
+  ctl.onAdd=function(){ return div; };
+  ctl.addTo(map);
+  div.querySelector('button').onclick=function(ev){
+    ev.stopPropagation();
+    _rtDead={};                       /* forget dead routers and try again */
+    try{ redraw&&redraw(); }catch(e){}
+  };
 }
 function drawTripMap(stops){
   var el=document.getElementById('tripMap'); if(!el||typeof L==='undefined')return;
@@ -3592,6 +3823,7 @@ function drawTripMap(stops){
     var ek=document.getElementById('rtTotKm'), eh=document.getElementById('rtTotHrs');
     if(ek) ek.textContent=Math.round(km).toLocaleString()+' km';
     if(eh) eh.textContent=hrsLabel(min/60);
+    routeStatusCtl(_tripMap,gen,rs,function(){ drawTripMap(stops); });
   });
   if(pts.length) _tripMap.fitBounds(L.latLngBounds(pts.map(function(s){return [s.lat,s.lon];})).pad(0.25));
   setTimeout(function(){ if(_tripMap)_tripMap.invalidateSize(); },60);
@@ -3631,6 +3863,7 @@ function lvDrawMap(){
     var ek=document.getElementById('lvTotKm'), eh=document.getElementById('lvTotHrs');
     if(ek) ek.textContent=Math.round(km).toLocaleString()+' km';
     if(eh) eh.textContent=hrsLabel(min/60);
+    routeStatusCtl(_lvMap,gen,rs,lvDrawMap);
   });
   if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
   setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
@@ -4179,7 +4412,7 @@ function performDrop(raw,t){
   if(!raw||t==null) return;
   if(raw.slice(0,3)==='xv:'){
     var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
-    if(t==='pool'){ if(xvDelete(xv.id)) refreshPlanner(); return; }
+    if(t==='pool'){ deleteVisit('x:'+xv.id); return; }
     if(t==='remote') return;
     var pp=t.split('|'); xv.wk=parseInt(pp[0],10);
     xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
@@ -4198,9 +4431,13 @@ function performDrop(raw,t){
       time:'', dur:60, type:'prebook', notes:'', done:false});
     savePlan(); refreshPlanner(); return;
   }
-  if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
-  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
-  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
+  if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;delete PTYPE[id];}
+  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;if(fromPool)delete PTYPE[id];}
+  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;}
+    /* dragging from the library CREATES a card — drag creation is always a
+       Pre-book (the primary workflow); + Visit in the library covers visits */
+    if(fromPool) delete PTYPE[id];
+  }
   savePlan(); refreshPlanner();
 }
 /* ---------- unified drag engine (Pointer Events) ----------
@@ -4286,17 +4523,19 @@ function dndInit(){
   document.addEventListener('contextmenu',function(e){ if(DND.src||DND.active) e.preventDefault(); });
   window.addEventListener('blur',function(){ if(DND.src) dndEnd(null); });
 }
-/* fallback when drag-and-drop is unavailable: pick the week from a small sheet */
-function addVisitSheet(dealerId){
+/* creation week picker — the no-drag path for + Pre-book / + Visit. The type
+   is fixed by the button that opened it; only the week is chosen here. */
+function addVisitSheet(dealerId,type){
   var d=uniById(dealerId); if(!d) return;
+  type=(type==='visit')?'visit':'prebook';
+  var B=VBADGE[type];
   var isExp=(d.territory==='Exports');
   var weeks=isExp?['remote']:[31].concat(FIELD_NUMS);
-  var already=(ASSIGN[dealerId]!=='pool');
   var wrap=document.createElement('div'); wrap.className='modalbg';
-  wrap.innerHTML='<div class="modalbox" style="width:min(360px,94vw)"><div class="mh"><div class="mt">Add Visit</div><button class="mclose">×</button></div>'
+  wrap.innerHTML='<div class="modalbox" style="width:min(360px,94vw)"><div class="mh"><div class="mt">New '+(type==='visit'?'Visit':'Pre-book')+'</div><button class="mclose">×</button></div>'
     +'<div style="padding:12px 18px 16px">'
-    +'<div style="font-size:13px;font-weight:700;margin-bottom:2px">'+esc(d.name)+'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(already?'Already scheduled — this adds another visit.':'Pick the week for the visit.')+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span><span style="font-size:13px;font-weight:700">'+esc(d.name)+'</span></div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pick the week — everything else edits on the card.</div>'
     +'<div class="avweeks">'+weeks.map(function(w){
         return '<button class="avwk" data-avwk="'+w+'">'+(w==='remote'?'Remote / Direct':('Wk '+w+(w===31?' · Kickoff':'')+'<span>'+(WEEKDATES[w]||'')+'</span>'))+'</button>';
       }).join('')+'</div>'
@@ -4307,33 +4546,37 @@ function addVisitSheet(dealerId){
   wrap.querySelector('.mclose').onclick=close;
   wrap.querySelectorAll('[data-avwk]').forEach(function(b){ b.onclick=function(){
     var w=b.dataset.avwk; close();
-    performDrop('pool:'+dealerId, w==='remote'?'remote':(w+'|none'));
+    createVisit(dealerId, type, w);
   };});
 }
 function wireDnD(){
   dndInit(); apInit();
-  document.querySelectorAll('[data-schedule]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();addVisitSheet(b.dataset.schedule);}));
-  document.querySelectorAll('[data-pt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.pt.split('|');if(vType(pr[0])===pr[1])return;if(pr[1]==='visit')PTYPE[pr[0]]='visit';else delete PTYPE[pr[0]];savePlan();refreshPlanner();}));
-  document.querySelectorAll('[data-ptx]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.ptx.split('|');var x=XVISITS.filter(function(v){return v.id===pr[0];})[0];if(!x||xvTypeKey(x.type)===pr[1])return;x.type=pr[1];savePlan();refreshPlanner();}));
-  document.querySelectorAll('.cday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DAY[s.dataset.day]=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}));
-  document.querySelectorAll('.ctime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();TIME[t.dataset.time]=t.value;savePlan();refreshPlanner();}));
-  document.querySelectorAll('.cdur').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DUR[s.dataset.dur]=parseInt(s.value,10);savePlan();refreshPlanner();}));
-  document.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.remove;const d=uniById(id);if(!d)return;ASSIGN[id]=d.territory==='Exports'?'remote':'pool';DAY[id]=null;TIME[id]='';savePlan();refreshPlanner();}));
+  /* library creation controls — type is chosen here and never changes */
+  document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.mk.split('|');addVisitSheet(pr[0],pr[1]);}));
+  /* inline card fields: one writer for both card kinds. Notes never re-render
+     the planner (no scroll jumps, no per-keystroke work) — they just persist. */
+  document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    var ok=setVisitField(el.dataset.vref, el.dataset.f, el.value);
+    if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
+    refreshPlanner();
+  }));
+  document.querySelectorAll('.vnote').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    setVisitField(el.dataset.vref,'notes',el.value);
+    el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
+  }));
+  document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleVisitConf(b.dataset.vconf);}));
+  /* delete: lightweight second-click confirmation, never a modal */
+  document.querySelectorAll('[data-vdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    if(!b.classList.contains('arm')){
+      b.classList.add('arm'); b.textContent='sure?';
+      b._t=setTimeout(function(){ b.classList.remove('arm'); b.textContent='✕'; },2500);
+      return;
+    }
+    clearTimeout(b._t); deleteVisit(b.dataset.vdel);
+  }));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
-  document.querySelectorAll('[data-appt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.dataset.appt;APPT[id]=!APPT[id];if(!APPT[id])delete APPT[id];savePlan();refreshPlanner();}));
-  document.querySelectorAll('[data-xvadd]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();xvSheet(b.dataset.xvadd);}));
-  document.querySelectorAll('[data-xvedit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var x=XVISITS.filter(function(v){return v.id===b.dataset.xvedit;})[0];if(x)xvSheet(x.dealer,x);}));
-  document.querySelectorAll('[data-xvdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(xvDelete(b.dataset.xvdel))refreshPlanner();}));
-  document.querySelectorAll('.xvf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
-    var x=XVISITS.filter(function(v){return v.id===el.dataset.xv;})[0]; if(!x)return;
-    var f=el.dataset.f;
-    if(f==='day') x.day=(el.value===''?null:parseInt(el.value,10));
-    else if(f==='type') x.type=xvTypeKey(el.value);
-    else x[f]=el.value;
-    savePlan(); refreshPlanner();
-  }));
-  document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id);}));
+  document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id.slice(0,3)==='xv:'?(XVISITS.filter(function(x){return 'xv:'+x.id===id;})[0]||{}).dealer:id);}));
   /* travel items: one delegated handler for every typed field */
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
@@ -4371,7 +4614,8 @@ function exportWeek(t,wk){
   var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
   var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
   var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(t)+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">'+wlabel+'</div></div>';
-  body+='<div class="meta">'+vs.length+' visits · '+sumFL(vs)+' loads · '+fmtUSD(sumFB(vs))+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
+  var _wf=wkForecast(t,wk);
+  body+='<div class="meta">'+vs.length+' visits · '+_wf.l+' loads · '+fmtUSD(_wf.b)+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
   body+=tpWeekTable(wk,vs,ls,false);
   tpOpen(t+' — '+wlabel, body);
 }
@@ -4389,7 +4633,8 @@ function exportTripPlans(){
       var xs=XVISITS.filter(function(x){return x.terr===t && x.wk===wk;});
       if(!vs.length && !ls.length && !xs.length) return;
       var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+sumFL(vs)+' loads · '+fmtUSD(sumFB(vs))+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
+      var _wf2=wkForecast(t,wk);
+      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
       if(xs.length){ wh+='<div style="font-size:11px;margin:2px 0 10px"><b>Additional visits:</b> '+xs.map(function(x){var dd=byId[x.dealer]||uniById(x.dealer);return esc((dd?dd.name:x.dealer))+' — '+xvType(x.type).label+' ('+esc(xvWhen(x))+')';}).join(' · ')+'</div>'; }
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+t+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">2027 Pre-Booking Travel</div></div>'+wh+'</div>';
@@ -4876,7 +5121,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; normalizeVisitData(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
@@ -5493,14 +5738,15 @@ function mobDrawMap(){
       .addTo(MOB.map).bindPopup('<b>'+esc(i.name||mobKind(i))+'</b><br>'+esc(mobKind(i)));
   });
   /* one routed leg per consecutive pair — each individually tappable */
-  var labs=dayLabels(MOB.wk);
+  var labs=dayLabels(MOB.wk), mlegs=[];
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
     var fly=(String(a.type).indexOf('flight')===0&&String(b.type).indexOf('flight')===0);
-    drawLeg(MOB.map,gen,a,b,{color:'#2563eb',weight:4,opacity:.85},
+    mlegs.push(drawLeg(MOB.map,gen,a,b,{color:'#2563eb',weight:4,opacity:.85},
       {from:a.name||mobKind(a),to:b.name||mobKind(b),area:MOB.terr,rep:FLAT.tm[MOB.terr]||'',fly:fly,
-       day:(b.day!=null&&labs[b.day])?(labs[b.day][0]+', '+labs[b.day][1]):'',time:b.time});
+       day:(b.day!=null&&labs[b.day])?(labs[b.day][0]+', '+labs[b.day][1]):'',time:b.time}));
   }
+  Promise.all(mlegs).then(function(rs){ routeStatusCtl(MOB.map,gen,rs,mobDrawMap); });
   if(pts.length) MOB.map.fitBounds(L.latLngBounds(pts.map(function(i){return [i.lat,i.lon];})).pad(0.25));
   setTimeout(function(){ if(MOB.map) MOB.map.invalidateSize(); },80);
 }
