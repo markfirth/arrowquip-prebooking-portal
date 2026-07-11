@@ -343,7 +343,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .maplegend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 .maplegend .ln{width:20px;height:0;border-top-width:2px;display:inline-block;}
 /* pins */
-.pin{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.35);border:2px solid #fff;}
+.pin{display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;color:#fff;font-size:7.5px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1.5px solid #fff;}
 /* leaflet popup -> clean detail card */
 .leaflet-popup-content-wrapper{border-radius:var(--radius);box-shadow:0 10px 40px rgba(0,0,0,.15);}
 .leaflet-popup-content{margin:0;width:250px!important;}
@@ -821,6 +821,63 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
 .atag.ok{background:#f2faf5;}
 .atag i{width:16px;height:16px;border-radius:50%;color:#fff;font-style:normal;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
 @media(max-width:1100px){.lvmapgrid{grid-template-columns:1fr;} #leaderMap{height:420px;}}
+/* ---- unified pointer drag & drop ---- */
+[data-drag]{touch-action:pan-y;user-select:none;-webkit-user-select:none;}
+.dndghost{position:fixed;z-index:100000;pointer-events:none;opacity:.9;box-shadow:0 10px 28px rgba(0,0,0,.22);transform:rotate(.6deg);margin:0;}
+body.dnd-on{cursor:grabbing;}
+body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3px;background:#fdf5f6;}
+/* library card: quiet "+ Add visit" fallback next to the loads line */
+.dcard .db{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.dadd{border:1px dashed var(--line);background:#fff;color:var(--muted);border-radius:9px;font-size:9px;font-weight:700;padding:1px 7px;cursor:pointer;white-space:nowrap;}
+.dadd:hover{color:var(--aq-red);border-color:var(--aq-red);}
+.avweeks{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.avwk{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:6px 9px;font:700 11.5px 'Open Sans',Arial,sans-serif;color:#111;cursor:pointer;text-align:left;}
+.avwk span{font-weight:400;font-size:9.5px;color:var(--muted);}
+.avwk:hover{border-color:var(--aq-red);}
+/* ---- Pre-book | Visit — compact segmented control inside the visit card ---- */
+.pseg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:0 0 auto;background:#fff;}
+.psg{border:0;background:transparent;color:var(--muted);font:700 8.5px 'Open Sans',Arial,sans-serif;letter-spacing:.03em;padding:2px 7px;cursor:pointer;line-height:1.4;}
+.psg+.psg{border-left:1px solid var(--line);}
+.psg.on{background:#eef3fb;color:#2563eb;}
+.psg.on:last-child{background:#f3f4f6;color:#374151;}
+.kcard.novalue .kc-amt{color:var(--muted-2);font-weight:400;}
+/* ---- airport typeahead dropdown ---- */
+#apDrop{position:fixed;z-index:100001;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.14);overflow:hidden;max-width:min(360px,94vw);}
+#apDrop .api{display:flex;align-items:baseline;gap:7px;padding:6px 10px;font-size:11.5px;cursor:pointer;white-space:nowrap;overflow:hidden;}
+#apDrop .api+.api{border-top:1px solid var(--line-soft);}
+#apDrop .api b{flex:0 0 34px;font-size:11px;color:var(--aq-black);}
+#apDrop .api .apn{font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;}
+#apDrop .api .apc{color:var(--muted);font-size:10px;margin-left:auto;padding-left:8px;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;}
+#apDrop .api.sel,#apDrop .api:hover{background:#f5f7fb;}
+/* ---- executive summary cards ---- */
+#cards.cards{align-items:stretch;}
+.xc{flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:.7rem .9rem .75rem;display:flex;flex-direction:column;}
+.xc-target{flex:1.7;}
+.xch{font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);margin-bottom:.3rem;}
+.xcv{font-size:1.25rem;font-weight:700;color:var(--aq-black);letter-spacing:-.5px;line-height:1.1;display:flex;align-items:baseline;gap:10px;}
+.xcv .xcl{font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:0;}
+.xbar{display:flex;height:8px;border-radius:5px;background:var(--line-soft);overflow:hidden;margin:.55rem 0 .5rem;}
+.xbar i{display:block;height:100%;}
+.xbar .c{background:#16a34a;}
+.xbar .p{background:#2563eb;}
+.xleg{display:flex;gap:18px;flex-wrap:wrap;}
+.xls{display:flex;align-items:flex-start;gap:6px;min-width:0;}
+.xld{width:8px;height:8px;border-radius:2px;background:#9ca3af;margin-top:3px;flex:0 0 auto;}
+.xls.c .xld{background:#16a34a;} .xls.p .xld{background:#2563eb;} .xls.r .xld{background:var(--line);}
+.xlt{display:flex;flex-direction:column;line-height:1.25;}
+.xll{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);}
+.xlt b{font-size:.82rem;font-weight:700;color:var(--aq-black);}
+.xlk{font-size:.62rem;color:var(--muted);}
+.xcb{display:flex;align-items:center;gap:14px;flex:1;}
+.xringwrap{position:relative;width:64px;height:64px;flex:0 0 auto;}
+.xring{width:100%;height:100%;display:block;}
+.xringpct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--aq-black);}
+.xstats{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.xs{display:flex;align-items:baseline;gap:6px;line-height:1.2;}
+.xs b{font-size:.85rem;font-weight:700;color:var(--aq-black);}
+.xs span{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);}
+.xs.muted b{color:var(--muted);font-weight:600;}
+@media(max-width:900px){#cards.cards{flex-direction:column;} .xc-target{flex:1;}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -860,7 +917,6 @@ input.xvf{flex:0 0 84px;border:1px solid var(--line);border-radius:6px;font-size
 </style>
 </head>
 <body>
-<datalist id="apList"></datalist>
 <div id="tripmode"></div>
 <div id="gate"><div class="gbox"><img class="glogoimg" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"><div class="gtag">Pre-Booking Portal</div><input id="gpass" type="password" inputmode="text" placeholder="Team passcode" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="gbtn">Enter</button><div id="gerr" class="gerr"></div></div></div>
 <div class="cloudbadge" id="cloudBadge"></div>
@@ -1169,19 +1225,33 @@ let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
    ADDITIONAL visit records, each fully independent:
    {id,dealer,terr,wk,day,time,dur,type,notes,done} */
 let XVISITS=[];
-/* Visit tags — small subtle pills, easy to change inside the visit box. */
+/* ONE planning type per scheduled visit:
+   prebook — counts in forecast dollars/loads, territory + weekly totals, reporting.
+   visit   — relationship visit only: still on the planner/trip/map, zero forecast. */
 const XV_TYPES={
-  prebook:{label:'Pre-Book',c:'#2563eb'},
-  checkin:{label:'Check-In',c:'#16a34a'},
-  followup:{label:'Follow-Up',c:'#d97706'},
-  event:{label:'Dealer Event',c:'#7c3aed'},
-  issue:{label:'Issue/Support',c:'#dc2626'},
-  training:{label:'Training',c:'#0d9488'},
-  other:{label:'Other',c:'#6b7280'}
+  prebook:{label:'Pre-book',c:'#2563eb'},
+  visit:{label:'Visit',c:'#6b7280'}
 };
-/* visit types saved before this tag set stay valid */
-const XV_ALIAS={initial:'prebook',openhouse:'event',demo:'event',delivery:'other',service:'issue',sales:'other',general:'other'};
-function xvTypeKey(t){ return XV_TYPES[t]?t:(XV_ALIAS[t]||'other'); }
+/* every legacy tag collapses onto the two planning types */
+const XV_ALIAS={initial:'prebook',checkin:'visit',followup:'visit',event:'visit',issue:'visit',
+  training:'visit',other:'visit',openhouse:'visit',demo:'visit',delivery:'visit',service:'visit',
+  sales:'visit',general:'visit'};
+function xvTypeKey(t){ return XV_TYPES[t]?t:(XV_ALIAS[t]||'visit'); }
+/* planning type of the dealer's INITIAL visit (XVISITS carry their own .type) */
+let PTYPE={};
+function vType(id){ return PTYPE[id]==='visit'?'visit':'prebook'; }
+/* forecast contribution: a "visit"-type initial visit carries zero dollars/loads */
+function fcB(d){ return vType(d.id)==='visit'?0:(+d.booking||0); }
+function fcL(d){ return vType(d.id)==='visit'?0:(+d.loads||0); }
+const sumFB=a=>a.reduce((s,d)=>s+fcB(d),0);
+const sumFL=a=>a.reduce((s,d)=>s+fcL(d),0);
+/* compact segmented control — fits inside the visit card without adding height */
+function ptSeg(cur,attr,val){
+  return '<span class="pseg">'
+    +'<button class="psg'+(cur!=='visit'?' on':'')+'" '+attr+'="'+val+'|prebook">Pre-book</button>'
+    +'<button class="psg'+(cur==='visit'?' on':'')+'" '+attr+'="'+val+'|visit">Visit</button>'
+    +'</span>';
+}
 /* ---- Centralized currency + 2027 target engine ----
    USA/UK/Exports: $75,000 USD per load. Canada: $85,000 CAD per load,
    converted with the editable FX rate. Everything that shows revenue reads
@@ -1249,8 +1319,8 @@ function xvNextLabel(d){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,fx:FX,t27tiers:T27_TIERS};}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}})();
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -1366,59 +1436,67 @@ const sumB=a=>a.reduce((s,d)=>s+(+d.booking||0),0);
 const sumL=a=>a.reduce((s,d)=>s+(+d.loads||0),0);
 const apptCount=a=>a.filter(d=>APPT[d.id]).length;
 const coordOf=d=>[d.lat,d.lon];
-/* --- KPI status tones (approved mockup, step 7). Thresholds are inclusive of
-   the upper bound: 0-30 bad, 31-70 warn, 71-100 good. --- */
-function pctTone(p){ if(!isFinite(p)) return 'neutral'; if(p<=30) return 'bad'; if(p<=70) return 'warn'; return 'good'; }
-/* Unscheduled pool: high share of revenue still unplaced is the problem case. */
-function remainTone(p){ if(!isFinite(p)) return 'neutral'; if(p<=30) return 'good'; if(p<=70) return 'warn'; return 'bad'; }
-/* Deadline: >60 days is comfortable, 30-60 tightening, <30 urgent. */
-function deadlineTone(d){ if(d==null||!isFinite(d)) return 'neutral'; if(d<30) return 'bad'; if(d<=60) return 'warn'; return 'good'; }
-
+/* slim SVG donut used by the executive summary */
+function ringSVG(pct,color){
+  pct=Math.max(0,Math.min(100,pct||0));
+  return '<div class="xringwrap"><svg viewBox="0 0 36 36" class="xring" aria-hidden="true">'
+    +'<circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--line-soft)" stroke-width="3.4"/>'
+    +'<circle cx="18" cy="18" r="15.9155" fill="none" stroke="'+color+'" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="'+pct+' '+(100-pct)+'" stroke-dashoffset="25"/>'
+    +'</svg><div class="xringpct">'+Math.round(pct)+'%</div></div>';
+}
 function renderCards(){
-  /* KPI cards source from the same Salesforce-merged dealer list as the Master
-     Sheet. booking/loads are not overlaid by the merge, so KPI $ values are
-     unchanged while 2027 Salesforce values are null/0; scheduling (ASSIGN),
-     GOAL2027 and dealer ids are untouched. */
+  /* Executive summary — three visual cards, minimal text.
+     Sourced from the same Salesforce-merged dealer list as the Master Sheet. */
   const _md=planningUniverse().filter(function(d){return d.areaPlanning!==false;});
   const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
+  var tl=function(d){return t27Loads(d)||(+d.loads||0);};
+  var ftl=function(d){return vType(d.id)==='visit'?0:tl(d);};
+  /* --- Card 1: 2027 Target — confirmed / planned / remaining --- */
   const target=sumB(ds);
-  const kickRev=sumB(ds.filter(d=>ASSIGN[d.id]===31));
-  const pool=ds.filter(d=>ASSIGN[d.id]==='pool'); const poolRev=sumB(pool);
-  const placedRev=sumB(ds.filter(d=>ASSIGN[d.id]!=='pool'));
-  const cov=target?kickRev/target*100:0; const schedPct=target?placedRev/target*100:0;
-  const days=Math.max(0,Math.round((DEADLINE-new Date())/864e5));
-  var isOv=(terr==='All'||terr==='Master');
-  var goalPct=(GOAL2027>0)?Math.min(100,Math.round(target/GOAL2027*100)):null;
-  var placedPct=ds.length?Math.round((ds.length-pool.length)/ds.length*100):0;
-  /* share of the territory's revenue still sitting unplaced in the pool */
-  var remainPct=target?Math.round(poolRev/target*100):(pool.length?100:0);
-  const cards=[
-   {lbl:(GOAL2027>0&&isOv)?"2027 Forecast vs Goal":"2027 Target", val:fmtUSDk(target), sub:(GOAL2027>0&&isOv)?('Goal '+fmtUSDk(GOAL2027)+' · '+((target-GOAL2027)>=0?('+'+fmtUSDk(target-GOAL2027)+' over'):('gap '+fmtUSDk(GOAL2027-target)))):((isOv?'all territories · ':terr+' · ')+fmtUSD(target)), prog:(GOAL2027>0&&isOv)?goalPct:null},
-   {lbl:"Kickoff Coverage (Wk 31)",val:cov.toFixed(0)+"%",sub:fmtUSDk(kickRev)+" locked at kickoff",prog:cov,tone:pctTone(cov)},
-   {lbl:"Planned into Weeks",val:schedPct.toFixed(0)+"%",sub:fmtUSDk(placedRev)+" placed of "+fmtUSDk(target),prog:schedPct,tone:pctTone(schedPct)},
-   {lbl:"Unscheduled Pool",val:fmtUSDk(poolRev),sub:pool.length+" of "+ds.length+" dealers to place",prog:placedPct,tone:remainTone(remainPct)},
-   {lbl:"Pre-Book Deadline",val:"Oct 31",sub:days+" days left · no bookings after Oct",tone:deadlineTone(days)},
-  ];
-  /* Status tone rides on a 2px bottom rail only — value text stays ink. */
-  document.getElementById("cards").innerHTML=cards.map(function(c){
-    var tone=c.tone||'neutral';
-    var fill=(c.prog!=null)?Math.max(0,Math.min(100,c.prog)):100;
-    return '<div class="card" data-tone="'+tone+'">'+
-      '<div class="lbl">'+c.lbl+'</div>'+
-      '<div class="val">'+c.val+'</div>'+
-      '<div class="sub">'+(c.sub||'')+'</div>'+
-      '<div class="tone"><i style="width:'+fill+'%"></i></div>'+
-    '</div>';
-  }).join("");
+  const targetLoads=ds.reduce(function(s,d){return s+tl(d);},0);
+  const sched=ds.filter(function(d){return ASSIGN[d.id]!=='pool';});
+  const conf=sched.filter(function(d){return APPT[d.id];});
+  const plan=sched.filter(function(d){return !APPT[d.id];});
+  const confB=sumFB(conf), planB=sumFB(plan);
+  const confL=conf.reduce(function(s,d){return s+ftl(d);},0);
+  const planL=plan.reduce(function(s,d){return s+ftl(d);},0);
+  const remB=Math.max(0,target-confB-planB), remL=Math.max(0,targetLoads-confL-planL);
+  const cPct=target?confB/target*100:0, pPct=target?planB/target*100:0;
+  var seg=function(cls,lbl,b,l){return '<div class="xls '+cls+'"><span class="xld"></span><div class="xlt"><span class="xll">'+lbl+'</span><b>'+fmtUSDk(b)+'</b><span class="xlk">'+Math.round(l)+' loads</span></div></div>';};
+  var card1='<div class="xc xc-target">'
+    +'<div class="xch">2027 Target</div>'
+    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads</span></div>'
+    +'<div class="xbar"><i class="c" style="width:'+Math.min(100,cPct).toFixed(1)+'%"></i><i class="p" style="width:'+Math.min(100-Math.min(100,cPct),pPct).toFixed(1)+'%"></i></div>'
+    +'<div class="xleg">'+seg('c','Confirmed',confB,confL)+seg('p','Planned',planB,planL)+seg('r','Remaining',remB,remL)+'</div>'
+    +'</div>';
+  /* --- Card 2: Planning Progress — dealers scheduled vs still in the library --- */
+  var hasVisit=function(d){return ASSIGN[d.id]!=='pool' || xvFor(d.id).length>0;};
+  var nSched=ds.filter(hasVisit).length;
+  var sPct=ds.length?nSched/ds.length*100:0;
+  var card2='<div class="xc">'
+    +'<div class="xch">Planning Progress</div>'
+    +'<div class="xcb">'+ringSVG(sPct,'#2563eb')
+    +'<div class="xstats"><div class="xs"><b>'+Math.round(sPct)+'%</b><span>Scheduled</span></div>'
+    +'<div class="xs muted"><b>'+Math.round(100-sPct)+'%</b><span>Unscheduled</span></div></div></div>'
+    +'</div>';
+  /* --- Card 3: Confirmation Progress — dealer confirmations on scheduled visits --- */
+  var cfPct=sched.length?conf.length/sched.length*100:0;
+  var card3='<div class="xc">'
+    +'<div class="xch">Confirmation Progress</div>'
+    +'<div class="xcb">'+ringSVG(cfPct,'#16a34a')
+    +'<div class="xstats"><div class="xs"><b>'+Math.round(cfPct)+'%</b><span>Confirmed</span></div>'
+    +'<div class="xs muted"><b>'+Math.round(100-cfPct)+'%</b><span>Pending</span></div></div></div>'
+    +'</div>';
+  document.getElementById("cards").innerHTML=card1+card2+card3;
 }
 function dealerCard(d){
   d=sfMasterMerge(d);
   /* Dealer LIBRARY card: identity only — no planning badges, no visit counters.
      data-id "pool:" prefix tells the drop handler this drag creates a visit. */
-  return `<div class="dcard" draggable="true" data-id="pool:${d.id}">
+  return `<div class="dcard" data-drag="1" data-id="pool:${d.id}">
     <div class="dn">${d.name}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${fmtUSDk(d.booking)}</span></div>
-    <div class="db">${d.loads} loads</div></div>`;
+    <div class="db">${d.loads} loads<button class="dadd" data-schedule="${d.id}" title="Add a visit without dragging">+ Add visit</button></div></div>`;
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
@@ -1450,7 +1528,7 @@ function renderPlanner(){
   var allT=dealersIn(terr);
   var tGoal=allT.reduce(function(s,d){return s+(+d.booking||0);},0);   /* Master Sheet rollup */
   var tLoads=allT.reduce(function(s,d){return s+t27Loads(d);},0);
-  var tPlan=sumB(schd);                                                /* scheduled into weeks */
+  var tPlan=sumFB(schd);                                               /* scheduled into weeks (pre-book only) */
   var tPct=tGoal?Math.round(tPlan/tGoal*100):null;
   document.getElementById("planSummary").innerHTML=
     '<div class="ps"><div class="pl">Area Goal (2027)</div><div class="pv">'+(tGoal?fmtUSDk(tGoal):'—')+'</div></div>'
@@ -1485,90 +1563,425 @@ const TRAVEL_CAT={flight_in:'Flights',flight_out:'Flights',rental_pickup:'Rental
   rental_return:'Rental Cars',hotel:'Hotels',fuel:'Fuel',food:'Food',
   parking:'Parking / Tolls',other:'Other'};
 
-/* Airports the Arrowquip territories actually fly through. code, name, city, lat, lon. */
+/* Worldwide airport directory: [IATA, name, city, lat, lon, ICAO, region].
+   Searchable by name, city, IATA, ICAO or region — see airportSearch(). */
 const AIRPORTS=[
-  ['YWG','Winnipeg Richardson Intl','Winnipeg, MB',49.9100,-97.2399],
-  ['YYZ','Toronto Pearson Intl','Toronto, ON',43.6777,-79.6248],
-  ['YUL','Montreal-Trudeau Intl','Montreal, QC',45.4706,-73.7408],
-  ['YOW','Ottawa Macdonald-Cartier','Ottawa, ON',45.3225,-75.6692],
-  ['YQB','Quebec City Jean Lesage','Quebec City, QC',46.7911,-71.3933],
-  ['YHZ','Halifax Stanfield Intl','Halifax, NS',44.8808,-63.5086],
-  ['YYG','Charlottetown','Charlottetown, PE',46.2900,-63.1211],
-  ['YYC','Calgary Intl','Calgary, AB',51.1315,-114.0106],
-  ['YEG','Edmonton Intl','Edmonton, AB',53.3097,-113.5800],
-  ['YXE','Saskatoon Diefenbaker','Saskatoon, SK',52.1708,-106.6997],
-  ['YQR','Regina Intl','Regina, SK',50.4319,-104.6658],
-  ['YVR','Vancouver Intl','Vancouver, BC',49.1967,-123.1815],
-  ['ATL','Hartsfield-Jackson Atlanta','Atlanta, GA',33.6407,-84.4277],
-  ['CLT','Charlotte Douglas Intl','Charlotte, NC',35.2140,-80.9431],
-  ['DFW','Dallas/Fort Worth Intl','Dallas, TX',32.8998,-97.0403],
-  ['DAL','Dallas Love Field','Dallas, TX',32.8471,-96.8518],
-  ['IAH','Houston Bush Intercontinental','Houston, TX',29.9902,-95.3368],
-  ['OKC','Will Rogers World','Oklahoma City, OK',35.3931,-97.6007],
-  ['TUL','Tulsa Intl','Tulsa, OK',36.1984,-95.8881],
-  ['ICT','Wichita Eisenhower','Wichita, KS',37.6499,-97.4331],
-  ['MCI','Kansas City Intl','Kansas City, MO',39.2976,-94.7139],
-  ['STL','St. Louis Lambert Intl','St. Louis, MO',38.7487,-90.3700],
-  ['ORD',"Chicago O'Hare Intl",'Chicago, IL',41.9742,-87.9073],
-  ['MDW','Chicago Midway','Chicago, IL',41.7868,-87.7522],
-  ['DTW','Detroit Metro','Detroit, MI',42.2162,-83.3554],
-  ['GRR','Gerald R. Ford Intl','Grand Rapids, MI',42.8808,-85.5228],
-  ['CLE','Cleveland Hopkins Intl','Cleveland, OH',41.4117,-81.8498],
-  ['CMH','John Glenn Columbus','Columbus, OH',39.9980,-82.8919],
-  ['CVG','Cincinnati/N. Kentucky','Cincinnati, OH',39.0489,-84.6678],
-  ['IND','Indianapolis Intl','Indianapolis, IN',39.7169,-86.2956],
-  ['MSP','Minneapolis-St Paul Intl','Minneapolis, MN',44.8848,-93.2223],
-  ['FSD','Sioux Falls Regional','Sioux Falls, SD',43.5820,-96.7419],
-  ['OMA','Eppley Airfield','Omaha, NE',41.3032,-95.8941],
-  ['DEN','Denver Intl','Denver, CO',39.8561,-104.6737],
-  ['ABQ','Albuquerque Sunport','Albuquerque, NM',35.0402,-106.6091],
-  ['ROW','Roswell Air Center','Roswell, NM',33.3016,-104.5306],
-  ['PHX','Phoenix Sky Harbor','Phoenix, AZ',33.4342,-112.0116],
-  ['SLC','Salt Lake City Intl','Salt Lake City, UT',40.7899,-111.9791],
-  ['BOI','Boise Air Terminal','Boise, ID',43.5644,-116.2228],
-  ['GEG','Spokane Intl','Spokane, WA',47.6199,-117.5338],
-  ['SEA','Seattle-Tacoma Intl','Seattle, WA',47.4502,-122.3088],
-  ['PDX','Portland Intl','Portland, OR',45.5898,-122.5951],
-  ['BNA','Nashville Intl','Nashville, TN',36.1263,-86.6774],
-  ['MEM','Memphis Intl','Memphis, TN',35.0424,-89.9767],
-  ['BHM','Birmingham-Shuttlesworth','Birmingham, AL',33.5629,-86.7535],
-  ['JAN','Jackson-Medgar Evers','Jackson, MS',32.3112,-90.0759],
-  ['MSY','Louis Armstrong New Orleans','New Orleans, LA',29.9934,-90.2581],
-  ['LIT','Clinton National','Little Rock, AR',34.7294,-92.2243],
-  ['RDU','Raleigh-Durham Intl','Raleigh, NC',35.8776,-78.7875],
-  ['GSO','Piedmont Triad Intl','Greensboro, NC',36.0978,-79.9373],
-  ['CAE','Columbia Metropolitan','Columbia, SC',33.9388,-81.1195],
-  ['SAV','Savannah/Hilton Head','Savannah, GA',32.1276,-81.2021],
-  ['JAX','Jacksonville Intl','Jacksonville, FL',30.4941,-81.6879],
-  ['MCO','Orlando Intl','Orlando, FL',28.4312,-81.3081],
-  ['TPA','Tampa Intl','Tampa, FL',27.9755,-82.5332],
-  ['RIC','Richmond Intl','Richmond, VA',37.5052,-77.3197],
-  ['ORF','Norfolk Intl','Norfolk, VA',36.8946,-76.2012],
-  ['PIT','Pittsburgh Intl','Pittsburgh, PA',40.4915,-80.2329],
-  ['MDT','Harrisburg Intl','Harrisburg, PA',40.1935,-76.7634],
-  ['BUF','Buffalo Niagara Intl','Buffalo, NY',42.9405,-78.7322],
-  ['SYR','Syracuse Hancock Intl','Syracuse, NY',43.1112,-76.1063],
-  ['ALB','Albany Intl','Albany, NY',42.7483,-73.8017],
-  ['BTV','Burlington Intl','Burlington, VT',44.4720,-73.1533]
+  ['YWG','Winnipeg Richardson Intl','Winnipeg, MB',49.9100,-97.2399,'CYWG','MB, Canada'],
+  ['YYZ','Toronto Pearson Intl','Toronto, ON',43.6777,-79.6248,'CYYZ','ON, Canada'],
+  ['YTZ','Toronto Billy Bishop','Toronto, ON',43.6275,-79.3962,'CYTZ','ON, Canada'],
+  ['YUL','Montreal-Trudeau Intl','Montreal, QC',45.4706,-73.7408,'CYUL','QC, Canada'],
+  ['YOW','Ottawa Macdonald-Cartier','Ottawa, ON',45.3225,-75.6692,'CYOW','ON, Canada'],
+  ['YQB','Quebec City Jean Lesage','Quebec City, QC',46.7911,-71.3933,'CYQB','QC, Canada'],
+  ['YHZ','Halifax Stanfield Intl','Halifax, NS',44.8808,-63.5086,'CYHZ','NS, Canada'],
+  ['YYG','Charlottetown','Charlottetown, PE',46.2900,-63.1211,'CYYG','PE, Canada'],
+  ['YFC','Fredericton Intl','Fredericton, NB',45.8689,-66.5372,'CYFC','NB, Canada'],
+  ['YSJ','Saint John','Saint John, NB',45.3161,-65.8903,'CYSJ','NB, Canada'],
+  ['YQM','Greater Moncton Intl','Moncton, NB',46.1122,-64.6786,'CYQM','NB, Canada'],
+  ['YYT',"St. John's Intl","St. John's, NL",47.6186,-52.7519,'CYYT','NL, Canada'],
+  ['YDF','Deer Lake Regional','Deer Lake, NL',49.2108,-57.3914,'CYDF','NL, Canada'],
+  ['YYC','Calgary Intl','Calgary, AB',51.1315,-114.0106,'CYYC','AB, Canada'],
+  ['YEG','Edmonton Intl','Edmonton, AB',53.3097,-113.5800,'CYEG','AB, Canada'],
+  ['YQL','Lethbridge','Lethbridge, AB',49.6303,-112.7997,'CYQL','AB, Canada'],
+  ['YXH','Medicine Hat','Medicine Hat, AB',50.0189,-110.7208,'CYXH','AB, Canada'],
+  ['YMM','Fort McMurray Intl','Fort McMurray, AB',56.6533,-111.2220,'CYMM','AB, Canada'],
+  ['YLL','Lloydminster','Lloydminster, AB',53.3092,-110.0725,'CYLL','AB, Canada'],
+  ['YXE','Saskatoon Diefenbaker','Saskatoon, SK',52.1708,-106.6997,'CYXE','SK, Canada'],
+  ['YQR','Regina Intl','Regina, SK',50.4319,-104.6658,'CYQR','SK, Canada'],
+  ['YBR','Brandon Municipal','Brandon, MB',49.9100,-99.9519,'CYBR','MB, Canada'],
+  ['YQT','Thunder Bay Intl','Thunder Bay, ON',48.3719,-89.3239,'CYQT','ON, Canada'],
+  ['YXU','London Intl','London, ON',43.0356,-81.1539,'CYXU','ON, Canada'],
+  ['YHM','John C. Munro Hamilton Intl','Hamilton, ON',43.1736,-79.9350,'CYHM','ON, Canada'],
+  ['YKF','Region of Waterloo Intl','Kitchener-Waterloo, ON',43.4608,-80.3786,'CYKF','ON, Canada'],
+  ['YQG','Windsor Intl','Windsor, ON',42.2756,-82.9556,'CYQG','ON, Canada'],
+  ['YVR','Vancouver Intl','Vancouver, BC',49.1967,-123.1815,'CYVR','BC, Canada'],
+  ['YXX','Abbotsford Intl','Abbotsford, BC',49.0253,-122.3608,'CYXX','BC, Canada'],
+  ['YYJ','Victoria Intl','Victoria, BC',48.6469,-123.4258,'CYYJ','BC, Canada'],
+  ['YLW','Kelowna Intl','Kelowna, BC',49.9561,-119.3778,'CYLW','BC, Canada'],
+  ['YKA','Kamloops','Kamloops, BC',50.7022,-120.4444,'CYKA','BC, Canada'],
+  ['YXS','Prince George','Prince George, BC',53.8894,-122.6789,'CYXS','BC, Canada'],
+  ['ATL','Hartsfield-Jackson Atlanta','Atlanta, GA',33.6407,-84.4277,'KATL','GA, USA'],
+  ['CLT','Charlotte Douglas Intl','Charlotte, NC',35.2140,-80.9431,'KCLT','NC, USA'],
+  ['DFW','Dallas/Fort Worth Intl','Dallas, TX',32.8998,-97.0403,'KDFW','TX, USA'],
+  ['DAL','Dallas Love Field','Dallas, TX',32.8471,-96.8518,'KDAL','TX, USA'],
+  ['IAH','Houston Bush Intercontinental','Houston, TX',29.9902,-95.3368,'KIAH','TX, USA'],
+  ['HOU','Houston Hobby','Houston, TX',29.6454,-95.2789,'KHOU','TX, USA'],
+  ['SAT','San Antonio Intl','San Antonio, TX',29.5337,-98.4698,'KSAT','TX, USA'],
+  ['AUS','Austin-Bergstrom Intl','Austin, TX',30.1945,-97.6699,'KAUS','TX, USA'],
+  ['ELP','El Paso Intl','El Paso, TX',31.8072,-106.3776,'KELP','TX, USA'],
+  ['LBB','Lubbock Preston Smith Intl','Lubbock, TX',33.6636,-101.8228,'KLBB','TX, USA'],
+  ['AMA','Rick Husband Amarillo Intl','Amarillo, TX',35.2194,-101.7059,'KAMA','TX, USA'],
+  ['MAF','Midland Intl','Midland, TX',31.9425,-102.2019,'KMAF','TX, USA'],
+  ['CRP','Corpus Christi Intl','Corpus Christi, TX',27.7704,-97.5012,'KCRP','TX, USA'],
+  ['OKC','Will Rogers World','Oklahoma City, OK',35.3931,-97.6007,'KOKC','OK, USA'],
+  ['TUL','Tulsa Intl','Tulsa, OK',36.1984,-95.8881,'KTUL','OK, USA'],
+  ['ICT','Wichita Eisenhower','Wichita, KS',37.6499,-97.4331,'KICT','KS, USA'],
+  ['MCI','Kansas City Intl','Kansas City, MO',39.2976,-94.7139,'KMCI','MO, USA'],
+  ['STL','St. Louis Lambert Intl','St. Louis, MO',38.7487,-90.3700,'KSTL','MO, USA'],
+  ['SGF','Springfield-Branson National','Springfield, MO',37.2457,-93.3886,'KSGF','MO, USA'],
+  ['COU','Columbia Regional','Columbia, MO',38.8181,-92.2196,'KCOU','MO, USA'],
+  ['XNA','Northwest Arkansas National','Bentonville, AR',36.2819,-94.3068,'KXNA','AR, USA'],
+  ['ORD',"Chicago O'Hare Intl",'Chicago, IL',41.9742,-87.9073,'KORD','IL, USA'],
+  ['MDW','Chicago Midway','Chicago, IL',41.7868,-87.7522,'KMDW','IL, USA'],
+  ['MLI','Quad Cities Intl','Moline, IL',41.4485,-90.5075,'KMLI','IL, USA'],
+  ['PIA','Peoria Intl','Peoria, IL',40.6642,-89.6933,'KPIA','IL, USA'],
+  ['DTW','Detroit Metro','Detroit, MI',42.2162,-83.3554,'KDTW','MI, USA'],
+  ['GRR','Gerald R. Ford Intl','Grand Rapids, MI',42.8808,-85.5228,'KGRR','MI, USA'],
+  ['LAN','Capital Region Intl','Lansing, MI',42.7787,-84.5874,'KLAN','MI, USA'],
+  ['FNT','Bishop Intl','Flint, MI',42.9654,-83.7436,'KFNT','MI, USA'],
+  ['TVC','Cherry Capital','Traverse City, MI',44.7414,-85.5822,'KTVC','MI, USA'],
+  ['AZO','Kalamazoo/Battle Creek Intl','Kalamazoo, MI',42.2349,-85.5521,'KAZO','MI, USA'],
+  ['CLE','Cleveland Hopkins Intl','Cleveland, OH',41.4117,-81.8498,'KCLE','OH, USA'],
+  ['CMH','John Glenn Columbus','Columbus, OH',39.9980,-82.8919,'KCMH','OH, USA'],
+  ['CVG','Cincinnati/N. Kentucky','Cincinnati, OH',39.0489,-84.6678,'KCVG','KY, USA'],
+  ['DAY','Dayton Intl','Dayton, OH',39.9024,-84.2194,'KDAY','OH, USA'],
+  ['TOL','Eugene F. Kranz Toledo Express','Toledo, OH',41.5868,-83.8078,'KTOL','OH, USA'],
+  ['IND','Indianapolis Intl','Indianapolis, IN',39.7169,-86.2956,'KIND','IN, USA'],
+  ['FWA','Fort Wayne Intl','Fort Wayne, IN',40.9785,-85.1951,'KFWA','IN, USA'],
+  ['EVV','Evansville Regional','Evansville, IN',38.0370,-87.5324,'KEVV','IN, USA'],
+  ['SBN','South Bend Intl','South Bend, IN',41.7087,-86.3173,'KSBN','IN, USA'],
+  ['MSP','Minneapolis-St Paul Intl','Minneapolis, MN',44.8848,-93.2223,'KMSP','MN, USA'],
+  ['DLH','Duluth Intl','Duluth, MN',46.8420,-92.1936,'KDLH','MN, USA'],
+  ['RST','Rochester Intl','Rochester, MN',43.9083,-92.5000,'KRST','MN, USA'],
+  ['FSD','Sioux Falls Regional','Sioux Falls, SD',43.5820,-96.7419,'KFSD','SD, USA'],
+  ['RAP','Rapid City Regional','Rapid City, SD',44.0453,-103.0574,'KRAP','SD, USA'],
+  ['FAR','Hector Intl','Fargo, ND',46.9207,-96.8158,'KFAR','ND, USA'],
+  ['BIS','Bismarck Airport','Bismarck, ND',46.7727,-100.7462,'KBIS','ND, USA'],
+  ['GFK','Grand Forks Intl','Grand Forks, ND',47.9493,-97.1761,'KGFK','ND, USA'],
+  ['MOT','Minot Intl','Minot, ND',48.2594,-101.2803,'KMOT','ND, USA'],
+  ['OMA','Eppley Airfield','Omaha, NE',41.3032,-95.8941,'KOMA','NE, USA'],
+  ['LNK','Lincoln Airport','Lincoln, NE',40.8510,-96.7592,'KLNK','NE, USA'],
+  ['GRI','Central Nebraska Regional','Grand Island, NE',40.9675,-98.3096,'KGRI','NE, USA'],
+  ['DSM','Des Moines Intl','Des Moines, IA',41.5340,-93.6631,'KDSM','IA, USA'],
+  ['CID','Eastern Iowa','Cedar Rapids, IA',41.8847,-91.7108,'KCID','IA, USA'],
+  ['SUX','Sioux Gateway','Sioux City, IA',42.4026,-96.3844,'KSUX','IA, USA'],
+  ['MKE','Milwaukee Mitchell Intl','Milwaukee, WI',42.9472,-87.8966,'KMKE','WI, USA'],
+  ['MSN','Dane County Regional','Madison, WI',43.1399,-89.3375,'KMSN','WI, USA'],
+  ['GRB','Green Bay Austin Straubel Intl','Green Bay, WI',44.4851,-88.1296,'KGRB','WI, USA'],
+  ['ATW','Appleton Intl','Appleton, WI',44.2581,-88.5191,'KATW','WI, USA'],
+  ['DEN','Denver Intl','Denver, CO',39.8561,-104.6737,'KDEN','CO, USA'],
+  ['COS','Colorado Springs','Colorado Springs, CO',38.8058,-104.7008,'KCOS','CO, USA'],
+  ['GJT','Grand Junction Regional','Grand Junction, CO',39.1224,-108.5267,'KGJT','CO, USA'],
+  ['ABQ','Albuquerque Sunport','Albuquerque, NM',35.0402,-106.6091,'KABQ','NM, USA'],
+  ['ROW','Roswell Air Center','Roswell, NM',33.3016,-104.5306,'KROW','NM, USA'],
+  ['PHX','Phoenix Sky Harbor','Phoenix, AZ',33.4342,-112.0116,'KPHX','AZ, USA'],
+  ['TUS','Tucson Intl','Tucson, AZ',32.1161,-110.9410,'KTUS','AZ, USA'],
+  ['SLC','Salt Lake City Intl','Salt Lake City, UT',40.7899,-111.9791,'KSLC','UT, USA'],
+  ['BOI','Boise Air Terminal','Boise, ID',43.5644,-116.2228,'KBOI','ID, USA'],
+  ['IDA','Idaho Falls Regional','Idaho Falls, ID',43.5146,-112.0708,'KIDA','ID, USA'],
+  ['TWF','Magic Valley Regional','Twin Falls, ID',42.4818,-114.4877,'KTWF','ID, USA'],
+  ['GEG','Spokane Intl','Spokane, WA',47.6199,-117.5338,'KGEG','WA, USA'],
+  ['SEA','Seattle-Tacoma Intl','Seattle, WA',47.4502,-122.3088,'KSEA','WA, USA'],
+  ['PSC','Tri-Cities','Pasco, WA',46.2647,-119.1190,'KPSC','WA, USA'],
+  ['PDX','Portland Intl','Portland, OR',45.5898,-122.5951,'KPDX','OR, USA'],
+  ['EUG','Eugene Airport','Eugene, OR',44.1246,-123.2120,'KEUG','OR, USA'],
+  ['MFR','Rogue Valley Intl','Medford, OR',42.3742,-122.8735,'KMFR','OR, USA'],
+  ['BIL','Billings Logan Intl','Billings, MT',45.8077,-108.5429,'KBIL','MT, USA'],
+  ['BZN','Bozeman Yellowstone Intl','Bozeman, MT',45.7775,-111.1530,'KBZN','MT, USA'],
+  ['MSO','Missoula Montana','Missoula, MT',46.9163,-114.0906,'KMSO','MT, USA'],
+  ['GTF','Great Falls Intl','Great Falls, MT',47.4820,-111.3707,'KGTF','MT, USA'],
+  ['HLN','Helena Regional','Helena, MT',46.6068,-111.9827,'KHLN','MT, USA'],
+  ['JAC','Jackson Hole','Jackson, WY',43.6073,-110.7377,'KJAC','WY, USA'],
+  ['CPR','Casper-Natrona County Intl','Casper, WY',42.9080,-106.4645,'KCPR','WY, USA'],
+  ['CYS','Cheyenne Regional','Cheyenne, WY',41.1557,-104.8118,'KCYS','WY, USA'],
+  ['LAS','Harry Reid Intl','Las Vegas, NV',36.0840,-115.1537,'KLAS','NV, USA'],
+  ['RNO','Reno-Tahoe Intl','Reno, NV',39.4991,-119.7681,'KRNO','NV, USA'],
+  ['LAX','Los Angeles Intl','Los Angeles, CA',33.9416,-118.4085,'KLAX','CA, USA'],
+  ['SAN','San Diego Intl','San Diego, CA',32.7338,-117.1933,'KSAN','CA, USA'],
+  ['SFO','San Francisco Intl','San Francisco, CA',37.6213,-122.3790,'KSFO','CA, USA'],
+  ['SJC','San Jose Mineta Intl','San Jose, CA',37.3639,-121.9289,'KSJC','CA, USA'],
+  ['OAK','Oakland Intl','Oakland, CA',37.7126,-122.2197,'KOAK','CA, USA'],
+  ['SMF','Sacramento Intl','Sacramento, CA',38.6954,-121.5908,'KSMF','CA, USA'],
+  ['FAT','Fresno Yosemite Intl','Fresno, CA',36.7762,-119.7181,'KFAT','CA, USA'],
+  ['ONT','Ontario Intl','Ontario, CA',34.0560,-117.6012,'KONT','CA, USA'],
+  ['BNA','Nashville Intl','Nashville, TN',36.1263,-86.6774,'KBNA','TN, USA'],
+  ['MEM','Memphis Intl','Memphis, TN',35.0424,-89.9767,'KMEM','TN, USA'],
+  ['TYS','McGhee Tyson','Knoxville, TN',35.8110,-83.9940,'KTYS','TN, USA'],
+  ['CHA','Chattanooga Metropolitan','Chattanooga, TN',35.0353,-85.2038,'KCHA','TN, USA'],
+  ['TRI','Tri-Cities Airport','Blountville, TN',36.4752,-82.4074,'KTRI','TN, USA'],
+  ['BHM','Birmingham-Shuttlesworth','Birmingham, AL',33.5629,-86.7535,'KBHM','AL, USA'],
+  ['HSV','Huntsville Intl','Huntsville, AL',34.6372,-86.7751,'KHSV','AL, USA'],
+  ['MOB','Mobile Regional','Mobile, AL',30.6912,-88.2428,'KMOB','AL, USA'],
+  ['MGM','Montgomery Regional','Montgomery, AL',32.3006,-86.3940,'KMGM','AL, USA'],
+  ['JAN','Jackson-Medgar Evers','Jackson, MS',32.3112,-90.0759,'KJAN','MS, USA'],
+  ['GPT','Gulfport-Biloxi Intl','Gulfport, MS',30.4073,-89.0701,'KGPT','MS, USA'],
+  ['MSY','Louis Armstrong New Orleans','New Orleans, LA',29.9934,-90.2581,'KMSY','LA, USA'],
+  ['BTR','Baton Rouge Metropolitan','Baton Rouge, LA',30.5332,-91.1496,'KBTR','LA, USA'],
+  ['SHV','Shreveport Regional','Shreveport, LA',32.4466,-93.8256,'KSHV','LA, USA'],
+  ['LFT','Lafayette Regional','Lafayette, LA',30.2053,-91.9876,'KLFT','LA, USA'],
+  ['LIT','Clinton National','Little Rock, AR',34.7294,-92.2243,'KLIT','AR, USA'],
+  ['SDF','Louisville Muhammad Ali Intl','Louisville, KY',38.1740,-85.7365,'KSDF','KY, USA'],
+  ['LEX','Blue Grass','Lexington, KY',38.0365,-84.6059,'KLEX','KY, USA'],
+  ['RDU','Raleigh-Durham Intl','Raleigh, NC',35.8776,-78.7875,'KRDU','NC, USA'],
+  ['GSO','Piedmont Triad Intl','Greensboro, NC',36.0978,-79.9373,'KGSO','NC, USA'],
+  ['AVL','Asheville Regional','Asheville, NC',35.4362,-82.5418,'KAVL','NC, USA'],
+  ['ILM','Wilmington Intl','Wilmington, NC',34.2706,-77.9026,'KILM','NC, USA'],
+  ['FAY','Fayetteville Regional','Fayetteville, NC',34.9912,-78.8803,'KFAY','NC, USA'],
+  ['CAE','Columbia Metropolitan','Columbia, SC',33.9388,-81.1195,'KCAE','SC, USA'],
+  ['CHS','Charleston Intl','Charleston, SC',32.8986,-80.0405,'KCHS','SC, USA'],
+  ['GSP','Greenville-Spartanburg Intl','Greer, SC',34.8957,-82.2189,'KGSP','SC, USA'],
+  ['MYR','Myrtle Beach Intl','Myrtle Beach, SC',33.6797,-78.9283,'KMYR','SC, USA'],
+  ['SAV','Savannah/Hilton Head','Savannah, GA',32.1276,-81.2021,'KSAV','GA, USA'],
+  ['AGS','Augusta Regional','Augusta, GA',33.3699,-81.9645,'KAGS','GA, USA'],
+  ['JAX','Jacksonville Intl','Jacksonville, FL',30.4941,-81.6879,'KJAX','FL, USA'],
+  ['MCO','Orlando Intl','Orlando, FL',28.4312,-81.3081,'KMCO','FL, USA'],
+  ['TPA','Tampa Intl','Tampa, FL',27.9755,-82.5332,'KTPA','FL, USA'],
+  ['MIA','Miami Intl','Miami, FL',25.7959,-80.2870,'KMIA','FL, USA'],
+  ['FLL','Fort Lauderdale-Hollywood Intl','Fort Lauderdale, FL',26.0742,-80.1506,'KFLL','FL, USA'],
+  ['PBI','Palm Beach Intl','West Palm Beach, FL',26.6832,-80.0956,'KPBI','FL, USA'],
+  ['RSW','Southwest Florida Intl','Fort Myers, FL',26.5362,-81.7552,'KRSW','FL, USA'],
+  ['SRQ','Sarasota-Bradenton Intl','Sarasota, FL',27.3954,-82.5544,'KSRQ','FL, USA'],
+  ['PNS','Pensacola Intl','Pensacola, FL',30.4734,-87.1866,'KPNS','FL, USA'],
+  ['TLH','Tallahassee Intl','Tallahassee, FL',30.3965,-84.3503,'KTLH','FL, USA'],
+  ['GNV','Gainesville Regional','Gainesville, FL',29.6900,-82.2718,'KGNV','FL, USA'],
+  ['RIC','Richmond Intl','Richmond, VA',37.5052,-77.3197,'KRIC','VA, USA'],
+  ['ORF','Norfolk Intl','Norfolk, VA',36.8946,-76.2012,'KORF','VA, USA'],
+  ['ROA','Roanoke-Blacksburg Regional','Roanoke, VA',37.3255,-79.9754,'KROA','VA, USA'],
+  ['CHO','Charlottesville-Albemarle','Charlottesville, VA',38.1386,-78.4529,'KCHO','VA, USA'],
+  ['CRW','West Virginia Intl Yeager','Charleston, WV',38.3731,-81.5932,'KCRW','WV, USA'],
+  ['PIT','Pittsburgh Intl','Pittsburgh, PA',40.4915,-80.2329,'KPIT','PA, USA'],
+  ['MDT','Harrisburg Intl','Harrisburg, PA',40.1935,-76.7634,'KMDT','PA, USA'],
+  ['PHL','Philadelphia Intl','Philadelphia, PA',39.8729,-75.2437,'KPHL','PA, USA'],
+  ['ABE','Lehigh Valley Intl','Allentown, PA',40.6521,-75.4408,'KABE','PA, USA'],
+  ['AVP','Wilkes-Barre/Scranton Intl','Scranton, PA',41.3385,-75.7234,'KAVP','PA, USA'],
+  ['ERI','Erie Intl','Erie, PA',42.0831,-80.1739,'KERI','PA, USA'],
+  ['SCE','State College Regional','State College, PA',40.8493,-77.8487,'KSCE','PA, USA'],
+  ['BUF','Buffalo Niagara Intl','Buffalo, NY',42.9405,-78.7322,'KBUF','NY, USA'],
+  ['SYR','Syracuse Hancock Intl','Syracuse, NY',43.1112,-76.1063,'KSYR','NY, USA'],
+  ['ALB','Albany Intl','Albany, NY',42.7483,-73.8017,'KALB','NY, USA'],
+  ['ROC','Frederick Douglass Rochester Intl','Rochester, NY',43.1189,-77.6724,'KROC','NY, USA'],
+  ['JFK','John F. Kennedy Intl','New York, NY',40.6413,-73.7781,'KJFK','NY, USA'],
+  ['LGA','LaGuardia','New York, NY',40.7769,-73.8740,'KLGA','NY, USA'],
+  ['EWR','Newark Liberty Intl','Newark, NJ',40.6895,-74.1745,'KEWR','NJ, USA'],
+  ['BTV','Burlington Intl','Burlington, VT',44.4720,-73.1533,'KBTV','VT, USA'],
+  ['BOS','Boston Logan Intl','Boston, MA',42.3656,-71.0096,'KBOS','MA, USA'],
+  ['PVD','Rhode Island T.F. Green Intl','Providence, RI',41.7267,-71.4325,'KPVD','RI, USA'],
+  ['BDL','Bradley Intl','Hartford, CT',41.9389,-72.6832,'KBDL','CT, USA'],
+  ['MHT','Manchester-Boston Regional','Manchester, NH',42.9326,-71.4357,'KMHT','NH, USA'],
+  ['PWM','Portland Intl Jetport','Portland, ME',43.6462,-70.3093,'KPWM','ME, USA'],
+  ['BGR','Bangor Intl','Bangor, ME',44.8074,-68.8281,'KBGR','ME, USA'],
+  ['BWI','Baltimore/Washington Intl','Baltimore, MD',39.1774,-76.6684,'KBWI','MD, USA'],
+  ['DCA','Ronald Reagan Washington National','Washington, DC',38.8512,-77.0402,'KDCA','DC, USA'],
+  ['IAD','Washington Dulles Intl','Washington, DC',38.9531,-77.4565,'KIAD','VA, USA'],
+  ['ANC','Ted Stevens Anchorage Intl','Anchorage, AK',61.1743,-149.9963,'PANC','AK, USA'],
+  ['HNL','Daniel K. Inouye Intl','Honolulu, HI',21.3187,-157.9224,'PHNL','HI, USA'],
+  ['MEX','Mexico City Intl','Mexico City',19.4363,-99.0721,'MMMX','Mexico'],
+  ['CUN','Cancun Intl','Cancun',21.0365,-86.8771,'MMUN','Mexico'],
+  ['GDL','Guadalajara Intl','Guadalajara',20.5218,-103.3111,'MMGL','Mexico'],
+  ['MTY','Monterrey Intl','Monterrey',25.7785,-100.1069,'MMMY','Mexico'],
+  ['SJD','Los Cabos Intl','San Jose del Cabo',23.1518,-109.7215,'MMSD','Mexico'],
+  ['PVR','Puerto Vallarta Intl','Puerto Vallarta',20.6801,-105.2544,'MMPR','Mexico'],
+  ['PTY','Tocumen Intl','Panama City',9.0714,-79.3835,'MPTO','Panama'],
+  ['SJO','Juan Santamaria Intl','San Jose',9.9939,-84.2088,'MROC','Costa Rica'],
+  ['GUA','La Aurora Intl','Guatemala City',14.5833,-90.5275,'MGGT','Guatemala'],
+  ['SAL','El Salvador Intl','San Salvador',13.4409,-89.0557,'MSLP','El Salvador'],
+  ['NAS','Lynden Pindling Intl','Nassau',25.0390,-77.4662,'MYNN','Bahamas'],
+  ['MBJ','Sangster Intl','Montego Bay',18.5037,-77.9134,'MKJS','Jamaica'],
+  ['KIN','Norman Manley Intl','Kingston',17.9357,-76.7875,'MKJP','Jamaica'],
+  ['SJU','Luis Munoz Marin Intl','San Juan',18.4394,-66.0018,'TJSJ','Puerto Rico'],
+  ['PUJ','Punta Cana Intl','Punta Cana',18.5674,-68.3634,'MDPC','Dominican Republic'],
+  ['SDQ','Las Americas Intl','Santo Domingo',18.4297,-69.6689,'MDSD','Dominican Republic'],
+  ['BGI','Grantley Adams Intl','Bridgetown',13.0746,-59.4925,'TBPB','Barbados'],
+  ['POS','Piarco Intl','Port of Spain',10.5954,-61.3372,'TTPP','Trinidad & Tobago'],
+  ['BOG','El Dorado Intl','Bogota',4.7016,-74.1469,'SKBO','Colombia'],
+  ['MDE','Jose Maria Cordova Intl','Medellin',6.1645,-75.4231,'SKRG','Colombia'],
+  ['UIO','Mariscal Sucre Intl','Quito',-0.1292,-78.3575,'SEQM','Ecuador'],
+  ['LIM','Jorge Chavez Intl','Lima',-12.0219,-77.1143,'SPJC','Peru'],
+  ['SCL','Arturo Merino Benitez Intl','Santiago',-33.3930,-70.7858,'SCEL','Chile'],
+  ['EZE','Ministro Pistarini Intl','Buenos Aires',-34.8222,-58.5358,'SAEZ','Argentina'],
+  ['GRU','Sao Paulo/Guarulhos Intl','Sao Paulo',-23.4356,-46.4731,'SBGR','Brazil'],
+  ['GIG','Rio de Janeiro/Galeao Intl','Rio de Janeiro',-22.8100,-43.2506,'SBGL','Brazil'],
+  ['MVD','Carrasco Intl','Montevideo',-34.8384,-56.0308,'SUMU','Uruguay'],
+  ['LHR','London Heathrow','London',51.4700,-0.4543,'EGLL','England, UK'],
+  ['LGW','London Gatwick','London',51.1537,-0.1821,'EGKK','England, UK'],
+  ['STN','London Stansted','London',51.8860,0.2389,'EGSS','England, UK'],
+  ['MAN','Manchester Airport','Manchester',53.3537,-2.2750,'EGCC','England, UK'],
+  ['BHX','Birmingham Airport','Birmingham',52.4539,-1.7480,'EGBB','England, UK'],
+  ['BRS','Bristol Airport','Bristol',51.3827,-2.7191,'EGGD','England, UK'],
+  ['NCL','Newcastle Intl','Newcastle',55.0375,-1.6917,'EGNT','England, UK'],
+  ['LBA','Leeds Bradford','Leeds',53.8659,-1.6606,'EGNM','England, UK'],
+  ['EDI','Edinburgh Airport','Edinburgh',55.9508,-3.3615,'EGPH','Scotland, UK'],
+  ['GLA','Glasgow Airport','Glasgow',55.8687,-4.4351,'EGPF','Scotland, UK'],
+  ['ABZ','Aberdeen Intl','Aberdeen',57.2019,-2.1978,'EGPD','Scotland, UK'],
+  ['BFS','Belfast Intl','Belfast',54.6575,-6.2158,'EGAA','Northern Ireland, UK'],
+  ['CWL','Cardiff Airport','Cardiff',51.3967,-3.3433,'EGFF','Wales, UK'],
+  ['DUB','Dublin Airport','Dublin',53.4264,-6.2499,'EIDW','Ireland'],
+  ['ORK','Cork Airport','Cork',51.8413,-8.4911,'EICK','Ireland'],
+  ['SNN','Shannon Airport','Shannon',52.7019,-8.9248,'EINN','Ireland'],
+  ['CDG','Paris Charles de Gaulle','Paris',49.0097,2.5479,'LFPG','France'],
+  ['ORY','Paris Orly','Paris',48.7233,2.3794,'LFPO','France'],
+  ['NCE',"Nice Cote d'Azur",'Nice',43.6584,7.2159,'LFMN','France'],
+  ['LYS','Lyon-Saint Exupery','Lyon',45.7256,5.0811,'LFLL','France'],
+  ['AMS','Amsterdam Schiphol','Amsterdam',52.3105,4.7683,'EHAM','Netherlands'],
+  ['BRU','Brussels Airport','Brussels',50.9010,4.4844,'EBBR','Belgium'],
+  ['FRA','Frankfurt Airport','Frankfurt',50.0379,8.5622,'EDDF','Germany'],
+  ['MUC','Munich Airport','Munich',48.3538,11.7861,'EDDM','Germany'],
+  ['BER','Berlin Brandenburg','Berlin',52.3667,13.5033,'EDDB','Germany'],
+  ['DUS','Dusseldorf Airport','Dusseldorf',51.2895,6.7668,'EDDL','Germany'],
+  ['HAM','Hamburg Airport','Hamburg',53.6304,9.9882,'EDDH','Germany'],
+  ['STR','Stuttgart Airport','Stuttgart',48.6899,9.2220,'EDDS','Germany'],
+  ['CGN','Cologne Bonn','Cologne',50.8659,7.1427,'EDDK','Germany'],
+  ['ZRH','Zurich Airport','Zurich',47.4582,8.5555,'LSZH','Switzerland'],
+  ['GVA','Geneva Airport','Geneva',46.2381,6.1090,'LSGG','Switzerland'],
+  ['VIE','Vienna Intl','Vienna',48.1103,16.5697,'LOWW','Austria'],
+  ['CPH','Copenhagen Kastrup','Copenhagen',55.6181,12.6561,'EKCH','Denmark'],
+  ['OSL','Oslo Gardermoen','Oslo',60.1976,11.1004,'ENGM','Norway'],
+  ['ARN','Stockholm Arlanda','Stockholm',59.6498,17.9238,'ESSA','Sweden'],
+  ['GOT','Gothenburg Landvetter','Gothenburg',57.6688,12.2922,'ESGG','Sweden'],
+  ['HEL','Helsinki-Vantaa','Helsinki',60.3183,24.9630,'EFHK','Finland'],
+  ['KEF','Keflavik Intl','Reykjavik',63.9850,-22.6056,'BIKF','Iceland'],
+  ['LIS','Lisbon Humberto Delgado','Lisbon',38.7742,-9.1342,'LPPT','Portugal'],
+  ['OPO','Porto Airport','Porto',41.2481,-8.6814,'LPPR','Portugal'],
+  ['MAD','Madrid Barajas','Madrid',40.4722,-3.5608,'LEMD','Spain'],
+  ['BCN','Barcelona El Prat','Barcelona',41.2971,2.0785,'LEBL','Spain'],
+  ['AGP','Malaga-Costa del Sol','Malaga',36.6749,-4.4991,'LEMG','Spain'],
+  ['FCO','Rome Fiumicino','Rome',41.8003,12.2389,'LIRF','Italy'],
+  ['MXP','Milan Malpensa','Milan',45.6306,8.7281,'LIMC','Italy'],
+  ['VCE','Venice Marco Polo','Venice',45.5053,12.3519,'LIPZ','Italy'],
+  ['NAP','Naples Intl','Naples',40.8860,14.2908,'LIRN','Italy'],
+  ['ATH','Athens Intl','Athens',37.9364,23.9445,'LGAV','Greece'],
+  ['IST','Istanbul Airport','Istanbul',41.2753,28.7519,'LTFM','Turkiye'],
+  ['WAW','Warsaw Chopin','Warsaw',52.1657,20.9671,'EPWA','Poland'],
+  ['KRK','Krakow John Paul II','Krakow',50.0777,19.7848,'EPKK','Poland'],
+  ['PRG','Vaclav Havel Prague','Prague',50.1008,14.2632,'LKPR','Czechia'],
+  ['BUD','Budapest Ferenc Liszt','Budapest',47.4394,19.2618,'LHBP','Hungary'],
+  ['OTP','Bucharest Otopeni','Bucharest',44.5711,26.0850,'LROP','Romania'],
+  ['DXB','Dubai Intl','Dubai',25.2532,55.3657,'OMDB','UAE'],
+  ['AUH','Abu Dhabi Intl','Abu Dhabi',24.4330,54.6511,'OMAA','UAE'],
+  ['DOH','Hamad Intl','Doha',25.2731,51.6081,'OTHH','Qatar'],
+  ['RUH','King Khalid Intl','Riyadh',24.9576,46.6988,'OERK','Saudi Arabia'],
+  ['JED','King Abdulaziz Intl','Jeddah',21.6796,39.1565,'OEJN','Saudi Arabia'],
+  ['TLV','Ben Gurion Intl','Tel Aviv',32.0055,34.8854,'LLBG','Israel'],
+  ['CAI','Cairo Intl','Cairo',30.1219,31.4056,'HECA','Egypt'],
+  ['CMN','Casablanca Mohammed V','Casablanca',33.3675,-7.5900,'GMMN','Morocco'],
+  ['JNB','O.R. Tambo Intl','Johannesburg',-26.1392,28.2460,'FAOR','South Africa'],
+  ['CPT','Cape Town Intl','Cape Town',-33.9648,18.6017,'FACT','South Africa'],
+  ['NBO','Jomo Kenyatta Intl','Nairobi',-1.3192,36.9278,'HKJK','Kenya'],
+  ['LOS','Murtala Muhammed Intl','Lagos',6.5774,3.3212,'DNMM','Nigeria'],
+  ['ADD','Addis Ababa Bole Intl','Addis Ababa',8.9779,38.7993,'HAAB','Ethiopia'],
+  ['ACC','Kotoka Intl','Accra',5.6052,-0.1668,'DGAA','Ghana'],
+  ['DEL','Indira Gandhi Intl','Delhi',28.5665,77.1031,'VIDP','India'],
+  ['BOM','Chhatrapati Shivaji Intl','Mumbai',19.0896,72.8656,'VABB','India'],
+  ['BLR','Kempegowda Intl','Bengaluru',13.1986,77.7066,'VOBL','India'],
+  ['MAA','Chennai Intl','Chennai',12.9941,80.1709,'VOMM','India'],
+  ['HYD','Rajiv Gandhi Intl','Hyderabad',17.2403,78.4294,'VOHS','India'],
+  ['SIN','Singapore Changi','Singapore',1.3644,103.9915,'WSSS','Singapore'],
+  ['KUL','Kuala Lumpur Intl','Kuala Lumpur',2.7456,101.7099,'WMKK','Malaysia'],
+  ['BKK','Suvarnabhumi','Bangkok',13.6900,100.7501,'VTBS','Thailand'],
+  ['HKT','Phuket Intl','Phuket',8.1132,98.3169,'VTSP','Thailand'],
+  ['CGK','Soekarno-Hatta Intl','Jakarta',-6.1256,106.6559,'WIII','Indonesia'],
+  ['DPS','Ngurah Rai Intl','Denpasar, Bali',-8.7482,115.1672,'WADD','Indonesia'],
+  ['MNL','Ninoy Aquino Intl','Manila',14.5086,121.0198,'RPLL','Philippines'],
+  ['HKG','Hong Kong Intl','Hong Kong',22.3080,113.9185,'VHHH','Hong Kong'],
+  ['TPE','Taiwan Taoyuan Intl','Taipei',25.0797,121.2342,'RCTP','Taiwan'],
+  ['ICN','Incheon Intl','Seoul',37.4602,126.4407,'RKSI','South Korea'],
+  ['NRT','Narita Intl','Tokyo',35.7653,140.3856,'RJAA','Japan'],
+  ['HND','Tokyo Haneda','Tokyo',35.5494,139.7798,'RJTT','Japan'],
+  ['KIX','Kansai Intl','Osaka',34.4342,135.2440,'RJBB','Japan'],
+  ['PEK','Beijing Capital Intl','Beijing',40.0799,116.6031,'ZBAA','China'],
+  ['PVG','Shanghai Pudong Intl','Shanghai',31.1443,121.8083,'ZSPD','China'],
+  ['CAN','Guangzhou Baiyun Intl','Guangzhou',23.3924,113.2988,'ZGGG','China'],
+  ['SZX',"Shenzhen Bao'an Intl",'Shenzhen',22.6393,113.8107,'ZGSZ','China'],
+  ['SYD','Sydney Kingsford Smith','Sydney',-33.9461,151.1772,'YSSY','NSW, Australia'],
+  ['MEL','Melbourne Tullamarine','Melbourne',-37.6690,144.8410,'YMML','VIC, Australia'],
+  ['BNE','Brisbane Airport','Brisbane',-27.3842,153.1175,'YBBN','QLD, Australia'],
+  ['PER','Perth Airport','Perth',-31.9385,115.9672,'YPPH','WA, Australia'],
+  ['ADL','Adelaide Airport','Adelaide',-34.9450,138.5306,'YPAD','SA, Australia'],
+  ['AKL','Auckland Airport','Auckland',-37.0082,174.7850,'NZAA','New Zealand'],
+  ['WLG','Wellington Intl','Wellington',-41.3272,174.8053,'NZWN','New Zealand'],
+  ['CHC','Christchurch Intl','Christchurch',-43.4894,172.5320,'NZCH','New Zealand'],
+  ['NAN','Nadi Intl','Nadi',-17.7554,177.4434,'NFFN','Fiji']
 ];
 function airportByCode(code){
   code=(code||'').toUpperCase();
-  var a=AIRPORTS.filter(function(x){return x[0]===code;})[0];
-  return a?{code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4]}:null;
+  var a=AIRPORTS.filter(function(x){return x[0]===code||x[5]===code;})[0];
+  return a?{code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''}:null;
 }
-/* search by code or name; returns up to 8 */
+/* intelligent airport search: every token must match code, ICAO, name, city or
+   region; exact/prefix code matches rank first. Pure in-memory scan — instant. */
 function airportSearch(q){
   q=(q||'').trim().toLowerCase();
   if(!q) return [];
-  var starts=[], contains=[];
-  AIRPORTS.forEach(function(a){
-    var code=a[0].toLowerCase(), name=a[1].toLowerCase(), city=a[2].toLowerCase();
-    if(code===q || code.indexOf(q)===0) starts.push(a);
-    else if(name.indexOf(q)>=0 || city.indexOf(q)>=0) contains.push(a);
+  var toks=q.split(/[\s,\-\/]+/).filter(Boolean);
+  if(!toks.length) return [];
+  var scored=[];
+  for(var i=0;i<AIRPORTS.length;i++){
+    var a=AIRPORTS[i];
+    var code=a[0].toLowerCase(), icao=(a[5]||'').toLowerCase();
+    var name=a[1].toLowerCase(), city=a[2].toLowerCase(), region=(a[6]||'').toLowerCase();
+    var hay=code+' '+icao+' '+name+' '+city+' '+region;
+    var score=0, ok=true;
+    for(var t=0;t<toks.length;t++){
+      var tk=toks[t];
+      if(code===tk||icao===tk) score+=100;
+      else if(code.indexOf(tk)===0||icao.indexOf(tk)===0) score+=60;
+      else if(name.indexOf(tk)===0||city.indexOf(tk)===0) score+=45;
+      else { var ix=hay.indexOf(tk);
+        if(ix<0){ ok=false; break; }
+        score+=(ix===0||hay.charAt(ix-1)===' '||hay.charAt(ix-1)==='(')?25:8; }
+    }
+    if(ok) scored.push([score,a]);
+  }
+  scored.sort(function(x,y){ return (y[0]-x[0])||x[1][1].localeCompare(y[1][1]); });
+  return scored.slice(0,8).map(function(s){ var a=s[1];
+    return {code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''};
   });
-  return starts.concat(contains).slice(0,8).map(function(a){
-    return {code:a[0],name:a[1],city:a[2],lat:a[3],lon:a[4]};
+}
+/* ---- airport typeahead: one shared dropdown for every .ap-in input ----
+   Delegated listeners, so re-rendered inputs need no re-wiring. Picking a
+   result writes through setTravelField (inputs with data-tv) or just fills
+   the input with the IATA code (mobile sheets). */
+var _apInput=null;
+function apInit(){
+  if(apInit.done) return; apInit.done=true;
+  var box=document.createElement('div'); box.id='apDrop'; box.style.display='none';
+  document.body.appendChild(box);
+  function hide(){ box.style.display='none'; box.innerHTML=''; _apInput=null; }
+  function pick(code){
+    var inp=_apInput; hide(); if(!inp) return;
+    if(inp.dataset.tv){ setTravelField(inp.dataset.tv,'airportCode',code); }
+    else { inp.value=code; inp.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+  function show(inp){
+    var rs=airportSearch(inp.value);
+    if(!rs.length){ hide(); return; }
+    _apInput=inp;
+    box.innerHTML=rs.map(function(a,i){
+      return '<div class="api'+(i===0?' sel':'')+'" data-code="'+a.code+'">'
+        +'<b>'+esc(a.code)+'</b><span class="apn">'+esc(a.name)+'</span>'
+        +'<span class="apc">'+esc(a.city)+(a.region?(' · '+esc(a.region)):'')+'</span></div>';
+    }).join('');
+    var r=inp.getBoundingClientRect();
+    box.style.left=Math.round(Math.min(r.left,innerWidth-320))+'px';
+    box.style.top=Math.round(r.bottom+2)+'px';
+    box.style.minWidth=Math.max(240,Math.round(r.width))+'px';
+    box.style.display='block';
+  }
+  document.addEventListener('input',function(e){
+    var t=e.target; if(t&&t.classList&&t.classList.contains('ap-in')) show(t);
   });
+  document.addEventListener('focusin',function(e){
+    var t=e.target;
+    if(t&&t.classList&&t.classList.contains('ap-in')){ try{t.select();}catch(_){}; if(t.value.trim())show(t); }
+    else if(_apInput&&!box.contains(e.target)) hide();
+  });
+  document.addEventListener('keydown',function(e){
+    if(!_apInput||e.target!==_apInput) return;
+    var items=box.querySelectorAll('.api'); if(!items.length) return;
+    var idx=-1; items.forEach(function(x,i){ if(x.classList.contains('sel')) idx=i; });
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();
+      var ni=(e.key==='ArrowDown')?Math.min(items.length-1,idx+1):Math.max(0,idx-1);
+      items.forEach(function(x,i){ x.classList.toggle('sel',i===ni); });
+    } else if(e.key==='Enter'){ e.preventDefault(); pick(items[idx>=0?idx:0].dataset.code); }
+    else if(e.key==='Escape'){ hide(); }
+  });
+  document.addEventListener('pointerdown',function(e){
+    var item=e.target.closest&&e.target.closest('#apDrop .api');
+    if(item){ e.preventDefault(); pick(item.dataset.code); return; }
+    if(_apInput&&e.target!==_apInput&&!box.contains(e.target)) hide();
+  },true);
+  window.addEventListener('resize',function(){ if(_apInput) hide(); });
+  document.addEventListener('scroll',function(e){ if(_apInput&&!box.contains(e.target)) hide(); },true);
 }
 
 /* ---- geocoding (OpenStreetMap Nominatim). Results are cached on the item, so a
@@ -1627,7 +2040,7 @@ function addTravel(type,wk){
   savePlan(); refreshPlanner();
 }
 function setTravelField(id,field,val){
-  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it) return;
+  var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='airportCode'){
@@ -1662,7 +2075,7 @@ function itineraryFor(t,wk){
       items.push({kind:'dealer', id:d.id, type:'dealer', name:d.name,
         address:d.address||'', lat:d.lat, lon:d.lon,
         day:(DAY[d.id]==null?null:DAY[d.id]), time:TIME[d.id]||'',
-        located:(d.lat!=null&&d.lon!=null), revenue:d.booking||0, loads:d.loads||0,
+        located:(d.lat!=null&&d.lon!=null), revenue:fcB(d), loads:fcL(d),
         status:(APPT[d.id]?'Confirmed':'Pending')});
     }
   });
@@ -1698,17 +2111,27 @@ function legsFor(items){
   var legs=[], totalMi=0;
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
+    /* between every pair of physical stops there is a travel segment:
+       airport→airport is a flight, anything else is a drive */
+    var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+    if(fly){
+      var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
+      legs.push({from:a, to:b, miles:gk/1.60934, km:gk, hours:gk/750+0.5, fly:true,
+                 sameDay:(a.day!=null && a.day===b.day)});
+      continue;                                   /* flights never count as driving */
+    }
     var mi=roadMi([a.lat,a.lon],[b.lat,b.lon]);
     if(mi==null) mi=0;
     totalMi+=mi;
-    legs.push({from:a, to:b, miles:mi, km:mi*1.60934, hours:mi/55,
+    legs.push({from:a, to:b, miles:mi, km:mi*1.60934, hours:mi/55, fly:false,
                sameDay:(a.day!=null && a.day===b.day)});
   }
   return {legs:legs, totalMi:totalMi, totalKm:totalMi*1.60934, totalHours:totalMi/55,
           unlocated:items.filter(function(i){return !i.located;}).length};
 }
 function legLabel(l){
-  return Math.round(l.km)+' km · '+hrsLabel(l.hours);
+  if(l.fly) return 'Flight · ~'+hrsLabel(l.hours);
+  return 'Drive · '+Math.round(l.km)+' km · '+hrsLabel(l.hours);
 }
 
 
@@ -1731,12 +2154,11 @@ function travelCard(it,wk){
   /* --- place row: airport picker for flights, address + locate for everything else --- */
   var place;
   if(isFlight){
-    /* a real selector listing every available airport — no free-typing codes */
+    /* intelligent airport search: type a name, city, IATA/ICAO code or region */
     place='<div class="tv-row">'
-      +'<select class="tv-in" data-tv="'+it.id+'" data-f="airportCode">'
-      +'<option value="">— airport —</option>'
-      +AIRPORTS.map(function(a){ return '<option value="'+a[0]+'"'+(it.airportCode===a[0]?' selected':'')+'>'+a[0]+' — '+esc(a[2])+'</option>'; }).join('')
-      +'</select>'
+      +'<input class="tv-in ap-in" data-tv="'+it.id+'" autocomplete="off" spellcheck="false"'
+      +' value="'+esc(it.airportCode?(it.airportCode+' — '+(it.airportName||it.address||'')):'')+'"'
+      +' placeholder="Search airport, city or code">'
       +'</div>';
   } else {
     place='<div class="tv-row">'
@@ -1797,7 +2219,7 @@ function logiRowDetail(x){
 function weekCard(wk){
   var isk=wk===31, isRemote=wk==='remote';
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;}).sort(function(a,b){return b.booking-a.booking;});
-  var rev=sumB(ds),loads=sumL(ds),pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
+  var rev=sumFB(ds),loads=sumFL(ds),pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
   var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
   var dates=isRemote?'book remotely':(WEEKDATES[wk]+', 2026');
@@ -1805,8 +2227,8 @@ function weekCard(wk){
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
   var cards;
-  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return cardHTML(d,wk);}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag dealers here</div>'; }
-  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag dealers here</div>'; }
+  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return cardHTML(d,wk);}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag a dealer here, or use + Add visit in the library</div>'; }
+  else if(!ds.length && !wlogi.length && !xw.length){ cards='<div class="dcempty">drag a dealer here, or use + Add visit in the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
     var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
@@ -1850,9 +2272,10 @@ function cardHTML(d,wk){
   var durOpts=[30,45,60,90,120,150,180,210,240].map(function(m){return '<option value="'+m+'"'+(dur===m?' selected':'')+'>'+fmtDur(m)+'</option>';}).join('');
   var frame=TIME[d.id]?('<div class="kc-frame">'+t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],dur))+' · '+fmtDur(dur)+'</div>'):'';
   var ctl=(wk==='remote')?'':'<div class="kc-ctl">'+daysel+'<input class="ctime" type="time" data-time="'+d.id+'" value="'+(TIME[d.id]||'')+'"><select class="cdur" data-dur="'+d.id+'">'+durOpts+'</select></div>'+frame;
-  return '<div class="kcard '+(ok?'confirmed':'planned')+'" draggable="true" data-id="'+d.id+'">'
-    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div><div class="kc-amt">'+fmtUSD(d.booking)+'</div></div>'
-    +'<div class="kc-bot"><span class="xvpill" style="color:#2563eb;border-color:#2563eb55" title="Visit type">●&nbsp;Pre-Book</span>'+(ok?'<span class="kbadge won">Confirmed</span>':'')+'<button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
+  var pt=vType(d.id);
+  return '<div class="kcard '+(ok?'confirmed':'planned')+(pt==='visit'?' novalue':'')+'" data-drag="1" data-id="'+d.id+'">'
+    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div><div class="kc-amt">'+(pt==='visit'?'—':fmtUSD(d.booking))+'</div></div>'
+    +'<div class="kc-bot">'+ptSeg(pt,'data-pt',d.id)+(ok?'<span class="kbadge won">Confirmed</span>':'')+'<button class="apptbtn '+(ok?'on':'')+'" data-appt="'+d.id+'">'+(ok?'✓':'Confirm')+'</button><button class="cx" data-remove="'+d.id+'" title="Remove this visit — the dealer stays in the library">✕</button></div>'
     +ctl+'</div>';
 }
 /* The ALL tab is the company-wide version of a territory page: the same
@@ -1866,14 +2289,12 @@ function xvCard(x){
   var tk=xvTypeKey(x.type), ty=XV_TYPES[tk];
   var labs=(typeof x.wk==='number')?dayLabels(x.wk):[];
   var dayOpts='<option value="">— day —</option>'+labs.map(function(l,i){return '<option value="'+i+'"'+(x.day===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
-  var typeOpts=Object.keys(XV_TYPES).map(function(k){return '<option value="'+k+'"'+(tk===k?' selected':'')+'>'+XV_TYPES[k].label+'</option>';}).join('');
   var frame=x.time?('<div class="kc-frame">'+t12s(x.time)+'–'+t12s(addMin(x.time,x.dur||60))+' · '+fmtDur(x.dur||60)+'</div>'):'';
-  return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'" draggable="true" data-id="xv:'+x.id+'">'
-    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div>'
-    +'<div class="kc-rep"><span class="xvpill" style="color:'+ty.c+';border-color:'+ty.c+'55">●&nbsp;'+ty.label+'</span></div></div>'
+  return '<div class="kcard xv'+(x.done?' confirmed':' planned')+'" data-drag="1" data-id="xv:'+x.id+'">'
+    +'<div class="kc-top"><div><div class="kc-name">'+esc(d.name)+'</div></div>'
     +'<div style="display:flex;gap:4px;flex:0 0 auto"><button class="cx" data-xvedit="'+x.id+'" title="Duration &amp; notes">✎</button><button class="cx" data-xvdel="'+x.id+'" title="Remove this visit only — the dealer is kept">✕</button></div></div>'
     +'<div class="kc-ctl">'
-      +'<select class="xvf" data-xv="'+x.id+'" data-f="type">'+typeOpts+'</select>'
+      +ptSeg(tk,'data-ptx',x.id)
       +'<select class="xvf" data-xv="'+x.id+'" data-f="day">'+dayOpts+'</select>'
       +'<input class="xvf" type="time" data-xv="'+x.id+'" data-f="time" value="'+esc(x.time||'')+'">'
     +'</div>'+frame
@@ -1897,7 +2318,7 @@ function xvSheet(dealerId, x){
   wrap.innerHTML='<div class="modalbox" style="width:min(430px,94vw)"><div class="mh"><div class="mt">'+(isNew?'Schedule Another Visit':'Edit Visit')+'</div><button class="mclose">×</button></div>'
     +'<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:10px">'
     +'<div style="font-size:13px;font-weight:700">'+esc(d.name)+' <span style="color:var(--muted);font-weight:400">· '+esc(d.loc||'')+' · '+esc(d.territory||'')+'</span></div>'
-    +fld('Visit type','<select id="xv_type" '+inp+'>'+Object.keys(XV_TYPES).map(function(k){return '<option value="'+k+'"'+(x.type===k?' selected':'')+'>'+XV_TYPES[k].label+'</option>';}).join('')+'</select>')
+    +fld('Planning type','<select id="xv_type" '+inp+'>'+Object.keys(XV_TYPES).map(function(k){return '<option value="'+k+'"'+(xvTypeKey(x.type)===k?' selected':'')+'>'+XV_TYPES[k].label+'</option>';}).join('')+'</select>')
     +'<div style="display:flex;gap:8px">'
       +fld('Week','<select id="xv_wk" '+inp+'>'+weeks.map(function(w){return '<option value="'+w+'"'+(x.wk===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+'</option>';}).join('')+'</select>')
       +fld('Day','<select id="xv_day" '+inp+'>'+dayOpts(x.wk,x.day)+'</select>')
@@ -1971,7 +2392,7 @@ function renderJoin(){
   var head='<tr><th>Trip</th><th class="num">Stops</th><th class="num">Revenue</th><th>Leaders joining</th></tr>';
   var body=rows.length?rows.map(function(r){ 
     var chips=LEADERS.map(function(n){var on=r.ds.length&&r.ds.every(function(d){return (JOINA[d.id]||[]).indexOf(n)>=0;}); return '<button class="joinchip'+(on?' on':'')+'" data-join="'+r.t+'|'+r.wk+'|'+n+'" style="'+(on?('background:'+LEADER_COLOR[n]+';border-color:'+LEADER_COLOR[n]+';color:#fff'):'')+'">'+n+'</button>';}).join('');
-    return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(sumB(r.ds))+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
+    return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(sumFB(r.ds))+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
   }).join(''):'<tr><td colspan="4" class="empty" style="padding:30px">No trips scheduled yet — plan some weeks first.</td></tr>';
   document.getElementById('ganttWrap').innerHTML='<div class="joinhd">Tap a name to confirm they will join that trip. Saved automatically.</div><table class="cal jtab"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
@@ -1991,8 +2412,8 @@ function lvWeekStats(wk){
   var per={}, rev=0, loads=0, n=0, conf=0, confRev=0;
   TERRS.forEach(function(t){
     var ds=lvVisits(wk,t);
-    var s={n:ds.length, rev:sumB(ds), loads:sumL(ds), conf:apptCount(ds),
-           confRev:ds.reduce(function(a,d){return a+(APPT[d.id]?(d.booking||0):0);},0)};
+    var s={n:ds.length, rev:sumFB(ds), loads:sumFL(ds), conf:apptCount(ds),
+           confRev:ds.reduce(function(a,d){return a+(APPT[d.id]?fcB(d):0);},0)};
     per[t]=s; rev+=s.rev; loads+=s.loads; n+=s.n; conf+=s.conf; confRev+=s.confRev;
   });
   return {per:per, rev:rev, loads:loads, n:n, conf:conf, confRev:confRev,
@@ -2028,7 +2449,7 @@ function lvAreaHTML(t,wk){
   var unChips=un.map(function(d){ var ok=!!APPT[d.id];
     return '<span class="lvchip'+(ok?' ok':'')+'">'+esc(d.name)+(ok?' ✓':'')+'</span>'; }).join('')+lvTravelChips(t,wk,null);
   if(unChips) rows+='<div class="lvday lvunsch"><span class="lvd">TBD</span><div class="lvvis">'+unChips+'</div></div>';
-  var stats=ds.length?('<span class="lvastats">'+ds.length+' visits · '+sumL(ds)+' loads · '+fmtUSDk(sumB(ds))+' · '+apptCount(ds)+'/'+ds.length+' conf</span>'):'';
+  var stats=ds.length?('<span class="lvastats">'+ds.length+' visits · '+sumFL(ds)+' loads · '+fmtUSDk(sumFB(ds))+' · '+apptCount(ds)+'/'+ds.length+' conf</span>'):'';
   return '<div class="lvarea"><div class="lvah"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t
     +(rep&&rep!=='—'?'<span class="rep">'+esc(rep)+'</span>':'')+stats
     +'<span class="lvopen" data-lvopen="'+t+'">Open ›</span></div>'
@@ -2168,7 +2589,7 @@ function allFiltersHTML(){
 function allKpiHTML(){
   var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
   var n=0,loads=0,rev=0,conf=0;
-  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; loads+=(+v.d.loads||0); rev+=(+v.d.booking||0); if(avConf(v))conf++; }); });
+  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; loads+=fcL(v.d); rev+=fcB(v.d); if(avConf(v))conf++; }); });
   var kpi=function(k,v){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; };
   return '<div class="lvkpis">'+kpi('Dealers',n)+kpi('Loads',loads)+kpi('Revenue',fmtUSDk(rev))
     +kpi('Appointments',conf+(n?(' · '+Math.round(conf/n*100)+'%'):''))+'</div>';
@@ -2186,7 +2607,7 @@ function allWeekCard(wk){
   var vs=[];
   if(isRemote){ allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]==='remote') vs.push({t:t,d:d}); }); }); }
   else vs=allVisits(wk);
-  var rev=vs.reduce(function(a,v){return a+(+v.d.booking||0);},0);
+  var rev=vs.reduce(function(a,v){return a+fcB(v.d);},0);
   var loads=vs.reduce(function(a,v){return a+(+v.d.loads||0);},0);
   var apc=vs.filter(avConf).length;
   var pct=vs.length?Math.round(apc/vs.length*100):0;
@@ -2407,9 +2828,9 @@ function renderAllMap(){
   var st={n:0,loads:0,rev:0,conf:0,confRev:0,per:{}};
   TERRS.forEach(function(t){ st.per[t]={n:0,loads:0,rev:0}; });
   wks.forEach(function(wk){ allVisits(wk).forEach(function(v){
-    var s=st.per[v.t]; s.n++; s.loads+=(+v.d.loads||0); s.rev+=(+v.d.booking||0);
-    st.n++; st.loads+=(+v.d.loads||0); st.rev+=(+v.d.booking||0);
-    if(APPT[v.d.id]){ st.conf++; st.confRev+=(+v.d.booking||0); }
+    var s=st.per[v.t]; s.n++; s.loads+=fcL(v.d); s.rev+=fcB(v.d);
+    st.n++; st.loads+=fcL(v.d); st.rev+=fcB(v.d);
+    if(APPT[v.d.id]){ st.conf++; st.confRev+=fcB(v.d); }
   }); });
   var typeLegend='<div class="lvlegend">'
     +[['dealer','Dealers'],['hotel','Hotels'],['airport','Airports'],['rental','Rental Cars'],['other','Stops'],['routes','Routes']].map(function(p){
@@ -2467,15 +2888,9 @@ function allDrawMap(){
       var stops=all.filter(function(s){ return LV_TYPES[typeKey(s)]!==false; });
       stops.forEach(function(s){
         var stt=STOP_TYPES[normType(s.type)];
-        var isDealer=(s.kind==='dealer');
-        var icon=L.divIcon({className:'', html:'<div class="pin" style="background:'+(isDealer?col:stt.color)+'">'+(stt.glyph||'')+'</div>',
-          iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-12]});
-        var tip=isDealer
-          ? ('<b>'+esc(s.name)+'</b><br>'+fmtUSDk(s.revenue)+' · '+s.loads+' loads<br>'
-             +(s.status==='Confirmed'?'✓ Confirmed':'Pending')+(rep?('<br>'+esc(rep)+' · '+t):('<br>'+t))
-             +'<br>Week '+wk+' · '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''))
-          : ('<b>'+esc(s.name)+'</b><br>'+stt.label+' · '+t+'<br>Week '+wk+' · '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''));
-        L.marker([s.lat,s.lon],{icon:icon}).addTo(_lvMap).bindTooltip(tip).bindPopup(popupHTML(s));
+        var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
+        L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:stt.color,stt.glyph)}).addTo(_lvMap)
+          .bindTooltip(stopTip(s)+'<br>Week '+wk+' · '+esc([rep,t].filter(Boolean).join(' · '))).bindPopup(popupHTML(s));
         bounds.push([s.lat,s.lon]);
       });
       if(LV_TYPES.routes!==false){
@@ -2574,7 +2989,7 @@ function mapHTML(tl, weekSel, colorBy){
   svg+='</svg>';
   var legend=order.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true});}).map(function(k){return '<span class="lgd"><i style="border-color:'+leg[k].c+';background:'+leg[k].c+'"></i>'+leg[k].lab+' ('+leg[k].n+')</span>';}).join('');
   var note='<span class="mapnote">filled = confirmed · hollow = pending · line = route · labels show day &amp; time</span>';
-  var body=total?svg:'<div class="empty">No visits scheduled here yet. Use Auto-plan or drag dealers into a week.</div>';
+  var body=total?svg:'<div class="empty">No visits scheduled here yet. Drag dealers into a week to get started.</div>';
   return '<div class="maphd">'+legend+note+'</div><div class="mapwrap">'+body+'</div>';
 }
 function renderCalendar(){ document.getElementById('ganttWrap').innerHTML=calendarHTML(["East","South","Central","West","Exports"]); }
@@ -2607,7 +3022,7 @@ function tripDetailHTML(terr,wk){
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
   var labs=dayLabels(wk); var md=settingsFor(terr).maxDrive;
   var jn=[]; ds.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});}); var jline=jn.length?('<div class="tsub" style="color:var(--green)">Joining: '+jn.join(', ')+'</div>'):'';
-  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+sumL(ds)+' loads · '+fmtUSD(sumB(ds))+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
+  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+sumFL(ds)+' loads · '+fmtUSD(sumFB(ds))+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
   if(!ds.length && !LOGI.some(function(x){return x.terr===terr&&x.wk===wk;})) return head+'<div class="empty" style="padding:20px">No visits.</div>';
   function row(d){var ok=!!APPT[d.id]; return '<div class="tstop '+(ok?'ok':'')+'"><div class="tst"><span class="ttime">'+(TIME[d.id]?(t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],DUR[d.id]||90))):'—')+'</span><span class="tnm">'+esc(d.name)+'</span><span class="tamt">'+fmtUSD(d.booking)+'</span></div><div class="tloc">'+(d.loc||'—')+' · '+esc(d.address)+(ok?' · <b style="color:var(--green)">confirmed</b>':'')+'</div>'+'</div>';}
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
@@ -2677,13 +3092,15 @@ function dealerStop(d,wk){
     dayIdx:(di==null?null:di), dayLabel:(di!=null&&labs[di])?(labs[di][0]+', '+labs[di][1]):'—',
     time:TIME[d.id]||'', address:d.address||'', city:'', state:d.loc||'', county:d.county||'',
     lat:d.lat, lon:d.lon, status:(APPT[d.id]?'Confirmed':'Pending'),
-    notes:x.notes||'', conf:x.conf||'',
-    loads:d.loads||0, revenue:d.booking||0};
+    notes:x.notes||'', conf:x.conf||'', ptype:vType(d.id),
+    loads:fcL(d), revenue:fcB(d)};
 }
 function manualStop(it,wk){
-  var labs=dayLabels(wk), di=it.day, ty=normType(it.type);
-  return {key:'m:'+it.id, id:it.id, kind:'manual', name:it.name||it.label||STOP_TYPES[ty].label, type:ty,
+  var labs=dayLabels(wk), di=it.day, di2=it.day2, ty=normType(it.type);
+  return {key:'m:'+it.id, id:it.id, kind:'manual', name:it.name||it.airportName||it.airportCode||it.label||STOP_TYPES[ty].label, type:ty,
+    rawType:it.type,
     dayIdx:(di==null?null:di), dayLabel:(di!=null&&labs[di])?(labs[di][0]+', '+labs[di][1]):'—',
+    dayLabel2:(di2!=null&&labs[di2])?(labs[di2][0]+', '+labs[di2][1]):'', time2:it.time2||'',
     time:it.time||'', address:it.address||'', city:it.city||'', state:it.state||'', county:it.county||'',
     lat:(it.lat!=null?Number(it.lat):null), lon:(it.lon!=null?Number(it.lon):null),
     status:it.status||'Pending', notes:it.notes||'', conf:it.conf||'',
@@ -2732,7 +3149,7 @@ function stopsForWeek(t,wk){
         dayIdx:(x.day==null?null:x.day), dayLabel:(x.day!=null&&labs[x.day])?(labs[x.day][0]+', '+labs[x.day][1]):'—',
         time:x.time||'', address:d.address||'', city:'', state:d.loc||'', county:'',
         lat:d.lat, lon:d.lon, status:(x.done?'Confirmed':'Pending'), notes:x.notes||'', conf:'',
-        loads:0, revenue:0});
+        ptype:xvTypeKey(x.type), loads:0, revenue:0});
     });
   }
   out.sort(function(a,b){
@@ -2980,10 +3397,33 @@ function renderTerrMap(){
 }
 
 /* ---------- leaflet ---------- */
+/* small, subtle markers — one builder for every map */
+function mkPin(bg,glyph){
+  return L.divIcon({className:'', html:'<div class="pin" style="background:'+bg+'">'+(glyph||'')+'</div>',
+    iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-8]});
+}
 function pinIcon(s){
   var st=STOP_TYPES[normType(s.type)];
-  return L.divIcon({className:'', html:'<div class="pin" style="background:'+st.color+'">'+(st.glyph||'')+'</div>',
-    iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-12]});
+  return mkPin(st.color,st.glyph);
+}
+/* concise hover tooltip per stop type — the popup stays for full details */
+function stopTip(s){
+  var h='<b>'+esc(s.name)+'</b>';
+  if(s.kind==='dealer'||s.kind==='xvisit'){
+    if(s.state) h+='<br>'+esc(s.state);
+    h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
+    h+='<br>'+(s.ptype==='visit'?'Visit':'Pre-book');
+  } else if(s.rawType==='hotel'){
+    h+='<br>Check-in: '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
+    if(s.dayLabel2||s.time2) h+='<br>Check-out: '+esc(s.dayLabel2||'—')+(s.time2?(' · '+t12s(s.time2)):'');
+  } else if(normType(s.type)==='airport'){
+    h+='<br>'+(s.rawType==='flight_in'?'Arrival':(s.rawType==='flight_out'?'Departure':'Airport'));
+    h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
+  } else {
+    h+='<br>'+STOP_TYPES[normType(s.type)].label;
+    h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
+  }
+  return h;
 }
 function popupHTML(s){
   var st=STOP_TYPES[normType(s.type)];
@@ -3002,10 +3442,9 @@ function popupHTML(s){
 }
 /* ---------- road routing (OSRM) ----------
    Ground legs follow real roads: geometry comes from the public OSRM router and
-   is cached (memory + localStorage), so each leg is fetched once. A straight
-   line is drawn immediately and swapped for the road polyline when it arrives;
-   if the router is unreachable the straight line simply stays. Airport→airport
-   legs are flights and are drawn as a curved dashed path instead. */
+   is cached (memory + localStorage), so each leg is fetched once. Nothing is
+   drawn until real road geometry is ready — never a straight placeholder line.
+   Airport→airport legs are flights, drawn immediately as a thin dotted arc. */
 var _rtMem={}, _rtQ=[], _rtBusy=0, _aqMapGen=0;
 function _rtStore(){ try{ return JSON.parse(localStorage.getItem('aqRoutes_v1')||'{}'); }catch(e){ return {}; } }
 function _rtPersist(k,v){ try{
@@ -3089,32 +3528,44 @@ function flightArc(a,b){ /* gently curved flight path between two points */
   return pts;
 }
 function legTip(meta,km,min){
-  var h='<b>'+esc(meta.from)+'</b> → <b>'+esc(meta.to)+'</b>';
+  var h='<b>'+esc(meta.from)+'</b><br><span class="lt-arr">↓</span> <b>'+esc(meta.to)+'</b>';
+  if(km!=null) h+='<br>'+Math.round(km)+' km · ~'+fmtDur(min);
   h+='<br>'+(meta.fly?'Flight':'Drive');
-  if(!meta.fly) h+=(km!=null)?(' · '+Math.round(km)+' km · ~'+fmtDur(min)):' · route loading…';
   if(meta.day) h+='<br>'+esc(meta.day)+(meta.time?(' · '+t12s(meta.time)):'');
   if(meta.rep||meta.area) h+='<br>'+[meta.rep,meta.area].filter(Boolean).map(esc).join(' · ');
   return h;
 }
-/* Draw ONE leg. Returns a promise with the leg's routed distance/time so callers
+/* the visible route stays thin; an invisible fat twin catches hovers nearby */
+function legHover(map,pts,tip){
+  var hot=L.polyline(pts,{color:'#000',weight:18,opacity:0.001,interactive:true}).addTo(map);
+  hot.bindTooltip(tip,{sticky:true});
+  return hot;
+}
+/* Draw ONE leg. Nothing is drawn for a drive until real road geometry is
+   ready — no straight-line placeholders, ever. Flights draw immediately as a
+   thin dotted arc. Returns a promise with the leg's distance/time so callers
    can build routed trip totals ({est:true} when the engine was unreachable). */
 function drawLeg(map,gen,a,b,style,meta){
   meta=meta||{};
   if(meta.fly){
-    L.polyline(flightArc([a.lat,a.lon],[b.lat,b.lon]),
-      {color:'#2563eb',weight:2,dashArray:'2 7',opacity:.85}).addTo(map)
-      .bindTooltip(legTip(meta),{sticky:true});
+    var arc=flightArc([a.lat,a.lon],[b.lat,b.lon]);
+    var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
+    var fmin=gk/750*60+30;
+    L.polyline(arc,{color:(style&&style.color)||'#2563eb',weight:1.5,dashArray:'1 6',opacity:.85,interactive:false}).addTo(map);
+    legHover(map,arc,legTip(meta,gk,fmin));
     return Promise.resolve({fly:true,km:0,min:0});
   }
-  var line=L.polyline([[a.lat,a.lon],[b.lat,b.lon]],style).addTo(map);
-  line.bindTooltip(legTip(meta,null,null),{sticky:true});
   var estMi=roadMi([a.lat,a.lon],[b.lat,b.lon])||0;
   return roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
-    if(rt&&map._aqGen===gen){
-      try{ line.setLatLngs(rt.pts); line.setTooltipContent(legTip(meta,rt.km,rt.min)); }catch(e){}
+    if(!rt) return {km:estMi*1.60934,min:estMi/55*60,est:true};
+    if(map._aqGen===gen){
+      try{
+        var st={color:style&&style.color||'#2563eb',weight:2,opacity:(style&&style.opacity)||.9,interactive:false};
+        L.polyline(rt.pts,st).addTo(map);
+        legHover(map,rt.pts,legTip(meta,rt.km,rt.min));
+      }catch(e){}
     }
-    if(rt) return {km:rt.km,min:rt.min};
-    return {km:estMi*1.60934,min:estMi/55*60,est:true};
+    return {km:rt.km,min:rt.min};
   });
 }
 function drawTripMap(stops){
@@ -3124,7 +3575,7 @@ function drawTripMap(stops){
   var gen=++_aqMapGen; _tripMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
   var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
-  pts.forEach(function(s){ L.marker([s.lat,s.lon],{icon:pinIcon(s)}).addTo(_tripMap).bindPopup(popupHTML(s)); });
+  pts.forEach(function(s){ L.marker([s.lat,s.lon],{icon:pinIcon(s)}).addTo(_tripMap).bindTooltip(stopTip(s)).bindPopup(popupHTML(s)); });
   var legs=[];
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
@@ -3162,15 +3613,9 @@ function lvDrawMap(){
     var stops=stopsForWeek(t,LV_WEEK).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
     stops.forEach(function(s){
       var st=STOP_TYPES[normType(s.type)];
-      var isDealer=(s.kind==='dealer');
-      var icon=L.divIcon({className:'', html:'<div class="pin" style="background:'+(isDealer?col:st.color)+'">'+(st.glyph||'')+'</div>',
-        iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-12]});
-      var tip=isDealer
-        ? ('<b>'+esc(s.name)+'</b><br>'+fmtUSDk(s.revenue)+' · '+s.loads+' loads<br>'
-           +(s.status==='Confirmed'?'✓ Confirmed':'Pending')+(rep?('<br>'+esc(rep)+' · '+t):('<br>'+t))
-           +'<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''))
-        : ('<b>'+esc(s.name)+'</b><br>'+st.label+' · '+t+'<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):''));
-      L.marker([s.lat,s.lon],{icon:icon}).addTo(_lvMap).bindTooltip(tip).bindPopup(popupHTML(s));
+      var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
+      L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:st.color,st.glyph)}).addTo(_lvMap)
+        .bindTooltip(stopTip(s)+'<br>'+esc([rep,t].filter(Boolean).join(' · '))).bindPopup(popupHTML(s));
       bounds.push([s.lat,s.lon]);
     });
     for(var i=1;i<stops.length;i++){
@@ -3256,12 +3701,12 @@ function openAddStop(){
 /* ---------- export ---------- */
 /* ---------- itinerary card: the actual trip, day by day, with legs ---------- */
 function itinIcon(i){
-  if(i.kind==='dealer') return '<span class="iic" style="background:'+STOP_TYPES.dealer.color+'"></span>';
+  if(i.kind==='dealer'||i.kind==='xvisit') return '<span class="iic" style="background:'+STOP_TYPES.dealer.color+'"></span>';
   var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
   return '<span class="iic" style="background:'+T.color+'">'+T.icon+'</span>';
 }
 function itinName(i){
-  if(i.kind==='dealer') return esc(i.name);
+  if(i.kind==='dealer'||i.kind==='xvisit') return esc(i.name);
   var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
   /* itineraryFor() falls back to the type label when a place is unnamed — don't repeat it */
   if(!i.name || i.name===T.label) return esc(T.label);
@@ -3283,7 +3728,7 @@ function itineraryCard(t,wk){
     body+='<div class="idayhd">'+esc(lab)+'</div>';
     byDay[d].forEach(function(i){
       var leg=legTo[i.kind+':'+i.id];
-      if(leg && leg.sameDay) body+='<div class="ileg">↓ '+legLabel(leg)+'</div>';
+      if(leg) body+='<div class="ileg">↓ '+legLabel(leg)+'</div>';
       body+='<div class="irow">'+itinIcon(i)
         +'<span class="itime">'+(i.time?t12s(i.time):'—')+'</span>'
         +'<span class="iname">'+itinName(i)+'</span>'
@@ -3311,7 +3756,7 @@ function itineraryCard(t,wk){
 }
 /* plain-text name of an itinerary item (no label duplication) */
 function legName(i){
-  if(i.kind==='dealer') return i.name;
+  if(i.kind==='dealer'||i.kind==='xvisit') return i.name;
   var T=TRAVEL_TYPES[i.type]||TRAVEL_TYPES.other;
   return (!i.name||i.name===T.label)?T.label:(T.label+' — '+i.name);
 }
@@ -3344,7 +3789,8 @@ function routeSummaryRows(t,wk){
       To:legName(l.to),
       Day:(l.to.day!=null&&labs[l.to.day])?(labs[l.to.day][0]+', '+labs[l.to.day][1]):'',
       'Distance (km)':Math.round(l.km),
-      'Drive time':hrsLabel(l.hours)};
+      'Type':(l.fly?'Flight':'Drive'),
+      'Travel time':hrsLabel(l.hours)};
   });
 }
 
@@ -3723,48 +4169,152 @@ function deleteDealer(id){ const i=DEALERS.findIndex(d=>d.id===id); if(i<0)retur
 function resetEdits(){ if(!confirm('Reset all Master Sheet edits back to the original data?'))return; DEALERS=ORIG.map(d=>Object.assign({},d)); reindex(); localStorage.removeItem('aq2027dealersv1'); renderMaster(); }
 /* autoPlan() and its helper driveHrs() were removed together with the
    Auto-plan / Clear controls. Nothing else called either function. */
+/* Dealers are permanent, visits are temporary:
+   pool:<id>  = from the dealer library -> first drop schedules the initial
+                visit; every later drop CREATES A NEW VISIT.
+   xv:<id>    = a scheduled additional visit -> moves that visit only.
+   <id>       = the scheduled initial-visit card -> moves that visit only.
+   Shared by drag-and-drop AND the "+ Add visit" fallback. */
+function performDrop(raw,t){
+  if(!raw||t==null) return;
+  if(raw.slice(0,3)==='xv:'){
+    var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
+    if(t==='pool'){ if(xvDelete(xv.id)) refreshPlanner(); return; }
+    if(t==='remote') return;
+    var pp=t.split('|'); xv.wk=parseInt(pp[0],10);
+    xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
+    savePlan(); refreshPlanner(); return;
+  }
+  const fromPool=raw.slice(0,5)==='pool:';
+  const id=fromPool?raw.slice(5):raw;
+  const d=uniById(id); if(!d)return;
+  if(fromPool && ASSIGN[id]!=='pool' && t!=='pool'){
+    /* already scheduled: scheduling from the library again = a NEW visit */
+    if(t==='remote') return;
+    var parts2=t.split('|'); var nw2=parseInt(parts2[0],10);
+    XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id,
+      terr:(d.territory==='Exports'?'Exports':terr), wk:nw2,
+      day:(parts2[1]!=null&&parts2[1]!=='none')?parseInt(parts2[1],10):null,
+      time:'', dur:60, type:'prebook', notes:'', done:false});
+    savePlan(); refreshPlanner(); return;
+  }
+  if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
+  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
+  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
+  savePlan(); refreshPlanner();
+}
+/* ---------- unified drag engine (Pointer Events) ----------
+   One code path for mouse, trackpad, pen and touch (incl. Windows touch),
+   replacing the old HTML5 drag events that silently failed on touch screens
+   and in some browser/session states. Document-level delegation means cards
+   never need per-render listeners — re-renders can't break dragging.
+   Mouse/pen: drag starts after 4px of movement. Touch: a 300ms hold starts
+   the drag, so normal scrolling still works. */
+var DND={src:null,raw:null,ghost:null,zone:null,active:false,touch:false,sx:0,sy:0,gdx:0,gdy:0,hold:null};
+function dndZoneAt(x,y){
+  var el=document.elementFromPoint(x,y);
+  return el?el.closest('[data-drop]'):null;
+}
+function dndStart(x,y){
+  if(DND.active||!DND.src) return;
+  DND.active=true;
+  var r=DND.src.getBoundingClientRect();
+  DND.gdx=Math.min(x-r.left,r.width-8); DND.gdy=Math.min(y-r.top,r.height-8);
+  var g=DND.src.cloneNode(true);
+  g.className+=' dndghost';
+  g.style.width=r.width+'px';
+  g.style.left=(x-DND.gdx)+'px'; g.style.top=(y-DND.gdy)+'px';
+  document.body.appendChild(g);
+  DND.ghost=g;
+  DND.src.classList.add('drag');
+  document.body.classList.add('dnd-on');
+  try{ if(navigator.vibrate) navigator.vibrate(10); }catch(e){}
+}
+function dndAutoScroll(x,y){
+  var m=70, s=16;
+  if(y<m) window.scrollBy(0,-s); else if(y>innerHeight-m) window.scrollBy(0,s);
+  var pool=document.getElementById('poolBody');
+  if(pool){ var r=pool.getBoundingClientRect();
+    if(x>=r.left&&x<=r.right){ if(y<r.top+40&&y>r.top-10)pool.scrollTop-=s; else if(y>r.bottom-40&&y<r.bottom+10)pool.scrollTop+=s; } }
+}
+function dndMove(e){
+  if(!DND.src) return;
+  var x=e.clientX,y=e.clientY;
+  if(!DND.active){
+    if(DND.touch){ if(Math.abs(x-DND.sx)>12||Math.abs(y-DND.sy)>12) dndEnd(null); return; }
+    if(Math.abs(x-DND.sx)<4&&Math.abs(y-DND.sy)<4) return;
+    dndStart(x,y);
+  }
+  if(e.cancelable) e.preventDefault();
+  DND.ghost.style.left=(x-DND.gdx)+'px'; DND.ghost.style.top=(y-DND.gdy)+'px';
+  var z=dndZoneAt(x,y);
+  if(z!==DND.zone){ if(DND.zone)DND.zone.classList.remove('over'); DND.zone=z; if(z)z.classList.add('over'); }
+  dndAutoScroll(x,y);
+}
+function dndEnd(drop){
+  if(DND.hold){ clearTimeout(DND.hold); DND.hold=null; }
+  if(DND.zone) DND.zone.classList.remove('over');
+  if(DND.ghost) DND.ghost.remove();
+  if(DND.src) DND.src.classList.remove('drag');
+  document.body.classList.remove('dnd-on');
+  var raw=DND.raw, was=DND.active;
+  DND.src=null; DND.raw=null; DND.ghost=null; DND.zone=null; DND.active=false; DND.touch=false;
+  if(was && drop) performDrop(raw, drop.dataset.drop);
+}
+function dndInit(){
+  if(dndInit.done) return; dndInit.done=true;
+  document.addEventListener('pointerdown',function(e){
+    if(e.button!=null&&e.button!==0) return;
+    if(DND.src) dndEnd(null);
+    var card=e.target&&e.target.closest&&e.target.closest('[data-drag]');
+    if(!card||!card.dataset.id) return;
+    if(e.target.closest('select,input,button,textarea,a,label,.ldpick')) return;
+    DND.src=card; DND.raw=card.dataset.id;
+    DND.sx=e.clientX; DND.sy=e.clientY;
+    DND.touch=(e.pointerType==='touch');
+    if(DND.touch){ DND.hold=setTimeout(function(){ DND.hold=null; dndStart(DND.sx,DND.sy); },300); }
+  },true);
+  document.addEventListener('pointermove',dndMove,{passive:false});
+  document.addEventListener('pointerup',function(e){
+    if(!DND.src) return;
+    dndEnd(DND.active?dndZoneAt(e.clientX,e.clientY):null);
+  });
+  document.addEventListener('pointercancel',function(){ if(DND.src) dndEnd(null); });
+  /* while a touch drag is live, the page must not pan underneath it */
+  document.addEventListener('touchmove',function(e){ if(DND.active&&e.cancelable) e.preventDefault(); },{passive:false});
+  /* a long-press that started a drag must not open the context menu */
+  document.addEventListener('contextmenu',function(e){ if(DND.src||DND.active) e.preventDefault(); });
+  window.addEventListener('blur',function(){ if(DND.src) dndEnd(null); });
+}
+/* fallback when drag-and-drop is unavailable: pick the week from a small sheet */
+function addVisitSheet(dealerId){
+  var d=uniById(dealerId); if(!d) return;
+  var isExp=(d.territory==='Exports');
+  var weeks=isExp?['remote']:[31].concat(FIELD_NUMS);
+  var already=(ASSIGN[dealerId]!=='pool');
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(360px,94vw)"><div class="mh"><div class="mt">Add Visit</div><button class="mclose">×</button></div>'
+    +'<div style="padding:12px 18px 16px">'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:2px">'+esc(d.name)+'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(already?'Already scheduled — this adds another visit.':'Pick the week for the visit.')+'</div>'
+    +'<div class="avweeks">'+weeks.map(function(w){
+        return '<button class="avwk" data-avwk="'+w+'">'+(w==='remote'?'Remote / Direct':('Wk '+w+(w===31?' · Kickoff':'')+'<span>'+(WEEKDATES[w]||'')+'</span>'))+'</button>';
+      }).join('')+'</div>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('.mclose').onclick=close;
+  wrap.querySelectorAll('[data-avwk]').forEach(function(b){ b.onclick=function(){
+    var w=b.dataset.avwk; close();
+    performDrop('pool:'+dealerId, w==='remote'?'remote':(w+'|none'));
+  };});
+}
 function wireDnD(){
-  document.querySelectorAll('[draggable="true"]').forEach(el=>{
-    el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',el.dataset.id);e.dataTransfer.effectAllowed='move';el.classList.add('drag');});
-    el.addEventListener('dragend',()=>el.classList.remove('drag'));
-  });
-  document.querySelectorAll('[data-drop]').forEach(z=>{
-    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
-    z.addEventListener('dragleave',()=>z.classList.remove('over'));
-    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');
-      /* Dealers are permanent, visits are temporary:
-         pool:<id>  = drag from the dealer library -> first drop schedules the
-                      initial visit; every later drop CREATES A NEW VISIT.
-         xv:<id>    = a scheduled additional visit -> moves that visit only.
-         <id>       = the scheduled initial-visit card -> moves that visit only. */
-      const raw=e.dataTransfer.getData('text/plain'); if(!raw) return;
-      const t=z.dataset.drop;
-      if(raw.slice(0,3)==='xv:'){
-        var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
-        if(t==='pool'){ if(xvDelete(xv.id)) refreshPlanner(); return; }
-        if(t==='remote') return;
-        var pp=t.split('|'); xv.wk=parseInt(pp[0],10);
-        xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
-        savePlan(); refreshPlanner(); return;
-      }
-      const fromPool=raw.slice(0,5)==='pool:';
-      const id=fromPool?raw.slice(5):raw;
-      const d=uniById(id); if(!d)return;
-      if(fromPool && ASSIGN[id]!=='pool' && t!=='pool'){
-        /* already scheduled: dragging from the library again = a NEW visit */
-        if(t==='remote') return;
-        var parts2=t.split('|'); var nw2=parseInt(parts2[0],10);
-        XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id,
-          terr:(d.territory==='Exports'?'Exports':terr), wk:nw2,
-          day:(parts2[1]!=null&&parts2[1]!=='none')?parseInt(parts2[1],10):null,
-          time:'', dur:60, type:'prebook', notes:'', done:false});
-        savePlan(); refreshPlanner(); return;
-      }
-      if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;}
-      else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
-      else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
-      savePlan(); refreshPlanner();});
-  });
+  dndInit(); apInit();
+  document.querySelectorAll('[data-schedule]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();addVisitSheet(b.dataset.schedule);}));
+  document.querySelectorAll('[data-pt]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.pt.split('|');if(vType(pr[0])===pr[1])return;if(pr[1]==='visit')PTYPE[pr[0]]='visit';else delete PTYPE[pr[0]];savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-ptx]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.ptx.split('|');var x=XVISITS.filter(function(v){return v.id===pr[0];})[0];if(!x||xvTypeKey(x.type)===pr[1])return;x.type=pr[1];savePlan();refreshPlanner();}));
   document.querySelectorAll('.cday').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DAY[s.dataset.day]=s.value===''?null:parseInt(s.value,10);savePlan();refreshPlanner();}));
   document.querySelectorAll('.ctime').forEach(t=>t.addEventListener('change',e=>{e.stopPropagation();TIME[t.dataset.time]=t.value;savePlan();refreshPlanner();}));
   document.querySelectorAll('.cdur').forEach(s=>s.addEventListener('change',e=>{e.stopPropagation();DUR[s.dataset.dur]=parseInt(s.value,10);savePlan();refreshPlanner();}));
@@ -3821,7 +4371,7 @@ function exportWeek(t,wk){
   var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
   var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
   var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(t)+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">'+wlabel+'</div></div>';
-  body+='<div class="meta">'+vs.length+' visits · '+sumL(vs)+' loads · '+fmtUSD(sumB(vs))+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
+  body+='<div class="meta">'+vs.length+' visits · '+sumFL(vs)+' loads · '+fmtUSD(sumFB(vs))+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
   body+=tpWeekTable(wk,vs,ls,false);
   tpOpen(t+' — '+wlabel, body);
 }
@@ -3839,7 +4389,7 @@ function exportTripPlans(){
       var xs=XVISITS.filter(function(x){return x.terr===t && x.wk===wk;});
       if(!vs.length && !ls.length && !xs.length) return;
       var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+sumL(vs)+' loads · '+fmtUSD(sumB(vs))+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
+      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+sumFL(vs)+' loads · '+fmtUSD(sumFB(vs))+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
       if(xs.length){ wh+='<div style="font-size:11px;margin:2px 0 10px"><b>Additional visits:</b> '+xs.map(function(x){var dd=byId[x.dealer]||uniById(x.dealer);return esc((dd?dd.name:x.dealer))+' — '+xvType(x.type).label+' ('+esc(xvWhen(x))+')';}).join(' · ')+'</div>'; }
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+t+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">2027 Pre-Booking Travel</div></div>'+wh+'</div>';
@@ -4326,7 +4876,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
@@ -4395,12 +4945,7 @@ function unlockApp(){
   var g=document.getElementById('gate'); if(g)g.style.display='none';
   pbCleanAuthUrl();
   try{ pbRenderAcct(); }catch(e){}
-  /* airport picker source */
-  var dl=document.getElementById('apList');
-  if(dl && !dl.childElementCount){
-    dl.innerHTML=AIRPORTS.map(function(a){
-      return '<option value="'+a[0]+'">'+esc(a[1])+' — '+esc(a[2])+'</option>';}).join('');
-  }
+  try{ dndInit(); apInit(); }catch(e){}   /* document-level drag + airport search (desktop and Trip Mode) */
   cloudLoad(function(){
     /* legacy flight/hotel/rental records -> location-based travel items. In memory only:
        the migrated shape persists on the next real save, so loading never writes. */
@@ -4944,7 +5489,7 @@ function mobDrawMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MOB.map);
   pts.forEach(function(i){
     var ic=mobIcon(i);
-    L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+'">'+ic.g+'</div>',iconSize:[26,26],iconAnchor:[13,13]})})
+    L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+';width:20px;height:20px;font-size:10px">'+ic.g+'</div>',iconSize:[20,20],iconAnchor:[10,10]})})
       .addTo(MOB.map).bindPopup('<b>'+esc(i.name||mobKind(i))+'</b><br>'+esc(mobKind(i)));
   });
   /* one routed leg per consecutive pair — each individually tappable */
@@ -5278,7 +5823,7 @@ function mobEditSheet(id){
 
   var inner='';
   if(isFlight){
-    inner+=mobField('Airport code','<input id="ms_code" list="apList" value="'+esc(it.airportCode||'')+'" placeholder="YYZ" maxlength="4" autocapitalize="characters">');
+    inner+=mobField('Airport','<input id="ms_code" class="ap-in" autocomplete="off" value="'+esc(it.airportCode||'')+'" placeholder="Search airport, city or code">');
     inner+=mobField('Airline','<input id="ms_airline" value="'+esc(it.airline||'')+'">');
     inner+=mobField('Flight number','<input id="ms_flightNo" value="'+esc(it.flightNo||'')+'">');
   } else {
