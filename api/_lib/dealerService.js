@@ -17,6 +17,9 @@
 // Access gate for the data endpoints (embedded in the frontend — NOT a credential).
 const ACCESS_TOKEN = 'aq-d3-4e8a1f60d9b2'
 const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
+// Planning years are configuration, not code: override via env for 2028+.
+const TARGET_YEAR = process.env.PLANNING_TARGET_YEAR || '2027'
+const BASE_YEAR = String(Number(TARGET_YEAR) - 1)
 
 const TEAM_TO_AREA = {
   'Eastern Eagles': 'East',
@@ -152,6 +155,8 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
     // standardized Phase-2 additions (safe superset; future pages)
     sfAccountId: acc.Id,
     dealerStage: acc.Dealer_Stage__c || null,
+    // Account Record Type — Salesforce resolves the ID to its display name
+    recordType: (acc.RecordType && acc.RecordType.Name) || null,
     state: acc.BillingStateCode || null,
     country: acc.BillingCountryCode || null,
     latitude: lat,
@@ -177,7 +182,7 @@ async function fetchAllDealers() {
   const base = `${instanceUrl}/services/data/${apiVersion()}`
   const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
   const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
-  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
+  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, RecordType.Name, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
 
   const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
   const [accounts, opp27, opp26, pb26] = await Promise.all([
@@ -185,9 +190,9 @@ async function fetchAllDealers() {
       `SELECT ${fields} FROM Account WHERE RecordType.Name = 'Arrowquip Dealer' ` +
       `AND Territory_Manager__c IN (${tmList})`),
     queryAll(base, instanceUrl, accessToken,
-      `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c, StageName FROM Opportunity WHERE Prebooking_Year__c = '2027'`),
+      `SELECT AccountId, Prebooked_Value__c, Number_of_Loads__c, StageName FROM Opportunity WHERE Prebooking_Year__c = '${TARGET_YEAR}'`),
     queryAll(base, instanceUrl, accessToken,
-      `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026' AND StageName = 'Closed Won'`),
+      `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '${BASE_YEAR}' AND StageName = 'Closed Won'`),
     // 2026 Pre-Booking Original Commitment = COUNT of Dealer Loads opportunities per dealer.
     // RecordType.Name = 'Dealer Loads' excludes Small Sales / Commercial / End User / Warranty /
     // Prebooking / Pre-Production / parts / non-load orders automatically. Use
@@ -197,8 +202,8 @@ async function fetchAllDealers() {
     queryAll(base, instanceUrl, accessToken,
       `SELECT AccountId, COUNT(Id) c FROM Opportunity ` +
       `WHERE RecordType.Name = 'Dealer Loads' ` +
-      `AND Production_Estimated_Ship_Date__c >= 2026-01-01 ` +
-      `AND Production_Estimated_Ship_Date__c <= 2026-12-31 ` +
+      `AND Production_Estimated_Ship_Date__c >= ${BASE_YEAR}-01-01 ` +
+      `AND Production_Estimated_Ship_Date__c <= ${BASE_YEAR}-12-31 ` +
       `AND StageName IN ('Closed Won', 'Prebooked') ` +
       `GROUP BY AccountId`),
   ])
@@ -220,7 +225,7 @@ async function fetchAllDealers() {
   let opp26all = []
   try {
     opp26all = await queryAll(base, instanceUrl, accessToken,
-      `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '2026'`)
+      `SELECT AccountId, Prebooked_Value__c FROM Opportunity WHERE Prebooking_Year__c = '${BASE_YEAR}'`)
   } catch { opp26all = [] }
 
   const by27 = {}; opp27.forEach((o) => { if (o.AccountId) by27[o.AccountId] = o })

@@ -955,6 +955,16 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 .xs span{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);}
 .xs.muted b{color:var(--muted);font-weight:600;}
 @media(max-width:900px){#cards.cards{flex-direction:column;} .xc-target{flex:1;}}
+/* subtle expandable dealer-program reference below the summary cards */
+.proginfo{flex:1 1 100%;order:9;margin-top:2px;}
+.proginfo summary{cursor:pointer;font-size:.62rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted-2);list-style:none;display:inline-block;padding:2px 0;}
+.proginfo summary::-webkit-details-marker{display:none;}
+.proginfo summary:hover{color:var(--aq-black);}
+.proginfo .pgwrap{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:10px 14px;margin-top:6px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;}
+.proginfo table{border-collapse:collapse;font-size:11px;}
+.proginfo th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);padding:2px 18px 4px 0;}
+.proginfo td{padding:2px 18px 2px 0;color:var(--ink);border-top:1px solid var(--line-soft);}
+.proginfo .pgnotes{font-size:11px;color:var(--muted);max-width:280px;line-height:1.7;padding-top:4px;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1002,6 +1012,7 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
     <div class="aqUtilityLeft"><span class="aqPortalLabel">Pre-Booking Portal</span></div>
     <div class="aqUtilityRight">
       <button class="tab aqAction" data-t="Master">Master Sheet</button>
+      <button class="tab aqAction" data-t="Settings" title="Admin — currency, revenue per load, planning defaults, dealer program, audit log">Settings</button>
       <button id="exportBtn" class="aqAction aqAction--solid">Trip Plans</button>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
@@ -1049,29 +1060,14 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
-        <div class="mtools-r"><label class="goalwrap">2027 Goal $<input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><button class="btn" id="t27cfgBtn" title="2027 tier bands and CAD→USD rate">⚙ 2027 Program</button><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select></div></div>
+        <div class="mtools-r"><label class="goalwrap"><span id="goalLbl">Goal $</span><input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><button class="btn" id="mCsvBtn" title="Export every dealer with targets, tiers, margins, confirmations and record types">⤓ CSV</button><select class="msel" id="mRT" style="display:none"></select><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select></div></div>
       <table>
-        <thead>
-        <tr class="grprow"><th class="grp-sf" colspan="9"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="9">Planner (Editable)<span class="gsub">Manage your targets, loads and appointments</span></th><th></th></tr>
-        <tr class="colhdr">
-          <th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>
-          <th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>
-          <th class="srt num" data-mk="lastYear">2026 Rev<span class="hlock"></span></th>
-          <th class="srt num" data-mk="loads">2026 Loads<span class="hsub">Confirmed</span><span class="hlock"></span></th>
-          <th class="srt num" data-mk="commit2026">2026 Updated<span class="hsub">Commitment</span><span class="hinfo" title="The dealer's latest 2026 commitment. Editable at any time."> ⓘ</span></th>
-          <th class="srt num" data-mk="prebook2026">2026 Original<span class="hsub">Pre-Booking Commitment</span><span class="hinfo" title="Manual entry only — never taken from Salesforce. Locks once confirmed."> ⓘ</span></th>
-          <th class="srt num" data-mk="t27loads">2027 Target Loads<span class="hinfo" title="Editable forecast. Drives 2027 Target ($) and Target Tier automatically."> ⓘ</span></th>
-          <th class="srt num" data-mk="booking">2027 Target<span class="hsub">auto: loads × value</span></th>
-          <th>2027 Target Tier<span class="hinfo" title="Auto-calculated from Target Loads once the 7-tier program thresholds are configured."> ⓘ</span></th>
-          <th class="num">2027 Actual<span class="hlock"></span></th>
-          <th class="srt" data-mk="areaPlanning">Area Planning<span class="hinfo" title="Show this dealer in East, West, South, Central or Export planning pages."> ⓘ</span></th>
-          <th class="srt" data-mk="atKickoff">Kickoff</th>
-          <th class="srt" data-mk="status">Status</th><th>Actions</th>
-        </tr></thead>
+        <thead id="mHead"></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
       </table>
     </div>
   </div>
+  <div id="settingsView" style="display:none;"></div>
 </div>
 <script>
 const FLAT = {"dealers": [{"id": "D001", "territory": "East", "tm": "Mark Firth", "name": "All American Panel", "loc": "GA", "address": "1092 Prairie Way, Calhoun, GA", "tier": "Tier 2", "loads": 45, "booking": 3375000, "lastYear": 2250000, "growth": "+15 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Justin Jones, Denise Parsons", "suggestedWeek": 31, "lat": 34.5, "lon": -84.95}, {"id": "D002", "territory": "East", "tm": "Mark Firth", "name": "D&H Manufacturing", "loc": "GA", "address": "2265 Frontage Rd, Calhoun, GA", "tier": "Tier 3", "loads": 30, "booking": 2250000, "lastYear": 1200000, "growth": "+14 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Thomas Harrell, Landon Foster", "suggestedWeek": 31, "lat": 34.5, "lon": -84.95}, {"id": "D003", "territory": "East", "tm": "Mark Firth", "name": "Laz E Hill Farm", "loc": "PA", "address": "3687 Saddleback Ln, Lancaster, PA", "tier": "Tier 3", "loads": 15, "booking": 1125000, "lastYear": 900000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Sean McStravick, Seamus McStravick", "suggestedWeek": 31, "lat": 40.04, "lon": -76.3}, {"id": "D004", "territory": "East", "tm": "Mark Firth", "name": "Double B Farm Supply", "loc": "VA", "address": "9415 Highway 6 N, Abingdon, VA", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 375000, "growth": "+10 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Mike Brubaker", "suggestedWeek": 31, "lat": 36.71, "lon": -81.98}, {"id": "D005", "territory": "East", "tm": "Mark Firth", "name": "Bridgers Coal & Farm Supply", "loc": "NC", "address": "8962 Main St, Lenoir, NC", "tier": "Tier 4", "loads": 10, "booking": 750000, "lastYear": 750000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Glenn Bridgers, Karen Bridgers", "suggestedWeek": 31, "lat": 35.91, "lon": -81.54}, {"id": "D006", "territory": "East", "tm": "Mark Firth", "name": "Burnips Equipment Company", "loc": "MI", "address": "7638 Main St, Allegan, MI", "tier": "Tier 4", "loads": 10, "booking": 750000, "lastYear": 825000, "growth": "-1 loads", "risk": "High", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Gail Vanderkolk", "suggestedWeek": 31, "lat": 42.53, "lon": -85.85}, {"id": "D007", "territory": "East", "tm": "Mark Firth", "name": "Farm Systems Inc", "loc": "NY", "address": "9056 Prairie Way, Schaghticoke, NY", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 525000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Tyler Love", "suggestedWeek": 31, "lat": 42.9, "lon": -73.58}, {"id": "D008", "territory": "East", "tm": "Mark Firth", "name": "Brussels Agri Services Ltd.", "loc": "ON", "address": "8036 County Rd 12, Brussels, ON", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 450000, "growth": "+4 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 43.73, "lon": -81.25}, {"id": "D009", "territory": "East", "tm": "Mark Firth", "name": "Capital Tractor Inc.", "loc": "NY", "address": "8099 Depot St, Schaghticoke, NY", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 225000, "growth": "+7 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 42.9, "lon": -73.58}, {"id": "D010", "territory": "East", "tm": "Mark Firth", "name": "Equipements S Laroche Inc", "loc": "QC", "address": "1153 Frontage Rd, Saint-Hyacinthe, QC", "tier": "Tier 4", "loads": 7, "booking": 525000, "lastYear": 525000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 45.63, "lon": -72.95}, {"id": "D011", "territory": "East", "tm": "Mark Firth", "name": "Roblin Veterinary Services & Sales", "loc": "MB", "address": "7511 Saddleback Ln, Brandon, MB", "tier": "Tier 4", "loads": 7, "booking": 525000, "lastYear": 600000, "growth": "-1 loads", "risk": "High", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 49.85, "lon": -99.95}, {"id": "D012", "territory": "East", "tm": "Mark Firth", "name": "Kingston Farm Supply", "loc": "NY", "address": "7028 County Rd 12, Schaghticoke, NY", "tier": "Tier 4", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 42.9, "lon": -73.58}, {"id": "D013", "territory": "East", "tm": "Mark Firth", "name": "Jones Supply A.I. Sales & Service", "loc": "VA", "address": "1214 Commerce Dr, Abingdon, VA", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 450000, "growth": "+4 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 36.71, "lon": -81.98}, {"id": "D014", "territory": "East", "tm": "Mark Firth", "name": "H&L Motors", "loc": "PA", "address": "4313 Industrial Pkwy, Lancaster, PA", "tier": "Tier 4", "loads": 7, "booking": 525000, "lastYear": 750000, "growth": "-3 loads", "risk": "High", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 40.04, "lon": -76.3}, {"id": "D015", "territory": "East", "tm": "Mark Firth", "name": "Abingdon Equipment Co", "loc": "VA", "address": "1813 Frontage Rd, Abingdon, VA", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 36.71, "lon": -81.98}, {"id": "D016", "territory": "East", "tm": "Mark Firth", "name": "Chatsworth Farm & Garden Supply", "loc": "GA", "address": "8057 Stockyard Ave, Calhoun, GA", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 34.5, "lon": -84.95}, {"id": "D017", "territory": "East", "tm": "Mark Firth", "name": "D&J Sales & Service", "loc": "OH", "address": "6393 Industrial Pkwy, Wooster, OH", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 450000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 40.81, "lon": -81.94}, {"id": "D018", "territory": "East", "tm": "Mark Firth", "name": "Mike Garner Hay & Livestock Equipment", "loc": "TN", "address": "3738 Commerce Dr, Lewisburg, TN", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 35.45, "lon": -86.79}, {"id": "D019", "territory": "East", "tm": "Mark Firth", "name": "Maverick", "loc": "KY", "address": "2708 Prairie Way, Stanford, KY", "tier": "New", "loads": 5, "booking": 375000, "lastYear": 0, "growth": "New account", "risk": "Medium", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 37.53, "lon": -84.66}, {"id": "D020", "territory": "East", "tm": "Mark Firth", "name": "Dance Steel & Farm Supply", "loc": "OH", "address": "8063 Highway 6 N, Wooster, OH", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 225000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 40.81, "lon": -81.94}, {"id": "D021", "territory": "South", "tm": "Dane Firth", "name": "WB Farm & Ranch Supply", "loc": "TX", "address": "3065 Frontage Rd, Gainesville, TX", "tier": "Tier 3", "loads": 20, "booking": 1500000, "lastYear": 1125000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Brandon Brown, Mike Lawler", "suggestedWeek": 31, "lat": 33.63, "lon": -97.13}, {"id": "D022", "territory": "South", "tm": "Dane Firth", "name": "Burgin Pipe and Supply", "loc": "TX", "address": "7768 Ranch Rd 3, Gainesville, TX", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 525000, "growth": "+8 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Corey Burgin", "suggestedWeek": 31, "lat": 33.63, "lon": -97.13}, {"id": "D023", "territory": "South", "tm": "Dane Firth", "name": "Ross Rogers Equipment", "loc": "TX", "address": "9842 Commerce Dr, Gainesville, TX", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 750000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Ryan Rogers", "suggestedWeek": 31, "lat": 33.63, "lon": -97.13}, {"id": "D024", "territory": "South", "tm": "Dane Firth", "name": "CK Cattle", "loc": "AL", "address": "3448 Ranch Rd 3, Hanceville, AL", "tier": "Tier 4", "loads": 10, "booking": 750000, "lastYear": 675000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Charlie Madaris", "suggestedWeek": 31, "lat": 34.06, "lon": -86.77}, {"id": "D025", "territory": "South", "tm": "Dane Firth", "name": "Diversified Sales & Services", "loc": "NM", "address": "1101 Industrial Pkwy, Roswell, NM", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Cody", "suggestedWeek": 31, "lat": 33.39, "lon": -104.52}, {"id": "D026", "territory": "South", "tm": "Dane Firth", "name": "Standley Feed & Seed", "loc": "TX", "address": "9276 Prairie Way, Gainesville, TX", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 750000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 33.63, "lon": -97.13}, {"id": "D027", "territory": "South", "tm": "Dane Firth", "name": "Buzbee Feed & Seed, Inc.", "loc": "TX", "address": "3804 County Rd 12, Gainesville, TX", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 375000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 33.63, "lon": -97.13}, {"id": "D028", "territory": "South", "tm": "Dane Firth", "name": "Grogan's Farm and Ranch", "loc": "TX", "address": "9190 Commerce Dr, Gainesville, TX", "tier": "Tier 4", "loads": 8, "booking": 600000, "lastYear": 375000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 33.63, "lon": -97.13}, {"id": "D029", "territory": "South", "tm": "Dane Firth", "name": "Wertzberger Ranch Equipment LLC", "loc": "KS", "address": "7615 Depot St, Burlington, KS", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 225000, "growth": "+4 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 38.19, "lon": -95.74}, {"id": "D030", "territory": "South", "tm": "Dane Firth", "name": "Schrick Trailer Sales, LTD.", "loc": "TX", "address": "3423 Saddleback Ln, Gainesville, TX", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 33.63, "lon": -97.13}, {"id": "D031", "territory": "South", "tm": "Dane Firth", "name": "MBJ Ranch Company", "loc": "TX", "address": "4492 Ranch Rd 3, Gainesville, TX", "tier": "Tier 4", "loads": 5, "booking": 375000, "lastYear": 750000, "growth": "-5 loads", "risk": "High", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 33.63, "lon": -97.13}, {"id": "D032", "territory": "South", "tm": "Dane Firth", "name": "Farm Club LLC", "loc": "TX", "address": "1922 Main St, Gainesville, TX", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 225000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 33.63, "lon": -97.13}, {"id": "D033", "territory": "South", "tm": "Dane Firth", "name": "Key Equipment", "loc": "TX", "address": "7656 Prairie Way, Gainesville, TX", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 150000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 33.63, "lon": -97.13}, {"id": "D034", "territory": "South", "tm": "Dane Firth", "name": "Eubanks Equipment", "loc": "OK", "address": "8954 Main St, Ada, OK", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 300000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 34.77, "lon": -96.68}, {"id": "D035", "territory": "South", "tm": "Dane Firth", "name": "Great Plains Kubota", "loc": "OK", "address": "1009 Stockyard Ave, Ada, OK", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 300000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 34.77, "lon": -96.68}, {"id": "D036", "territory": "South", "tm": "Dane Firth", "name": "La Grange Farm & Ranch, Inc.", "loc": "TX", "address": "431 Saddleback Ln, Gainesville, TX", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 33.63, "lon": -97.13}, {"id": "D037", "territory": "South", "tm": "Dane Firth", "name": "Six Toes Feed & Seed, LLC", "loc": "TX", "address": "7397 Stockyard Ave, Gainesville, TX", "tier": "Tier 5", "loads": 4, "booking": 300000, "lastYear": 300000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 33.63, "lon": -97.13}, {"id": "D038", "territory": "South", "tm": "Dane Firth", "name": "Johnston County Feed & Supply", "loc": "OK", "address": "5415 Highway 6 N, Ada, OK", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 225000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 34.77, "lon": -96.68}, {"id": "D039", "territory": "South", "tm": "Dane Firth", "name": "Stone Farms & Sales", "loc": "OK", "address": "425 Stockyard Ave, Ada, OK", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 150000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 34.77, "lon": -96.68}, {"id": "D040", "territory": "South", "tm": "Dane Firth", "name": "Foote's Farm Supply", "loc": "AR", "address": "433 Frontage Rd, Berryville, AR", "tier": "Tier 6", "loads": 3, "booking": 225000, "lastYear": 75000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 36.37, "lon": -93.57}, {"id": "D041", "territory": "South", "tm": "Dane Firth", "name": "Louisiana Home Builders Inc", "loc": "LA", "address": "1246 Main St, Sulphur, LA", "tier": "Tier 5", "loads": 3, "booking": 225000, "lastYear": 150000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 30.24, "lon": -93.38}, {"id": "D042", "territory": "South", "tm": "Dane Firth", "name": "Rushing Ag", "loc": "MS", "address": "7159 Depot St, Buckatunna, MS", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 31.55, "lon": -88.53}, {"id": "D043", "territory": "South", "tm": "Dane Firth", "name": "Farm Systems Alabama", "loc": "AL", "address": "8770 Main St, Hanceville, AL", "tier": "New", "loads": 5, "booking": 375000, "lastYear": 0, "growth": "New account", "risk": "Medium", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 34.06, "lon": -86.77}, {"id": "D044", "territory": "South", "tm": "Dane Firth", "name": "Triple B Ranch Supply", "loc": "NM", "address": "2754 Commerce Dr, Roswell, NM", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 33.39, "lon": -104.52}, {"id": "D045", "territory": "South", "tm": "Dane Firth", "name": "New Moon Hay & Feed", "loc": "NM", "address": "1008 Prairie Way, Roswell, NM", "tier": "Tier 6", "loads": 3, "booking": 225000, "lastYear": 150000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 33.39, "lon": -104.52}, {"id": "D046", "territory": "Central", "tm": "Dale Cornell", "name": "Schulte Cattlequip", "loc": "SK", "address": "7522 Old Mill Rd, Saskatoon, SK", "tier": "Tier 3", "loads": 15, "booking": 1125000, "lastYear": 1125000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Cam Schulte", "suggestedWeek": 31, "lat": 52.13, "lon": -106.67}, {"id": "D047", "territory": "Central", "tm": "Dale Cornell", "name": "Riverland Farm & Ranch Equipment", "loc": "SD", "address": "1639 Highway 6 N, Gettysburg, SD", "tier": "Tier 3", "loads": 10, "booking": 750000, "lastYear": 1125000, "growth": "-5 loads", "risk": "High", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Trenton Mast, Tyler Mast", "suggestedWeek": 31, "lat": 45.01, "lon": -99.96}, {"id": "D048", "territory": "Central", "tm": "Dale Cornell", "name": "Esch Ag Supply", "loc": "IN", "address": "1985 Stockyard Ave, Montgomery, IN", "tier": "Tier 4", "loads": 10, "booking": 750000, "lastYear": 900000, "growth": "-2 loads", "risk": "High", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Mark Valentine", "suggestedWeek": 31, "lat": 38.66, "lon": -87.04}, {"id": "D049", "territory": "Central", "tm": "Dale Cornell", "name": "United Quality Cooperative", "loc": "MN", "address": "2220 Ranch Rd 3, Hutchinson, MN", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Gregg Schaefer", "suggestedWeek": 31, "lat": 44.89, "lon": -94.37}, {"id": "D050", "territory": "Central", "tm": "Dale Cornell", "name": "High Point Stockmans Supply", "loc": "NC", "address": "8167 Saddleback Ln, Lenoir, NC", "tier": "Tier 4", "loads": 7, "booking": 525000, "lastYear": 450000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 35.91, "lon": -81.54}, {"id": "D051", "territory": "Central", "tm": "Dale Cornell", "name": "Dooley Tractor Company", "loc": "TN", "address": "8462 Old Mill Rd, Lewisburg, TN", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 300000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 35.45, "lon": -86.79}, {"id": "D052", "territory": "Central", "tm": "Dale Cornell", "name": "Ag1 Farmers Co-op", "loc": "TN", "address": "5957 Frontage Rd, Lewisburg, TN", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 35.45, "lon": -86.79}, {"id": "D053", "territory": "Central", "tm": "Dale Cornell", "name": "Dodson Creek Farm Supply", "loc": "TN", "address": "1437 Frontage Rd, Lewisburg, TN", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 35.45, "lon": -86.79}, {"id": "D054", "territory": "Central", "tm": "Dale Cornell", "name": "Murray's Dairy, Farm & Refrigeration", "loc": "WI", "address": "2426 Main St, Marshfield, WI", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 750000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 44.67, "lon": -90.17}, {"id": "D055", "territory": "Central", "tm": "Dale Cornell", "name": "Premier Ag Supply", "loc": "IN", "address": "7943 Depot St, Montgomery, IN", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 450000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 38.66, "lon": -87.04}, {"id": "D056", "territory": "Central", "tm": "Dale Cornell", "name": "Lincoln Bedford Moore Farmers Co-op", "loc": "TN", "address": "9892 Ranch Rd 3, Lewisburg, TN", "tier": "Tier 6", "loads": 5, "booking": 375000, "lastYear": 225000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 35.45, "lon": -86.79}, {"id": "D057", "territory": "Central", "tm": "Dale Cornell", "name": "Southern States - Stanford", "loc": "KY", "address": "8525 Industrial Pkwy, Stanford, KY", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 37.53, "lon": -84.66}, {"id": "D058", "territory": "Central", "tm": "Dale Cornell", "name": "Zumbrota Stockman's Supply", "loc": "MN", "address": "9389 Industrial Pkwy, Hutchinson, MN", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 300000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 44.89, "lon": -94.37}, {"id": "D059", "territory": "Central", "tm": "Dale Cornell", "name": "Hopedale Agri Center", "loc": "IL", "address": "7313 Industrial Pkwy, Carlinville, IL", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 39.28, "lon": -89.88}, {"id": "D060", "territory": "Central", "tm": "Dale Cornell", "name": "North Country Mercantile & Equipment", "loc": "MN", "address": "9206 Old Mill Rd, Hutchinson, MN", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 44.89, "lon": -94.37}, {"id": "D061", "territory": "Central", "tm": "Dale Cornell", "name": "B&B Livestock Supply & Trailers", "loc": "IL", "address": "4436 Prairie Way, Carlinville, IL", "tier": "Tier 6", "loads": 3, "booking": 225000, "lastYear": 150000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 39.28, "lon": -89.88}, {"id": "D062", "territory": "Central", "tm": "Dale Cornell", "name": "Hirsch Feed & Farm Supply", "loc": "MO", "address": "3890 Commerce Dr, Bolivar, MO", "tier": "Tier 3", "loads": 20, "booking": 1500000, "lastYear": 1125000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 37.61, "lon": -93.41}, {"id": "D063", "territory": "Central", "tm": "Dale Cornell", "name": "PAC", "loc": "IA", "address": "8106 Commerce Dr, Ames, IA", "tier": "New", "loads": 15, "booking": 1125000, "lastYear": 0, "growth": "New account", "risk": "Medium", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 42.03, "lon": -93.62}, {"id": "D064", "territory": "Central", "tm": "Dale Cornell", "name": "Premier Equipment", "loc": "IA", "address": "631 Depot St, Ames, IA", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 42.03, "lon": -93.62}, {"id": "D065", "territory": "Central", "tm": "Dale Cornell", "name": "South Central FS", "loc": "IL", "address": "1990 Main St, Carlinville, IL", "tier": "Tier 6", "loads": 3, "booking": 225000, "lastYear": 75000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 39.28, "lon": -89.88}, {"id": "D066", "territory": "Central", "tm": "Dale Cornell", "name": "Goldies Trailer Sales", "loc": "MO", "address": "4292 County Rd 12, Bolivar, MO", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 37.61, "lon": -93.41}, {"id": "D067", "territory": "Central", "tm": "Dale Cornell", "name": "Livestock Equipment & Manufacturing", "loc": "NE", "address": "137 Stockyard Ave, Callaway, NE", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 41.28, "lon": -99.92}, {"id": "D068", "territory": "Central", "tm": "Dale Cornell", "name": "TNT Manufacturing", "loc": "MO", "address": "359 Depot St, Bolivar, MO", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 37.61, "lon": -93.41}, {"id": "D069", "territory": "Central", "tm": "Dale Cornell", "name": "Uphill Creek Farms", "loc": "MO", "address": "6178 Commerce Dr, Bolivar, MO", "tier": "Tier 5", "loads": 3, "booking": 225000, "lastYear": 375000, "growth": "-2 loads", "risk": "High", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 36, "lat": 37.61, "lon": -93.41}, {"id": "D070", "territory": "Central", "tm": "Dale Cornell", "name": "Lorenzen Equipment", "loc": "NE", "address": "2849 Frontage Rd, Callaway, NE", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 37, "lat": 41.28, "lon": -99.92}, {"id": "D071", "territory": "Central", "tm": "Dale Cornell", "name": "Hatton Vermeer Sales", "loc": "ND", "address": "6921 Stockyard Ave, Hatton, ND", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 37, "lat": 47.64, "lon": -97.46}, {"id": "D072", "territory": "Central", "tm": "Dale Cornell", "name": "Stenberg Trailers & Cattle Supply", "loc": "NE", "address": "7737 Industrial Pkwy, Callaway, NE", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 300000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 37, "lat": 41.28, "lon": -99.92}, {"id": "D073", "territory": "Central", "tm": "Dale Cornell", "name": "Ag Plus Farm & Ranch Supply", "loc": "SD", "address": "303 Depot St, Gettysburg, SD", "tier": "Tier 6", "loads": 5, "booking": 375000, "lastYear": 0, "growth": "New account", "risk": "Medium", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 37, "lat": 45.01, "lon": -99.96}, {"id": "D074", "territory": "West", "tm": "Darren Brennan", "name": "Norheim Equipment Co.", "loc": "SK", "address": "6039 Saddleback Ln, Saskatoon, SK", "tier": "Tier 3", "loads": 30, "booking": 2250000, "lastYear": 1800000, "growth": "+6 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Lee Norheim, Chelsea Norheim", "suggestedWeek": 31, "lat": 52.13, "lon": -106.67}, {"id": "D075", "territory": "West", "tm": "Darren Brennan", "name": "Rocking Horse Industries Inc.", "loc": "AB", "address": "7029 Stockyard Ave, Lethbridge, AB", "tier": "Tier 3", "loads": 15, "booking": 1125000, "lastYear": 975000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Steve Marshman, Jessica Marshman", "suggestedWeek": 31, "lat": 49.69, "lon": -112.84}, {"id": "D076", "territory": "West", "tm": "Darren Brennan", "name": "Agri-Best Feeds", "loc": "MT", "address": "7488 Prairie Way, Billings, MT", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 600000, "growth": "+7 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Scott Anderson, Alex Koss", "suggestedWeek": 31, "lat": 45.79, "lon": -108.5}, {"id": "D077", "territory": "West", "tm": "Darren Brennan", "name": "Howard Equipment", "loc": "OR", "address": "1574 Main St, Madras, OR", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 750000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 1, "attendeeNames": "Mont Howard", "suggestedWeek": 31, "lat": 44.63, "lon": -121.13}, {"id": "D078", "territory": "West", "tm": "Darren Brennan", "name": "Cattleman's Resource Inc", "loc": "CO", "address": "6224 County Rd 12, Sterling, CO", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 375000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Paul Chard, Megan Chard", "suggestedWeek": 31, "lat": 40.62, "lon": -103.21}, {"id": "D079", "territory": "West", "tm": "Darren Brennan", "name": "Diamond K Sales", "loc": "OR", "address": "8289 Stockyard Ave, Madras, OR", "tier": "Tier 4", "loads": 9, "booking": 675000, "lastYear": 675000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": true, "atKickoff": true, "attendees": 2, "attendeeNames": "Darryl Rodeback, Royal Kropf", "suggestedWeek": 31, "lat": 44.63, "lon": -121.13}, {"id": "D080", "territory": "West", "tm": "Darren Brennan", "name": "VJV Farm & Ranch", "loc": "AB", "address": "1633 Frontage Rd, Lethbridge, AB", "tier": "Tier 4", "loads": 15, "booking": 1125000, "lastYear": 675000, "growth": "+6 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 49.69, "lon": -112.84}, {"id": "D081", "territory": "West", "tm": "Darren Brennan", "name": "The Jones Boys Saddlery & Western Wear", "loc": "CO", "address": "6528 Ranch Rd 3, Sterling, CO", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 40.62, "lon": -103.21}, {"id": "D082", "territory": "West", "tm": "Darren Brennan", "name": "Producers Co-op", "loc": "MT", "address": "9081 Stockyard Ave, Billings, MT", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 450000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 45.79, "lon": -108.5}, {"id": "D083", "territory": "West", "tm": "Darren Brennan", "name": "Covolo Auto-Farm Service", "loc": "WY", "address": "948 County Rd 12, Gillette, WY", "tier": "Tier 6", "loads": 4, "booking": 300000, "lastYear": 150000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 32, "lat": 44.29, "lon": -105.5}, {"id": "D084", "territory": "West", "tm": "Darren Brennan", "name": "Valley Wide Coop", "loc": "ID", "address": "4583 Depot St, Mountain Home, ID", "tier": "Tier 5", "loads": 9, "booking": 675000, "lastYear": 375000, "growth": "+4 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 43.13, "lon": -115.69}, {"id": "D085", "territory": "West", "tm": "Darren Brennan", "name": "Rocky Mountain Supply", "loc": "MT", "address": "6313 Frontage Rd, Billings, MT", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 450000, "growth": "+1 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 45.79, "lon": -108.5}, {"id": "D086", "territory": "West", "tm": "Darren Brennan", "name": "The Western Feed Corral", "loc": "AZ", "address": "8428 Prairie Way, Tucson, AZ", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 32.22, "lon": -110.97}, {"id": "D087", "territory": "West", "tm": "Darren Brennan", "name": "Animal Health Express", "loc": "AZ", "address": "4706 Commerce Dr, Tucson, AZ", "tier": "Tier 6", "loads": 5, "booking": 375000, "lastYear": 150000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 33, "lat": 32.22, "lon": -110.97}, {"id": "D088", "territory": "West", "tm": "Darren Brennan", "name": "Oregon Trail Livestock Supply", "loc": "OR", "address": "3958 Commerce Dr, Madras, OR", "tier": "Tier 5", "loads": 10, "booking": 750000, "lastYear": 375000, "growth": "+5 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 44.63, "lon": -121.13}, {"id": "D089", "territory": "West", "tm": "Darren Brennan", "name": "Double N Ranch Supply", "loc": "WA", "address": "2411 Highway 6 N, Colville, WA", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 48.55, "lon": -117.9}, {"id": "D090", "territory": "West", "tm": "Darren Brennan", "name": "Horst Farm Supply", "loc": "WA", "address": "9551 Highway 6 N, Colville, WA", "tier": "Tier 6", "loads": 3, "booking": 225000, "lastYear": 75000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 34, "lat": 48.55, "lon": -117.9}, {"id": "D091", "territory": "West", "tm": "Darren Brennan", "name": "Mongini Veterinary Clinic", "loc": "CA", "address": "1759 Saddleback Ln, Redding, CA", "tier": "Tier 5", "loads": 7, "booking": 525000, "lastYear": 375000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 40.59, "lon": -122.39}, {"id": "D092", "territory": "West", "tm": "Darren Brennan", "name": "The Horse Barn", "loc": "OR", "address": "3982 Commerce Dr, Madras, OR", "tier": "Tier 6", "loads": 5, "booking": 375000, "lastYear": 150000, "growth": "+3 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 44.63, "lon": -121.13}, {"id": "D093", "territory": "West", "tm": "Darren Brennan", "name": "Shasta Farm & Equipment", "loc": "CA", "address": "994 Commerce Dr, Redding, CA", "tier": "Tier 5", "loads": 5, "booking": 375000, "lastYear": 375000, "growth": "Flat / hold", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": 35, "lat": 40.59, "lon": -122.39}, {"id": "D094", "territory": "Exports", "tm": "Exports", "name": "Wise Agriculture Ltd.", "loc": "UK", "address": "7183 Saddleback Ln, Shropshire, UK", "tier": "Tier 3", "loads": 30, "booking": 2250000, "lastYear": 1950000, "growth": "+4 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": null, "lat": 52.7, "lon": -2.75}, {"id": "D095", "territory": "Exports", "tm": "Exports", "name": "Sarl Sabourdy", "loc": "FR", "address": "3104 Ranch Rd 3, Limoges, FR", "tier": "Tier 3", "loads": 15, "booking": 1125000, "lastYear": 975000, "growth": "+2 loads", "risk": "Low", "visitConfirmed": false, "atKickoff": false, "attendees": 0, "attendeeNames": "", "suggestedWeek": null, "lat": 45.83, "lon": 1.26}], "territoryTotal": {"East": 16875000.0, "South": 13950000.0, "Central": 15675000.0, "West": 14400000.0, "Exports": 3375000.0}, "tm": {"East": "Mark Firth", "South": "Dane Firth", "Central": "Dale Cornell", "West": "Darren Brennan", "Exports": "\u2014"}};
@@ -1126,6 +1122,7 @@ function sfMasterMerge(d){
     /* The Original 2026 Pre-Booking Commitment is MANUAL ENTRY ONLY.
        Salesforce revenue is never copied into it — it stays planner-owned
        and independent of the Updated Commitment. */
+    o.recordType=sf.recordType||'';                    /* Account Record Type — read-only */
     o._sfId=sf.id; o._sf=true;
   } else {
     src.name=src.territory=src.tm=src.loc=src.address=src.tier=src.lastYear=src.lat=src.lon='planner-fallback';
@@ -1245,7 +1242,7 @@ let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
-let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="";
+let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="";
 /* Planner-owned planning status (default Not Started). Rendered as a coloured pill <select>. */
 var STATUSES=['Committed','Working','Not Started','Complete'];
 function statusCls(s){ return 'st-'+String(s||'Not Started').toLowerCase().replace(/\s+/g,''); }
@@ -1427,6 +1424,15 @@ function normalizeVisitData(){
   });
   Object.keys(PTYPE).forEach(function(k){ if(PTYPE[k]!=='visit') delete PTYPE[k]; });
   Object.keys(DUR).forEach(function(k){ var n=normDur(DUR[k]); if(n==null) delete DUR[k]; else DUR[k]=n; });
+  /* one-time migration: confirmed Pre-book cards that predate the commitment
+     ledger get their commitment records so totals stay commitment-based */
+  try{
+    var seen={};
+    DEALERS.forEach(function(d){
+      if(seen[d.id]) return; seen[d.id]=1;
+      if(pbCardsOf(d.id).some(function(c){return c.done;}) && !pbConfirmed(d.id)) syncCommitments(d.id);
+    });
+  }catch(e){}
 }
 /* ============ FORECAST OWNERSHIP ============
    Dollars and loads belong to the DEALER, deduplicated by stable dealer id —
@@ -1442,7 +1448,12 @@ function pbCardsOf(id){
   return out;
 }
 function hasPB(id){ return pbCardsOf(id).length>0; }
-function pbConfirmed(id){ return pbCardsOf(id).some(function(c){return c.done;}); }
+/* confirmed = backed by an ACTIVE commitment record (immutable CID ledger),
+   never a dealer-name or visit-count test */
+function pbConfirmed(id){
+  for(var i=0;i<COMMITS.length;i++){ var c=COMMITS[i]; if(c.dealer===id&&c.year===planYear()&&!c.void) return true; }
+  return false;
+}
 /* weekly attribution: earliest numeric pre-book week, else 'remote' */
 function pbWeek(id){
   var cs=pbCardsOf(id); if(!cs.length) return null;
@@ -1472,15 +1483,24 @@ const CA_PROVS={ON:1,QC:1,MB:1,SK:1,AB:1,BC:1,NS:1,NB:1,PE:1,NL:1,YT:1,NT:1,NU:1
    the ⚙ 2027 Program settings on the Master Sheet; saved in the shared plan. */
 let T27_TIERS=[];
 function dealerIsCA(d){ var sf=(typeof sfLookup==='function')?sfLookup(d):null; if(sf&&sf.country) return sf.country==='CA'; return !!CA_PROVS[d.loc]; }
-function loadUSD(d){ return dealerIsCA(d)?Math.round(LOAD_CAD*FX):LOAD_USD; }
+/* per-load values now live in ADMIN.revPerLoad (Planning Settings) — LOAD_USD/LOAD_CAD are seeds only */
 function t27Loads(d){ var ov=(d._accountId&&SF_OVERLAY[d._accountId])||null; var v=(d.t27loads!=null?d.t27loads:(ov&&ov.t27loads)); return +v||0; }
-function t27Tier(loads){ if(!loads) return ''; for(var i=0;i<T27_TIERS.length;i++){ if(loads>=T27_TIERS[i][0]) return T27_TIERS[i][1]; } return T27_TIERS.length?T27_TIERS[T27_TIERS.length-1][1]:''; }
+/* tier label comes from the official program in Planning Settings */
+function t27Tier(loads){ if(!(+loads>0)) return ''; var p=programOf(loads); return p?('Tier '+p.tier):'Not Qualified'; }
 /* keep booking (used app-wide as planned revenue) derived from Target Loads */
 function recalcTargets(){
-  /* 2027 Target revenue is ALWAYS derived: Target Loads × $/load. Blank
-     loads = blank revenue and blank tier — never populated automatically. */
-  DEALERS.forEach(function(d){ d.booking=(+d.t27loads>0)?Math.round((+d.t27loads)*loadUSD(d)):0; });
-  Object.keys(SF_OVERLAY).forEach(function(sid){ var ov=SF_OVERLAY[sid]; if(!ov) return; var sf=SF_BY_ID[sid]; var pseudo={loc:(sf&&sf.loc)||'', id:sid}; ov.booking=(+ov.t27loads>0)?Math.round((+ov.t27loads)*(sf&&sf.country==='CA'?Math.round(LOAD_CAD*FX):(CA_PROVS[pseudo.loc]?Math.round(LOAD_CAD*FX):LOAD_USD))):0; });
+  /* Target revenue is ALWAYS derived by the engine: Target Loads × the
+     market's Average Revenue Per Load (converted at the engine rate). Blank
+     loads = blank revenue/tier/margin/co-op — never populated automatically,
+     never a fallback to legacy or prior-year revenue. */
+  DEALERS.forEach(function(d){ d.booking=dealerRevMixedFor(d); });
+  Object.keys(SF_OVERLAY).forEach(function(sid){
+    var ov=SF_OVERLAY[sid]; if(!ov) return;
+    var sf=SF_BY_ID[sid];
+    var pseudo={id:sid, loc:(sf&&sf.loc)||'', territory:(sf&&sf.territory)||'', t27loads:ov.t27loads, _accountId:sid};
+    ov.booking=dealerRevMixedFor(pseudo, ov.t27loads);
+  });
+  CALC.dirtyAll();
   invalidateUniverse();
 }
 function xvFor(id){ return XVISITS.filter(function(x){ return x.dealer===id; }); }
@@ -1516,11 +1536,190 @@ function xvNextLabel(d){
   var labs=dayLabels(c.wk);
   return 'Wk '+c.wk+((c.day!=null&&labs[c.day])?(' · '+labs[c.day][0]+' '+labs[c.day][1]):'');
 }
+/* ============================================================
+   PLANNING ENGINE — the single source of truth for every number.
+   Pages never calculate; they read CALC.* and the helpers below.
+   Everything here is driven by ADMIN (Planning Settings) so the
+   program, rates, markets and the planning year change without
+   code edits — 2028/2029/2030 are a settings change, not a rewrite.
+   ============================================================ */
+let ADMIN={};      /* admin/planning settings — persisted in the shared plan */
+let COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
+
+/* Official dealer program (seed). Editable afterwards in Planning Settings. */
+const PROGRAM_DEFAULT=[
+  {tier:1,min:45,max:null,margin:30,coop:1.5},
+  {tier:2,min:30,max:44,margin:27,coop:1.5},
+  {tier:3,min:20,max:29,margin:25,coop:1.25},
+  {tier:4,min:15,max:19,margin:23,coop:1},
+  {tier:5,min:7,max:14,margin:20,coop:1},
+  {tier:6,min:5,max:6,margin:18,coop:0.5},
+  {tier:7,min:3,max:4,margin:12,coop:0.25}
+];
+function adminInit(){
+  ADMIN=ADMIN||{};
+  ADMIN.currency=ADMIN.currency||{rate:(+FX>0?+FX:0.73),source:'seed',timestamp:null,updatedBy:'seed',override:null};
+  ADMIN.revPerLoad=ADMIN.revPerLoad||{};
+  var seedR=function(k,v,cur,label){ if(!ADMIN.revPerLoad[k]) ADMIN.revPerLoad[k]={value:v,currency:cur,label:label,effective:'2026-07-01',updatedBy:'seed'}; };
+  seedR('US',75000,'USD','United States'); seedR('CA',85000,'CAD','Canada');
+  seedR('EXPORT',75000,'USD','Export'); seedR('FUTURE',75000,'USD','Future Markets');
+  ADMIN.defaults=ADMIN.defaults||{planningYear:2026,targetYear:2027,visitDur:60,prebookDur:90,maxDrive:3};
+  if(!Array.isArray(ADMIN.program)||!ADMIN.program.length) ADMIN.program=PROGRAM_DEFAULT.map(function(p){return Object.assign({},p);});
+  ADMIN.audit=ADMIN.audit||[];
+}
+function planYear(){ return (ADMIN.defaults&&+ADMIN.defaults.targetYear)||2027; }
+function pbWho(){ try{ return (PB_USER&&PB_USER.email)||'local user'; }catch(e){ return 'local user'; } }
+/* audit ledger: who / when / what / old / new */
+function audit(kind,info){
+  try{
+    ADMIN.audit=ADMIN.audit||[];
+    ADMIN.audit.unshift(Object.assign({at:new Date().toISOString(),by:pbWho(),kind:kind},info||{}));
+    if(ADMIN.audit.length>500) ADMIN.audit.length=500;
+  }catch(e){}
+}
+/* ---- program: tier / margin / co-op derive ONLY from Target Loads ---- */
+function programList(){ return (ADMIN.program&&ADMIN.program.length)?ADMIN.program:PROGRAM_DEFAULT; }
+function programOf(loads){
+  loads=+loads||0; if(loads<3) return null;              /* <3 loads: Not Qualified */
+  var P=programList();
+  for(var i=0;i<P.length;i++){ var p=P[i]; if(loads>=+p.min&&(p.max==null||p.max===''||loads<=+p.max)) return p; }
+  return null;
+}
+/* ---- currency engine: one CAD→USD rate, auto-refreshed, override in Admin ---- */
+function fxRate(){
+  var c=(ADMIN&&ADMIN.currency)||{};
+  if(c.override&&+c.override.rate>0) return +c.override.rate;
+  return (+c.rate>0)?+c.rate:((+FX>0)?+FX:0.73);
+}
+function fxSync(){ FX=fxRate(); }                        /* FX = read-only mirror for legacy call sites */
+var _FX_PROVIDERS=[
+  {name:'frankfurter.dev (ECB)', url:'https://api.frankfurter.dev/v1/latest?base=CAD&symbols=USD', pick:function(j){ return j&&j.rates&&+j.rates.USD; }},
+  {name:'open.er-api.com',       url:'https://open.er-api.com/v6/latest/CAD',                      pick:function(j){ return j&&j.rates&&+j.rates.USD; }}
+];
+function fxAutoRefresh(force,cb){
+  var c=ADMIN.currency;
+  if(!force&&c.timestamp&&(Date.now()-new Date(c.timestamp).getTime())<20*3600e3){ cb&&cb(false); return; }
+  var attempt=function(i){
+    if(i>=_FX_PROVIDERS.length){ cb&&cb(false); return; } /* all providers down: last successful rate stays */
+    var P=_FX_PROVIDERS[i];
+    fetch(P.url).then(function(r){ return r.ok?r.json():null; }).then(function(j){
+      var r=P.pick(j);
+      if(!(r>0)){ attempt(i+1); return; }
+      var changed=Math.abs((+c.rate||0)-r)>0.0005;
+      c.rate=r; c.source=P.name; c.timestamp=new Date().toISOString(); c.updatedBy='auto';
+      fxSync();
+      if(changed){ recalcTargets(); savePlan(); try{ withPreservedScroll(render); }catch(e){} }
+      cb&&cb(true);
+    }).catch(function(){ attempt(i+1); });
+  };
+  attempt(0);
+}
+/* ---- markets: the dealer's country decides the revenue-per-load ---- */
+function marketOf(d){
+  if(!d) return null;
+  var sf=(typeof sfLookup==='function')?sfLookup(d):null;
+  if(sf&&sf.country){ if(sf.country==='CA')return 'CA'; if(sf.country==='US')return 'US'; return 'EXPORT'; }
+  if(d.territory==='Exports') return 'EXPORT';
+  if(CA_PROVS[d.loc]) return 'CA';
+  if(d.loc==='UK'||d.loc==='FR') return 'EXPORT';
+  if(COORD[d.loc]) return 'US';
+  return null;                                            /* unknown market → problem row */
+}
+function revPerLoadOf(mkt){
+  var r=ADMIN.revPerLoad&&ADMIN.revPerLoad[mkt];
+  return (r&&+r.value>0)?{value:+r.value,currency:r.currency||'USD'}:null;
+}
+/* mixed = USD-equivalent (CAD markets converted at the engine rate) */
+function dealerRevMixedFor(d,loads){
+  loads=+((loads!=null)?loads:t27Loads(d))||0;
+  if(!(loads>0)) return 0;
+  var mkt=marketOf(d); var rp=mkt&&revPerLoadOf(mkt);
+  if(!rp) return 0;
+  var usd=(rp.currency==='CAD')?rp.value*fxRate():rp.value;
+  return Math.round(loads*usd);
+}
+/* ============ CALC: memoized per-dealer figures + rollups ============
+   Invalidation is scoped: an edit dirties that dealer, its territory and
+   the company totals — never a full recalculation of every dealer. */
+var CALC={_d:{},_t:{},_c:null};
+CALC.dirtyDealer=function(id,t){ delete this._d[id]; if(t)delete this._t[t]; this._c=null; };
+CALC.dirtyAll=function(){ this._d={}; this._t={}; this._c=null; };
+CALC.dealer=function(d){
+  if(!d||!d.id) return null;
+  var c=this._d[d.id]; if(c) return c;
+  var mkt=marketOf(d), rp=mkt&&revPerLoadOf(mkt);
+  var loads=t27Loads(d), fx=fxRate();
+  var revMixed=dealerRevMixedFor(d,loads);
+  var prog=(loads>0)?programOf(loads):undefined;
+  var act=COMMITS.filter(function(x){ return x.dealer===d.id&&x.year===planYear()&&!x.void; });
+  var sf=(typeof sfLookup==='function')?sfLookup(d):null;
+  c={id:d.id, market:mkt,
+     loads:loads, revMixed:revMixed, revCAD:revMixed?Math.round(revMixed/fx):0,
+     tier:(prog?prog.tier:null),
+     tierLabel:(loads>0?(prog?('Tier '+prog.tier):'Not Qualified'):''),
+     margin:(prog?+prog.margin:null), coop:(prog?+prog.coop:null),
+     confLoads:act.reduce(function(s,x){return s+(+x.loads||0);},0),
+     confRevMixed:act.reduce(function(s,x){return s+(+x.revMixed||0);},0),
+     confRevCAD:act.reduce(function(s,x){return s+(+x.revCAD||0);},0),
+     commitments:act.length,
+     actual:(sf&&+sf.actual2027)||0,
+     recordType:(sf&&(sf.recordType||''))||'',
+     problem:(!mkt)||(loads>0&&!rp)};
+  c.gap=Math.max(0,revMixed-c.actual);
+  this._d[d.id]=c; return c;
+};
+CALC.terr=function(t){
+  var c=this._t[t]; if(c) return c;
+  c={tgtMixed:0,tgtCAD:0,tgtLoads:0,confMixed:0,confCAD:0,confLoads:0,dealers:0};
+  dealersIn(t).forEach(function(d){
+    var x=CALC.dealer(d); if(!x) return;
+    c.dealers++; c.tgtMixed+=x.revMixed; c.tgtCAD+=x.revCAD; c.tgtLoads+=x.loads;
+    c.confMixed+=x.confRevMixed; c.confCAD+=x.confRevCAD; c.confLoads+=x.confLoads;
+  });
+  this._t[t]=c; return c;
+};
+CALC.company=function(){
+  if(this._c) return this._c;
+  var c={tgtMixed:0,tgtCAD:0,tgtLoads:0,confMixed:0,confCAD:0,confLoads:0,dealers:0};
+  TERRS.forEach(function(t){ var x=CALC.terr(t); Object.keys(c).forEach(function(k){ c[k]+=x[k]; }); });
+  this._c=c; return c;
+};
+/* ---- confirmed commitments: an immutable ledger, never dealer names ----
+   Confirming a Pre-book card ensures the dealer's target is covered by
+   commitment records (an INCREASE since the last confirmation creates an
+   additional genuine commitment for the delta — never a duplicate). When a
+   dealer's last confirmed Pre-book card is unconfirmed, their commitments
+   are voided (kept in the ledger, excluded from totals). */
+function syncCommitments(dealerId){
+  var d=uniById(dealerId); if(!d) return;
+  var year=planYear();
+  var confirmedCard=pbCardsOf(dealerId).some(function(c){ return c.done; });
+  var act=COMMITS.filter(function(c){ return c.dealer===dealerId&&c.year===year&&!c.void; });
+  CALC.dirtyDealer(dealerId,d.territory);
+  if(confirmedCard){
+    var dc=CALC.dealer(d);
+    var covered=act.reduce(function(s,c){ return s+(+c.loads||0); },0);
+    var delta=dc.loads-covered;
+    if(delta>0){
+      var per=dc.loads?dc.revMixed/dc.loads:0;
+      var cm=Math.round(delta*per), fx=fxRate();
+      COMMITS.push({cid:'C'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        dealer:dealerId, year:year, loads:delta, revMixed:cm, revCAD:Math.round(cm/fx),
+        at:new Date().toISOString(), by:pbWho(), void:false});
+      audit('commitment',{dealer:dealerId,loads:delta,revMixed:cm});
+    }
+  } else if(act.length){
+    act.forEach(function(c){ c.void=true; c.voidAt=new Date().toISOString(); c.voidBy=pbWho(); });
+    audit('commitment-void',{dealer:dealerId,voided:act.length});
+  }
+  CALC.dirtyDealer(dealerId,d.territory);
+}
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;}
+adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -1645,32 +1844,32 @@ function ringSVG(pct,color){
     +'</svg><div class="xringpct">'+Math.round(pct)+'%</div></div>';
 }
 function renderCards(){
-  /* Executive summary — three visual cards, minimal text. All counts are
-     UNIQUE DEALERS (stable dealer id); cards are never counted. Visit-only
-     dealers contribute nothing and stay Unplanned. */
+  /* Executive summary — every figure comes from the CALC engine.
+     Confirmed values are the commitment ledger (Mixed + CAD); percentages
+     always compare Mixed to Mixed. */
+  const Y=planYear();
   const _md=planningUniverse().filter(function(d){return d.areaPlanning!==false;});
   const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
-  /* strictly 2027 Target Loads — blank loads contribute nothing, never a fallback */
-  var tl=function(d){return t27Loads(d);};
-  /* --- Card 1: 2027 Target — confirmed / planned / remaining ($ and loads) --- */
-  const target=sumB(ds);
-  const targetLoads=ds.reduce(function(s,d){return s+tl(d);},0);
+  var target=0, targetLoads=0, targetCAD=0, confB=0, confL=0, confCAD=0;
+  ds.forEach(function(d){ var c=CALC.dealer(d); if(!c) return;
+    target+=c.revMixed; targetLoads+=c.loads; targetCAD+=c.revCAD;
+    confB+=c.confRevMixed; confL+=c.confLoads; confCAD+=c.confRevCAD;
+  });
   const pbDs=ds.filter(function(d){return hasPB(d.id);});          /* >=1 Pre-book card */
-  const conf=pbDs.filter(function(d){return pbConfirmed(d.id);});  /* ...and confirmed  */
+  const conf=pbDs.filter(function(d){return pbConfirmed(d.id);});  /* commitment-backed */
   const plan=pbDs.filter(function(d){return !pbConfirmed(d.id);});
-  const confB=sumB(conf), planB=sumB(plan);
-  const confL=conf.reduce(function(s,d){return s+tl(d);},0);
-  const planL=plan.reduce(function(s,d){return s+tl(d);},0);
+  const planB=plan.reduce(function(s,d){var c=CALC.dealer(d);return s+(c?c.revMixed:0);},0);
+  const planL=plan.reduce(function(s,d){var c=CALC.dealer(d);return s+(c?c.loads:0);},0);
   const remB=Math.max(0,target-confB-planB), remL=Math.max(0,targetLoads-confL-planL);
   const overB=Math.max(0,confB+planB-target);
   const base=Math.max(target,confB+planB)||1;                      /* over-target never hides */
   const cPct=confB/base*100, pPct=planB/base*100;
-  /* the bar explains itself on hover — no static legend row */
   var pc=function(b){ return target?Math.round(b/target*100):0; };
   var tip=function(lbl,b,l){ return lbl+' — '+fmtUSD(b)+' · '+Math.round(l)+' loads · '+pc(b)+'% of target'; };
+  var cad=function(v){ return 'CA$'+Math.round(v).toLocaleString(); };
   var card1='<div class="xc xc-target">'
-    +'<div class="xch">2027 Target</div>'
-    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads</span>'
+    +'<div class="xch">'+Y+' Target</div>'
+    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads · '+cad(targetCAD)+'</span>'
       +(overB>0?('<span class="xover">+'+fmtUSDk(overB)+' over target</span>'):'')+'</div>'
     +'<div class="xbar">'
       +'<i class="c" style="width:'+cPct.toFixed(1)+'%" title="'+esc(tip('Confirmed',confB,confL))+'"></i>'
@@ -1679,12 +1878,11 @@ function renderCards(){
     +'</div>'
     +'<div class="xhint">Hover the bar — green confirmed · blue planned · grey remaining</div>'
     +'</div>';
-  /* --- Card 2: 2027 Confirmed Pre-Booking — straight from the Master Sheet
-         targets: unique dealers with a confirmed Pre-book, counted once. --- */
+  /* --- Card 2: Confirmed Pre-Booking — the commitment ledger, Mixed + CAD --- */
   var cfShare=target?confB/target*100:0;
   var card2='<div class="xc">'
-    +'<div class="xch">2027 Confirmed Pre-Booking</div>'
-    +'<div class="xcv">'+fmtUSDk(confB)+'<span class="xcl">'+Math.round(confL)+' loads</span></div>'
+    +'<div class="xch">'+Y+' Confirmed Pre-Booking</div>'
+    +'<div class="xcv">'+fmtUSDk(confB)+'<span class="xcl">'+Math.round(confL)+' loads · '+cad(confCAD)+'</span></div>'
     +'<div class="xstats" style="margin-top:6px"><div class="xs"><b>'+cfShare.toFixed(0)+'%</b><span>of regional target</span></div></div>'
     +'</div>';
   /* --- Card 3: Confirmation Progress — unique pre-book dealers, confirmed vs not --- */
@@ -1695,7 +1893,15 @@ function renderCards(){
     +'<div class="xstats"><div class="xs"><b>'+Math.round(cfPct)+'%</b><span>Confirmed</span></div>'
     +'<div class="xs muted"><b>'+Math.round(100-cfPct)+'%</b><span>Not Confirmed</span></div></div></div>'
     +'</div>';
-  document.getElementById("cards").innerHTML=card1+card2+card3;
+  /* subtle expandable program reference — never a banner */
+  var prog='<details class="proginfo"><summary>ⓘ '+Y+' Dealer Program</summary>'
+    +'<div class="pgwrap"><table><thead><tr><th>Tier</th><th>Loads</th><th>Margin</th><th>Co-op</th></tr></thead><tbody>'
+    +programList().map(function(p){ return '<tr><td>Tier '+p.tier+'</td><td>'+p.min+(p.max==null?'+':('–'+p.max))+'</td><td>'+p.margin+'%</td><td>'+p.coop+'%</td></tr>'; }).join('')
+    +'<tr><td colspan="2" style="color:var(--muted-2)">Under 3 loads</td><td colspan="2" style="color:#b45309;font-weight:600">Not Qualified — no tier, margin or co-op</td></tr>'
+    +'</tbody></table>'
+    +'<div class="pgnotes">Pre-booking opens <b>October 31</b> · co-op accrues from <b>January 1</b> · production slots are <b>first come, first served</b></div>'
+    +'</div></details>';
+  document.getElementById("cards").innerHTML=card1+card2+card3+prog;
 }
 function dealerCard(d){
   d=sfMasterMerge(d);
@@ -2701,8 +2907,12 @@ function setVisitField(ref,f,val){
 }
 function toggleVisitConf(ref){
   var kind=ref.slice(0,1), id=ref.slice(2);
-  if(kind==='i'){ APPT[id]=!APPT[id]; if(!APPT[id])delete APPT[id]; }
-  else { var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return; x.done=!x.done; }
+  var dealerId, isPB;
+  if(kind==='i'){ dealerId=id; isPB=(vType(id)==='prebook'); APPT[id]=!APPT[id]; if(!APPT[id])delete APPT[id]; }
+  else { var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return; dealerId=x.dealer; isPB=(x.type!=='visit'); x.done=!x.done; }
+  /* Pre-book confirmations write the commitment ledger; Visit confirmations
+     only track the appointment and never touch financial totals */
+  if(isPB) syncCommitments(dealerId);
   savePlan(); refreshPlanner();
 }
 /* delete ONE card. The dealer always stays in the library; any tasks on an
@@ -4424,31 +4634,66 @@ function planningUniverse(){
   return _uni;
 }
 function uniById(id){ planningUniverse(); return _uniById[id]||byId[id]||null; }
+function masterHeadHTML(){
+  var Y=planYear(), PY=Y-1;
+  return '<tr class="grprow"><th class="grp-sf" colspan="10"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="15">Planner (Editable)<span class="gsub">Targets, tiers, margins and confirmations calculate automatically</span></th><th></th></tr>'
+    +'<tr class="colhdr">'
+    +'<th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>'
+    +'<th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>'
+    +'<th class="srt num" data-mk="lastYear">'+PY+' Rev<span class="hlock"></span></th>'
+    +'<th class="srt num" data-mk="loads">'+PY+' Loads<span class="hsub">Confirmed</span><span class="hlock"></span></th>'
+    +'<th class="srt" data-mk="recordType">Record Type<span class="hlock"></span><span class="hinfo" title="Salesforce Account Record Type — read-only, populated during sync"> ⓘ</span></th>'
+    +'<th class="srt num" data-mk="commit2026">'+PY+' Updated<span class="hsub">Commitment</span><span class="hinfo" title="The dealer\'s latest '+PY+' commitment. Editable at any time."> ⓘ</span></th>'
+    +'<th class="srt num" data-mk="prebook2026">'+PY+' Original<span class="hsub">Pre-Booking Commitment</span><span class="hinfo" title="Manual entry only — never taken from Salesforce. Locks once confirmed."> ⓘ</span></th>'
+    +'<th class="srt num" data-mk="t27loads">'+Y+' Target Loads<span class="hinfo" title="Editable. The ONLY input — revenue, tier, margin and co-op all calculate from it."> ⓘ</span></th>'
+    +'<th class="srt num" data-mk="booking">'+Y+' Target<span class="hsub">Revenue (Mixed)</span></th>'
+    +'<th class="num">'+Y+' Target<span class="hsub">Revenue (CAD)</span></th>'
+    +'<th>'+Y+' Target Tier</th>'
+    +'<th class="num">Margin<span class="hsub">Dealer %</span></th>'
+    +'<th class="num">Co-op<span class="hsub">%</span></th>'
+    +'<th class="num">'+Y+' Confirmed<span class="hsub">Loads</span></th>'
+    +'<th class="num">'+Y+' Confirmed<span class="hsub">Revenue (Mixed)</span></th>'
+    +'<th class="num">'+Y+' Confirmed<span class="hsub">Revenue (CAD)</span></th>'
+    +'<th class="num">'+Y+' Actual<span class="hlock"></span></th>'
+    +'<th class="srt" data-mk="areaPlanning">Area Planning</th>'
+    +'<th class="srt" data-mk="atKickoff">Kickoff</th>'
+    +'<th class="srt" data-mk="status">Status</th><th>Actions</th>'
+    +'</tr>';
+}
 function renderMaster(){
-  var _allMerged=buildMasterUniverse(); /* Phase A: Salesforce universe + planner overlay (Master Sheet only) */
+  var _allMerged=buildMasterUniverse(); /* Salesforce universe + planner overlay (Master Sheet only) */
+  var mh=document.getElementById('mHead'); if(mh) mh.innerHTML=masterHeadHTML();
+  var gl=document.getElementById('goalLbl'); if(gl) gl.textContent=planYear()+' Goal $';
   let rows=_allMerged.slice();
   if(mFilterTerr) rows=rows.filter(function(d){return d.territory===mFilterTerr;});
   if(mFilterAM) rows=rows.filter(function(d){return (d.tm||'')===mFilterAM;});
   if(mFilterArea==='in') rows=rows.filter(function(d){return d.areaPlanning!==false;});
   else if(mFilterArea==='out') rows=rows.filter(function(d){return d.areaPlanning===false;});
   if(mFilterStatus) rows=rows.filter(function(d){return (d.status||'Not Started')===mFilterStatus;});
-  if(mq) rows=rows.filter(d=>((d.name||'')+' '+(d.loc||'')+' '+(d.territory||'')+' '+(d.tm||'')+' '+(d.tier||'')).toLowerCase().includes(mq));
+  if(mFilterRT) rows=rows.filter(function(d){return (d.recordType||'')===mFilterRT;});
   var terrOpts=["East","South","Central","West","Exports"];
   var amList=[]; _allMerged.forEach(function(d){ if(d.tm && d.tm!=='—' && amList.indexOf(d.tm)<0) amList.push(d.tm); }); amList.sort();
+  var rtList=[]; _allMerged.forEach(function(d){ if(d.recordType && rtList.indexOf(d.recordType)<0) rtList.push(d.recordType); }); rtList.sort();
   var ts=document.getElementById("mTerr"); if(ts) ts.innerHTML='<option value="">All territories</option>'+terrOpts.map(function(t){return '<option value="'+t+'"'+(mFilterTerr===t?' selected':'')+'>'+t+'</option>';}).join('');
   var as=document.getElementById("mAM"); if(as) as.innerHTML='<option value="">All managers</option>'+amList.map(function(a){return '<option value="'+a+'"'+(mFilterAM===a?' selected':'')+'>'+a+'</option>';}).join('');
+  var rs=document.getElementById("mRT");
+  if(rs){ rs.style.display=rtList.length?'':'none';
+    rs.innerHTML='<option value="">All record types</option>'+rtList.map(function(r){return '<option value="'+esc(r)+'"'+(mFilterRT===r?' selected':'')+'>'+esc(r)+'</option>';}).join(''); }
   const k=msort.key,dir=msort.dir;
   rows.sort((a,b)=>{let va=a[k],vb=b[k]; if(k==='atKickoff'||k==='visitConfirmed'){va=va?1:0;vb=vb?1:0;} if(k==='areaPlanning'){va=(va!==false)?1:0;vb=(vb!==false)?1:0;} if(k==='status'){va=va||'Not Started';vb=vb||'Not Started';} if(typeof va==='string')return (va||'').localeCompare(vb||'')*dir; return ((+va||0)-(+vb||0))*dir;});
-  /* dealers with data problems (not matched in Salesforce, planner-only,
-     incomplete records) always sink below healthy rows, regardless of the
-     active sort. Salesforce-match checks only apply once Salesforce loaded. */
+  /* dealers with data problems (not matched in Salesforce once loaded,
+     planner-only, incomplete records, unknown market) always sink below
+     healthy rows, regardless of the active sort */
   var _sfUp=Object.keys(SF_BY_ID||{}).length>0;
-  var _prob=function(d){ return (_sfUp&&!d._sf) || !d.name || !d.territory || !d.loc; };
+  var _prob=function(d){ return (_sfUp&&!d._sf) || !d.name || !d.territory || !d.loc || !marketOf(d); };
   rows=rows.filter(function(d){return !_prob(d);}).concat(rows.filter(_prob));
   var gi=document.getElementById("goalInput"); if(gi && document.activeElement!==gi) gi.value=GOAL2027||'';
   var gtxt=GOAL2027?(' · goal '+fmtUSD(GOAL2027)+' · '+((grandTot()-GOAL2027)>=0?('+'+fmtUSD(grandTot()-GOAL2027)+' over'):('gap '+fmtUSD(GOAL2027-grandTot())))):'';
   document.getElementById("mSub").textContent=rows.length+" of "+_allMerged.length+" dealers · forecast "+fmtUSD(grandTot())+gtxt+" · click any cell to edit";
-  document.getElementById("mBody").innerHTML=rows.map((d,i)=>`<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
+  var mut=' style="color:var(--muted-2)"';
+  document.getElementById("mBody").innerHTML=rows.map((d,i)=>{
+    var c=CALC.dealer(d)||{};
+    return `<tr data-id="${d.id}" class="${d._sf?'':'plannerrow'}${d._local?' localrow':''}">
     <td class="rownum">${i+1}</td>
     ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"><span class="ponly" title="Not in Salesforce — planner-managed until linked to an Arrowquip Dealer">Planner Only</span></td>`}
     ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
@@ -4457,98 +4702,176 @@ function renderMaster(){
     ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
-    ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','2026 Loads — Salesforce-derived count of Dealer Loads (Closed Won or Prebooked, 2026 production ship date). Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
-    <td class="num pln" title="The dealer's latest 2026 commitment — editable at any time."><input class="ed num" data-f="commit2026" type="number" value="${d.commit2026||''}" placeholder="—"></td>
+    ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','Salesforce-derived count of Dealer Loads. Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
+    ${d.recordType?lockTD('',d.recordType,'span','Salesforce Account Record Type — read-only.'):'<td'+mut+'>—</td>'}
+    <td class="num pln" title="The dealer's latest commitment — editable at any time."><input class="ed num" data-f="commit2026" type="number" value="${d.commit2026||''}" placeholder="—"></td>
     ${d.origLock
-      ?`<td class="num sflock" title="Original 2026 Pre-Booking Commitment — confirmed and locked. Manual entry only, never taken from Salesforce."><span class="lockico">${LOCK_SVG}</span><span class="lockval">${fmtUSD(+d.prebook2026||0)}</span></td>`
-      :`<td class="num pln" title="Original 2026 Pre-Booking Commitment — manual entry only, never taken from Salesforce. Confirm to lock."><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||''}" placeholder="—">${(+d.prebook2026>0)?`<button class="pblock" data-lockpb="${d.id}" title="Confirm this original commitment — it becomes locked">✓</button>`:''}</td>`}
+      ?`<td class="num sflock" title="Original Pre-Booking Commitment — confirmed and locked. Manual entry only."><span class="lockico">${LOCK_SVG}</span><span class="lockval">${fmtUSD(+d.prebook2026||0)}</span></td>`
+      :`<td class="num pln" title="Original Pre-Booking Commitment — manual entry only, never taken from Salesforce. Confirm to lock."><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||''}" placeholder="—">${(+d.prebook2026>0)?`<button class="pblock" data-lockpb="${d.id}" title="Confirm this original commitment — it becomes locked">✓</button>`:''}</td>`}
     <td class="num pln"><input class="ed num" data-f="t27loads" type="number" min="0" value="${t27Loads(d)||''}" placeholder="—"></td>
-    ${t27Loads(d)>0
-      ?`<td class="num" title="Auto-calculated: ${t27Loads(d)} loads × ${fmtUSD(loadUSD(d))}/load${dealerIsCA(d)?' ($'+LOAD_CAD.toLocaleString()+' CAD converted at '+FX+')':' USD'}" style="font-weight:600;color:#1f2937">${fmtUSD(+d.booking||0)}<span class="pmdot" style="background:#16a34a" title="Auto from Target Loads"></span></td>`
-      :`<td class="num" style="color:var(--muted-2)" title="Enter 2027 Target Loads — revenue is always calculated, never entered directly">—</td>`}
-    <td class="num" style="font-size:10.5px;color:var(--muted)">${t27Loads(d)>0?((t27Tier(t27Loads(d))||'—').replace('Tier ','')):'—'}</td>
-    ${d._sf?lockTD('num',fmtUSD((sfLookup(d)&&+sfLookup(d).actual2027)||0),'span','2027 Actual — Closed Won 2027 prebooking value from Salesforce. Read-only.'):'<td class="num" style="color:var(--muted-2)">—</td>'}
+    ${c.loads>0
+      ?`<td class="num" title="Target Loads × the ${c.market||''} market's Average Revenue Per Load (Planning Settings), converted at the engine rate" style="font-weight:600;color:#1f2937">${fmtUSD(c.revMixed)}<span class="pmdot" style="background:#16a34a" title="Calculated by the planning engine"></span></td>`
+      :`<td class="num"${mut} title="Enter Target Loads — revenue is always calculated, never entered directly">—</td>`}
+    <td class="num"${mut}>${c.revCAD?('CA$'+Math.round(c.revCAD).toLocaleString()):'—'}</td>
+    <td style="font-size:10.5px;${c.tier?'color:var(--muted)':'color:#b45309;font-weight:600'}">${c.tierLabel||'—'}</td>
+    <td class="num"${mut}>${c.margin!=null?(c.margin+'%'):'—'}</td>
+    <td class="num"${mut}>${c.coop!=null?(c.coop+'%'):'—'}</td>
+    <td class="num">${c.confLoads||'—'}</td>
+    <td class="num">${c.confRevMixed?fmtUSD(c.confRevMixed):'—'}</td>
+    <td class="num"${mut}>${c.confRevCAD?('CA$'+Math.round(c.confRevCAD).toLocaleString()):'—'}</td>
+    ${d._sf?lockTD('num',fmtUSD(c.actual||0),'span','Closed Won prebooking value from Salesforce. Read-only.'):'<td class="num"'+mut+'>—</td>'}
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td class="pln statuscell">${statusSel(d)}</td>
-    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`).join("");
-  /* totals reflect the VISIBLE (filtered) rows only, and recalculate on every filter change */
-  var _fTot=rows.reduce(function(a,d){ a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.cm+=(+d.commit2026||0); a.pb+=(+d.prebook2026||0); a.tl+=t27Loads(d); a.tgt+=(+d.booking||0); var sf=sfLookup(d); a.act+=((sf&&+sf.actual2027)||0); return a; },{rev:0,loads:0,cm:0,pb:0,tl:0,tgt:0,act:0});
-  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.cm)}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td></td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
+    <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`;}).join("");
+  /* totals reflect the VISIBLE (filtered) rows only */
+  var _fTot=rows.reduce(function(a,d){ var c=CALC.dealer(d)||{};
+    a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.cm+=(+d.commit2026||0); a.pb+=(+d.prebook2026||0);
+    a.tl+=c.loads||0; a.tgt+=c.revMixed||0; a.tcad+=c.revCAD||0;
+    a.cfl+=c.confLoads||0; a.cfm+=c.confRevMixed||0; a.cfc+=c.confRevCAD||0; a.act+=c.actual||0;
+    return a; },{rev:0,loads:0,cm:0,pb:0,tl:0,tgt:0,tcad:0,cfl:0,cfm:0,cfc:0,act:0});
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td></td><td class="num">${fmtUSD(_fTot.cm)}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td class="num">CA$${Math.round(_fTot.tcad).toLocaleString()}</td><td></td><td></td><td></td><td class="num">${_fTot.cfl}</td><td class="num">${fmtUSD(_fTot.cfm)}</td><td class="num">CA$${Math.round(_fTot.cfc).toLocaleString()}</td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
-  var tb=document.getElementById('t27cfgBtn'); if(tb) tb.onclick=t27Settings;
+  wireMasterExtras();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
 }
-/* ---- ⚙ 2027 Program settings: tier bands + CAD→USD rate (subtle modal) ---- */
-function t27Settings(){
-  var wrap=document.createElement('div'); wrap.className='modalbg';
-  var bands=T27_TIERS.slice();
-  var rowFor=function(i){
-    var b=bands[i]||[ '', 'Tier '+(i+1) ];
-    return '<div style="display:flex;gap:8px;align-items:center;font-size:12px">'
-      +'<span style="flex:0 0 52px;font-weight:700;color:var(--muted)">Tier '+(i+1)+'</span>'
-      +'<input class="t27min" data-i="'+i+'" type="number" min="0" value="'+(b[0]===''?'':b[0])+'" placeholder="min loads" style="width:96px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:400 12px \'Open Sans\',Arial,sans-serif">'
-      +'<span style="color:var(--muted-2);font-size:11px">loads and up</span></div>';
-  };
-  wrap.innerHTML='<div class="modalbox" style="width:min(400px,94vw)"><div class="mh"><div class="mt">2027 Program Settings</div><button class="mclose">×</button></div>'
-    +'<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:9px">'
-    +'<div style="font-size:11.5px;color:var(--muted)">Target formula: <b>Target Loads × '+fmtUSD(LOAD_USD)+'</b> (Canada: '+fmtUSD(LOAD_CAD)+' CAD × rate). Tier is forecast from Target Loads using the bands below.</div>'
-    +'<label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700">CAD → USD rate'
-    +'<input id="t27fx" type="number" step="0.01" min="0.1" max="2" value="'+FX+'" style="width:84px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:600 12px \'Open Sans\',Arial,sans-serif"></label>'
-    +'<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin-top:2px">Tier bands (minimum target loads)</div>'
-    +[0,1,2,3,4,5,6].map(rowFor).join('')
-    +'<button class="btn" id="t27save" style="background:#111;color:#fff;border-color:#111;margin-top:6px">Save program settings</button>'
-    +'</div></div>';
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
-  wrap.querySelector('.mclose').onclick=function(){ wrap.remove(); };
-  wrap.querySelector('#t27save').onclick=function(){
-    var v=parseFloat(wrap.querySelector('#t27fx').value); if(v>0) FX=v;
-    var out=[];
-    wrap.querySelectorAll('.t27min').forEach(function(inp){
-      var i=+inp.dataset.i, mv=parseFloat(inp.value);
-      if(isFinite(mv)&&mv>0) out.push([mv,'Tier '+(i+1)]);
-    });
-    out.sort(function(a,b){ return b[0]-a[0]; });   /* highest band first */
-    T27_TIERS=out;
-    recalcTargets(); saveDealers(); savePlan();
-    wrap.remove(); withPreservedScroll(renderMaster); cloudBadge('2027 program saved');
-  };
+/* toolbar extras: CSV export + record-type filter (wired per render) */
+function wireMasterExtras(){
+  var cb=document.getElementById('mCsvBtn'); if(cb) cb.onclick=exportMasterCSV;
+  var rs=document.getElementById('mRT'); if(rs) rs.onchange=function(){ mFilterRT=rs.value; renderMaster(); };
 }
-/* ---- Executive 2027 Goal Dashboard (retired from the Master Sheet) ---- */
-function renderExecDash(){
-  var host=document.getElementById('execDash'); if(!host) return;
-  var uni=buildMasterUniverse().filter(function(d){ return d.areaPlanning!==false; });
-  var planned=uni.reduce(function(s,d){ return s+(+d.booking||0); },0);
-  var loadsP=uni.reduce(function(s,d){ return s+t27Loads(d); },0);
-  var goal=+GOAL2027||0, gap=goal-planned, pct=goal?Math.round(planned/goal*100):null;
-  var stat=function(k,v,sub){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(sub?('<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">'+sub+'</div>'):'')+'</div>'; };
-  var cards=TERRS.map(function(t){
-    var ds=uni.filter(function(d){ return d.territory===t; });
-    var rev=ds.reduce(function(s,d){ return s+(+d.booking||0); },0);
-    var lds=ds.reduce(function(s,d){ return s+t27Loads(d); },0);
-    var share=goal?(rev/goal*100):0;
-    var tt=(typeof ttOf==='function')?ttOf(t):0;
-    var ok=tt?rev>=tt:(share>=15);
-    return '<div class="lvkpi" style="border-top:2px solid '+AREA_COLOR[t]+'"><div class="k">'+t+'</div>'
-      +'<div class="v" style="font-size:.95rem">'+fmtUSDk(rev)+'</div>'
-      +'<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">'+lds+' loads · '+share.toFixed(1)+'% of goal · '
-      +'<span style="font-weight:700;color:'+(ok?'#15803d':'#b45309')+'">'+(ok?'On Track':'Behind Goal')+'</span></div></div>';
+/* ---- reporting layer: every dealer with every engine figure, exported ---- */
+function dealerReportRows(){
+  var Y=planYear();
+  return buildMasterUniverse().map(function(d){
+    var c=CALC.dealer(d)||{};
+    var visits=pbCardsOf(d.id).length+XVISITS.filter(function(x){return x.dealer===d.id&&x.type==='visit';}).length+((typeof ASSIGN[d.id]==='number'&&vType(d.id)==='visit')?1:0);
+    return {Dealer:d.name, Territory:d.territory, State:d.loc, 'Record Type':c.recordType||'',
+      ['Target Loads '+Y]:c.loads||'', ['Target Revenue Mixed '+Y]:c.revMixed||'', ['Target Revenue CAD '+Y]:c.revCAD||'',
+      Tier:c.tierLabel||'', 'Margin %':(c.margin!=null?c.margin:''), 'Co-op %':(c.coop!=null?c.coop:''),
+      ['Actual '+Y]:c.actual||'', Gap:c.gap||'',
+      ['Confirmed Loads '+Y]:c.confLoads||'', ['Confirmed Revenue Mixed '+Y]:c.confRevMixed||'', ['Confirmed Revenue CAD '+Y]:c.confRevCAD||'',
+      Commitments:c.commitments||0, Visits:visits};
+  });
+}
+function exportMasterCSV(){
+  var rows=dealerReportRows(); if(!rows.length) return;
+  var cols=Object.keys(rows[0]);
+  var q=function(v){ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  var csv=cols.join(',')+'\n'+rows.map(function(r){ return cols.map(function(cn){ return q(r[cn]); }).join(','); }).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='arrowquip-dealers-'+planYear()+'.csv';
+  a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); },2000);
+  audit('export',{rows:rows.length});
+}
+/* ============ ADMIN → PLANNING SETTINGS ============
+   The one place the engine is configured: currency, revenue per load per
+   market, planning defaults and the dealer program. Every change recalculates
+   through the engine and is written to the audit log. */
+function renderSettings(){
+  var host=document.getElementById('settingsView'); if(!host) return;
+  adminInit();
+  var c=ADMIN.currency, Y=planYear();
+  var sec=function(title,sub,body){ return '<div class="tablecard" style="margin-bottom:14px"><div class="tabletools"><div><div class="h">'+title+'</div><div class="sub">'+sub+'</div></div></div><div style="padding:4px 18px 16px">'+body+'</div></div>'; };
+  var inp='style="border:1px solid var(--line);border-radius:6px;padding:6px 9px;font:400 12.5px \'Open Sans\',Arial,sans-serif;width:110px"';
+  var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2)"';
+  var row='style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line-soft)"';
+  var fld=function(l,html){ return '<label style="display:flex;flex-direction:column;gap:3px"><span '+lbl+'>'+l+'</span>'+html+'</label>'; };
+  /* currency */
+  var curBody='<div '+row+'>'
+    +fld('Automatic rate (CAD → USD)','<span style="font:700 15px \'Open Sans\';padding:6px 0">'+(+c.rate).toFixed(4)+'</span>')
+    +fld('Source','<span style="font-size:12px;color:var(--muted);padding:8px 0">'+esc(c.source||'—')+'</span>')
+    +fld('Updated','<span style="font-size:12px;color:var(--muted);padding:8px 0">'+(c.timestamp?new Date(c.timestamp).toLocaleString():'—')+' · '+esc(c.updatedBy||'')+'</span>')
+    +'<button class="btn" id="fxRefreshBtn">↻ Refresh now</button>'
+    +'</div><div '+row.replace('border-bottom:1px solid var(--line-soft)','border-bottom:0')+'>'
+    +fld('Manual override','<input id="fxOverride" type="number" step="0.0001" min="0.1" max="2" '+inp+' value="'+(c.override?c.override.rate:'')+'" placeholder="auto">')
+    +'<span style="font-size:11px;color:var(--muted-2);max-width:420px">Leave blank to follow the automatic rate. An override applies everywhere immediately and is recorded in the audit log.'+(c.override?(' <b>Override active</b> — set by '+esc(c.override.by||'')+' '+(c.override.at?new Date(c.override.at).toLocaleString():'')):'')+'</span>'
+    +'</div>';
+  /* revenue per load */
+  var rplBody=Object.keys(ADMIN.revPerLoad).map(function(k){
+    var r=ADMIN.revPerLoad[k];
+    return '<div '+row+'>'
+      +'<span style="flex:0 0 130px;font-weight:700;font-size:12.5px">'+esc(r.label||k)+'</span>'
+      +fld('Revenue per load ('+esc(r.currency||'USD')+')','<input class="rplIn" data-mkt="'+k+'" type="number" min="0" '+inp+' value="'+(+r.value||'')+'">')
+      +fld('Effective date','<input class="rplDate" data-mkt="'+k+'" type="date" '+inp+' value="'+esc(r.effective||'')+'">')
+      +fld('Updated by','<span style="font-size:12px;color:var(--muted);padding:8px 0">'+esc(r.updatedBy||'—')+'</span>')
+      +'</div>';
   }).join('');
-  host.innerHTML='<div class="lvkpis" style="margin:10px 0 8px">'
-    +stat('2027 Goal (USD)',goal?fmtUSDk(goal):'—','set below in the toolbar')
-    +'<div class="lvkpi"><div class="k">CAD → USD Rate</div><div class="v" style="display:flex;align-items:center;gap:6px"><input id="fxRate" type="number" step="0.01" min="0.1" max="2" value="'+FX+'" style="width:74px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:600 14px inherit"></div>'
-    +'<div class="k" style="text-transform:none;letter-spacing:0;margin-top:2px">CA loads: $'+LOAD_CAD.toLocaleString()+' CAD ≈ '+fmtUSD(Math.round(LOAD_CAD*FX))+'</div></div>'
-    +stat('Planned Contribution',fmtUSDk(planned),loadsP+' target loads')
-    +stat('Remaining Gap',goal?( gap>0?fmtUSDk(gap):('+'+fmtUSDk(-gap)+' over') ):'—')
-    +stat('% of Goal',pct!=null?(pct+'%'):'—')
-    +'</div><div class="lvkpis" style="margin:0 0 10px">'+cards+'</div>';
-  var fx=document.getElementById('fxRate');
-  if(fx) fx.onchange=function(){
-    var v=parseFloat(fx.value); if(!(v>0)) return;
-    FX=v; recalcTargets(); saveDealers(); savePlan();
-    withPreservedScroll(renderMaster);
+  /* planning defaults */
+  var df=ADMIN.defaults;
+  var defBody='<div '+row.replace('border-bottom:1px solid var(--line-soft)','border-bottom:0')+'>'
+    +fld('Planning year','<input class="defIn" data-k="planningYear" type="number" '+inp+' value="'+df.planningYear+'">')
+    +fld('Target year','<input class="defIn" data-k="targetYear" type="number" '+inp+' value="'+df.targetYear+'">')
+    +fld('Visit duration (min)','<input class="defIn" data-k="visitDur" type="number" min="15" '+inp+' value="'+df.visitDur+'">')
+    +fld('Pre-book duration (min)','<input class="defIn" data-k="prebookDur" type="number" min="15" '+inp+' value="'+df.prebookDur+'">')
+    +fld('Max drive before hotel (h)','<input class="defIn" data-k="maxDrive" type="number" min="1" step="0.5" '+inp+' value="'+df.maxDrive+'">')
+    +'</div>';
+  /* tier program */
+  var progBody='<table style="border-collapse:collapse;font-size:12px"><thead><tr>'
+    +['Tier','Min loads','Max loads','Dealer margin %','Co-op %'].map(function(h){return '<th style="text-align:left;padding:5px 14px 5px 0;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'
+    +programList().map(function(p,i){
+      var cell=function(k,ph){ return '<td style="padding:3px 14px 3px 0"><input class="progIn" data-i="'+i+'" data-k="'+k+'" type="number" step="0.05" '+inp.replace('110px','86px')+' value="'+(p[k]==null?'':p[k])+'" placeholder="'+(ph||'')+'"></td>'; };
+      return '<tr><td style="padding:3px 14px 3px 0;font-weight:700">Tier '+p.tier+'</td>'+cell('min')+cell('max','∞')+cell('margin')+cell('coop')+'</tr>';
+    }).join('')
+    +'</tbody></table>'
+    +'<div style="font-size:11px;color:var(--muted-2);margin-top:8px">Below the lowest band (under 3 loads): <b>Not Qualified</b> — no tier, no margin, no co-op. Program notes: pre-booking opens <b>October 31</b>; co-op accrues from <b>January 1</b>; production slots are <b>first come, first served</b>.</div>';
+  /* audit log */
+  var audBody=(ADMIN.audit&&ADMIN.audit.length)
+    ? '<div style="max-height:280px;overflow:auto"><table style="border-collapse:collapse;font-size:11.5px;width:100%"><tbody>'
+      +ADMIN.audit.slice(0,120).map(function(a){
+        var what=[a.dealer?('dealer '+a.dealer):null, a.field||null,
+          (a.old!==undefined?('old: '+a.old):null),(a.neu!==undefined?('new: '+a.neu):null),
+          (a.loads!==undefined?(a.loads+' loads'):null),(a.revMixed!==undefined?fmtUSD(a.revMixed):null),
+          (a.value!==undefined?fmtUSD(a.value):null),(a.voided!==undefined?(a.voided+' voided'):null),
+          (a.rows!==undefined?(a.rows+' rows'):null)].filter(Boolean).join(' · ');
+        return '<tr><td style="padding:3px 10px 3px 0;white-space:nowrap;color:var(--muted)">'+new Date(a.at).toLocaleString()+'</td>'
+          +'<td style="padding:3px 10px 3px 0;font-weight:700;white-space:nowrap">'+esc(a.kind)+'</td>'
+          +'<td style="padding:3px 10px 3px 0;color:var(--muted)">'+esc(what)+'</td>'
+          +'<td style="padding:3px 0;color:var(--muted-2);white-space:nowrap">'+esc(a.by||'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>'
+    : '<div style="font-size:12px;color:var(--muted-2);padding:6px 0">No changes recorded yet.</div>';
+  host.innerHTML=
+     sec('Currency','One centralized exchange rate drives every CAD conversion. Auto-refreshed daily; last successful rate is kept when the provider is unreachable.',curBody)
+    +sec('Average Revenue Per Load','Dealer target revenue = Target Loads × the value for the dealer\'s market. Dealers in unknown markets become problem rows.',rplBody)
+    +sec('Planning Defaults','The target year drives every label and calculation — '+(Y+1)+' and beyond are a settings change, not a rewrite.',defBody)
+    +sec(Y+' Dealer Program','Tier, dealer margin and co-op derive automatically from Target Loads. Edit the bands here — no code changes needed.',progBody)
+    +sec('Audit Log','Who changed what, when — targets, rates, overrides, commitments and locks.',audBody);
+  /* wiring */
+  var saveAdmin=function(){ savePlan(); };
+  var b=host.querySelector('#fxRefreshBtn');
+  if(b) b.onclick=function(){ b.disabled=true; b.textContent='Refreshing…';
+    fxAutoRefresh(true,function(ok){ cloudBadge(ok?'Exchange rate updated':'Rate provider unreachable — keeping last rate'); renderSettings(); }); };
+  var ov=host.querySelector('#fxOverride');
+  if(ov) ov.onchange=function(){
+    var v=parseFloat(ov.value), old=(c.override&&c.override.rate)||null;
+    if(isFinite(v)&&v>0){ c.override={rate:v,by:pbWho(),at:new Date().toISOString()}; }
+    else { c.override=null; }
+    audit('fx-override',{old:old,neu:c.override?c.override.rate:null});
+    fxSync(); recalcTargets(); saveAdmin(); renderSettings();
   };
+  host.querySelectorAll('.rplIn,.rplDate').forEach(function(el){ el.onchange=function(){
+    var r=ADMIN.revPerLoad[el.dataset.mkt]; if(!r) return;
+    if(el.classList.contains('rplIn')){ var v=Math.max(0,Math.round(parseFloat(el.value)||0)); audit('avg-rev',{field:el.dataset.mkt,old:r.value,neu:v}); r.value=v; }
+    else r.effective=el.value;
+    r.updatedBy=pbWho();
+    recalcTargets(); saveAdmin(); renderSettings();
+  };});
+  host.querySelectorAll('.defIn').forEach(function(el){ el.onchange=function(){
+    var k=el.dataset.k, v=parseFloat(el.value);
+    if(!isFinite(v)) return;
+    audit('default',{field:k,old:ADMIN.defaults[k],neu:v});
+    ADMIN.defaults[k]=v;
+    recalcTargets(); saveAdmin(); renderSettings();
+  };});
+  host.querySelectorAll('.progIn').forEach(function(el){ el.onchange=function(){
+    var i=+el.dataset.i, k=el.dataset.k, p=ADMIN.program[i]; if(!p) return;
+    var v=(el.value==='')?null:parseFloat(el.value);
+    if(k!=='max'&&(v==null||!isFinite(v))) { renderSettings(); return; }
+    audit('program',{field:'Tier '+p.tier+' '+k,old:p[k],neu:v});
+    p[k]=v;
+    recalcTargets(); saveAdmin(); renderSettings();
+  };});
 }
 function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
@@ -4557,8 +4880,14 @@ function onMasterEdit(e){
     if(SF_BY_ID[id] && ['booking','commit2026','prebook2026','t27loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
       var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,commit2026:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
       if(f==='prebook2026'&&ov.origLock) return;    /* confirmed original commitment: locked */
+      var ovOld=ov[f];
       if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
-      if(f==='t27loads'){ var sfx=SF_BY_ID[id]; ov.booking=(+ov.t27loads>0)?Math.round(ov.t27loads*((sfx&&(sfx.country==='CA'||CA_PROVS[sfx.loc]))?Math.round(LOAD_CAD*FX):LOAD_USD)):0; }
+      if(f==='t27loads'){
+        var sfx=SF_BY_ID[id];
+        ov.booking=dealerRevMixedFor({id:id,loc:(sfx&&sfx.loc)||'',territory:(sfx&&sfx.territory)||'',_accountId:id}, ov.t27loads);
+        CALC.dirtyDealer(id,(sfx&&sfx.territory)||'');
+        audit('target',{dealer:id,old:ovOld,neu:ov[f]});
+      }
       invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster);
     }
     return;
@@ -4570,9 +4899,15 @@ function onMasterEdit(e){
   else if(f==='loc') v=(el.value||'').trim().toUpperCase();
   else v=(el.value||'').trim();
   if(f==='prebook2026'&&d.origLock) return;        /* confirmed original commitment: locked */
+  var _old=d[f];
   d[f]=v;
-  /* Target Loads is the ONLY source of 2027 Target revenue: blank loads = blank revenue */
-  if(f==='t27loads'){ d.booking=(v>0)?Math.round(v*loadUSD(d)):0; }
+  /* Target Loads is the ONLY target input: the engine derives everything else */
+  if(f==='t27loads'){
+    d.booking=dealerRevMixedFor(d,v);
+    CALC.dirtyDealer(d.id,d.territory);              /* dealer → territory → company only */
+    audit('target',{dealer:d.id,old:_old,neu:v});
+  }
+  if(f==='commit2026'||f==='prebook2026') audit('commitment-field',{dealer:d.id,field:f,old:_old,neu:v});
   if(f==='loc'){ const c=COORD[v]; d.lat=c?c[0]:null; d.lon=c?c[1]:null; }
   if(f==='territory'){ ASSIGN[d.id]= d.atKickoff?31:(v==='Exports'?'remote':'pool'); DAY[d.id]=null; savePlan(); }
   if(f==='atKickoff'){ if(v){ASSIGN[d.id]=31;d.visitConfirmed=true;} else {ASSIGN[d.id]= d.territory==='Exports'?'remote':'pool';} DAY[d.id]=null; savePlan(); }
@@ -5296,14 +5631,16 @@ function pbRestoreNav(){
   }catch(e){}
 }
 function render(){
-  const isMaster=terr==='Master', isAll=terr==='All';
+  const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings';
   pbSaveNav();
-  document.getElementById("cards").style.display=isMaster?'none':'';
-  if(!isMaster) renderCards();
-  document.getElementById("plannerView").style.display=(!isAll&&!isMaster)?'':'none';
+  document.getElementById("cards").style.display=(isMaster||isSettings)?'none':'';
+  if(!isMaster&&!isSettings) renderCards();
+  document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings)?'':'none';
   document.getElementById("allView").style.display=isAll?'':'none';
   document.getElementById("masterView").style.display=isMaster?'':'none';
-  if(isMaster) renderMaster();
+  document.getElementById("settingsView").style.display=isSettings?'':'none';
+  if(isSettings) renderSettings();
+  else if(isMaster) renderMaster();
   else if(isAll) renderAllView();
   else {
     document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
@@ -5335,9 +5672,9 @@ document.getElementById("mBody").addEventListener("click",e=>{
   const lk=e.target.closest('[data-lockpb]');
   if(lk){
     const id=lk.dataset.lockpb, d=byId[id];
-    if(d){ if(+d.prebook2026>0){ d.origLock=true; saveDealers(); withPreservedScroll(renderMaster); cloudBadge('Original commitment locked'); } }
+    if(d){ if(+d.prebook2026>0){ d.origLock=true; audit('commitment-lock',{dealer:id,value:+d.prebook2026}); saveDealers(); savePlan(); withPreservedScroll(renderMaster); cloudBadge('Original commitment locked'); } }
     else if(SF_BY_ID[id]&&SF_OVERLAY[id]&&+SF_OVERLAY[id].prebook2026>0){
-      SF_OVERLAY[id].origLock=true; invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); withPreservedScroll(renderMaster); cloudBadge('Original commitment locked');
+      SF_OVERLAY[id].origLock=true; audit('commitment-lock',{dealer:id,value:+SF_OVERLAY[id].prebook2026}); invalidateUniverse(); cloudSave('overlay_v1',SF_OVERLAY); savePlan(); withPreservedScroll(renderMaster); cloudBadge('Original commitment locked');
     }
   }
 });
@@ -5492,7 +5829,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; normalizeVisitData(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
@@ -5572,6 +5909,7 @@ function unlockApp(){
     mobBoot();          /* Trip Mode: phone widths only */
   });
   initRealtime(); loadSFDealers();
+  try{ fxAutoRefresh(false); }catch(e){}   /* currency engine: daily auto-refresh, last good rate kept */
   try{ pbPhotoBackfill(); }catch(e){}   /* drain any photos captured while signed-out/offline */
 }
 /* ===================== Authentication (Supabase email magic link) ============
