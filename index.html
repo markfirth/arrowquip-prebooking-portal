@@ -919,6 +919,16 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 /* ALL map: day-by-day stepping controls */
 .daystep{display:inline-flex;align-items:center;gap:4px;}
 .dsbtn{padding:6px 10px;font-weight:800;}
+/* executive ride-along selectors: compact, part of the planner */
+.riderow{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin:2px 0 10px;}
+.ridesel{display:inline-flex;align-items:center;gap:7px;min-width:0;}
+.rlbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2);white-space:nowrap;}
+.ravatar{flex:0 0 auto;width:22px;height:22px;border-radius:50%;color:#fff;font:800 9px 'Open Sans',Arial,sans-serif;display:inline-flex;align-items:center;justify-content:center;letter-spacing:.02em;}
+.rsel{max-width:220px;padding:6px 8px;font-size:12px;}
+.ridebadge{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:9px;padding:2.5px 8px;color:var(--muted-2);background:#fff;white-space:nowrap;}
+.ridebadge.on{color:#2563eb;border-color:#2563eb44;background:#eef3fb;}
+.ridepair{font-size:11px;color:var(--muted);white-space:nowrap;}
+.ridepair::before{content:'—';margin-right:8px;color:var(--line);}
 #apDrop #apm_save{background:#111;color:#fff;border-color:#111;}
 /* quiet routing-unavailable notice on maps */
 .aq-rtfail{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:600 10.5px 'Open Sans',Arial,sans-serif;color:var(--muted);box-shadow:0 1px 4px rgba(0,0,0,.12);}
@@ -1550,6 +1560,7 @@ function xvNextLabel(d){
    ============================================================ */
 let ADMIN={};      /* admin/planning settings — persisted in the shared plan */
 let COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
+let RIDEALONG={};  /* 'terr|wk' -> executive id (ride-alongs) — persisted too */
 
 /* Official dealer program (seed). Editable afterwards in Planning Settings. */
 const PROGRAM_DEFAULT=[
@@ -1721,10 +1732,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -2961,7 +2972,8 @@ function renderAllView(){
   var ob=document.getElementById('allOvBtn'),mb=document.getElementById('allMapBtn');
   if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map');
   var sub=document.getElementById('allSub');
-  if(sub)sub.textContent=(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
+  if(sub)sub.textContent=(ALL_EXEC&&ALL_REP?(execById(ALL_EXEC).name+' accompanying '+repOf(ALL_REP)+' · '):'')
+    +(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
     +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]
       +(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY]?(' · '+dayLabels(ALL_WK)[ALL_DAY][0]+' '+dayLabels(ALL_WK)[ALL_DAY][1]):'')))+' · read-only';
   if(allMode==='map') renderAllMap(); else renderAllOverview();
@@ -3165,6 +3177,33 @@ function renderLeaderSummary(){
 const AREA_CODE={East:'E',South:'S',Central:'C',West:'W',Exports:'X'};
 let ALL_WK='all';   /* 'all' or a week number — ONE filter state shared by Overview and Map */
 let ALL_DAY='all';  /* 'all' or a day index within ALL_WK — leader day-by-day stepping on the Map */
+/* ---- executive ride-along planning (ALL page) ----
+   "Viewing as" picks the travelling executive; "Joining rep" picks the
+   Territory Manager whose schedule is shown. The pairing is stored per
+   trip (territory|week) so every visit on that trip knows its executive —
+   the base for ride-along history, executive travel calendars and
+   territory-support reporting later. */
+let ALL_EXEC='', ALL_REP='';   /* view state; RIDEALONG itself is declared with the plan stores */
+const EXECS=[
+  {id:'Andrew', name:'Andrew Firth', title:'CEO'},
+  {id:'JW',     name:'JW',           title:'Leadership'},
+  {id:'Brodie', name:'Brodie',       title:'Leadership'},
+  {id:'Jerry',  name:'Jerry',        title:'Leadership'},
+  {id:'Jotham', name:'Jotham',       title:'Leadership'},
+  {id:'Graeme', name:'Graeme',       title:'Leadership'}
+];
+function execById(id){ for(var i=0;i<EXECS.length;i++) if(EXECS[i].id===id) return EXECS[i]; return null; }
+function repOf(t){ var n=FLAT.tm[t]; return (n&&n!=='—')?n:'NA'; }
+function initialsOf(n){ return String(n||'').split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'–'; }
+function rideFor(t,wk){ return RIDEALONG[t+'|'+wk]||''; }
+function rideLine(t,wk){ var e=execById(rideFor(t,wk)); return e?(e.name+' accompanying '+repOf(t)):''; }
+/* store/clear the pairing for the trip currently in view */
+function rideStore(){
+  if(!ALL_REP||typeof ALL_WK!=='number') return;
+  var k=ALL_REP+'|'+ALL_WK, old=RIDEALONG[k]||'';
+  if(ALL_EXEC&&old!==ALL_EXEC){ RIDEALONG[k]=ALL_EXEC; audit('ridealong',{field:k,old:old||null,neu:ALL_EXEC}); savePlan(); }
+  else if(!ALL_EXEC&&old){ delete RIDEALONG[k]; audit('ridealong',{field:k,old:old,neu:null}); savePlan(); }
+}
 let LV_TYPES={dealer:true,hotel:true,airport:true,rental:true,other:true,routes:true};
 function allAreas(){ return TERRS.filter(function(t){ return LV_AREAS[t]; }); }
 function allWeeksList(){ return [31].concat(FIELD_NUMS); }
@@ -3201,7 +3240,34 @@ function allFiltersHTML(){
     +dayCtl
     +'<span class="lvlegend" style="margin:0">'+TERRS.map(function(t){
         return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('')+'</span>'
-    +'<button class="btn" id="allShowAll">Show All</button></div>';
+    +'<button class="btn" id="allShowAll">Show All</button></div>'
+    +rideRowHTML();
+}
+/* executive ride-along selectors: who is travelling, and whose trip they join */
+function rideRowHTML(){
+  var e=execById(ALL_EXEC);
+  var execOpts='<option value="">— no executive —</option>'
+    +EXECS.map(function(x){ return '<option value="'+x.id+'"'+(ALL_EXEC===x.id?' selected':'')+'>'+esc(x.name)+' — '+x.title+'</option>'; }).join('');
+  var repOpts='<option value="">All reps</option>'
+    +TERRS.map(function(t){ var lbl=repOf(t)+' — '+(t==='Exports'?'Exports':(t+' Territory Manager'));
+      return '<option value="'+t+'"'+(ALL_REP===t?' selected':'')+'>'+esc(lbl)+'</option>'; }).join('');
+  var badge=e
+    ? '<span class="ridebadge on">'+(e.title==='CEO'?'CEO Ride-Along':'Leadership Visit')+'</span>'
+    : '<span class="ridebadge">No executive assigned</span>';
+  return '<div class="riderow">'
+    +'<span class="ridesel">'
+      +'<span class="rlbl">Viewing as</span>'
+      +'<span class="ravatar" style="background:'+(e?(LEADER_COLOR[e.id]||'#374151'):'#c9ced4')+'">'+(e?initialsOf(e.name):'–')+'</span>'
+      +'<select id="allExecSel" class="msearch rsel">'+execOpts+'</select>'
+      +badge
+    +'</span>'
+    +'<span class="ridesel">'
+      +'<span class="rlbl">Joining rep</span>'
+      +'<span class="ravatar" style="background:'+(ALL_REP?(AREA_COLOR[ALL_REP]||'#374151'):'#c9ced4')+'">'+(ALL_REP?initialsOf(repOf(ALL_REP)):'–')+'</span>'
+      +'<select id="allRepSel" class="msearch rsel">'+repOpts+'</select>'
+    +'</span>'
+    +(ALL_EXEC&&ALL_REP?('<span class="ridepair">'+esc(execById(ALL_EXEC).name)+' accompanying '+esc(repOf(ALL_REP))+'</span>'):'')
+    +'</div>';
 }
 /* dealer-unique $/loads for the ALL views: one week = that week's attribution,
    the full span = every pre-booked dealer once. Never a per-card sum. */
@@ -3280,7 +3346,16 @@ function renderAllOverview(){
   allWireShared(host);
 }
 function allWireShared(host){
-  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){ ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); ALL_DAY='all'; renderAllView(); pbSaveNav(); };
+  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){
+    ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); ALL_DAY='all';
+    if(ALL_REP&&typeof ALL_WK==='number') ALL_EXEC=rideFor(ALL_REP,ALL_WK)||ALL_EXEC;   /* adopt the stored pairing */
+    renderAllView(); pbSaveNav(); };
+  var ex=document.getElementById('allExecSel'); if(ex) ex.onchange=function(){ ALL_EXEC=ex.value; rideStore(); renderAllView(); };
+  var rp=document.getElementById('allRepSel'); if(rp) rp.onchange=function(){
+    ALL_REP=rp.value;
+    TERRS.forEach(function(t){ LV_AREAS[t]=ALL_REP?(t===ALL_REP):true; });               /* the rep's schedule only */
+    if(ALL_REP&&typeof ALL_WK==='number'&&!ALL_EXEC) ALL_EXEC=rideFor(ALL_REP,ALL_WK);
+    rideStore(); renderAllView(); };
   var ds=document.getElementById('allDaySel'); if(ds) ds.onchange=function(){ ALL_DAY=(ds.value==='all')?'all':parseInt(ds.value,10); renderAllView(); };
   var stepDay=function(dir){
     if(ALL_WK==='all') return;
@@ -3292,7 +3367,7 @@ function allWireShared(host){
   };
   var dp=document.getElementById('allDayPrev'); if(dp) dp.onclick=function(){ stepDay(-1); };
   var dn=document.getElementById('allDayNext'); if(dn) dn.onclick=function(){ stepDay(1); };
-  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; ALL_DAY='all'; renderAllView(); pbSaveNav(); };
+  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; ALL_DAY='all'; ALL_EXEC=''; ALL_REP=''; renderAllView(); pbSaveNav(); };
   host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderAllView(); pbSaveNav(); }; });
   host.querySelectorAll('[data-lvtype]').forEach(function(b){ b.onclick=function(){ LV_TYPES[b.dataset.lvtype]=!LV_TYPES[b.dataset.lvtype]; renderAllView(); }; });
   host.querySelectorAll('[data-adealer]').forEach(function(el){ el.onclick=function(){ allDealerModal(el.dataset.adealer); }; });
@@ -3486,8 +3561,21 @@ function renderAllMap(){
     +wsRow('Estimated Budget',money(bud.total.est))+wsRow('Actual Budget',money(bud.total.act))
     +wsRow('Budget Variance','<span class="'+varCls(vTot)+'">'+varTxt(vTot)+'</span>')
     +'</div></div>';
+  /* ride-along itinerary: one rep + one week = that trip, headed by who is
+     travelling with whom — obvious whose schedule is being reviewed */
+  var rideCards='';
+  if(ALL_REP&&typeof ALL_WK==='number'){
+    var _e=execById(ALL_EXEC||rideFor(ALL_REP,ALL_WK));
+    rideCards='<div class="tcard" style="margin-bottom:12px"><div class="tcb" style="padding:10px 14px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--aq-black)">'
+        +(_e?esc(_e.name)+' <span style="font-weight:400;color:var(--muted)">accompanying</span> ':'')+esc(repOf(ALL_REP))+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]
+        +(_e?'':' · no executive assigned')+'</div>'
+      +'</div></div>'
+      +itineraryCard(ALL_REP,ALL_WK);
+  }
   host.innerHTML=allFiltersHTML()+allKpiHTML()
-    +'<div class="lvmapgrid"><div><div id="leaderMap"></div>'+typeLegend+sumTab+'</div><div>'+budCard+wsCard+'</div></div>';
+    +'<div class="lvmapgrid"><div><div id="leaderMap"></div>'+typeLegend+sumTab+'</div><div>'+rideCards+budCard+wsCard+'</div></div>';
   allWireShared(host);
   allDrawMap();
 }
@@ -5346,7 +5434,8 @@ function exportWeek(t,wk){
   var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
   var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(t)+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">'+wlabel+'</div></div>';
   var _wf=wkForecast(t,wk);
-  body+='<div class="meta">'+vs.length+' visits · '+_wf.l+' loads · '+fmtUSD(_wf.b)+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
+  var _ride=rideLine(t,wk);
+  body+='<div class="meta">'+(_ride?('<span class="lead">'+esc(_ride)+'</span> &nbsp;|&nbsp; '):'')+vs.length+' visits · '+_wf.l+' loads · '+fmtUSD(_wf.b)+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
   body+=tpWeekTable(wk,vs,ls,false);
   tpOpen(t+' — '+wlabel, body);
 }
@@ -5365,7 +5454,8 @@ function exportTripPlans(){
       if(!vs.length && !ls.length && !xs.length) return;
       var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
       var _wf2=wkForecast(t,wk);
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
+      var _ride2=rideLine(t,wk);
+      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(_ride2?(' · '+esc(_ride2)):'')+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
       if(xs.length){ wh+='<div style="font-size:11px;margin:2px 0 10px"><b>Additional visits:</b> '+xs.map(function(x){var dd=byId[x.dealer]||uniById(x.dealer);return esc((dd?dd.name:x.dealer))+' — '+xvType(x.type).label+' ('+esc(xvWhen(x))+')';}).join(' · ')+'</div>'; }
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+t+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">2027 Pre-Booking Travel</div></div>'+wh+'</div>';
@@ -5477,8 +5567,9 @@ function rptGenerate(){
 function rptCSV(){
   var o=RPT, r=rptRange();
   var vs=rptVisits({terr:o.terr,dealer:(o.type==='dealer'?o.dealer:''),from:r[0],to:r[1]});
-  var lines=['Dealer,Territory,Week,When,Type,Status,Time,Notes'];
-  vs.forEach(function(v){ lines.push([v.d.name,v.terr,v.wk,v.when,xvType(v.type).label,(v.done?'Completed':'Planned'),v.time||'',(v.plaud&&(v.plaud.reportNotes||v.plaud.summary))||v.notes||''].map(csvCell).join(',')); });
+  var lines=['Dealer,Territory,Week,When,Type,Status,Time,Executive,Territory Manager,Notes'];
+  vs.forEach(function(v){ var _e=execById(rideFor(v.terr,v.wk));
+    lines.push([v.d.name,v.terr,v.wk,v.when,xvType(v.type).label,(v.done?'Completed':'Planned'),v.time||'',(_e?_e.name:''),repOf(v.terr),(v.plaud&&(v.plaud.reportNotes||v.plaud.summary))||v.notes||''].map(csvCell).join(',')); });
   downloadCSV('arrowquip-report.csv', lines.join('\n'));
 }
 function renderReports(){
@@ -5864,7 +5955,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
