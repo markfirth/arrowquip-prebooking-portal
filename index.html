@@ -755,6 +755,54 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvlegend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;}
 .lvlegend .lga{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:14px;padding:3px 10px;cursor:pointer;background:#fff;color:#374151;user-select:none;}
 .lvlegend .lga.off{opacity:.35;}
+/* ---- Leader Trip Builder ---- */
+#leaderMap.tripmode{cursor:crosshair;}
+.tripdays{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:-2px 0 12px;}
+.tripday-sp{flex:1;}
+.tpill{font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.3px;border:1px solid var(--line);border-radius:14px;padding:4px 12px;background:#fff;color:#6b7280;cursor:pointer;user-select:none;transition:all .12s;}
+.tpill:hover{border-color:#9ca3af;color:#374151;}
+.tpill.on{background:#111827;border-color:#111827;color:#fff;}
+.tpill.flag.on{background:#16a34a;border-color:#16a34a;}
+.tpin{position:relative;display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;color:#fff;font-size:10px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1.5px solid #fff;}
+.tpin.tpd{opacity:.28;}
+.tpin.tps{width:20px;height:20px;border:2.5px solid #fff;box-shadow:0 0 0 2px #111827,0 2px 5px rgba(0,0,0,.4);}
+.tpin .pinseq{position:absolute;top:-6px;right:-7px;background:#111827;color:#fff;border-radius:8px;font-size:8px;line-height:1;padding:2px 4px;border:1px solid #fff;}
+.triplegend{justify-content:flex-start;}
+.triplegend .tlnote{font-size:10.5px;color:var(--muted-2);}
+#leaderTripPanel{border:1px solid var(--line);border-radius:var(--radius);background:#fff;max-height:620px;overflow:auto;}
+.ltp-head{position:sticky;top:0;background:#fff;padding:12px 14px 10px;border-bottom:1px solid var(--line);z-index:2;}
+.ltp-title{font-size:12px;font-weight:800;letter-spacing:1.2px;color:#111827;}
+.ltp-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.ltp-actions{display:flex;gap:6px;margin-top:9px;}
+.btn.sm{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;font-weight:600;color:#374151;}
+.btn.sm:hover{border-color:#9ca3af;}
+.btn.sm.ghost{color:#9ca3af;}
+.ltp-empty{padding:22px 16px;font-size:12px;color:var(--muted);line-height:1.7;}
+.ltp-empty span{color:var(--muted-2);font-size:11px;}
+.ltp-day{padding:2px 0;}
+.ltp-dayhd{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#111827;padding:10px 14px 4px;border-top:1px solid var(--line-soft);}
+.ltp-day:first-child .ltp-dayhd{border-top:0;}
+.ltp-stop{display:flex;align-items:flex-start;gap:8px;padding:8px 12px 8px 8px;border-bottom:1px solid var(--line-soft);cursor:grab;}
+.ltp-stop:hover{background:#f9fafb;}
+.ltp-stop.dragging{opacity:.4;}
+.ltp-stop.missing{background:#fef2f2;}
+.ltp-grip{color:#d1d5db;font-size:10px;line-height:1.4;user-select:none;margin-top:2px;letter-spacing:-2px;}
+.ltp-dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:4px;}
+.ltp-main{flex:1;min-width:0;}
+.ltp-r1{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+.ltp-nm{font-size:12.5px;font-weight:700;color:#111827;}
+.ltp-tm{font-size:11px;color:var(--muted);white-space:nowrap;}
+.ltp-r2{font-size:11px;color:var(--muted);margin-top:1px;}
+.ltp-r2 .ok{color:#16a34a;}
+.ltp-drive{font-size:10.5px;color:#9ca3af;margin-top:3px;}
+.ltp-warn{margin-top:3px;}
+.ltp-warn .wm{display:inline-block;font-size:10px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:1px 6px;margin:2px 4px 0 0;}
+.ltp-sync{margin-top:4px;font-size:10.5px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:4px 7px;}
+.ltp-sync .lnk{background:none;border:0;color:#2563eb;font-weight:700;cursor:pointer;font-size:10.5px;padding:0;font-family:inherit;}
+.ltp-x{flex:0 0 auto;background:none;border:0;color:#c4c8cc;font-size:16px;line-height:1;cursor:pointer;padding:0 2px;}
+.ltp-x:hover{color:#dc2626;}
+.ltp-add{padding:10px 12px;border-bottom:1px solid var(--line);background:#f9fafb;display:flex;flex-direction:column;gap:7px;}
+.ltp-addrow{display:flex;gap:7px;}
 .lvsumtab{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:12px;}
 .lvsumtab th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);}
 .lvsumtab td{padding:5px 8px;border-bottom:1px solid var(--line-soft);}
@@ -1075,7 +1123,7 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
   </div>
   <div id="allView" style="display:none;">
     <div class="tablecard">
-      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button></div></div></div>
+      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button><button id="allTripBtn" class="segb">Build My Trip</button></div></div></div>
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
@@ -2997,10 +3045,14 @@ function createVisit(dealerId,type,wk,day){
   savePlan(); refreshPlanner();
 }
 function renderAllView(){
-  if(allMode!=='map') allMode='overview';
-  var ob=document.getElementById('allOvBtn'),mb=document.getElementById('allMapBtn');
-  if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map');
+  if(allMode!=='map'&&allMode!=='trip') allMode='overview';
+  var ob=document.getElementById('allOvBtn'),mb=document.getElementById('allMapBtn'),tb=document.getElementById('allTripBtn');
+  if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map'); if(tb)tb.classList.toggle('on',allMode==='trip');
   var sub=document.getElementById('allSub');
+  if(allMode==='trip'){
+    if(sub)sub.textContent='Build My Trip — click appointment markers to add them to your personal itinerary · never changes a Territory Manager’s schedule';
+    renderTripBuilder(); return;
+  }
   if(sub)sub.textContent=(ALL_EXEC&&ALL_REP?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' joining '+repOf(ALL_REP)+' · '):(ALL_EXEC?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' — Leadership Travel · '):''))
     +(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
     +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]
@@ -3862,6 +3914,342 @@ function allDrawMap(){
   });
   if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
   setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
+}
+/* ==========================================================================
+   LEADER TRIP BUILDER
+   A leader assembles a personal itinerary by clicking existing appointment
+   markers. Every selection is a REFERENCE (week|key) into the live schedule,
+   plus leader-only travel items — stored in a private localStorage key and
+   never written through savePlan(). A Territory Manager's schedule, revenue,
+   loads and metrics are therefore never touched or duplicated.
+   ========================================================================== */
+const TRIP_WD=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const TRIP_DAYNAME={Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const TRIP_ITEM_TYPES={flight:'Flight',hotel:'Hotel',rental:'Rental Car',meeting:'Internal Meeting',dinner:'Dinner',airport:'Airport',note:'Notes'};
+let TRIP_MODE_DAY='all';   /* day-of-week pill filter */
+let TRIP_CONF=false;       /* confirmed-only filter */
+let TRIP_TMF='';           /* territory-manager filter */
+let TRIP_ADDOPEN=false;    /* inline add-travel-item form */
+let LEADERTRIP=(function(){ try{ return JSON.parse(localStorage.getItem('aqLeaderTrip_v1')||'[]'); }catch(e){ return []; } })();
+function tripSave(){ try{ localStorage.setItem('aqLeaderTrip_v1',JSON.stringify(LEADERTRIP)); }catch(e){} }
+function wdIdx(w){ var i=TRIP_WD.indexOf(w); return i<0?99:i; }
+function wdOf(s){ var m=String(s&&s.dayLabel||'').match(/^([A-Za-z]{3})/); return m?m[1]:'?'; }
+function tripDayName(w){ return TRIP_DAYNAME[w]||w; }
+function tripHas(uid){ return LEADERTRIP.some(function(e){ return e.uid===uid; }); }
+function tripItems(){ return LEADERTRIP.filter(function(e){ return e.kind==='litem'; }); }
+function tripSeq(uid){ var o=tripOrdered(); for(var i=0;i<o.length;i++) if(o[i].uid===uid) return i+1; return null; }
+function tripMinOf(t){ if(!t) return null; var p=String(t).split(':'); return (+p[0])*60+(+p[1]||0); }
+function tripShort(n){ n=String(n||'').split(' — ')[0]; return n.length>18?(n.slice(0,17)+'…'):n; }
+
+/* candidate appointments across the active week/territory filters (located
+   dealer or additional-visit markers — the stops a leader can join) */
+function tripCandidates(){
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  var out=[];
+  allAreas().forEach(function(t){
+    wks.forEach(function(wk){
+      stopsForWeek(t,wk).forEach(function(s){
+        if(s.lat==null||s.lon==null||!isFinite(s.lat)||!isFinite(s.lon)) return;
+        if(!(s.kind==='dealer'||s.kind==='xvisit')) return;
+        out.push({s:s,t:t,wk:wk,wd:wdOf(s),uid:wk+'|'+s.key});
+      });
+    });
+  });
+  return out;
+}
+function tripFindStop(terr,wk,key){
+  var list=stopsForWeek(terr,wk);
+  for(var i=0;i<list.length;i++) if(list[i].key===key) return list[i];
+  return null;
+}
+function tripSnap(s){ return {name:s.name,dayIdx:s.dayIdx,time:s.time||'',status:s.status||'',lat:s.lat,lon:s.lon}; }
+function tripChanged(e,s){
+  var a=e.snap; if(!a||e.ignore) return false;
+  return a.name!==s.name||a.dayIdx!==s.dayIdx||(a.time||'')!==(s.time||'')||a.status!==s.status||a.lat!==s.lat||a.lon!==s.lon;
+}
+function tripResolve(e){
+  if(e.kind==='litem'){
+    return {uid:e.uid,kind:'litem',type:e.type,name:e.name||TRIP_ITEM_TYPES[e.type]||'Item',
+      wd:e.wd||'?',wdIdx:wdIdx(e.wd||'?'),time:e.time||'',lat:(e.lat!=null?+e.lat:null),lon:(e.lon!=null?+e.lon:null),
+      terr:'',tm:'',color:'#6b7280',status:'',notes:e.notes||'',e:e};
+  }
+  var s=tripFindStop(e.terr,e.wk,e.key);
+  if(!s){ return {uid:e.uid,kind:'appt',missing:true,name:(e.snap&&e.snap.name)||e.key,wd:'?',wdIdx:99,
+    time:'',lat:null,lon:null,terr:e.terr,tm:repOf(e.terr),color:AREA_COLOR[e.terr]||'#374151',e:e}; }
+  return {uid:e.uid,kind:'appt',name:s.name,terr:e.terr,tm:repOf(e.terr),color:AREA_COLOR[e.terr]||'#374151',
+    wd:wdOf(s),wdIdx:wdIdx(wdOf(s)),time:s.time||'',lat:s.lat,lon:s.lon,status:s.status,ptype:s.ptype,
+    state:s.state,address:s.address,s:s,e:e,changed:tripChanged(e,s)};
+}
+/* trip in display order: weekday, then stored array order within a day
+   (new stops insert chronologically; drag-drop reorders the array) */
+function tripOrdered(){
+  var arr=LEADERTRIP.map(function(e,i){ var r=tripResolve(e); r._i=i; return r; });
+  arr.sort(function(a,b){ return (a.wdIdx-b.wdIdx) || (a._i-b._i); });
+  return arr;
+}
+function tripOrderedLocated(){ return tripOrdered().filter(function(r){ return r.lat!=null&&r.lon!=null&&isFinite(r.lat)&&isFinite(r.lon); }); }
+
+function tripToggle(c){
+  var idx=-1; for(var i=0;i<LEADERTRIP.length;i++){ if(LEADERTRIP[i].uid===c.uid){ idx=i; break; } }
+  if(idx>=0){ LEADERTRIP.splice(idx,1); aqToast('Removed from your trip'); }
+  else {
+    var e={uid:c.uid,kind:'appt',wk:c.wk,key:c.s.key,terr:c.t,snap:tripSnap(c.s)};
+    var wi=wdIdx(c.wd), tmv=c.s.time||'99', at=LEADERTRIP.length;
+    for(var j=0;j<LEADERTRIP.length;j++){ var r=tripResolve(LEADERTRIP[j]);
+      if(r.wdIdx>wi || (r.wdIdx===wi && (r.time||'99')>tmv)){ at=j; break; } }
+    LEADERTRIP.splice(at,0,e); aqToast('Added to your trip');
+  }
+  tripSave(); renderTripBuilder();
+}
+function tripRemove(uid){ LEADERTRIP=LEADERTRIP.filter(function(e){ return e.uid!==uid; }); tripSave(); renderTripBuilder(); }
+function tripClear(){ if(!LEADERTRIP.length) return; LEADERTRIP=[]; tripSave(); renderTripBuilder(); aqToast('Trip cleared'); }
+function tripSync(uid,act){
+  var e=LEADERTRIP.filter(function(x){return x.uid===uid;})[0]; if(!e) return;
+  if(act==='remove'){ tripRemove(uid); return; }
+  var s=tripFindStop(e.terr,e.wk,e.key);
+  if(act==='update'&&s){ e.snap=tripSnap(s); e.ignore=false; }
+  if(act==='ignore'&&s){ e.snap=tripSnap(s); e.ignore=true; }
+  tripSave(); renderTripBuilder();
+}
+function tripAddItem(o){
+  var e={uid:'L'+Date.now()+Math.floor(Math.random()*1000),kind:'litem',type:o.type||'note',
+    name:o.name||'',wd:o.wd||'?',time:o.time||'',notes:o.notes||'',
+    lat:(o.lat!=null?+o.lat:null),lon:(o.lon!=null?+o.lon:null)};
+  LEADERTRIP.push(e); tripSave(); TRIP_ADDOPEN=false; renderTripBuilder(); aqToast('Travel item added');
+}
+function tripMove(src,before){
+  if(src===before) return;
+  var si=-1; for(var i=0;i<LEADERTRIP.length;i++) if(LEADERTRIP[i].uid===src){ si=i; break; }
+  if(si<0) return; var e=LEADERTRIP.splice(si,1)[0];
+  var bi=LEADERTRIP.length; if(before){ for(var j=0;j<LEADERTRIP.length;j++) if(LEADERTRIP[j].uid===before){ bi=j; break; } }
+  LEADERTRIP.splice(bi,0,e); tripSave(); renderTripBuilder();
+}
+function tripOverlap(dayRows,r){
+  if(r.kind!=='appt'||!r.time) return false;
+  var a0=tripMinOf(r.time), a1=a0+90;
+  return dayRows.some(function(o){ if(o===r||o.kind!=='appt'||!o.time) return false;
+    var b0=tripMinOf(o.time), b1=b0+90; return a0<b1 && b0<a1; });
+}
+
+/* ---- rendering ---- */
+function renderTripBuilder(){
+  var host=document.getElementById('ganttWrap'); if(!host) return;
+  host.innerHTML=tripTopBarHTML()
+    +'<div class="lvmapgrid"><div><div id="leaderMap" class="tripmode"></div>'+tripLegendHTML()+'</div>'
+    +'<div id="leaderTripPanel">'+leaderTripPanelHTML()+'</div></div>';
+  wireTripBuilder(host);
+  tripDrawMap();
+  tripRouteInfo();
+}
+function tripDayPillsHTML(){
+  var p=function(v,lab){ return '<button class="tpill'+(TRIP_MODE_DAY===v?' on':'')+'" data-tripday="'+v+'">'+lab+'</button>'; };
+  return p('all','ALL')+TRIP_WD.map(function(d){return p(d,d.toUpperCase());}).join('');
+}
+function tripTopBarHTML(){
+  var wkOpts='<option value="all"'+(ALL_WK==='all'?' selected':'')+'>All weeks</option>'
+    +allWeeksList().map(function(w){return '<option value="'+w+'"'+(ALL_WK===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+  var tms=[]; TERRS.forEach(function(t){ var r=repOf(t); if(r&&r!=='—'&&tms.indexOf(r)<0) tms.push(r); });
+  var tmOpts='<option value="">All managers</option>'+tms.map(function(r){return '<option value="'+esc(r)+'"'+(TRIP_TMF===r?' selected':'')+'>'+esc(r)+'</option>';}).join('');
+  var legend=TERRS.map(function(t){return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('');
+  return '<div class="lvctl">'
+    +'<select id="allWkSel" class="msearch" style="max-width:210px">'+wkOpts+'</select>'
+    +'<select id="tripTmSel" class="msearch" style="max-width:160px">'+tmOpts+'</select>'
+    +'<span class="lvlegend" style="margin:0">'+legend+'</span>'
+    +'<button class="btn" id="allShowAll">Show All</button></div>'
+    +'<div class="tripdays">'+tripDayPillsHTML()
+      +'<span class="tripday-sp"></span>'
+      +'<button class="tpill flag'+(TRIP_CONF?' on':'')+'" id="tripConfToggle">Confirmed only</button>'
+    +'</div>';
+}
+function tripLegendHTML(){
+  return '<div class="lvlegend triplegend"><span><i class="lvdot" style="background:#cf202f"></i>Your route</span>'
+    +'<span class="tlnote">Faded lines are Territory Manager routes · click a marker to add or remove · pick a day to focus</span></div>';
+}
+function tripPin(col,sel,seq,active){
+  var cls='tpin'+(sel?' tps':(active?'':' tpd'));
+  return L.divIcon({className:'',html:'<div class="'+cls+'" style="background:'+col+'">'+(sel?'✓':'')
+      +(seq!=null?('<i class="pinseq">'+seq+'</i>'):'')+'</div>',
+    iconSize:sel?[20,20]:[14,14], iconAnchor:sel?[10,10]:[7,7], popupAnchor:[0,-8]});
+}
+function tripDrawMap(){
+  var el=document.getElementById('leaderMap'); if(!el||typeof L==='undefined') return;
+  if(_lvMap){ try{_lvMap.remove();}catch(e){} _lvMap=null; }
+  _lvMap=L.map(el,{zoomControl:true,scrollWheelZoom:true,preferCanvas:true}).setView([45,-98],4);
+  var gen=++_aqMapGen; _lvMap._aqGen=gen;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_lvMap);
+  var bounds=[];
+  /* faded Territory Manager routes (~16% opacity) */
+  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
+  allAreas().forEach(function(t){ var col=AREA_COLOR[t];
+    wks.forEach(function(wk){
+      var all=stopsForWeek(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
+      for(var i=1;i<all.length;i++){
+        var fly=(normType(all[i-1].type)==='airport'&&normType(all[i].type)==='airport');
+        drawLeg(_lvMap,gen,all[i-1],all[i],{color:col,weight:1.5,opacity:0.16},{from:all[i-1].name,to:all[i].name,area:t,fly:fly});
+      }
+    });
+  });
+  /* appointment markers — selectable */
+  tripCandidates().forEach(function(c){
+    var s=c.s, col=AREA_COLOR[c.t], sel=tripHas(c.uid);
+    var dayMatch=(TRIP_MODE_DAY==='all'||c.wd===TRIP_MODE_DAY);
+    var conf=(!TRIP_CONF||s.status==='Confirmed');
+    var tmMatch=(!TRIP_TMF||repOf(c.t)===TRIP_TMF);
+    var active=dayMatch&&conf&&tmMatch;
+    var seq=sel?tripSeq(c.uid):null;
+    var mk=L.marker([s.lat,s.lon],{icon:tripPin(col,sel,seq,active),zIndexOffset:(sel?1000:(active?200:0))}).addTo(_lvMap);
+    mk.bindTooltip(stopTip(s)+'<br>'+esc(c.t)+' · Week '+c.wk+(active?('<br><b>Click to '+(sel?'remove':'add')+'</b>'):(sel?'':'<br><span style="color:#9ca3af">filtered out</span>')));
+    if(active||sel) mk.on('click',function(){ tripToggle(c); });
+    if(active||sel){ bounds.push([s.lat,s.lon]); }
+  });
+  /* leader-only travel items with coordinates */
+  tripItems().forEach(function(it){ if(it.lat==null||it.lon==null) return;
+    var stt=STOP_TYPES[normType(it.type==='airport'||it.type==='flight'?'airport':(it.type==='hotel'?'hotel':(it.type==='rental'?'rental':'other')))]||STOP_TYPES.other;
+    L.marker([+it.lat,+it.lon],{icon:mkPin(stt.color,stt.glyph||'',null,'lonly'),zIndexOffset:900}).addTo(_lvMap)
+      .bindTooltip('<b>'+esc(it.name||TRIP_ITEM_TYPES[it.type])+'</b><br>'+esc(TRIP_ITEM_TYPES[it.type]||'Item')+(it.wd&&it.wd!=='?'?('<br>'+tripDayName(it.wd)):''));
+    bounds.push([+it.lat,+it.lon]);
+  });
+  if(bounds.length) _lvMap.fitBounds(L.latLngBounds(bounds).pad(0.2));
+  setTimeout(function(){ if(_lvMap)_lvMap.invalidateSize(); },60);
+}
+/* draw the thick leader route + fill drive times, totals and conflict warnings */
+function tripRouteInfo(){
+  var seq=tripOrderedLocated();
+  var gen=_lvMap?_lvMap._aqGen:0;
+  var totMi=0,totMin=0,done=0,need=Math.max(0,seq.length-1);
+  function finalize(){
+    var mi=document.getElementById('tripMiles'), hr=document.getElementById('tripHrs');
+    if(mi) mi.textContent=Math.round(totMi).toLocaleString()+' mi';
+    if(hr) hr.textContent=(totMin?hrsLabel(totMin/60):'0h 00m')+' drive';
+  }
+  if(!need){ finalize(); return; }
+  for(var i=1;i<seq.length;i++){ (function(a,b){
+    roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
+      if(!_lvMap||_lvMap._aqGen!==gen) return;
+      var pts=(rt&&rt.pts)?rt.pts:[[a.lat,a.lon],[b.lat,b.lon]];
+      var km=rt?rt.km:((hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934), min=rt?rt.min:(km/80*60), miL=km*0.621371;
+      L.polyline(pts,{color:'#cf202f',weight:5,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(_lvMap)
+        .bindTooltip('<b>'+esc(a.name)+'</b> → <b>'+esc(b.name)+'</b><br>'+Math.round(miL)+' mi · ~'+fmtDur(min),{sticky:true});
+      totMi+=miL; totMin+=min;
+      var dEl=document.getElementById('trip-drive-'+b.uid);
+      if(dEl) dEl.textContent='↓ '+Math.round(miL)+' mi · ~'+fmtDur(min)+' from '+tripShort(a.name);
+      var wEl=document.getElementById('trip-warn-'+b.uid);
+      if(wEl){ var msgs=[];
+        if(a.wd===b.wd&&a.time&&b.time){ var gap=tripMinOf(b.time)-tripMinOf(a.time)-90; if(gap<min) msgs.push('Drive time exceeds available travel time'); }
+        if(a.wd!==b.wd&&a.wd!=='?'&&b.wd!=='?'&&(min>180||km>350)) msgs.push('Hotel required');
+        if(km>900) msgs.push('Flight recommended');
+        wEl.innerHTML=msgs.map(function(m){ return '<span class="wm">'+esc(m)+'</span>'; }).join('');
+      }
+      done++; if(done>=need) finalize();
+    },function(){ done++; if(done>=need) finalize(); });
+  })(seq[i-1],seq[i]); }
+}
+function tripAddFormHTML(){
+  var tyOpts=Object.keys(TRIP_ITEM_TYPES).map(function(k){return '<option value="'+k+'">'+TRIP_ITEM_TYPES[k]+'</option>';}).join('');
+  var dyOpts='<option value="?">Day…</option>'+TRIP_WD.map(function(d){return '<option value="'+d+'">'+d+'</option>';}).join('');
+  return '<div class="ltp-add">'
+    +'<div class="ltp-addrow"><select id="tripItemType" class="msearch">'+tyOpts+'</select>'
+      +'<select id="tripItemDay" class="msearch" style="max-width:96px">'+dyOpts+'</select>'
+      +'<input id="tripItemTime" class="msearch" type="time" style="max-width:120px"></div>'
+    +'<input id="tripItemName" class="msearch" placeholder="Name (e.g. Hilton Garden Inn · UA 482)">'
+    +'<input id="tripItemAddr" class="msearch" placeholder="Address for map &amp; QR (optional)">'
+    +'<div class="ltp-addrow"><button class="btn sm" id="tripItemSave">Add item</button>'
+      +'<button class="btn sm ghost" id="tripItemCancel">Cancel</button></div></div>';
+}
+function leaderTripPanelHTML(){
+  var ordered=tripOrdered();
+  var head='<div class="ltp-head"><div class="ltp-title">MY LEADER TRIP</div>'
+    +'<div class="ltp-sub"><span id="tripCount">'+ordered.length+' stop'+(ordered.length===1?'':'s')+'</span>'
+    +' · <span id="tripMiles">— mi</span> · <span id="tripHrs">— drive</span></div>'
+    +'<div class="ltp-actions"><button class="btn sm" id="tripAddBtn">+ Add</button>'
+    +'<button class="btn sm" id="tripDownloadBtn">Download Trip</button>'
+    +(ordered.length?'<button class="btn sm ghost" id="tripClearBtn">Clear</button>':'')+'</div></div>';
+  var addForm=TRIP_ADDOPEN?tripAddFormHTML():'';
+  if(!ordered.length) return head+addForm+'<div class="ltp-empty">Pick a day above, then click appointment markers on the map to build your trip.<br><span>Everything here is your personal overlay — it never changes a Territory Manager’s schedule.</span></div>';
+  var groups={}; ordered.forEach(function(r){ (groups[r.wd]=groups[r.wd]||[]).push(r); });
+  var order=TRIP_WD.filter(function(w){return groups[w];}); if(groups['?']) order.push('?');
+  var body=order.map(function(w){
+    var rows=groups[w].map(function(r){
+      var meta=(r.kind==='litem')
+        ? (TRIP_ITEM_TYPES[r.type]||'Item')+(r.notes?(' · '+esc(r.notes)):'')
+        : esc(r.tm||'—')+' · '+esc(r.terr)+(r.state?(' · '+esc(r.state)):'')+(r.ptype==='visit'?' · Visit':' · Pre-book')+(r.status==='Confirmed'?' · <b class="ok">Confirmed</b>':'');
+      var timeTxt=r.time?t12s(r.time):(r.kind==='litem'?'':'—');
+      return '<div class="ltp-stop'+(r.missing?' missing':'')+'" draggable="true" data-tripuid="'+r.uid+'">'
+        +'<span class="ltp-grip">⋮⋮</span>'
+        +'<span class="ltp-dot" style="background:'+r.color+'"></span>'
+        +'<div class="ltp-main"><div class="ltp-r1"><span class="ltp-nm">'+esc(r.name)+'</span>'
+          +(timeTxt?('<span class="ltp-tm">'+esc(timeTxt)+'</span>'):'')+'</div>'
+        +'<div class="ltp-r2">'+meta+'</div>'
+        +'<div class="ltp-drive" id="trip-drive-'+r.uid+'"></div>'
+        +(tripOverlap(groups[w],r)?'<div class="ltp-warn"><span class="wm">Appointment overlaps</span></div>':'')
+        +'<div class="ltp-warn" id="trip-warn-'+r.uid+'"></div>'
+        +(r.changed?('<div class="ltp-sync">This appointment has changed. '
+            +'<button class="lnk" data-tripsync="update" data-uid="'+r.uid+'">Update Trip</button> · '
+            +'<button class="lnk" data-tripsync="ignore" data-uid="'+r.uid+'">Ignore</button> · '
+            +'<button class="lnk" data-tripsync="remove" data-uid="'+r.uid+'">Remove</button></div>'):'')
+        +(r.missing?'<div class="ltp-sync">Original appointment was removed. <button class="lnk" data-tripsync="remove" data-uid="'+r.uid+'">Remove</button></div>':'')
+        +'</div><button class="ltp-x" data-tripx="'+r.uid+'" title="Remove">×</button></div>';
+    }).join('');
+    return '<div class="ltp-day"><div class="ltp-dayhd">'+(w==='?'?'Unscheduled':tripDayName(w))+'</div>'+rows+'</div>';
+  }).join('');
+  return head+addForm+'<div class="ltp-list">'+body+'</div>';
+}
+function tripDownloadTrip(){
+  var ordered=tripOrdered();
+  if(!ordered.length){ aqToast('Add stops to your trip first'); return; }
+  var groups={}; ordered.forEach(function(r){ (groups[r.wd]=groups[r.wd]||[]).push(r); });
+  var order=TRIP_WD.filter(function(w){return groups[w];}); if(groups['?']) order.push('?');
+  var loc=tripOrderedLocated(), totMi=0,totMin=0;
+  for(var i=1;i<loc.length;i++){ var mi=roadMi([loc[i-1].lat,loc[i-1].lon],[loc[i].lat,loc[i].lon]); if(mi!=null){ totMi+=mi; totMin+=mi/55*60; } }
+  var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">My Leader Trip</div><div class="pwk">Personal Itinerary</div></div>'
+    +'<div class="meta">'+ordered.length+' stops · '+Math.round(totMi).toLocaleString()+' mi · '+hrsLabel(totMin/60)+' driving</div>';
+  var prev=null;
+  order.forEach(function(w){
+    body+='<div class="wbar">'+(w==='?'?'Unscheduled':tripDayName(w))+'</div>';
+    body+='<table class="sched"><thead><tr><th style="width:64px">Time</th><th style="width:70px">Type</th><th>Stop / Details</th><th>Location</th><th style="width:130px">Drive from prev</th><th style="width:82px">Navigate</th></tr></thead><tbody>';
+    groups[w].forEach(function(r){
+      var drive='';
+      if(r.lat!=null&&prev){ var mi=roadMi([prev.lat,prev.lon],[r.lat,r.lon]); if(mi!=null) drive='~'+fmtDur(Math.max(15,Math.round(mi/55*60)))+' · '+Math.round(mi)+' mi'; }
+      var typ=(r.kind==='litem')?(TRIP_ITEM_TYPES[r.type]||'Item'):(r.ptype==='visit'?'Visit':'Pre-book');
+      var locTxt=(r.kind==='litem')?esc(r.notes||''):(esc(r.state||'')+(r.address?(' · '+esc(r.address)):''));
+      var qr='';
+      if(r.lat!=null){ var g='https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon;
+        qr='<img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data='+encodeURIComponent(g)+'" width="64" height="64" alt="Map QR">'; }
+      body+='<tr><td>'+(r.time?t12s(r.time):'—')+'</td><td>'+esc(typ)+'</td><td class="nm">'+esc(r.name)
+        +(r.kind==='appt'?(' <span class="tag">'+esc(r.tm||'')+' · '+esc(r.terr)+'</span>'):'')+'</td>'
+        +'<td class="lo">'+locTxt+'</td><td class="du">'+drive+'</td><td>'+qr+'</td></tr>';
+      if(r.lat!=null) prev=r;
+    });
+    body+='</tbody></table>';
+  });
+  body+='<p style="color:#666">Personal leadership itinerary — references existing appointments and never changes a Territory Manager’s schedule. Scan a QR code for turn-by-turn Google Maps navigation.</p>';
+  tpOpen('My Leader Trip', body);
+}
+function wireTripBuilder(host){
+  allWireShared(host);
+  host.querySelectorAll('[data-tripday]').forEach(function(b){ b.onclick=function(){ TRIP_MODE_DAY=b.dataset.tripday; renderTripBuilder(); }; });
+  var cf=document.getElementById('tripConfToggle'); if(cf) cf.onclick=function(){ TRIP_CONF=!TRIP_CONF; renderTripBuilder(); };
+  var tm=document.getElementById('tripTmSel'); if(tm) tm.onchange=function(){ TRIP_TMF=tm.value; renderTripBuilder(); };
+  var ab=document.getElementById('tripAddBtn'); if(ab) ab.onclick=function(){ TRIP_ADDOPEN=!TRIP_ADDOPEN; renderTripBuilder(); };
+  var db=document.getElementById('tripDownloadBtn'); if(db) db.onclick=tripDownloadTrip;
+  var cb=document.getElementById('tripClearBtn'); if(cb) cb.onclick=tripClear;
+  host.querySelectorAll('[data-tripx]').forEach(function(b){ b.onclick=function(){ tripRemove(b.dataset.tripx); }; });
+  host.querySelectorAll('[data-tripsync]').forEach(function(b){ b.onclick=function(){ tripSync(b.dataset.uid,b.dataset.tripsync); }; });
+  var save=document.getElementById('tripItemSave');
+  if(save) save.onclick=function(){
+    var ty=document.getElementById('tripItemType').value, nm=document.getElementById('tripItemName').value.trim();
+    var wd=document.getElementById('tripItemDay').value, tmv=document.getElementById('tripItemTime').value, ad=document.getElementById('tripItemAddr').value.trim();
+    if(ad){ aqToast('Locating address…'); geocodeAddress(ad,function(g){ tripAddItem({type:ty,name:nm,wd:wd,time:tmv,notes:ad,lat:g&&g.lat,lon:g&&g.lon}); }); }
+    else tripAddItem({type:ty,name:nm,wd:wd,time:tmv});
+  };
+  var cancel=document.getElementById('tripItemCancel'); if(cancel) cancel.onclick=function(){ TRIP_ADDOPEN=false; renderTripBuilder(); };
+  var dragUid=null;
+  host.querySelectorAll('.ltp-stop').forEach(function(el){
+    el.addEventListener('dragstart',function(){ dragUid=el.dataset.tripuid; el.classList.add('dragging'); });
+    el.addEventListener('dragend',function(){ el.classList.remove('dragging'); });
+    el.addEventListener('dragover',function(e){ e.preventDefault(); });
+    el.addEventListener('drop',function(e){ e.preventDefault(); if(dragUid&&dragUid!==el.dataset.tripuid) tripMove(dragUid,el.dataset.tripuid); });
+  });
 }
 function dayTimeLabel(d){ var wk=ASSIGN[d.id]; var di=DAY[d.id]; var labs=(typeof wk==='number')?dayLabels(wk):[]; var dn=(di!=null&&labs[di])?labs[di][0]:''; var tm=TIME[d.id]?t12s(TIME[d.id]):''; return (dn+(tm?(' '+tm):'')).trim(); }
 function calendarHTML(tl){
@@ -6006,7 +6394,7 @@ function pbRestoreNav(){
     var tabsOk=['All','East','South','Central','West','Exports','Master'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
-    allMode=(ns.allMode==='map')?'map':'overview';   /* legacy cal/leaders/leader → overview */
+    allMode=(ns.allMode==='map')?'map':(ns.allMode==='trip'?'trip':'overview');   /* legacy cal/leaders/leader → overview */
     if(typeof ns.mapWeek==='number') mapWeek=ns.mapWeek;
     if(ns.terrMapWeek==='all'||typeof ns.terrMapWeek==='number') terrMapWeek=ns.terrMapWeek;
     if(['overview','budget','files'].indexOf(ns.sbTab)>=0) SIDEBAR_TAB=ns.sbTab;
@@ -6066,7 +6454,8 @@ document.getElementById("mBody").addEventListener("click",e=>{
 
 document.getElementById("exportBtn").addEventListener("click",exportTripPlans);
 document.getElementById("allOvBtn").addEventListener("click",function(){allMode='overview';renderAllView();});
-document.getElementById("allMapBtn").addEventListener("click",function(){allMode='map';renderAllView();});
+document.getElementById("allMapBtn").addEventListener("click",function(){allMode='map';renderAllView();pbSaveNav();});
+document.getElementById("allTripBtn").addEventListener("click",function(){allMode='trip';renderAllView();pbSaveNav();});
 document.getElementById("terrSeg").addEventListener("click",function(e){var b=e.target.closest(".segb"); if(!b)return; terrMode=b.dataset.tm; render();});
 document.getElementById("terrMap").addEventListener("click",function(e){var b=e.target.closest('[data-trip]'); if(!b)return; terrMapWeek=(b.dataset.trip==='all')?'all':parseInt(b.dataset.trip,10); render();});
 document.querySelectorAll('th.srt').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.mk;if(msort.key===k)msort.dir*=-1;else msort={key:k,dir:(k==='booking'||k==='loads'||k==='lastYear')?-1:1};renderMaster();}));
