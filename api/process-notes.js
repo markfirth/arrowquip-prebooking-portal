@@ -37,15 +37,21 @@ module.exports = async function handler(req, res) {
         max_tokens: 1500,
         messages: [{ role: 'user', content:
           'You are processing the raw transcript of an Arrowquip (cattle handling equipment) sales rep\'s dealer visit. ' +
-          'Produce structured visit notes. Respond with ONLY a JSON object, no prose, no code fences:\n' +
-          '{"summary":string (3-5 sentence clean summary),' +
+          'Produce a structured dealer visit report. Respond with ONLY a JSON object, no prose, no code fences:\n' +
+          '{"summary":string (3-5 sentence executive summary),' +
+          '"dealer_sentiment":string (one of: Positive, Neutral, Mixed, Negative, Unknown, with a short reason),' +
           '"notes":[string] (bullet-point visit notes, report-ready, professional),' +
-          '"decisions":[string],"concerns":[string] (dealer concerns),' +
-          '"opportunities":[string],' +
+          '"discussion_points":[string] (key discussion points),' +
+          '"inventory_observations":[string] (what inventory/stock was observed or discussed),' +
+          '"product_interest":[string] (specific products the dealer showed interest in),' +
+          '"decisions":[string],"concerns":[string] (dealer concerns/problems/risks),' +
+          '"opportunities":[string] (sales opportunities),' +
+          '"competitor_info":[string] (any competitor mentions/intel),' +
           '"commitments_arrowquip":[string] (what Arrowquip committed to),' +
           '"commitments_dealer":[string] (what the dealer committed to),' +
-          '"actions":[{"t":string,"owner":string|"","due":string|""}]}\n' +
-          'Use empty arrays when a section has nothing. Never invent facts not in the transcript.\n\nTRANSCRIPT:\n' + transcript },
+          '"actions":[{"t":string,"owner":string|"","due":string|""}] (follow-up actions with owner and due date),' +
+          '"cleaned_transcript_notes":string (a lightly cleaned, readable version of the conversation notes)}\n' +
+          'Use empty arrays/strings when a section has nothing. Never invent facts not in the transcript.\n\nTRANSCRIPT:\n' + transcript },
         ],
       }),
     })
@@ -61,11 +67,16 @@ module.exports = async function handler(req, res) {
     const arr = (v) => Array.isArray(v) ? v.map(String) : []
     res.status(200).json({
       ok: true,
+      model: 'claude-haiku-4-5-20251001',
       summary: String(p.summary || ''),
-      notes: arr(p.notes), decisions: arr(p.decisions), concerns: arr(p.concerns),
-      opportunities: arr(p.opportunities),
+      dealer_sentiment: String(p.dealer_sentiment || ''),
+      notes: arr(p.notes), discussion_points: arr(p.discussion_points),
+      inventory_observations: arr(p.inventory_observations), product_interest: arr(p.product_interest),
+      decisions: arr(p.decisions), concerns: arr(p.concerns),
+      opportunities: arr(p.opportunities), competitor_info: arr(p.competitor_info),
       commitments_arrowquip: arr(p.commitments_arrowquip), commitments_dealer: arr(p.commitments_dealer),
       actions: Array.isArray(p.actions) ? p.actions.map((a) => ({ t: String(a.t || ''), owner: String(a.owner || ''), due: String(a.due || '') })).filter((a) => a.t) : [],
+      cleaned_transcript_notes: String(p.cleaned_transcript_notes || ''),
     })
   } catch (e) {
     res.status(200).json({ ok: false, reason: 'error', message: (e && e.message) || String(e) })

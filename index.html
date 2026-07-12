@@ -709,6 +709,12 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tm-detail .dvv{font-size:14px;color:#111;font-weight:600;text-align:right;min-width:0;word-break:break-word;}
 .tm-photothumb{width:40px;height:40px;border-radius:8px;flex:0 0 auto;overflow:hidden;background:transparent;}
 .tm-photothumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.phst{position:absolute;left:2px;bottom:2px;font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:6px;color:#fff;letter-spacing:.02em;}
+.phst.synced{background:rgba(21,128,61,.9);} .phst.uploading{background:rgba(37,99,235,.9);}
+.phst.waiting{background:rgba(180,83,9,.92);} .phst.local{background:rgba(107,114,128,.92);} .phst.failed{background:rgba(185,28,28,.92);}
+.tm-syncbar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.tm-syncbar .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+.tm-syncbar .dot.ok{background:#16a34a;} .tm-syncbar .dot.pend{background:#b45309;} .tm-syncbar .dot.off{background:#9ca3af;}
 /* ---- Master Sheet: sticky header, frozen Dealer/Territory columns, tags ---- */
 #masterView .tablecard{max-height:calc(100vh - 250px);overflow:auto;position:relative;}
 #masterView thead th{position:sticky;z-index:40;}
@@ -6152,6 +6158,129 @@ function exportTripPlans(){
   if(!body) body='<p>No trips scheduled yet.</p>';
   tpOpen('2027 Pre-Booking — Trip Plans', body);
 }
+/* ===================== DEDICATED TRIP REPORT (§5) =====================
+   A complete, structured trip report built from the live shared data (itinerary,
+   drive times, transport, dealer visits + status, Claude reports, expenses,
+   receipts, photos, documents) and rendered through the branded print window.
+   Not a screenshot of the app. Shared by desktop and mobile. */
+function trReportDocs(terr, wk, kind){
+  if(typeof SB==='undefined'||!SB||typeof pbAuthed!=='function'||!pbAuthed()) return Promise.resolve([]);
+  var q=SB.from('prebooking_documents').select('id,title,storage_path,created_at,stop_key,mime_type,ocr_fields,suggested_category,week,territory')
+    .eq('kind',kind).eq('week',wk).order('created_at',{ascending:true}).limit(200);
+  if(terr && terr!=='All') q=q.eq('territory',terr);
+  return q.then(function(r){ return (r&&r.data)||[]; }, function(){ return []; });
+}
+function trSign(sp){ if(typeof pbSignedUrl==='function') return pbSignedUrl(sp); return Promise.resolve(null); }
+function generateTripReport(terr, wk){
+  if(typeof tpOpen!=='function'){ alert('Report view unavailable.'); return; }
+  if(typeof cloudBadge==='function') cloudBadge('Building trip report…');
+  var items=itineraryFor(terr,wk); var R=legsFor(items);
+  var labs=dayLabels(wk);
+  var dealers=items.filter(function(i){return i.kind==='dealer';});
+  var doneN=dealers.filter(function(d){return APPT[d.id];}).length;
+  var exps=expensesFor(terr,wk), bud=budgetFor(exps);
+  var user=(typeof pbActorLabel==='function'?pbActorLabel(pbActor()):(typeof pbActor==='function'?pbActor():''));
+  var esc2=esc, T=TRAVEL_TYPES;
+  var isImg=function(m){ return /^image\//.test(m||''); };
+
+  /* async: gather images (visit photos, receipts, documents) with signed URLs */
+  Promise.all([trReportDocs(terr,wk,'visit_photo'),trReportDocs(terr,wk,'receipt'),trReportDocs(terr,wk,'document')])
+   .then(function(sets){
+    var photos=sets[0], receipts=sets[1], docs=sets[2];
+    var all=photos.concat(receipts).concat(docs).filter(function(r){return isImg(r.mime_type);});
+    return Promise.all(all.map(function(r){ return trSign(r.storage_path).then(function(u){ r._url=u; return r; }); }))
+      .then(function(){ return {photos:photos,receipts:receipts,docs:docs}; });
+   }).then(function(D){
+    var css='<style>.tr-cover{text-align:center;padding:60px 0 30px;}.tr-cover .b{font-size:30px;font-weight:800;letter-spacing:2px;color:#cf202f;}.tr-cover .t{font-size:20px;font-weight:700;margin-top:6px;}.tr-cover .m{color:#555;margin-top:8px;font-size:12px;}'
+      +'.tr-kpis{display:flex;gap:10px;justify-content:center;margin:14px 0;}.tr-kpi{border:1px solid #ddd;border-radius:6px;padding:8px 14px;text-align:center;}.tr-kpi b{display:block;font-size:18px;}.tr-kpi span{font-size:9px;text-transform:uppercase;color:#777;letter-spacing:.05em;}'
+      +'.tr-h{background:#292828;color:#fff;font-size:12px;font-weight:700;padding:5px 9px;border-radius:4px;margin:16px 0 8px;}'
+      +'.tr-row{border-bottom:1px solid #eee;padding:4px 0;font-size:10.5px;}.tr-row .tm{font-weight:700;}.tr-drive{color:#888;font-size:9.5px;padding:2px 0 2px 14px;}'
+      +'.tr-grid{display:flex;flex-wrap:wrap;gap:6px;}.tr-grid img{width:150px;height:110px;object-fit:cover;border:1px solid #ddd;border-radius:4px;}'
+      +'.tr-rcpt{display:flex;gap:8px;align-items:center;border-bottom:1px solid #eee;padding:5px 0;font-size:10px;}.tr-rcpt img{width:54px;height:54px;object-fit:cover;border-radius:4px;border:1px solid #ddd;}'
+      +'.tr-foot{margin-top:20px;border-top:1px solid #ddd;padding-top:6px;font-size:9px;color:#888;}'
+      +'.tr-rep{border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;margin-bottom:8px;page-break-inside:avoid;}.tr-rep .rl{font-size:9px;text-transform:uppercase;color:#888;font-weight:700;margin-top:5px;}.tr-rep .rv{font-size:10.5px;white-space:pre-wrap;}'
+      +'@media print{.tr-cover{page-break-after:always;}.repsec{page-break-before:always;}}</style>';
+    var wlabel='Week '+wk+' — '+(WEEKDATES[wk]||'');
+    var body=css
+      +'<div class="tr-cover"><div class="b">ARROWQUIP</div><div class="t">Trip Report</div>'
+      +'<div class="m">'+esc2(terr)+' &nbsp;·&nbsp; '+esc2(wlabel)+'<br>'+esc2(user||'')+'<br>Generated '+new Date().toLocaleString()+'</div>'
+      +'<div class="tr-kpis"><div class="tr-kpi"><b>'+dealers.length+'</b><span>Visits</span></div>'
+        +'<div class="tr-kpi"><b>'+doneN+'/'+dealers.length+'</b><span>Completed</span></div>'
+        +'<div class="tr-kpi"><b>'+hrsLabel(R.totalHours)+'</b><span>Drive</span></div>'
+        +'<div class="tr-kpi"><b>'+Math.round(R.totalKm).toLocaleString()+' km</b><span>Distance</span></div>'
+        +'<div class="tr-kpi"><b>'+money(bud.total.act)+'</b><span>Spend</span></div></div></div>';
+
+    /* itinerary with drive connectors */
+    body+='<div class="repsec"><div class="tr-h">Itinerary</div>';
+    var byDay={}; items.forEach(function(i){ (byDay[i.day==null?'z':i.day]=byDay[i.day==null?'z':i.day]||[]).push(i); });
+    Object.keys(byDay).sort().forEach(function(dk){
+      var dl=(dk==='z')?'Unscheduled':((labs[dk]?labs[dk][0]+', '+labs[dk][1]:'Day '+dk));
+      var day=byDay[dk].slice().sort(function(a,b){return (a.time||'99:99').localeCompare(b.time||'99:99');});
+      body+='<div style="font-weight:700;font-size:10px;margin:8px 0 3px;color:#333">'+esc2(dl)+'</div>';
+      day.forEach(function(i,n){
+        var kind=(i.kind==='dealer')?'Dealer visit':(T[i.type]?T[i.type].label:'Stop');
+        var st=(i.kind==='dealer')?(APPT[i.id]?' · ✓ complete':' · planned'):'';
+        body+='<div class="tr-row"><span class="tm">'+(i.time?t12s(i.time):'—')+'</span> · '+esc2(i.name||kind)+' <span style="color:#888">('+esc2(kind)+')</span>'+st+(i.address?(' — '+esc2(i.address)):'')+'</div>';
+      });
+    });
+    if(R.legs&&R.legs.length){ body+='<div style="font-size:9.5px;color:#777;margin-top:6px">Total drive: '+hrsLabel(R.totalHours)+' · '+Math.round(R.totalKm).toLocaleString()+' km'+(R.unlocated?(' · '+R.unlocated+' stop(s) without an address excluded'):'')+'</div>'; }
+    body+='</div>';
+
+    /* transport */
+    var trav=function(label,filt){ var ls=items.filter(filt); if(!ls.length) return ''; return '<div class="tr-h">'+label+'</div>'+ls.map(function(i){ return '<div class="tr-row">'+esc2(i.name||'-')+(i.conf?(' · Conf '+esc2(i.conf)):'')+((i.day!=null&&labs[i.day])?(' · '+labs[i.day][0]):'')+(i.time?(' '+t12s(i.time)):'')+(i.airline?(' · '+esc2(i.airline)+' '+esc2(i.flightNo||'')):'')+'</div>'; }).join(''); };
+    body+='<div class="repsec">'
+      +trav('Flights',function(i){return i.kind==='travel'&&normType(i.type)==='airport';})
+      +trav('Hotels',function(i){return i.kind==='travel'&&normType(i.type)==='hotel';})
+      +trav('Rental vehicles',function(i){return i.kind==='travel'&&normType(i.type)==='rental';})
+      +'</div>';
+
+    /* dealer visits + Claude reports */
+    body+='<div class="repsec"><div class="tr-h">Dealer Visits &amp; Claude Reports</div>';
+    dealers.forEach(function(d){
+      var v=(VISIT[d.id]||{}); var pl=v.plaud;
+      body+='<div class="tr-rep"><div style="font-weight:700;font-size:11px">'+esc2(d.name)+' <span style="color:#888;font-weight:400">'+(APPT[d.id]?'· completed':'· planned')+'</span></div>';
+      if(pl){
+        var rl=function(l,x){ return x?('<div class="rl">'+l+'</div><div class="rv">'+esc2(x)+'</div>'):''; };
+        body+=rl('Executive summary',pl.summary)+rl('Sentiment',pl.sentiment)+rl('Discussion points',pl.discussionPoints)
+          +rl('Inventory',pl.inventory)+rl('Product interest',pl.productInterest)+rl('Opportunities',pl.opportunities)
+          +rl('Competitor info',pl.competitorInfo)+rl('Problems / risks',pl.concerns)
+          +rl('Arrowquip commitments',pl.commitArrowquip)+rl('Dealer commitments',pl.commitDealer);
+        body+='<div class="rl">Report status</div><div class="rv">'+esc2(pl.status||'draft')+(pl.version?(' · v'+pl.version):'')+'</div>';
+      } else if(v.notes){ body+='<div class="rl">Notes</div><div class="rv">'+esc2(v.notes)+'</div>'; }
+      else { body+='<div class="rv" style="color:#999">No report yet.</div>'; }
+      body+='</div>';
+    });
+    body+='</div>';
+
+    /* expenses */
+    body+='<div class="repsec"><div class="tr-h">Expenses</div>';
+    body+='<div style="font-size:10.5px;margin-bottom:6px">Total <b>'+money(bud.total.act)+'</b>'+(bud.total.est?(' of '+money(bud.total.est)+' budget'):'')+'</div>';
+    (typeof BUDGET_CATS!=='undefined'?BUDGET_CATS:[]).forEach(function(c){ var r=bud.rows[c]; if(r&&(r.act||r.est)) body+='<div class="tr-row">'+esc2(c)+' — <b>'+money(r.act)+'</b></div>'; });
+    var unc=exps.filter(function(e){return !e.cat||normCat(e.cat)==='Uncategorized'||normCat(e.cat)==='Other';});
+    if(unc.length) body+='<div style="font-size:9.5px;color:#b45309;margin-top:4px">'+unc.length+' uncategorized / other item(s) — assign a category on the desktop planner.</div>';
+    body+='</div>';
+
+    /* receipt appendix */
+    if(D.receipts.length){
+      body+='<div class="repsec"><div class="tr-h">Receipt Appendix</div>';
+      D.receipts.forEach(function(r){ var f=r.ocr_fields||{}; body+='<div class="tr-rcpt">'+(r._url?('<img src="'+r._url+'">'):'')+'<div>'+esc2(f.vendor||r.title||'Receipt')+'<br><span style="color:#777">'+esc2((r.suggested_category||f.category||'')+(f.total!=null?(' · $'+f.total):'')+(f.date?(' · '+f.date):''))+'</span></div></div>'; });
+      body+='</div>';
+    }
+    /* photos */
+    if(D.photos.length){
+      var pImg=D.photos.filter(function(r){return r._url;});
+      if(pImg.length){ body+='<div class="repsec"><div class="tr-h">Visit &amp; Agreement Photos</div><div class="tr-grid">'+pImg.map(function(r){return '<img src="'+r._url+'">';}).join('')+'</div></div>'; }
+    }
+    /* other documents */
+    if(D.docs.length){
+      body+='<div class="repsec"><div class="tr-h">Documents</div>'+D.docs.map(function(r){ return '<div class="tr-row">'+esc2(r.title||'Document')+'</div>'; }).join('')+'</div>';
+    }
+    if((typeof pbAuthed!=='function'||!pbAuthed())) body+='<div style="font-size:10px;color:#b45309;margin-top:10px">Sign in on this device to include photos and receipts stored in private cloud storage.</div>';
+
+    body+='<div class="tr-foot">Arrowquip 2027 Pre-Booking · Trip '+esc2(terr)+' / Week '+wk+' · generated '+new Date().toISOString()+'</div>';
+    tpOpen('Trip Report — '+terr+' Week '+wk, body);
+  });
+}
 function downloadCSV(fn,txt){var blob=new Blob([txt],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 function csvCell(v){v=(v==null?'':String(v));return /[",\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v;}
 function dealerTemplate(){
@@ -6283,6 +6412,7 @@ function renderReports(){
     +'<select id="rptTerr" class="msearch" style="max-width:130px">'+tOpts+'</select>'
     +'<span style="flex:1"></span>'
     +'<button class="btn" id="rptCsvBtn">⬇ CSV</button>'
+    +'<button class="btn" id="rptTripBtn" title="Full trip report: itinerary, visits, Claude reports, expenses, receipts, photos">Full Trip Report</button>'
     +'<button class="btn" id="rptPdfBtn" style="background:#111;color:#fff;border-color:#111">Generate PDF Report</button>'
     +'</div>'
     +'<div style="font-size:11px;color:var(--muted-2)">PDF opens in a print window — choose "Save as PDF". Reports include visits, reviewed notes, action items and the budget section. Raw transcripts are never included.</div>'
@@ -6306,6 +6436,7 @@ function renderReports(){
   re('rptTerr',function(){ RPT.terr=this.value; });
   document.getElementById('rptPdfBtn').onclick=function(){ if(RPT.type==='dealer'&&!RPT.dealer){ alert('Choose a dealer.'); return; } rptGenerate(); };
   document.getElementById('rptCsvBtn').onclick=rptCSV;
+  var trb=document.getElementById('rptTripBtn'); if(trb) trb.onclick=function(){ var tt=(RPT.terr&&RPT.terr!=='All')?RPT.terr:terr; generateTripReport((tt&&tt!=='All'&&tt!=='Master')?tt:'East', RPT.wk||32); };
   document.getElementById('nbSaveBtn').onclick=nbSave;
   nbLoad();
 }
@@ -6335,8 +6466,8 @@ function nbSave(){
 }
 function nbLoad(){
   var host=document.getElementById('nbList'); if(!host||!SB) return;
-  SB.from('prebooking_documents').select('id,title,created_at,stop_key,notes,ocr_status,metadata')
-    .eq('kind','transcript').neq('ocr_status','done').order('created_at',{ascending:false}).limit(30)
+  SB.from('prebooking_documents').select('id,title,created_at,stop_key,notes,ocr_status,metadata,week,territory,created_by')
+    .eq('kind','transcript').neq('ocr_status','done').neq('ocr_status','archived').order('created_at',{ascending:false}).limit(30)
     .then(function(res){
       var h=document.getElementById('nbList'); if(!h) return;
       var rows=(res&&res.data)||[];
@@ -6344,12 +6475,20 @@ function nbLoad(){
       if(!rows.length){ h.textContent='Inbox is empty — new transcripts land here for matching and processing.'; return; }
       h.innerHTML=rows.map(function(r){
         var d=r.stop_key&&uniById(r.stop_key);
-        var match=d?('Matched dealer: <b>'+esc(d.name)+'</b>'+((r.metadata&&r.metadata.suggestVisit)?' · one open visit — suggested':' · choose the visit when attaching')):'No dealer match — attach manually';
+        var hasVisit=r.metadata&&r.metadata.visit_id;
+        var match=d?('Matched dealer: <b>'+esc(d.name)+'</b>'+(hasVisit?' · visit bound':(r.metadata&&r.metadata.suggestVisit)?' · one open visit — suggested':' · choose the visit when attaching')):'No dealer match — attach manually';
+        var stat=(r.metadata&&r.metadata.status)||r.ocr_status||'received';
+        var meta2=[new Date(r.created_at).toLocaleString(),(r.territory?esc(r.territory):'')+(r.week!=null?(' · Wk '+r.week):''),(r.created_by?esc(r.created_by):''),'status: '+esc(stat)].filter(Boolean).join(' · ');
         return '<div class="tmrow" style="align-items:center"><div class="t" style="min-width:0"><b>'+esc(r.title||'Transcript')+'</b>'
-          +'<span>'+new Date(r.created_at).toLocaleString()+' · '+match+(r.notes?(' · <a href="'+esc(r.notes)+'" target="_blank" rel="noopener">source</a>'):'')+'</span></div>'
-          +'<button class="btn" data-nbproc="'+r.id+'" style="flex:0 0 auto">Process Notes</button></div>';
+          +'<span>'+meta2+' · '+match+(r.notes?(' · <a href="'+esc(r.notes)+'" target="_blank" rel="noopener">source</a>'):'')+'</span></div>'
+          +'<button class="btn" data-nbproc="'+r.id+'" style="flex:0 0 auto">Process Notes</button>'
+          +'<button class="btn" data-nbarch="'+r.id+'" title="Archive" style="flex:0 0 auto;background:#fff;color:#b91c1c;border-color:#e5e7eb">Archive</button></div>';
       }).join('');
       h.querySelectorAll('[data-nbproc]').forEach(function(b){ b.onclick=function(){ nbProcess(b.dataset.nbproc); }; });
+      h.querySelectorAll('[data-nbarch]').forEach(function(b){ b.onclick=function(){
+        if(!confirm('Archive this recording? It leaves the inbox and is not processed. The raw transcript is retained.')) return;
+        SB.from('prebooking_documents').update({ocr_status:'archived',approval_status:'archived'}).eq('id',b.dataset.nbarch).then(function(x){ if(x&&x.error){ alert('Could not archive: '+x.error.message); } else { cloudBadge('Recording archived'); nbLoad(); } });
+      }; });
     });
 }
 function nbProcess(docId){
@@ -7349,6 +7488,18 @@ function mobFiles_render(){
     +'<div style="font-size:11px;color:#9ca3af;margin-top:10px">Private Supabase buckets, authenticated access only.</div>'
     +'</div>';
 }
+/* global sync indicator (More): pending upload count + online state (§6) */
+function mobFillSync(){
+  var dot=document.getElementById('mobSyncDot'), title=document.getElementById('mobSyncTitle'), sub=document.getElementById('mobSyncSub');
+  if(!dot) return;
+  var online=(typeof navigator==='undefined')||navigator.onLine;
+  (typeof pbPendingCount==='function'?pbPendingCount():Promise.resolve(0)).then(function(n){
+    if(!document.getElementById('mobSyncDot')) return;
+    if(!online){ dot.className='dot off'; title.textContent='Offline'; sub.textContent=(n?(n+' item(s) waiting to upload'):'Changes saved on this device'); }
+    else if(n){ dot.className='dot pend'; title.textContent=n+' item(s) uploading'; sub.textContent=(typeof pbAuthed==='function'&&pbAuthed())?'Syncing to private storage…':'Sign in to sync photos to the cloud'; }
+    else { dot.className='dot ok'; title.textContent='All changes synced'; sub.textContent='Nothing pending'; }
+  });
+}
 /* fill the three overview rows with a live count + first thumbnail */
 function mobFillPhotosOverview(){
   if(MOB.tab!=='files'||(MOB.stack&&MOB.stack.length)||!pbAuthed()) return;
@@ -7461,6 +7612,10 @@ function mobFillFiles(){
 /* ---------- MORE ---------- */
 function mobMore_render(){
   return '<div class="tm-screen">'
+    +'<div class="tm-h"><span>Sync</span></div>'
+    +'<div class="tm-syncbar"><span class="dot ok" id="mobSyncDot"></span>'
+      +'<div class="t" style="flex:1 1 auto;min-width:0"><b id="mobSyncTitle">All changes synced</b><span id="mobSyncSub" style="font-size:12px;color:#6b7280">Checking…</span></div>'
+      +'<button class="tmbtn" style="flex:0 0 96px;min-height:38px;font-size:13px" id="mobSyncNow">Sync now</button></div>'
     +'<div class="tm-h"><span>Trip</span></div>'
     +'<div class="tmrow"><div class="t"><b>'+esc(MOB.terr)+' · Week '+MOB.wk+'</b><span>'+esc(WEEKDATES[MOB.wk]||'')+', 2026</span></div></div>'
     +'<div class="tm-h"><span>Desktop</span></div>'
@@ -7625,16 +7780,23 @@ function mobDealer_page(id){
     +'</div>';
   h+='<div class="vd-actions">'
     +(mobHasDest(d)?'<a class="tmbtn nav" href="'+navUrl(d)+'" target="_blank" rel="noopener">'+tmIcon('nav',16)+' Navigate</a>':'<button class="tmbtn" disabled>'+tmIcon('nav',16)+' Navigate</button>')
-    +(callNum?'<a class="tmbtn" style="background:#111;border-color:#111;color:#fff;flex:2 1 auto;text-decoration:none" data-mobcall="'+esc(callNum)+'" href="tel:'+encodeURIComponent(callNum)+'">'+tmIcon('phone',16)+' Call Dealer</a>':'<button class="tmbtn" disabled>'+tmIcon('phone',16)+' No number</button>')
+    +(callNum?'<button class="tmbtn" style="background:#111;border-color:#111;color:#fff;flex:2 1 auto" data-mobcall="'+esc(callNum)+'">'+tmIcon('phone',16)+' Call Dealer</button>':'<button class="tmbtn" disabled>'+tmIcon('phone',16)+' No number</button>')
     +'</div>';
   if(cName||callNum) h+='<div style="font-size:12px;color:#6b7280;margin:8px 2px 2px">'+esc([cName,callNum].filter(Boolean).join(' · '))+'</div>';
+  /* Dialpad status + explicit native fallback (never automatic, §4) */
+  h+='<div id="vd_callstatus" style="font-size:12px;color:#6b7280;margin:6px 2px 0;min-height:16px"></div>';
+  if(callNum) h+='<a id="vd_callfallback" href="tel:'+encodeURIComponent(callNum)+'" style="display:none;font-size:13px;color:#2563eb;text-decoration:underline;margin:2px 2px 0">Call using phone instead</a>';
   h+='<div class="tm-h">Status</div>';
   h+='<button class="tm-drow" data-dphotos="'+id+'"><span class="di" style="background:#0f766e">'+tmIcon('camera',17)+'</span>'
     +'<div class="dt"><b>Photos</b><span>Storefront &amp; store</span></div>'
     +'<span class="dv" data-dphcount="'+id+'">—</span><span class="chev">›</span></button>';
+  var ps=mobPlaudStatus(id);
   h+='<button class="tm-drow" data-dreport="'+id+'"><span class="di" style="background:#4338ca">'+tmIcon('clipboard',17)+'</span>'
-    +'<div class="dt"><b>Claude Visit Report</b><span>'+(reportReady?'Notes recorded':'No recording yet')+'</span></div>'
-    +'<span class="tm-cstat '+(reportReady?'ready':'none')+'">'+(reportReady?'Ready':'None')+'</span><span class="chev">›</span></button>';
+    +'<div class="dt"><b>Claude Visit Report</b><span>'+(ps[1]==='none'?'No recording yet':(ps[1]==='ready'?'Reviewed':(ps[1]==='review'?'Draft — needs review':'In progress')))+'</span></div>'
+    +'<span class="tm-cstat '+ps[1]+'">'+ps[0]+'</span><span class="chev">›</span></button>';
+  h+='<button class="tm-drow" data-attachrec="'+id+'"><span class="di" style="background:#0ea5e9">'+tmIcon('msg',17)+'</span>'
+    +'<div class="dt"><b>Attach Visit Recording</b><span>Plaud transcript → Claude report</span></div>'
+    +'<span class="chev">›</span></button>';
   h+='<button class="tm-primary" id="vd_complete" style="background:'+(done?'#16a34a':'#111')+'">'+(done?'✓ Visit complete':'Mark Visit Complete')+'</button>';
   h+='</div>';
   return h;
@@ -7661,7 +7823,25 @@ function mobReport_page(id){
   var tab=function(k,label,n){ return '<button class="vd-tab'+(MOB._visitTab===k?' on':'')+'" data-vt="'+k+'">'+label+(n?(' ('+n+')'):'')+'</button>'; };
   var pane='';
   if(MOB._visitTab==='report'){
-    pane='<div class="vd-sec"><div class="vd-lbl">Visit notes</div><div class="vd-ro">'+(v.notes?esc(v.notes):'<i>No notes yet</i>')+'</div></div>'
+    var pl=v.plaud, plHtml='';
+    if(pl){
+      var sec=function(lbl,val){ return val?('<div class="vd-sec"><div class="vd-lbl">'+lbl+'</div><div class="vd-ro">'+esc(val)+'</div></div>'):''; };
+      plHtml='<div class="tm-cstat '+((pl.status==='needs_review')?'review':(pl.status==='complete'?'ready':'proc'))+'" style="display:inline-block;margin-bottom:8px">Claude report · '+esc(pl.status||'draft')+(pl.version?(' · v'+pl.version):'')+'</div>'
+        +sec('Executive summary',pl.summary)
+        +sec('Dealer sentiment',pl.sentiment)
+        +sec('Key discussion points',pl.discussionPoints)
+        +sec('Inventory observations',pl.inventory)
+        +sec('Product interest',pl.productInterest)
+        +sec('Sales opportunities',pl.opportunities)
+        +sec('Competitor information',pl.competitorInfo)
+        +sec('Problems / risks',pl.concerns)
+        +sec('Arrowquip commitments',pl.commitArrowquip)
+        +sec('Dealer commitments',pl.commitDealer)
+        +sec('Cleaned transcript notes',pl.cleanedNotes)
+        +(pl.status==='needs_review'?'<button class="tm-primary" id="vd_approve" style="background:#16a34a;margin:4px 0 10px">Approve report</button>':'')
+        +'<div class="vd-lbl" style="margin-top:6px">Rep notes</div>';
+    }
+    pane=plHtml+'<div class="vd-sec"><div class="vd-lbl">Visit notes</div><div class="vd-ro">'+(v.notes?esc(v.notes):'<i>No notes yet</i>')+'</div></div>'
       +(v.attendees?'<div class="vd-sec"><div class="vd-lbl">Attendees</div><div class="vd-ro">'+esc(v.attendees)+'</div></div>':'')
       +'<div class="vd-sec"><div class="vd-lbl">Action items</div>'
         +(v.actions&&v.actions.length? v.actions.map(function(a){ return '<div class="vd-act"><span class="vd-chk'+(a.done?' on':'')+'"></span><span class="vd-at">'+esc(a.t)+'</span>'+(a.due?'<span class="vd-due">Due '+esc(a.due)+'</span>':'')+'</div>'; }).join('') : '<div class="vd-ro"><i>None</i></div>')
@@ -7709,21 +7889,121 @@ function mobTripReport_page(){
   h+='</div>';
   return h;
 }
-/* Call Dealer → Dialpad (§11); falls back to the native dialer only when Dialpad
-   isn't configured, never SMS, and surfaces a clear error otherwise. */
+/* Call Dealer → Dialpad (§4/§11). Primary action is Dialpad ONLY — never SMS and
+   never an automatic native-dialer fallback. On failure the user is shown a clear
+   message and a SEPARATE explicit "Call using phone instead" link is revealed. */
 function mobCallDealer(number, dealerId, visitId){
-  var tel='tel:'+encodeURIComponent(number);
-  if(typeof cloudBadge==='function') cloudBadge('Starting call…');
+  var st=document.getElementById('vd_callstatus');
+  var say=function(t){ if(st) st.textContent=t; else if(typeof cloudBadge==='function') cloudBadge(t); };
+  var reveal=function(){ var f=document.getElementById('vd_callfallback'); if(f) f.style.display=''; };
+  say('Starting Dialpad call…');
   fetch('/api/dialpad-call?k=aq-d3-4e8a1f60d9b2',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({number:number, dealerId:dealerId||'', visitId:visitId||''})})
     .then(function(r){ return r.json(); })
     .then(function(j){
-      if(j&&j.ok){ if(typeof cloudBadge==='function') cloudBadge('Calling '+(j.number||number)+' via Dialpad…'); return; }
-      if(j&&j.reason==='not_configured'){ if(typeof cloudBadge==='function') cloudBadge('Dialpad not set up — using phone dialer'); location.href=tel; return; }
-      alert('Could not start the Dialpad call'+((j&&j.message)?(': '+j.message):'.')+'\n\nTap OK to use your phone dialer instead.');
-      location.href=tel;
+      if(j&&j.ok){ say('Calling '+(j.number||number)+' via Dialpad…'); return; }
+      if(j&&j.reason==='not_configured'){ say('Dialpad is not configured for this account.'); reveal(); return; }
+      say('Could not start the Dialpad call.'); reveal();
     })
-    .catch(function(){ if(typeof cloudBadge==='function') cloudBadge('Offline — using phone dialer'); location.href=tel; });
+    .catch(function(){ say('Could not start the Dialpad call.'); reveal(); });
+}
+/* ---------- PLAUD / CLAUDE visit report (mobile attach) §1/§2 ----------
+   Statuses: received · unmatched · queued · processing · complete · needs_review · failed.
+   The structured report lives in VISIT[id].plaud (already structured, shared with desktop).
+   Reprocessing never silently overwrites a reviewed report — the prior version is kept
+   in VISIT[id].plaudHistory and the new one becomes the current draft. */
+function mobPlaudStatus(id){
+  var v=visitOf(id), pl=v.plaud;
+  if(pl){
+    var map={complete:['Ready','ready'],needs_review:['Needs review','review'],
+      processing:['Processing','proc'],queued:['Queued','proc'],received:['Received','proc'],
+      failed:['Failed','review'],unmatched:['Unmatched','review']};
+    return map[pl.status]||['Ready','ready'];
+  }
+  return ['None','none'];
+}
+/* stable client id so an offline/retried attach never double-processes */
+function mobNewRecordingId(){ return 'rec_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+/* attach sheet: paste transcript text or upload a .txt file, pre-bound to this visit */
+function mobAttachRecording(id){
+  var d=uniById(id)||{};
+  var inner='<div style="font-size:12.5px;color:#6b7280;margin-bottom:10px">Attach the Plaud transcript for <b>'+esc(d.name||'this dealer')+'</b>. It is bound to this visit before processing — no name-guessing.</div>'
+    +'<label class="tm-primary" style="display:flex;align-items:center;justify-content:center;cursor:pointer;background:#4338ca;margin-bottom:8px">'+tmIcon('folder',16)+'&nbsp; Upload transcript (.txt)'
+    +'<input id="ar_file" type="file" accept=".txt,text/plain" style="display:none"></label>'
+    +'<div class="tm-field"><label>Or paste transcript text</label><textarea id="ar_text" rows="6" placeholder="Paste the recording transcript here…"></textarea></div>'
+    +'<div class="tm-field"><label>Plaud link (optional)</label><input id="ar_link" placeholder="https://…"></div>'
+    +'<button class="tm-primary" id="ar_save">Attach &amp; process</button>'
+    +'<div id="ar_status" style="font-size:12px;color:#6b7280;text-align:center;margin-top:8px;min-height:16px"></div>';
+  var w=mobSheet('Attach Visit Recording', inner);
+  var fileInput=w.querySelector('#ar_file');
+  fileInput.onchange=function(){ var f=fileInput.files&&fileInput.files[0]; if(!f) return;
+    if(f.size>2*1024*1024){ alert('Transcript file is too large (max 2 MB of text).'); fileInput.value=''; return; }
+    var rd=new FileReader(); rd.onload=function(){ w.querySelector('#ar_text').value=String(rd.result||''); }; rd.readAsText(f);
+  };
+  w.querySelector('#ar_save').onclick=function(){
+    var text=(w.querySelector('#ar_text').value||'').trim();
+    var link=(w.querySelector('#ar_link').value||'').trim();
+    if(text.length<20){ alert('Paste or upload the transcript text first.'); return; }
+    var st=w.querySelector('#ar_status'); st.textContent='Attaching…';
+    mobProcessRecording(id, text, link, function(msg, ok){ st.textContent=msg; if(ok){ setTimeout(function(){ w.remove(); renderMobile(); },700); } });
+  };
+}
+/* insert the transcript record (with all shared IDs) then process via /api/process-notes */
+function mobProcessRecording(id, text, link, cb){
+  var d=uniById(id)||{};
+  var recId=mobNewRecordingId();
+  var meta={ recording_id:recId, visit_id:id, dealer_id:id, trip_id:(MOB.terr+':'+MOB.wk),
+    week_id:MOB.wk, territory:MOB.terr, user_id:pbActor(), status:'received', source:(link?'plaud-link':'mobile-paste') };
+  /* mark the visit as received immediately (optimistic, offline-safe) */
+  var v=visitOf(id); v._pendingRec={recording_id:recId, status:'received', at:new Date().toISOString(), link:link||null};
+  savePlan();
+  /* persist the raw transcript to prebooking_documents when a secure session exists */
+  var authed=(typeof SB!=='undefined' && SB && typeof pbAuthed==='function' && pbAuthed());
+  var persist = authed
+    ? SB.from('prebooking_documents').insert({ kind:'transcript', territory:MOB.terr, week:MOB.wk,
+        stop_key:id, title:'Recording — '+(d.name||id), storage_path:'transcripts/'+recId,
+        mime_type:'text/plain', source:meta.source, notes:link||null, ocr_text:text,
+        ocr_status:'received', metadata:meta, created_by:pbActor() }).select('id').maybeSingle()
+        .then(function(r){ return (r&&r.data&&r.data.id)||null; }, function(){ return null; })
+    : Promise.resolve(null);
+  persist.then(function(docId){
+    /* mark the transcript row done once attached+processed so it never appears in the
+       desktop Unmatched inbox (it already carries a visit_id) */
+    var finishDoc=function(status,fields){ if(authed&&docId){ try{ SB.from('prebooking_documents').update({ocr_status:status,metadata:Object.assign({},meta,{status:status}),ocr_fields:fields||null,approval_status:(status==='done'?'processed':'pending')}).eq('id',docId).then(function(){},function(){}); }catch(e){} } };
+    v._pendingRec.docId=docId; savePlan();
+    if(typeof navigator!=='undefined' && !navigator.onLine){
+      v._pendingRec.status='queued'; savePlan(); finishDoc('queued');
+      cb('Saved — will process when back online.', true); return;
+    }
+    cb('Processing with Claude…', false);
+    fetch('/api/process-notes?k=aq-d3-4e8a1f60d9b2',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({transcript:text})}).then(function(x){ return x.json(); }).then(function(j){
+      if(!j||!j.ok){
+        v._pendingRec.status=(j&&j.reason==='not_configured')?'queued':'failed';
+        v._pendingRec.error=(j&&(j.reason||j.message))||'unknown'; savePlan();
+        finishDoc(v._pendingRec.status);
+        cb((j&&j.reason==='not_configured')?'Saved to inbox — Claude not configured yet.':'Processing failed — saved for retry.', true); return;
+      }
+      /* version prior reviewed report instead of overwriting */
+      if(v.plaud){ v.plaudHistory=v.plaudHistory||[]; v.plaudHistory.push(v.plaud); }
+      v.plaud={ source:'plaud/transcript', link:link||null, recordingId:recId, visitId:id, dealerId:id,
+        tripId:meta.trip_id, weekId:MOB.wk, userId:pbActor(), model:j.model||'',
+        status:'needs_review', version:((v.plaudHistory&&v.plaudHistory.length)||0)+1,
+        processedAt:new Date().toISOString(), owner:(typeof pbActorLabel==='function'?pbActorLabel(pbActor()):pbActor()),
+        summary:j.summary||'', sentiment:j.dealer_sentiment||'',
+        reportNotes:(j.notes||[]).join('\n'), discussionPoints:(j.discussion_points||[]).join('\n'),
+        inventory:(j.inventory_observations||[]).join('\n'), productInterest:(j.product_interest||[]).join('\n'),
+        decisions:(j.decisions||[]).join('\n'), concerns:(j.concerns||[]).join('\n'),
+        opportunities:(j.opportunities||[]).join('\n'), competitorInfo:(j.competitor_info||[]).join('\n'),
+        commitArrowquip:(j.commitments_arrowquip||[]).join('\n'), commitDealer:(j.commitments_dealer||[]).join('\n'),
+        cleanedNotes:j.cleaned_transcript_notes||'' };
+      var tasks=(j.actions||[]).map(function(a){ return a.t?{t:a.t,owner:a.owner||'',due:a.due||'',status:'Open',notes:'',done:false}:null; }).filter(Boolean);
+      if(tasks.length) v.actions=(v.actions||[]).concat(tasks);
+      delete v._pendingRec; savePlan();
+      finishDoc('done', v.plaud);
+      cb('Report ready — review it in Claude Visit Report.', true);
+    }).catch(function(){ v._pendingRec.status='failed'; savePlan(); cb('Processing failed — saved for retry.', true); });
+  });
 }
 /* dispatch: page descriptor -> {title, body, menu} */
 function mobPageMeta(p){
@@ -7745,6 +8025,7 @@ function wireMobPage(p){
   if(p.type==='dealer'){
     q('[data-dphotos]').forEach(function(b){ b.onclick=function(){ mobPush({type:'dphotos',id:b.dataset.dphotos}); }; });
     q('[data-dreport]').forEach(function(b){ b.onclick=function(){ MOB._visitTab='report'; mobPush({type:'dreport',id:b.dataset.dreport}); }; });
+    q('[data-attachrec]').forEach(function(b){ b.onclick=function(){ mobAttachRecording(b.dataset.attachrec); }; });
     q('[data-mobcall]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); mobCallDealer(a.dataset.mobcall, p.id, p.id); }; });
     var mm=document.querySelector('#tripmode [data-mobmenu]'); if(mm) mm.onclick=function(){ mobDealerMenu(p.id); };
     var comp=document.getElementById('vd_complete');
@@ -7761,7 +8042,8 @@ function wireMobPage(p){
     [['store',''],['agreement',':agreement']].forEach(function(sec){
       var key=id+sec[1], grid=document.getElementById('vd_photos_'+sec[0]);
       if(grid) pbPhotoList(key).then(function(ps){
-        grid.innerHTML = ps.length ? ps.map(function(ph){ return '<div class="vd-ph"><img src="'+ph.url+'" alt=""><button class="vd-phdel" data-phdel="'+ph.id+'">×</button></div>'; }).join('') : '<div class="tm-empty" style="grid-column:1/-1">No photos yet.</div>';
+        var lbl={synced:'Synced',uploading:'Uploading',waiting:'Waiting',local:'On device',failed:'Failed'};
+        grid.innerHTML = ps.length ? ps.map(function(ph){ return '<div class="vd-ph"><img src="'+ph.url+'" alt=""><button class="vd-phdel" data-phdel="'+ph.id+'">×</button>'+(ph.state?'<span class="phst '+ph.state+'">'+(lbl[ph.state]||ph.state)+'</span>':'')+'</div>'; }).join('') : '<div class="tm-empty" style="grid-column:1/-1">No photos yet.</div>';
         grid.querySelectorAll('[data-phdel]').forEach(function(b){ b.onclick=function(){ if(!confirm('Delete this photo? If it has synced, this removes it from cloud storage too.')) return; pbPhotoDelete(b.dataset.phdel).then(function(){ renderMobile(); }); }; });
       });
       var cam=document.getElementById('vd_cam_'+sec[0]);
@@ -7779,6 +8061,7 @@ function wireMobPage(p){
   if(p.type==='dreport'){
     var id2=p.id, v=visitOf(id2);
     q('[data-vt]').forEach(function(b){ b.onclick=function(){ MOB._visitTab=b.dataset.vt; renderMobile(); }; });
+    var ap=document.getElementById('vd_approve'); if(ap) ap.onclick=function(){ if(v.plaud){ v.plaud.status='complete'; v.plaud.reviewedAt=new Date().toISOString(); savePlan(); renderMobile(); } };
     var ns=document.getElementById('vd_savenotes');
     if(ns) ns.onclick=function(){ v.notes=document.getElementById('vd_notes').value; v.attendees=document.getElementById('vd_att').value; v.followUp=document.getElementById('vd_fu').value; v.nextVisit=document.getElementById('vd_nv').value; visitSave(); MOB._visitTab='report'; renderMobile(); };
     var at=document.getElementById('vd_addt');
@@ -7787,13 +8070,7 @@ function wireMobPage(p){
     q('[data-vdel]').forEach(function(b){ b.onclick=function(){ v.actions.splice(+b.dataset.vdel,1); visitSave(); renderMobile(); }; });
   }
 }
-/* best-effort export: reuse the desktop trip-plan print/PDF path if present */
-function mobExportTripReport(){
-  if(typeof exportTripPlan==='function'){ try{ exportTripPlan(); return; }catch(e){} }
-  if(typeof buildTripReport==='function' && typeof tpOpen==='function'){ try{ tpOpen('Trip Report — '+MOB.terr+' Week '+MOB.wk, buildTripReport(MOB.terr,MOB.wk)); return; }catch(e){} }
-  if(typeof tpOpen==='function'){ try{ tpOpen('Trip Report', '<p>Open the desktop planner to generate the full trip PDF.</p>'); return; }catch(e){} }
-  alert('The trip PDF export is generated from the desktop planner. Open this trip on a larger screen to download the full report.');
-}
+function mobExportTripReport(){ generateTripReport(MOB.terr, MOB.wk); }
 /* three-dot menu on the dealer page: advanced actions kept off the main screen */
 function mobDealerMenu(id){
   var done=!!APPT[id];
@@ -7865,6 +8142,9 @@ function renderMobile(){
   if(MOB.tab==='route') mobUpdateDriveTotals();
   if(MOB.tab==='files'){ mobFillPhotosOverview();
     document.querySelectorAll('#tripmode [data-photosec]').forEach(function(b){ b.onclick=function(){ mobPush({type:'photosec',kind:b.dataset.photosec}); }; });
+  }
+  if(MOB.tab==='more'){ mobFillSync();
+    var sn=document.getElementById('mobSyncNow'); if(sn) sn.onclick=function(){ sn.disabled=true; sn.textContent='Syncing…'; pbFlushPending(function(){ mobFillSync(); sn.disabled=false; sn.textContent='Sync now'; }); };
   }
 }
 function wireMobile(){
@@ -8108,9 +8388,39 @@ function pbPhotoList(dealer){
     cloud.forEach(function(c){ have[c.storagePath]=true; });
     var pending=loc.filter(function(l){ return !(l.remotePath && have[l.remotePath]); });
     var all=cloud.concat(pending).sort(function(a,b){ return (a.at||0)-(b.at||0); });
-    return all.map(function(p){ return { id:(p.kind==='cloud'?('c:'+p.docId):('l:'+p.localId)), url:p.url, at:p.at }; });
+    var online=(typeof navigator==='undefined')||navigator.onLine;
+    var authed=(typeof pbAuthed==='function'&&pbAuthed());
+    return all.map(function(p){
+      /* never "synced" until the server confirms (cloud row, or remotePath ack) */
+      var st = p.kind==='cloud' ? 'synced'
+             : p.remotePath ? 'uploading'
+             : (!authed ? 'local' : (online ? 'uploading' : 'waiting'));
+      return { id:(p.kind==='cloud'?('c:'+p.docId):('l:'+p.localId)), url:p.url, at:p.at, state:st, pending:(p.kind!=='cloud') };
+    });
   });
 }
+/* all local rows not yet confirmed to the server (upload queue) */
+function pbAllLocalPending(){
+  return pbPhotoDB().then(function(db){ return new Promise(function(res){
+    var out=[], cur=db.transaction('photos','readonly').objectStore('photos').openCursor();
+    cur.onsuccess=function(e){ var c=e.target.result; if(c){ if(!c.value.remotePath) out.push({localId:c.value.id,dealer:c.value.dealer,blob:c.value.blob}); c.continue(); } else res(out); };
+    cur.onerror=function(){ res(out); };
+  });}).catch(function(){ return []; });
+}
+function pbPendingCount(){ return pbAllLocalPending().then(function(a){ return a.length; }, function(){ return 0; }); }
+/* flush the upload queue; only marks items synced once pbPhotoUploadOne records a remotePath */
+function pbFlushPending(cb){
+  if(typeof pbAuthed!=='function'||!pbAuthed()||(typeof navigator!=='undefined'&&!navigator.onLine)){ if(cb)cb(0,false); return; }
+  pbAllLocalPending().then(function(rows){
+    if(!rows.length){ if(cb)cb(0,true); return; }
+    Promise.all(rows.map(function(r){ return pbPhotoUploadOne(r.dealer, r.blob, r.localId).then(function(){return true;},function(){return false;}); }))
+      .then(function(res){ var ok=res.filter(Boolean).length; if(typeof cloudBadge==='function'&&ok) cloudBadge(ok+' item(s) synced'); if(cb)cb(ok,true); });
+  });
+}
+/* retry pending uploads automatically when the connection returns */
+if(typeof window!=='undefined') window.addEventListener('online', function(){
+  try{ pbFlushPending(function(n){ if(n && typeof mobIsPhone==='function' && mobIsPhone() && typeof renderMobile==='function') renderMobile(); }); }catch(e){}
+});
 function pbPhotoDeleteLocal(localId){
   return pbPhotoDB().then(function(db){ return new Promise(function(res){
     var tx=db.transaction('photos','readwrite'); tx.objectStore('photos').delete(localId); tx.oncomplete=res; tx.onerror=res;
