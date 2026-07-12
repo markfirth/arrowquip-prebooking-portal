@@ -3214,6 +3214,10 @@ let ALL_DAY='all';  /* 'all' or a day index within ALL_WK — leader day-by-day 
    territory-support reporting. */
 let ALL_EXEC='', ALL_REP='';   /* view state; RIDEALONG itself is declared with the plan stores */
 let ALL_RIDESCOPE='week';      /* 'week' | 'day' — what the leader selection applies to */
+/* Ride-along UI is temporarily disabled — flip to true to restore every
+   leader-planning surface. Stored pairings, attendance metadata and the
+   Graheme migration all remain intact and untouched. */
+let LEADER_UI=false;
 function execList(){ return (ADMIN.leaders&&ADMIN.leaders.length)?ADMIN.leaders:[]; }
 function execById(id){
   if(id==='Graeme') id='Graheme';                       /* legacy spelling */
@@ -3236,10 +3240,11 @@ function repOf(t){
 function initialsOf(n){ return String(n||'').split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'–'; }
 /* day-aware pairing: the day override wins, else the week-level pairing */
 function rideFor(t,wk,day){
+  if(!LEADER_UI) return '';
   if(day!=null&&day!=='all'&&RIDEALONG[t+'|'+wk+'|'+day]!=null) return RIDEALONG[t+'|'+wk+'|'+day];
   return RIDEALONG[t+'|'+wk]||'';
 }
-function rideLine(t,wk,day){ var e=execById(rideFor(t,wk,day)); return e?(e.name+' joining '+repOf(t)):''; }
+function rideLine(t,wk,day){ if(!LEADER_UI) return ''; var e=execById(rideFor(t,wk,day)); return e?(e.name+' joining '+repOf(t)):''; }
 /* store/clear the pairing for the trip (or day) currently in view */
 function rideStore(){
   if(!ALL_REP||typeof ALL_WK!=='number') return;
@@ -3313,7 +3318,7 @@ function leaderJoinStop(key){
 }
 /* action buttons inside ALL-map marker popups (leaders only) */
 function stopActionsHTML(s){
-  if(!isLeaderUser()||!ALL_REP||typeof ALL_WK!=='number') return '';
+  if(!LEADER_UI||!isLeaderUser()||!ALL_REP||typeof ALL_WK!=='number') return '';
   var b=function(act,lbl,extra){ return '<button class="lact" data-lact="'+act+'" '+(extra||'')+'>'+lbl+'</button>'; };
   var pos='data-lat="'+s.lat+'" data-lon="'+s.lon+'" data-n="'+esc(s.name)+'"';
   var h='<div class="lacts">';
@@ -3439,6 +3444,7 @@ function allFiltersHTML(){
 }
 /* executive ride-along selectors: which leader is travelling, whose trip they join */
 function rideRowHTML(){
+  if(!LEADER_UI) return '';
   var e=execById(ALL_EXEC);
   var execOpts='<option value="">— no leader —</option>'
     +execList().map(function(x){ return '<option value="'+x.id+'"'+(ALL_EXEC===x.id?' selected':'')+'>'+esc(x.name)+' — '+esc(x.title)+'</option>'; }).join('');
@@ -3807,7 +3813,7 @@ function allDrawMap(){
     var b=e.target.closest&&e.target.closest('.lact');
     if(b){ e.preventDefault(); e.stopPropagation(); try{_lvMap.closePopup();}catch(_){} leaderAction(b.dataset.lact,b.dataset); }
   });
-  if(isLeaderUser()&&ALL_REP&&typeof ALL_WK==='number'){
+  if(LEADER_UI&&isLeaderUser()&&ALL_REP&&typeof ALL_WK==='number'){
     _lvMap.on('click',function(ev){
       L.popup().setLatLng(ev.latlng)
         .setContent('<div class="lacts"><button class="lact" data-lact="here" data-lat="'+ev.latlng.lat.toFixed(5)+'" data-lon="'+ev.latlng.lng.toFixed(5)+'">+ Add stop here</button></div>')
@@ -4359,6 +4365,7 @@ function pinIcon(s,seq){
 /* concise hover tooltip per stop type — the popup stays for full details */
 /* attendance line for tooltips/cards: Joint · Andrew + Mark / Leader only · JW */
 function attLine(s){
+  if(!LEADER_UI) return '';
   var first=function(n){ return String(n||'').split(' ')[0]; };
   if(s.att==='joint'){ var e=execById(s.leader); return 'Joint · '+first(e?e.name:s.leader||'Leader')+' + '+first(repOf(s.terrName||ALL_REP||'')||''); }
   if(s.att==='leader'){ var e2=execById(s.leader); return 'Leader only · '+(e2?e2.name:(s.leader||'Leadership')); }
