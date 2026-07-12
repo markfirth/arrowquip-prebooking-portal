@@ -337,7 +337,9 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .maplegend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 .maplegend .ln{width:20px;height:0;border-top-width:2px;display:inline-block;}
 /* pins */
-.pin{display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;color:#fff;font-size:7.5px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1.5px solid #fff;}
+.pin{position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;color:#fff;font-size:7.5px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1.5px solid #fff;}
+/* subtle stop-order badge: which stop is first at a glance */
+.pinseq{position:absolute;top:-6px;right:-7px;min-width:11px;height:11px;padding:0 2px;border-radius:6px;background:#fff;border:1px solid #c9ced4;color:#374151;font:800 7px 'Open Sans',Arial,sans-serif;font-style:normal;line-height:9.5px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.18);}
 /* leaflet popup -> clean detail card */
 .leaflet-popup-content-wrapper{border-radius:var(--radius);box-shadow:0 10px 40px rgba(0,0,0,.15);}
 .leaflet-popup-content{margin:0;width:250px!important;}
@@ -914,6 +916,9 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 #apDrop .apmrow{display:flex;gap:6px;}
 #apDrop .apmrow input{flex:1;}
 #apDrop .apmrow button,#apDrop #apm_save{border:1px solid var(--line);border-radius:5px;background:#fff;font:700 10.5px 'Open Sans',Arial,sans-serif;padding:5px 9px;cursor:pointer;color:#111;}
+/* ALL map: day-by-day stepping controls */
+.daystep{display:inline-flex;align-items:center;gap:4px;}
+.dsbtn{padding:6px 10px;font-weight:800;}
 #apDrop #apm_save{background:#111;color:#fff;border-color:#111;}
 /* quiet routing-unavailable notice on maps */
 .aq-rtfail{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:600 10.5px 'Open Sans',Arial,sans-serif;color:var(--muted);box-shadow:0 1px 4px rgba(0,0,0,.12);}
@@ -1130,7 +1135,7 @@ function sfMasterMerge(d){
     o._sf=false;
   }
   /* planner-owned, editable: 2027 Target and both 2026 commitments */
-  src.booking='planner-fallback'; src.prebook2026='planner-fallback'; src.commit2026='planner-fallback';
+  src.booking='planner-fallback'; src.prebook2026='planner-fallback';
   /* local planner-owned */
   src.visitConfirmed='local'; src.atKickoff='local';
   o._sources=src; /* internal metadata only — not persisted, not displayed */
@@ -2957,7 +2962,8 @@ function renderAllView(){
   if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map');
   var sub=document.getElementById('allSub');
   if(sub)sub.textContent=(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
-    +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]))+' · read-only';
+    +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]
+      +(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY]?(' · '+dayLabels(ALL_WK)[ALL_DAY][0]+' '+dayLabels(ALL_WK)[ALL_DAY][1]):'')))+' · read-only';
   if(allMode==='map') renderAllMap(); else renderAllOverview();
 }
 function renderLeaderView(){
@@ -3158,6 +3164,7 @@ function renderLeaderSummary(){
 /* =================== ALL territory — executive planning view ================ */
 const AREA_CODE={East:'E',South:'S',Central:'C',West:'W',Exports:'X'};
 let ALL_WK='all';   /* 'all' or a week number — ONE filter state shared by Overview and Map */
+let ALL_DAY='all';  /* 'all' or a day index within ALL_WK — leader day-by-day stepping on the Map */
 let LV_TYPES={dealer:true,hotel:true,airport:true,rental:true,other:true,routes:true};
 function allAreas(){ return TERRS.filter(function(t){ return LV_AREAS[t]; }); }
 function allWeeksList(){ return [31].concat(FIELD_NUMS); }
@@ -3177,7 +3184,21 @@ function avConf(v){ return v.xv?!!v.xv.done:!!APPT[v.d.id]; }
 function allFiltersHTML(){
   var wkOpts='<option value="all"'+(ALL_WK==='all'?' selected':'')+'>All weeks</option>'
     +allWeeksList().map(function(w){return '<option value="'+w+'"'+(ALL_WK===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+  /* one week selected → a day filter with ‹ › stepping, so a leader can walk
+     the reps' appointments day by day and plan their own trip around them */
+  var dayCtl='';
+  if(ALL_WK!=='all'){
+    var labs=dayLabels(ALL_WK);
+    var dOpts='<option value="all"'+(ALL_DAY==='all'?' selected':'')+'>All days</option>'
+      +labs.map(function(l,i){return '<option value="'+i+'"'+(ALL_DAY===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join('');
+    dayCtl='<span class="daystep">'
+      +'<button class="btn dsbtn" id="allDayPrev" title="Previous day">‹</button>'
+      +'<select id="allDaySel" class="msearch" style="max-width:150px">'+dOpts+'</select>'
+      +'<button class="btn dsbtn" id="allDayNext" title="Next day">›</button>'
+      +'</span>';
+  }
   return '<div class="lvctl"><select id="allWkSel" class="msearch" style="max-width:230px">'+wkOpts+'</select>'
+    +dayCtl
     +'<span class="lvlegend" style="margin:0">'+TERRS.map(function(t){
         return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('')+'</span>'
     +'<button class="btn" id="allShowAll">Show All</button></div>';
@@ -3259,8 +3280,19 @@ function renderAllOverview(){
   allWireShared(host);
 }
 function allWireShared(host){
-  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){ ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); renderAllView(); pbSaveNav(); };
-  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; renderAllView(); pbSaveNav(); };
+  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){ ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); ALL_DAY='all'; renderAllView(); pbSaveNav(); };
+  var ds=document.getElementById('allDaySel'); if(ds) ds.onchange=function(){ ALL_DAY=(ds.value==='all')?'all':parseInt(ds.value,10); renderAllView(); };
+  var stepDay=function(dir){
+    if(ALL_WK==='all') return;
+    var n=dayLabels(ALL_WK).length;
+    var cur=(ALL_DAY==='all')?(dir>0?-1:n):ALL_DAY;
+    var nx=cur+dir;
+    ALL_DAY=(nx<0||nx>=n)?'all':nx;                 /* stepping past the edges returns to All days */
+    renderAllView();
+  };
+  var dp=document.getElementById('allDayPrev'); if(dp) dp.onclick=function(){ stepDay(-1); };
+  var dn=document.getElementById('allDayNext'); if(dn) dn.onclick=function(){ stepDay(1); };
+  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; ALL_DAY='all'; renderAllView(); pbSaveNav(); };
   host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderAllView(); pbSaveNav(); }; });
   host.querySelectorAll('[data-lvtype]').forEach(function(b){ b.onclick=function(){ LV_TYPES[b.dataset.lvtype]=!LV_TYPES[b.dataset.lvtype]; renderAllView(); }; });
   host.querySelectorAll('[data-adealer]').forEach(function(el){ el.onclick=function(){ allDealerModal(el.dataset.adealer); }; });
@@ -3472,11 +3504,14 @@ function allDrawMap(){
     var col=AREA_COLOR[t], rep=FLAT.tm[t]||'';
     wks.forEach(function(wk){
       var all=stopsForWeek(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
+      /* leader day view: one selected week can be stepped day by day */
+      if(ALL_WK!=='all'&&ALL_DAY!=='all') all=all.filter(function(s){ return s.dayIdx===ALL_DAY; });
+      var seqOf={}; all.forEach(function(s,i){ seqOf[s.key]=i+1; });   /* route order for the badges */
       var stops=all.filter(function(s){ return LV_TYPES[typeKey(s)]!==false; });
       stops.forEach(function(s){
         var stt=STOP_TYPES[normType(s.type)];
         var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
-        L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:stt.color,stt.glyph)}).addTo(_lvMap)
+        L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:stt.color,stt.glyph,seqOf[s.key])}).addTo(_lvMap)
           .bindTooltip(stopTip(s)+'<br>Week '+wk+' · '+esc([rep,t].filter(Boolean).join(' · '))).bindPopup(popupHTML(s));
         bounds.push([s.lat,s.lon]);
       });
@@ -3990,14 +4025,16 @@ function renderTerrMap(){
 }
 
 /* ---------- leaflet ---------- */
-/* small, subtle markers — one builder for every map */
-function mkPin(bg,glyph){
-  return L.divIcon({className:'', html:'<div class="pin" style="background:'+bg+'">'+(glyph||'')+'</div>',
+/* small, subtle markers — one builder for every map. seq (optional) adds a
+   tiny order badge so the first/next stop is obvious at a glance. */
+function mkPin(bg,glyph,seq){
+  return L.divIcon({className:'', html:'<div class="pin" style="background:'+bg+'">'+(glyph||'')
+      +(seq!=null?('<i class="pinseq">'+seq+'</i>'):'')+'</div>',
     iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-8]});
 }
-function pinIcon(s){
+function pinIcon(s,seq){
   var st=STOP_TYPES[normType(s.type)];
-  return mkPin(st.color,st.glyph);
+  return mkPin(st.color,st.glyph,seq);
 }
 /* concise hover tooltip per stop type — the popup stays for full details */
 function stopTip(s){
@@ -4188,7 +4225,7 @@ function drawTripMap(stops){
   var gen=++_aqMapGen; _tripMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
   var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
-  pts.forEach(function(s){ L.marker([s.lat,s.lon],{icon:pinIcon(s)}).addTo(_tripMap).bindTooltip(stopTip(s)).bindPopup(popupHTML(s)); });
+  pts.forEach(function(s,i){ L.marker([s.lat,s.lon],{icon:pinIcon(s,i+1)}).addTo(_tripMap).bindTooltip(stopTip(s)).bindPopup(popupHTML(s)); });
   var legs=[];
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
@@ -4225,10 +4262,10 @@ function lvDrawMap(){
     if(LV_REP && rep!==LV_REP) return;
     var col=AREA_COLOR[t];
     var stops=stopsForWeek(t,LV_WEEK).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
-    stops.forEach(function(s){
+    stops.forEach(function(s,i){
       var st=STOP_TYPES[normType(s.type)];
       var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
-      L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:st.color,st.glyph)}).addTo(_lvMap)
+      L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:st.color,st.glyph,i+1)}).addTo(_lvMap)
         .bindTooltip(stopTip(s)+'<br>'+esc([rep,t].filter(Boolean).join(' · '))).bindPopup(popupHTML(s));
       bounds.push([s.lat,s.lon]);
     });
@@ -4596,14 +4633,14 @@ function newSFRow(sf){
     loc:sf.loc||'', address:sf.address||'',
     lastYear:(sf.lastYear!=null?sf.lastYear:0), lat:(sf.lat!=null?sf.lat:null), lon:(sf.lon!=null?sf.lon:null),
     booking:0, loads:(sf.loads!=null?+sf.loads:0), visitConfirmed:false, atKickoff:false, remote:false,
-    commit2026:0, prebook2026:0, areaPlanning:true, status:'Not Started' };
+    prebook2026:0, areaPlanning:true, status:'Not Started' };
   o._sources={ name:sf.name?'salesforce':'planner-fallback', territory:sf.territory?'salesforce':'planner-fallback',
     tm:sf.tm?'salesforce':'planner-fallback', tier:sf.tier?'salesforce':'planner-fallback',
     loc:sf.loc?'salesforce':'planner-fallback', address:sf.address?'salesforce':'planner-fallback',
     lastYear:(sf.lastYear!=null?'salesforce':'planner-fallback'), lat:(sf.lat!=null?'salesforce':'planner-fallback'),
     lon:(sf.lon!=null?'salesforce':'planner-fallback'), booking:'planner-fallback',
     loads:(sf.loads!=null?'salesforce':'planner-fallback'),
-    commit2026:'planner-fallback', prebook2026:'planner-fallback',
+    prebook2026:'planner-fallback',
     visitConfirmed:'local', atKickoff:'local' };
   return o;
 }
@@ -4616,7 +4653,7 @@ function buildMasterUniverse(){
   ids.forEach(function(sid){
     var p=plannerBySf[sid];
     if(p){ var o=sfMasterMerge(p); o._accountId=sid; rows.push(o); }   /* matched: existing overlay, edits still bind to planner id */
-    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.commit2026=+ov.commit2026||0; nr.prebook2026=+ov.prebook2026||0; nr.origLock=!!ov.origLock; nr.t27loads=(ov.t27loads!=null?ov.t27loads:nr.t27loads); nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
+    else { var nr=newSFRow(SF_BY_ID[sid]); var ov=SF_OVERLAY[sid]; if(ov){ nr.booking=+ov.booking||0; nr.prebook2026=+ov.prebook2026||0; nr.origLock=!!ov.origLock; nr.t27loads=(ov.t27loads!=null?ov.t27loads:nr.t27loads); nr.visitConfirmed=!!ov.visitConfirmed; nr.atKickoff=!!ov.atKickoff; nr.remote=!!ov.remote; nr.areaPlanning=(ov.areaPlanning!==false); nr.status=ov.status||'Not Started'; } rows.push(nr); } /* new SF dealer: defaults, or lazy overlay_v1 values if edited */
   });
   DEALERS.forEach(function(d){ if(!sfLookup(d)){ var o=sfMasterMerge(d); o._local=true; rows.push(o); } }); /* local-only (not in Salesforce) */
   return rows;
@@ -4636,14 +4673,13 @@ function planningUniverse(){
 function uniById(id){ planningUniverse(); return _uniById[id]||byId[id]||null; }
 function masterHeadHTML(){
   var Y=planYear(), PY=Y-1;
-  return '<tr class="grprow"><th class="grp-sf" colspan="10"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="15">Planner (Editable)<span class="gsub">Targets, tiers, margins and confirmations calculate automatically</span></th><th></th></tr>'
+  return '<tr class="grprow"><th class="grp-sf" colspan="10"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="14">Planner (Editable)<span class="gsub">Targets, tiers, margins and confirmations calculate automatically</span></th><th></th></tr>'
     +'<tr class="colhdr">'
     +'<th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>'
     +'<th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>'
+    +'<th class="srt" data-mk="recordType">Record Type<span class="hlock"></span><span class="hinfo" title="Salesforce Account Record Type — read-only, populated during sync"> ⓘ</span></th>'
     +'<th class="srt num" data-mk="lastYear">'+PY+' Rev<span class="hlock"></span></th>'
     +'<th class="srt num" data-mk="loads">'+PY+' Loads<span class="hsub">Confirmed</span><span class="hlock"></span></th>'
-    +'<th class="srt" data-mk="recordType">Record Type<span class="hlock"></span><span class="hinfo" title="Salesforce Account Record Type — read-only, populated during sync"> ⓘ</span></th>'
-    +'<th class="srt num" data-mk="commit2026">'+PY+' Updated<span class="hsub">Commitment</span><span class="hinfo" title="The dealer\'s latest '+PY+' commitment. Editable at any time."> ⓘ</span></th>'
     +'<th class="srt num" data-mk="prebook2026">'+PY+' Original<span class="hsub">Pre-Booking Commitment</span><span class="hinfo" title="Manual entry only — never taken from Salesforce. Locks once confirmed."> ⓘ</span></th>'
     +'<th class="srt num" data-mk="t27loads">'+Y+' Target Loads<span class="hinfo" title="Editable. The ONLY input — revenue, tier, margin and co-op all calculate from it."> ⓘ</span></th>'
     +'<th class="srt num" data-mk="booking">'+Y+' Target<span class="hsub">Revenue (Mixed)</span></th>'
@@ -4701,10 +4737,9 @@ function renderMaster(){
     ${sfLock(d,'tier')?lockTD('',d.tier,'span',sfLockTitle(d)):`<td><select class="ed" data-f="tier">${selOpts(TIERS,d.tier)}</select></td>`}
     ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
+    ${d.recordType?lockTD('',d.recordType,'span','Salesforce Account Record Type — read-only.'):'<td'+mut+'>—</td>'}
     ${sfLock(d,'lastYear')?lockTD('num',fmtUSD(+d.lastYear||0),'span',sfLockTitle(d)):`<td class="num"><input class="ed num" data-f="lastYear" type="number" value="${d.lastYear||0}"></td>`}
     ${sfLock(d,'loads')?lockTD('num',(+d.loads||0),'span','Salesforce-derived count of Dealer Loads. Read-only.'):`<td class="num pln"><input class="ed num" data-f="loads" type="number" value="${d.loads||0}"></td>`}
-    ${d.recordType?lockTD('',d.recordType,'span','Salesforce Account Record Type — read-only.'):'<td'+mut+'>—</td>'}
-    <td class="num pln" title="The dealer's latest commitment — editable at any time."><input class="ed num" data-f="commit2026" type="number" value="${d.commit2026||''}" placeholder="—"></td>
     ${d.origLock
       ?`<td class="num sflock" title="Original Pre-Booking Commitment — confirmed and locked. Manual entry only."><span class="lockico">${LOCK_SVG}</span><span class="lockval">${fmtUSD(+d.prebook2026||0)}</span></td>`
       :`<td class="num pln" title="Original Pre-Booking Commitment — manual entry only, never taken from Salesforce. Confirm to lock."><input class="ed num" data-f="prebook2026" type="number" value="${d.prebook2026||''}" placeholder="—">${(+d.prebook2026>0)?`<button class="pblock" data-lockpb="${d.id}" title="Confirm this original commitment — it becomes locked">✓</button>`:''}</td>`}
@@ -4726,11 +4761,11 @@ function renderMaster(){
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`;}).join("");
   /* totals reflect the VISIBLE (filtered) rows only */
   var _fTot=rows.reduce(function(a,d){ var c=CALC.dealer(d)||{};
-    a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.cm+=(+d.commit2026||0); a.pb+=(+d.prebook2026||0);
+    a.rev+=(+d.lastYear||0); a.loads+=(+d.loads||0); a.pb+=(+d.prebook2026||0);
     a.tl+=c.loads||0; a.tgt+=c.revMixed||0; a.tcad+=c.revCAD||0;
     a.cfl+=c.confLoads||0; a.cfm+=c.confRevMixed||0; a.cfc+=c.confRevCAD||0; a.act+=c.actual||0;
-    return a; },{rev:0,loads:0,cm:0,pb:0,tl:0,tgt:0,tcad:0,cfl:0,cfm:0,cfc:0,act:0});
-  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td></td><td class="num">${fmtUSD(_fTot.cm)}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td class="num">CA$${Math.round(_fTot.tcad).toLocaleString()}</td><td></td><td></td><td></td><td class="num">${_fTot.cfl}</td><td class="num">${fmtUSD(_fTot.cfm)}</td><td class="num">CA$${Math.round(_fTot.cfc).toLocaleString()}</td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
+    return a; },{rev:0,loads:0,pb:0,tl:0,tgt:0,tcad:0,cfl:0,cfm:0,cfc:0,act:0});
+  document.getElementById("mFoot").innerHTML=`<tr><td></td><td class="tlabel">Total${rows.length<_allMerged.length?' (filtered · '+rows.length+')':''}</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmtUSD(_fTot.rev)}</td><td class="num">${_fTot.loads}</td><td class="num">${fmtUSD(_fTot.pb)}</td><td class="num">${_fTot.tl}</td><td class="num">${fmtUSD(_fTot.tgt)}</td><td class="num">CA$${Math.round(_fTot.tcad).toLocaleString()}</td><td></td><td></td><td></td><td class="num">${_fTot.cfl}</td><td class="num">${fmtUSD(_fTot.cfm)}</td><td class="num">CA$${Math.round(_fTot.cfc).toLocaleString()}</td><td class="num">${fmtUSD(_fTot.act)}</td><td></td><td></td><td></td><td></td></tr>`;
   renderSFBanner();
   wireMasterExtras();
   document.querySelectorAll('th.srt').forEach(th=>{th.classList.toggle('on',th.dataset.mk===k); const old=th.querySelector('.ar'); if(old)old.remove(); if(th.dataset.mk===k){const s=document.createElement('span');s.className='ar';s.textContent=dir>0?'▲':'▼';th.appendChild(s);}});
@@ -4877,8 +4912,8 @@ function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
   if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
-    if(SF_BY_ID[id] && ['booking','commit2026','prebook2026','t27loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
-      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,commit2026:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
+    if(SF_BY_ID[id] && ['booking','prebook2026','t27loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
+      var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
       if(f==='prebook2026'&&ov.origLock) return;    /* confirmed original commitment: locked */
       var ovOld=ov[f];
       if(el.type==='checkbox') ov[f]=!!el.checked; else if(f==='status') ov[f]=el.value; else ov[f]=Math.max(0,Math.round(parseFloat(el.value)||0));
@@ -4895,7 +4930,7 @@ function onMasterEdit(e){
   if(f==='remote'){ if(el.checked){ASSIGN[d.id]='remote';DAY[d.id]=null;TIME[d.id]='';} else {ASSIGN[d.id]=d.atKickoff?31:'pool';} savePlan(); withPreservedScroll(renderMaster); return; }
   let v;
   if(el.type==='checkbox') v=el.checked;
-  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='commit2026'||f==='prebook2026'||f==='t27loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
+  else if(f==='lastYear'||f==='booking'||f==='loads'||f==='prebook2026'||f==='t27loads') v=Math.max(0,Math.round(parseFloat(el.value)||0));
   else if(f==='loc') v=(el.value||'').trim().toUpperCase();
   else v=(el.value||'').trim();
   if(f==='prebook2026'&&d.origLock) return;        /* confirmed original commitment: locked */
@@ -4907,7 +4942,7 @@ function onMasterEdit(e){
     CALC.dirtyDealer(d.id,d.territory);              /* dealer → territory → company only */
     audit('target',{dealer:d.id,old:_old,neu:v});
   }
-  if(f==='commit2026'||f==='prebook2026') audit('commitment-field',{dealer:d.id,field:f,old:_old,neu:v});
+  if(f==='prebook2026') audit('commitment-field',{dealer:d.id,field:f,old:_old,neu:v});
   if(f==='loc'){ const c=COORD[v]; d.lat=c?c[0]:null; d.lon=c?c[1]:null; }
   if(f==='territory'){ ASSIGN[d.id]= d.atKickoff?31:(v==='Exports'?'remote':'pool'); DAY[d.id]=null; savePlan(); }
   if(f==='atKickoff'){ if(v){ASSIGN[d.id]=31;d.visitConfirmed=true;} else {ASSIGN[d.id]= d.territory==='Exports'?'remote':'pool';} DAY[d.id]=null; savePlan(); }
@@ -6441,9 +6476,9 @@ function mobDrawMap(){
   MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:true,attributionControl:true}).setView([43.5,-79],5);
   var gen=++_aqMapGen; MOB.map._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MOB.map);
-  pts.forEach(function(i){
+  pts.forEach(function(i,n){
     var ic=mobIcon(i);
-    L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+';width:20px;height:20px;font-size:10px">'+ic.g+'</div>',iconSize:[20,20],iconAnchor:[10,10]})})
+    L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+';width:20px;height:20px;font-size:10px">'+ic.g+'<i class="pinseq">'+(n+1)+'</i></div>',iconSize:[20,20],iconAnchor:[10,10]})})
       .addTo(MOB.map).bindPopup('<b>'+esc(i.name||mobKind(i))+'</b><br>'+esc(mobKind(i)));
   });
   /* one routed leg per consecutive pair — each individually tappable */
