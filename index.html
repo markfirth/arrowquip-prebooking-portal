@@ -10,7 +10,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Pre-Booking">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<title>Arrowquip · 2027 Pre-Booking Travel Planner</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png?v=3">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png?v=3">
+<link rel="shortcut icon" href="/icons/icon-192.png?v=3">
+<title>Pre-Booking Portal</title>
 <style>
 /* ===== Arrowquip design system — ported verbatim from the Sales Portal =====
    Source: sales.arrowquip.com  NavBar-module / home-module / RegisteredSalesCard-module
@@ -282,6 +285,17 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .mapnote{font-size:11px;color:var(--muted);margin-left:auto;}
 .mapwrap{padding:10px 14px 16px;overflow:auto;}
 .plansum{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff;}
+/* when the summary holds only the territory reset controls there is no big box —
+   just small, subtle secondary buttons aligned to the header row */
+.plansum.bare{border:0;background:none;overflow:visible;margin-bottom:0;justify-content:flex-start;}
+.plansum.bare .tctl{margin-left:0;}
+/* one tight control line: 2027 Dealer Program · Reset/Clear · Schedule/Map/History */
+.progbar{display:flex;align-items:center;gap:16px;margin:2px 0 10px;flex-wrap:wrap;}
+.progbar .progtext{display:flex;align-items:center;min-width:0;}
+.progbar .progtext .proginfo{flex:0 0 auto;order:0;margin:0;}
+.progbar #planActions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.progbar .plansum.bare{margin-bottom:0;}
+.progbar .pt{display:none;}
 .plansum .ps{flex:1 1 0;padding:12px 15px;border-right:1px solid var(--line-soft);} .plansum .ps:last-child{border-right:0;}
 .plansum .pl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
 .plansum .pv{font-size:15px;font-weight:600;color:var(--aq-black);margin-top:2px;}
@@ -457,7 +471,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tv-lbl{flex:0 0 54px;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
 .tv-in{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 5px;background:#fff;}
 .tv-in:focus{outline:none;border-color:#2563eb;}
-.tv-time{flex:0 0 82px;}
+.tv-time{flex:0 0 auto;width:auto;min-width:92px;white-space:nowrap;}
 .tv-code{flex:0 0 96px;text-transform:uppercase;font-weight:700;}
 .tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tv-place i{color:var(--muted-2);}
@@ -922,6 +936,11 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .legrow button:hover{border-color:#111;}
 .lsug{color:#92610a;white-space:nowrap;}
 .lsug .lsugx{border:0;background:none;padding:0 2px;color:#c2b49a;font-size:11px;}
+.legrow .ltime{color:#8a8e90;white-space:nowrap;}
+.lsug.ok{color:#4b5563;}
+.lsug.warn{color:#b45309;font-weight:600;}
+.lapply{border:1px solid var(--green)!important;color:var(--green)!important;background:#fff;margin-left:4px;font-weight:700;}
+.lapply:hover{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;}
 /* ---- undo toast ---- */
 #aqToast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100003;background:#1f2937;color:#fff;border-radius:9px;padding:9px 14px;font:600 12px 'Open Sans',Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;transition:opacity .3s;}
 #aqToast.out{opacity:0;}
@@ -962,17 +981,25 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 .kcard.vc .kc-name{display:block;width:100%;font-weight:700;color:var(--aq-black);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;margin-top:4px;}
 /* appointment confirmation: quiet outline until confirmed, then green.
    Un-confirming is a second-click ("Unconfirm?") — no permanent X. */
-.vok{flex:0 0 auto;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font:600 8px 'Open Sans',Arial,sans-serif;letter-spacing:0;line-height:1;cursor:pointer;padding:2.5px 5px;white-space:nowrap;}
+.vok{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font:600 8px 'Open Sans',Arial,sans-serif;letter-spacing:0;line-height:1;cursor:pointer;padding:2.5px 6px;white-space:nowrap;}
+/* subtle, perfectly round status dot — inline-flex keeps it from ever clipping */
+.vokdot{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:8px;height:8px;border-radius:50%;border:1px solid #c7ccd1;background:#fff;color:var(--green);font-size:6.5px;font-weight:800;line-height:1;box-sizing:border-box;}
 .vok:hover{border-color:var(--green);color:var(--green);}
+.vok:hover .vokdot{border-color:var(--green);}
 .vok.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;}
+.vok.on .vokdot{background:#fff;border-color:#fff;color:var(--green);}
 .vok.arm{background:#fff;border-color:#d97706;color:#d97706;}
 .vdel{flex:0 0 auto;}
 .vdel.arm{color:#fff;background:#dc2626;border-color:#dc2626;font-size:8.5px;font-weight:700;width:auto;padding:2px 6px;border-radius:4px;}
 .kcard.vc .kc-ctl{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:nowrap;min-width:0;}
 .kcard.vc .vf{min-width:0;font-family:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:3px 4px;background:#fff;color:var(--ink);}
 .kcard.vc select.vf{flex:1 1 auto;padding-right:14px;text-overflow:ellipsis;}
-.kcard.vc .vtime{flex:0 0 76px;width:76px;}
-.kcard.vc .vdur{flex:0 0 56px;width:56px;text-align:center;}
+/* native time input sized to its own content so the full time and AM/PM are
+   always visible (never clipped to "A" or a stray "M") and never wrap */
+.kcard.vc .vtime{flex:0 0 auto;width:auto;min-width:92px;white-space:nowrap;}
+.kcard.vc .vdur{flex:0 0 54px;width:54px;text-align:center;}
+input[type=time]{font-variant-numeric:tabular-nums;}
+input[type=time]::-webkit-datetime-edit{padding:0;}
 .vnote{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid transparent;border-radius:5px;padding:3px 5px;font:400 10.5px 'Open Sans',Arial,sans-serif;color:var(--muted);background:transparent;transition:border-color .15s,background .15s;}
 .vnote:hover{border-color:var(--line-soft);}
 .vnote:focus{border-color:var(--line);background:#fff;color:var(--ink);outline:none;}
@@ -1036,6 +1063,13 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 .xbar i{cursor:default;}
 .xbar i:hover{filter:brightness(1.08);}
 .xhint{font-size:.6rem;color:var(--muted-2);margin-top:.45rem;}
+.xhint.over{color:var(--green);font-weight:700;}
+/* loads target: a neutral track (not a blue block) with a green confirmed-loads
+   fill and the total load target labelled at the far end */
+.ltrack{position:relative;display:flex;align-items:center;height:16px;border-radius:8px;background:var(--line-soft);overflow:hidden;margin:.6rem 0 .35rem;}
+.ltrack .lfill{position:absolute;left:0;top:0;bottom:0;background:var(--green);border-radius:8px;min-width:2px;transition:width .3s ease;}
+.ltrack .ltgt{position:relative;margin-left:auto;padding:0 10px;font-size:.6rem;font-weight:700;letter-spacing:.02em;color:var(--muted);white-space:nowrap;z-index:1;}
+.xcv .lc{color:var(--green);}
 /* lock control for the Original 2026 Pre-Booking Commitment */
 .pblock{margin-left:4px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--muted);font:700 9px 'Open Sans',Arial,sans-serif;padding:2px 5px;cursor:pointer;vertical-align:middle;}
 .pblock:hover{border-color:var(--green);color:var(--green);}
@@ -1134,12 +1168,11 @@ body.dnd-on .kdaybody.over{outline:2px dashed var(--aq-red);outline-offset:-2px;
 <div class="wrap">
   <div class="cards" id="cards"></div>
   <div id="plannerView" style="display:none;">
-    <div class="planhead">
+    <div class="progbar" id="progBar">
+      <div class="progtext" id="progText"></div>
       <div class="pt" id="planTitle"></div>
-      <div class="statbar">
-        <div class="plansum" id="planSummary"></div>
-        <div class="pa"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
-      </div>
+      <div class="plansum" id="planSummary"></div>
+      <div class="pa" id="planActions"><div class="seg" id="terrSeg"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
     </div>
     <div class="planwrap" id="planwrap">
       <div class="sidebar">
@@ -1231,6 +1264,15 @@ function sfMasterMerge(d){
     src.loads='planner-fallback';   /* local-only dealer: no Salesforce loads, planner may enter one */
     o._sf=false;
   }
+  /* geocoded fallback: a dealer with no Salesforce/seed coordinates but a usable
+     address is located from the geocode cache (filled in the background). This
+     never overrides real coordinates and is device-local (not written to the
+     plan), so manual corrections and Salesforce data always win. */
+  if((o.lat==null||o.lon==null) && o.address){
+    try{ var _g=_GEOCACHE[_geoKey(o.address)];
+      if(_g){ o.lat=_g.lat; o.lon=_g.lon; o._geoApprox=!!_g.approx; src.lat=src.lon='geocoded'; }
+    }catch(e){}
+  }
   /* planner-owned, editable: 2027 Target and both 2026 commitments */
   src.booking='planner-fallback'; src.prebook2026='planner-fallback';
   /* local planner-owned */
@@ -1309,6 +1351,7 @@ function loadSFDealers(opts){
       try{ if(document.getElementById('mBody')) renderMaster(); }catch(e){ console.warn('[SF] renderMaster after sync failed',e); }
       try{ if(document.getElementById('cards')) renderCards(); }catch(e){ console.warn('[SF] renderCards after sync failed',e); }
       try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){ console.warn('[SF] renderPlanner after sync failed',e); }
+      try{ backfillCoords(); }catch(e){}   /* geocode any Salesforce accounts that arrived without billing coordinates */
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
@@ -1438,6 +1481,24 @@ function legArriveWarn(endMin,startStop,travelMin){
 }
 var _hotelDx=(function(){ try{ return JSON.parse(localStorage.getItem('aqHotelDismiss')||'{}'); }catch(e){ return {}; } })();
 function hotelDismiss(k){ _hotelDx[k]=1; try{ localStorage.setItem('aqHotelDismiss',JSON.stringify(_hotelDx)); }catch(e){} }
+/* absolute-week-minute formatting for cross-midnight travel labels. An arrival
+   after midnight belongs to the FOLLOWING calendar day — the day index comes
+   from the running week total, so "leave Sun 9:30 PM" correctly reads
+   "arrive Mon 1:00 AM". */
+function _absClock(mins){ var m=((Math.round(mins)%1440)+1440)%1440; return t12(addMin('00:00',m)); }
+function _absHHMM(mins){ var m=((Math.round(mins)%1440)+1440)%1440; return addMin('00:00',m); }
+function _absDow(wk,mins){ var di=Math.floor(Math.round(mins)/1440); var labs=(typeof wk==='number')?dayLabels(wk):[]; return (labs[di]&&labs[di][0])||''; }
+/* apply a leg's suggested time to the next stop (dealer visit / extra visit /
+   travel item). Only sets the time — never the day — and only when the user
+   chooses to, so a manually entered time is never silently overwritten. */
+function applyLegTime(bkey,hhmm){
+  if(!bkey||!hhmm) return;
+  var k=bkey.slice(0,1), id=bkey.slice(2);
+  if(k==='d') setVisitField('i:'+id,'time',hhmm);
+  else if(k==='x') setVisitField('x:'+id,'time',hhmm);
+  else if(k==='m') setTravelField(id,'time',hhmm);
+  refreshPlanner();
+}
 function legRowHTML(a,b,wk){
   if(wk===31) return '';                              /* kickoff: head office, no travel */
   var endA=(a.time?((a.day||0)*1440+minOf(a.time)+(a.dur||0)):null);
@@ -1477,18 +1538,36 @@ function legFill(row){
     var lbl=(row.dataset.hotel==='1')
       ? ('🚗 '+esc(names[0])+' → '+esc(names[1])+' · '+fmtDur(dm)+' · '+mi+' mi')
       : ('🚗 Drive · '+fmtDur(dm)+' · '+mi+' mi');
-    var warn='';
+    var wk=parseInt(row.dataset.wk,10);
     var ea=row.dataset.ea, tb=row.dataset.tb.split('|');
-    if(ea!==''&&tb[1]) warn=legArriveWarn(+ea,{day:+tb[0],time:tb[1]},dm);
-    var sug='';
-    var thr=((settingsFor(terr).maxDrive||3))*60;
-    if(dm>thr && row.dataset.hotel!=='1' && !_hotelDx[row.dataset.lkey]){
-      sug=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+row.dataset.wk+'">Add hotel?</button>'
-        +'<button class="lsugx" data-lkey="'+esc(row.dataset.lkey)+'" title="Don’t suggest again for this leg">×</button></span>';
+    var bday=+tb[0], btime=tb[1];
+    var bkey=(row.dataset.lkey.split('>')[1])||'';
+    row.classList.remove('lfail','lwarn');
+    /* departure + estimated arrival (with the correct day when it crosses midnight) */
+    var timing='', sug='';
+    if(ea!==''){
+      var depAbs=+ea, arrAbs=depAbs+dm;
+      timing=' · <span class="ltime">Leave '+(_absDow(wk,depAbs)?_absDow(wk,depAbs)+' ':'')+_absClock(depAbs)
+             +' · Arrive '+(_absDow(wk,arrAbs)?_absDow(wk,arrAbs)+' ':'')+_absClock(arrAbs)+'</span>';
+      var applyBtn='<button class="lapply" data-bkey="'+esc(bkey)+'" data-t="'+_absHHMM(arrAbs)+'" title="Use this time for the next stop">Use</button>';
+      if(!btime){
+        /* no time yet on the next item → a subtle, one-click suggestion */
+        sug=' <span class="lsug ok">Suggested: '+_absClock(arrAbs)+' based on '+fmtDur(dm)+' drive '+applyBtn+'</span>';
+      } else if(bday*1440+minOf(btime) < arrAbs){
+        /* entered time is earlier than physically possible */
+        sug=' <span class="lsug warn">Earliest possible arrival: '+_absClock(arrAbs)+' '+applyBtn+'</span>';
+        row.classList.add('lwarn');
+      }
     }
-    row.classList.remove('lfail');
-    if(warn) row.classList.add('lwarn');
-    tx.innerHTML=lbl+warn+sug;
+    /* long-drive hotel hint stays available, but never competes with an arrival warning */
+    if(!sug || row.dataset.hotel==='1'){
+      var thr=((settingsFor(terr).maxDrive||3))*60;
+      if(dm>thr && row.dataset.hotel!=='1' && !_hotelDx[row.dataset.lkey] && !(sug&&/warn/.test(sug))){
+        sug+=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+row.dataset.wk+'">Add hotel?</button>'
+          +'<button class="lsugx" data-lkey="'+esc(row.dataset.lkey)+'" title="Don’t suggest again for this leg">×</button></span>';
+      }
+    }
+    tx.innerHTML=lbl+timing+sug;
   });
 }
 function hydrateDriveRows(){
@@ -1987,16 +2066,22 @@ function renderCards(){
   var pc=function(b){ return target?Math.round(b/target*100):0; };
   var tip=function(lbl,b,l){ return lbl+' — '+fmtUSD(b)+' · '+Math.round(l)+' loads · '+pc(b)+'% of target'; };
   var cad=function(v){ return 'CA$'+Math.round(v).toLocaleString(); };
+  /* Loads-first target: confirmed pre-booking loads (green) against the total
+     load target (labelled at the far end). No blue block, no CAD, no surplus
+     dollars — the unit here is loads. */
+  var tgtL=Math.round(targetLoads), cL=Math.round(confL);
+  var overL=Math.max(0,cL-tgtL);
+  var pctL=tgtL?Math.min(100,cL/tgtL*100):0;
   var card1='<div class="xc xc-target">'
-    +'<div class="xch">'+Y+' Target</div>'
-    +'<div class="xcv">'+fmtUSDk(target)+'<span class="xcl">'+Math.round(targetLoads)+' loads · '+cad(targetCAD)+'</span>'
-      +(overB>0?('<span class="xover">+'+fmtUSDk(overB)+' over target</span>'):'')+'</div>'
-    +'<div class="xbar">'
-      +'<i class="c" style="width:'+cPct.toFixed(1)+'%" title="'+esc(tip('Confirmed',confB,confL))+'"></i>'
-      +'<i class="p" style="width:'+pPct.toFixed(1)+'%" title="'+esc(tip('Planned — not yet confirmed',planB,planL))+'"></i>'
-      +'<i class="r" style="width:'+Math.max(0,100-cPct-pPct).toFixed(1)+'%" title="'+esc(tip('Remaining',remB,remL))+'"></i>'
+    +'<div class="xch">'+Y+' Pre-Booking Target</div>'
+    +'<div class="xcv"><b class="lc">'+cL+'</b><span class="xcl">confirmed loads</span></div>'
+    +'<div class="ltrack" title="'+cL+' confirmed of a '+tgtL+'-load target">'
+      +'<i class="lfill" style="width:'+pctL.toFixed(1)+'%"></i>'
+      +'<span class="ltgt">'+tgtL+'-load target</span>'
     +'</div>'
-    +'<div class="xhint">Hover the bar — green confirmed · blue planned · grey remaining</div>'
+    +(overL>0
+      ? ('<div class="xhint over">'+overL+' load'+(overL===1?'':'s')+' above target</div>')
+      : ('<div class="xhint">'+Math.max(0,tgtL-cL)+' load'+((tgtL-cL)===1?'':'s')+' to target · '+fmtUSDk(confB)+' confirmed</div>'))
     +'</div>';
   /* --- Card 2: Confirmed Pre-Booking — the commitment ledger, Mixed + CAD --- */
   var cfShare=target?confB/target*100:0;
@@ -2005,13 +2090,27 @@ function renderCards(){
     +'<div class="xcv">'+fmtUSDk(confB)+'<span class="xcl">'+Math.round(confL)+' loads · '+cad(confCAD)+'</span></div>'
     +'<div class="xstats" style="margin-top:6px"><div class="xs"><b>'+cfShare.toFixed(0)+'%</b><span>of regional target</span></div></div>'
     +'</div>';
-  /* --- Card 3: Confirmation Progress — unique pre-book dealers, confirmed vs not --- */
-  var cfPct=pbDs.length?conf.length/pbDs.length*100:0;
+  /* --- Card 3: Confirmation Process — EVERY appointment-type card, confirmed vs
+     not. Counts both Pre-booking appointments and normal dealer Visits (initial
+     visits + additional XVISITS); non-appointment travel (hotels, flights,
+     airports, rentals) is never counted. The two percentages always total 100.
+     No appointments yet → a neutral zero state, never a divide-by-zero. --- */
+  var apptTotal=0, apptConf=0;
+  ds.forEach(function(d){ var a=ASSIGN[d.id]; if(a!=null && a!=='pool'){ apptTotal++; if(APPT[d.id]) apptConf++; } });
+  XVISITS.forEach(function(x){
+    if(!(terr==='All'||terr==='Master')){ var d=byId[x.dealer]||uniById(x.dealer); if(!d||d.territory!==terr) return; }
+    apptTotal++; if(x.done) apptConf++;
+  });
+  var cfPct=apptTotal?apptConf/apptTotal*100:0;
+  var cfC=Math.round(cfPct), cfN=100-cfC;
   var card3='<div class="xc">'
-    +'<div class="xch">Confirmation Progress</div>'
-    +'<div class="xcb">'+ringSVG(cfPct,'#16a34a')
-    +'<div class="xstats"><div class="xs"><b>'+Math.round(cfPct)+'%</b><span>Confirmed</span></div>'
-    +'<div class="xs muted"><b>'+Math.round(100-cfPct)+'%</b><span>Not Confirmed</span></div></div></div>'
+    +'<div class="xch">Confirmation Process</div>'
+    +(apptTotal
+      ? ('<div class="xcb">'+ringSVG(cfPct,'#16a34a')
+        +'<div class="xstats"><div class="xs"><b>'+cfC+'%</b><span>Confirmed</span></div>'
+        +'<div class="xs muted"><b>'+cfN+'%</b><span>Not Confirmed</span></div></div></div>'
+        +'<div class="xhint">'+apptConf+' of '+apptTotal+' visit &amp; pre-book cards confirmed</div>')
+      : '<div class="xcb">'+ringSVG(0,'#c7ccd1')+'<div class="xstats"><div class="xs muted"><b>—</b><span>No visits scheduled</span></div></div></div>')
     +'</div>';
   /* subtle expandable program reference — never a banner */
   var prog='<details class="proginfo"><summary>ⓘ '+Y+' Dealer Program</summary>'
@@ -2021,7 +2120,13 @@ function renderCards(){
     +'</tbody></table>'
     +'<div class="pgnotes">Pre-booking opens <b>October 31</b> · co-op accrues from <b>January 1</b> · production slots are <b>first come, first served</b></div>'
     +'</div></details>';
-  document.getElementById("cards").innerHTML=card1+card2+card3+prog;
+  /* On the territory planner the program reference sits on one compact line with
+     the Reset/Clear and Schedule/Map/History controls (the #progBar header row);
+     on the ALL / Master dashboard there is no planner header, so it stays under
+     the KPI cards as before. */
+  var _inPlanner=(terr!=='All'&&terr!=='Master');
+  document.getElementById("cards").innerHTML=card1+card2+card3+(_inPlanner?'':prog);
+  var _pt=document.getElementById("progText"); if(_pt) _pt.innerHTML=(_inPlanner?prog:'');
 }
 function dealerCard(d){
   d=sfMasterMerge(d);
@@ -2049,7 +2154,8 @@ function renderPlanner(){
   else if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(b.booking-a.booking);});
   else pool.sort(function(a,b){return b.booking-a.booking;});
   document.getElementById("sbTitle").textContent="Dealer Library — "+terr;
-  document.getElementById("sbSub").textContent=pool.length+" of "+poolAll.length+" dealers · click or drag + Pre-book / + Visit to schedule";
+  /* dealer-count and drag instructions removed — the library starts cleanly at its controls */
+  var _sbSub=document.getElementById("sbSub"); if(_sbSub){ _sbSub.textContent=''; _sbSub.style.display='none'; }
   let body="";
   if(!pool.length){ body=`<div class="poolempty">${poolAll.length?'No matches.':'No dealers in this territory yet.'}</div>`; }
   else if(poolSort==='state'){ let cur=null; pool.forEach(d=>{ if(d.loc!==cur){cur=d.loc; body+=`<div class="grp">${d.loc||'—'}</div>`;} body+=dealerCard(d); }); }
@@ -2058,8 +2164,10 @@ function renderPlanner(){
   const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
   /* the secondary KPI strip is gone — the primary dashboard tells the story.
      Only the quiet territory utilities live here now. */
-  document.getElementById("planSummary").innerHTML=
-    ((terr!=='All'&&terr!=='Master')?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
+  var _psum=document.getElementById("planSummary");
+  var _showReset=(terr!=='All'&&terr!=='Master');
+  _psum.className='plansum bare';
+  _psum.innerHTML=(_showReset?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -2644,23 +2752,125 @@ function apInit(){
   document.addEventListener('scroll',function(e){ if(_apInput&&!box.contains(e.target)) hide(); },true);
 }
 
-/* ---- geocoding (OpenStreetMap Nominatim). Results are cached on the item, so a
-       given address is looked up once, ever. Attribution is required and shown. ---- */
+/* ---- geocoding ------------------------------------------------------------
+   Any address that can be found on the map resolves here. The lookup is not a
+   single exact-format call: the address is normalised (stray undefined/null
+   tokens dropped, duplicate city/state collapsed, separators cleaned), then
+   tried through a fallback ladder of progressively looser variations against
+   two free providers — OpenStreetMap Nominatim first, komoot Photon as the
+   Google-compatible secondary. Successful coordinates are cached in
+   localStorage (keyed by the normalised address) so a given address is looked
+   up once, ever; manual corrections are never overwritten. Variations looser
+   than the full address are flagged approx so an approximate (city/postal)
+   hit is never silently presented as an exact rooftop match. ---- */
+var _GEOCACHE=(function(){ try{ return JSON.parse(localStorage.getItem('aqGeoCacheV1')||'{}'); }catch(e){ return {}; } })();
+function _geoCacheSave(){ try{ localStorage.setItem('aqGeoCacheV1',JSON.stringify(_GEOCACHE)); }catch(e){} }
+/* clean a raw/composed address: drop undefined/null tokens, tidy separators and
+   whitespace, and collapse consecutive duplicate comma segments (e.g. a
+   Salesforce "Calhoun, GA, GA" or a doubled city). */
+function cleanAddr(s){
+  s=String(s==null?'':s).replace(/\b(?:undefined|null|nan)\b/gi,' ');
+  s=s.replace(/[;\n\r\t|]+/g,', ').replace(/\s+/g,' ').trim();
+  var parts=s.split(',').map(function(p){return p.trim();}).filter(Boolean);
+  var out=[]; parts.forEach(function(p){ if(!out.length||out[out.length-1].toLowerCase()!==p.toLowerCase()) out.push(p); });
+  return out.join(', ');
+}
+function _geoKey(s){ return cleanAddr(s).toLowerCase(); }
+/* build the fallback ladder from a full address string */
+function geocodeVariants(q){
+  q=cleanAddr(q);
+  var parts=q.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var vs=[], seen={};
+  var push=function(x){ x=cleanAddr(x); var k=x.toLowerCase(); if(x&&!seen[k]){ seen[k]=1; vs.push(x); } };
+  push(q);                                             /* 1. full normalized address */
+  if(parts.length>=2){
+    push(parts.slice(1).join(', '));                   /* 2. drop leading business/unit token */
+    if(parts.length>=4) push([parts[1]].concat(parts.slice(-3)).join(', ')); /* 3. street + city/state/zip */
+    push(parts.slice(-3).join(', '));                  /* 4. street/city/state or city/state/zip */
+    push(parts.slice(-2).join(', '));                  /* 5. city + state/province, or zip + city */
+  }
+  return vs;
+}
+function _geoNominatim(q){
+  return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.ok?r.json():[]; })
+    .then(function(j){ return (j&&j[0])?{lat:parseFloat(j[0].lat),lon:parseFloat(j[0].lon),display:j[0].display_name}:null; })
+    .catch(function(){ return null; });
+}
+function _geoPhoton(q){
+  return fetch('https://photon.komoot.io/api/?limit=1&q='+encodeURIComponent(q))
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(j){ var f=j&&j.features&&j.features[0]; if(!f||!f.geometry||!f.geometry.coordinates) return null;
+      var c=f.geometry.coordinates, p=f.properties||{};
+      var disp=[p.name,p.street,p.city,p.state,p.country].filter(Boolean).join(', ');
+      return {lat:c[1],lon:c[0],display:disp||q}; })
+    .catch(function(){ return null; });
+}
 var _geoBusy={};
 function geocodeAddress(q,cb){
-  q=(q||'').trim();
+  q=cleanAddr(q);
   if(!q){ cb(null); return; }
-  if(_geoBusy[q]){ cb(null); return; }
-  _geoBusy[q]=1;
-  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q='+encodeURIComponent(q);
-  fetch(url,{headers:{'Accept':'application/json'}})
-    .then(function(r){ return r.ok?r.json():[]; })
-    .then(function(j){
-      delete _geoBusy[q];
-      if(j&&j[0]) cb({lat:parseFloat(j[0].lat), lon:parseFloat(j[0].lon), display:j[0].display_name});
-      else cb(null);
-    })
-    .catch(function(){ delete _geoBusy[q]; cb(null); });
+  var key=_geoKey(q);
+  if(_GEOCACHE[key]){ cb(_GEOCACHE[key]); return; }
+  if(_geoBusy[key]){ setTimeout(function(){ geocodeAddress(q,cb); },500); return; }
+  _geoBusy[key]=1;
+  var vars=geocodeVariants(q), i=0;
+  function finish(res){ delete _geoBusy[key]; if(res){ _GEOCACHE[key]=res; _geoCacheSave(); } cb(res); }
+  function tryNext(){
+    if(i>=vars.length){ finish(null); return; }
+    var idx=i++, v=vars[idx], approx=idx>0;
+    _geoNominatim(v).then(function(r){
+      if(r){ if(approx)r.approx=true; finish(r); return; }
+      _geoPhoton(v).then(function(r2){
+        if(r2){ if(approx)r2.approx=true; finish(r2); return; }
+        tryNext();
+      });
+    });
+  }
+  tryNext();
+}
+/* throttled queue (~1 req/sec, respects Nominatim usage policy) for background
+   backfill of many addresses at once */
+var _geoQ=[], _geoQBusy=false;
+function geocodeQueue(q,cb){ _geoQ.push({q:q,cb:cb}); _geoQPump(); }
+function _geoQPump(){
+  if(_geoQBusy) return; var job=_geoQ.shift(); if(!job) return;
+  var key=_geoKey(job.q);
+  if(_GEOCACHE[key]){ try{ job.cb&&job.cb(_GEOCACHE[key]); }catch(e){} _geoQPump(); return; }
+  _geoQBusy=true;
+  geocodeAddress(job.q,function(r){ _geoQBusy=false; try{ job.cb&&job.cb(r); }catch(e){} setTimeout(_geoQPump,1100); });
+}
+/* Fill missing coordinates for dealers (Salesforce accounts with no billing
+   lat/lon) and travel items that have an address but no coordinates. Dealer
+   hits live only in the geocode cache (merged in sfMasterMerge) so the plan
+   JSON is never touched; travel hits are written to the item and persisted.
+   Never overwrites an existing coordinate — manual corrections are preserved. */
+function backfillCoords(){
+  var jobs=[], lchanged=false;
+  try{ (typeof planningUniverse==='function'?planningUniverse():DEALERS).forEach(function(d){
+    var lat=d.lat, lon=d.lon, addr=d.address;
+    var sf=(typeof sfLookup==='function')?sfLookup(d):null;
+    if(sf){ if(sf.lat!=null)lat=sf.lat; if(sf.lon!=null)lon=sf.lon; if(sf.address)addr=sf.address; }
+    if((lat==null||lon==null) && addr && !_GEOCACHE[_geoKey(addr)]) jobs.push({q:addr});
+  }); }catch(e){}
+  (LOGI||[]).forEach(function(it){
+    if(travelHasLocation(it)) return;
+    var q=[it.name,it.address].filter(Boolean).join(', '); if(!q) return;
+    var g=_GEOCACHE[_geoKey(q)];
+    if(g){ it.lat=g.lat; it.lon=g.lon; it._geoApprox=!!g.approx; lchanged=true; }
+    else jobs.push({q:q, apply:it});
+  });
+  if(lchanged) try{ savePlan(); }catch(e){}
+  if(!jobs.length){ return; }
+  var remaining=jobs.length, wrote=false;
+  jobs.forEach(function(j){ geocodeQueue(j.q,function(r){
+    if(r && j.apply){ j.apply.lat=r.lat; j.apply.lon=r.lon; j.apply._geoApprox=!!r.approx; wrote=true; }
+    if(--remaining<=0){ if(wrote){ try{ savePlan(); }catch(e){} } refreshAfterGeo(); }
+  }); });
+}
+function refreshAfterGeo(){
+  try{ if(document.getElementById('cards')) renderCards(); }catch(e){}
+  try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){}
 }
 
 /* ---- model helpers ---- */
@@ -2838,13 +3048,13 @@ function travelCard(it,wk){
   var whenLbl=isHotel?'Check-in':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
-    +'<input class="tv-in tv-time" type="time" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||'')+'">'
+    +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||'')+'">'
     +'</div>';
   var when2='';
   if(isHotel){
     when2='<div class="tv-row"><label class="tv-lbl">Check-out</label>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2)+'</select>'
-      +'<input class="tv-in tv-time" type="time" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||'')+'">'
+      +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||'')+'">'
       +'</div>';
   }
 
@@ -2994,7 +3204,7 @@ function dvCard(v){
   /* week + day come from WHERE the card sits — moving it is the only way to
      change them. The card edits only time, duration and notes inline. */
   var ctl=v.remote?'':'<div class="kc-ctl">'
-      +'<input class="vf vtime" type="time" '+da+' data-f="time" title="Start time" value="'+esc(v.time)+'">'
+      +'<input class="vf vtime" type="time" step="900" '+da+' data-f="time" title="Start time (15-minute steps; type any exact time)" value="'+esc(v.time)+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
@@ -3002,12 +3212,11 @@ function dvCard(v){
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
-      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'">'+(v.done?'✓ Conf.':'○ Confirm')+'</button>'
+      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
     +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)+'</div>'
     +ctl+frame
-    +'<input class="vnote" '+da+' data-f="notes" placeholder="Notes" value="'+esc(v.notes)+'">'
     +'</div>';
 }
 /* one writer for every inline field on either card kind */
@@ -6119,6 +6328,8 @@ function uiInit(){
     if(hb){ addTravel('hotel', hb.dataset.wk); return; }
     var xb=e.target.closest&&e.target.closest('.lsugx');
     if(xb){ hotelDismiss(xb.dataset.lkey); var s=xb.closest('.lsug'); if(s)s.remove(); return; }
+    var ab=e.target.closest&&e.target.closest('.lapply');
+    if(ab){ e.stopPropagation(); applyLegTime(ab.dataset.bkey, ab.dataset.t); return; }
     /* card selection (for the Delete key): click empty card area */
     var kc=e.target.closest&&e.target.closest('#weeks .kcard.vc');
     if(kc&&!e.target.closest('input,select,button,textarea,.kc-name')){
@@ -6869,6 +7080,7 @@ function unlockApp(){
     pbRestoreNav();     /* refresh returns to the same tab/view/week */
     render();
     mobBoot();          /* Trip Mode: phone widths only */
+    try{ backfillCoords(); }catch(e){}   /* resolve any missing coordinates in the background */
   });
   initRealtime(); loadSFDealers();
   try{ fxAutoRefresh(false); }catch(e){}   /* currency engine: daily auto-refresh, last good rate kept */
