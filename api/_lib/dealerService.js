@@ -141,7 +141,17 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
     tm: acc.Territory_Manager__c || '',
     name: acc.Name || '',
     loc,
-    address: [acc.BillingStreet, acc.BillingCity, acc.BillingState].filter(Boolean).join(', '),
+    // Full postal address for display AND geocoding. Includes StateCode fallback,
+    // postal code and country so the geocoder's lookup ladder can disambiguate
+    // same-named streets/cities in other states (fixes wrong-location mapping).
+    address: [
+      acc.BillingStreet,
+      acc.BillingCity,
+      acc.BillingState || acc.BillingStateCode,
+      acc.BillingPostalCode,
+      acc.BillingCountryCode,
+    ].filter(Boolean).join(', '),
+    postal: acc.BillingPostalCode || null,
     tier: acc.Account_Tier_Text__c || 'New',
     // 2026 Loads — Salesforce-derived COUNT of Dealer Loads opportunities
     // (Production_Estimated_Ship_Date__c in 2026, stage Closed Won or Prebooked).
@@ -186,7 +196,7 @@ async function fetchAllDealers() {
   const base = `${instanceUrl}/services/data/${apiVersion()}`
   const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
   const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
-  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, RecordType.Name, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingCountryCode, BillingLatitude, BillingLongitude`
+  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, RecordType.Name, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingPostalCode, BillingCountryCode, BillingLatitude, BillingLongitude`
 
   const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
   const [accounts, opp27, opp26, pb26] = await Promise.all([
@@ -252,6 +262,49 @@ async function fetchAllDealers() {
   return accounts.map((a) => mapDealer(a, by27[a.Id], by26[a.Id], byLoads[a.Id] || 0, byContact[a.Id], by26any[a.Id]))
 }
 
+// ── Record Type validation / audit (read-only) ──────────────────────────────
+// The main dealer feed hard-filters `RecordType.Name = 'Arrowquip Dealer'`, so a
+// dealer whose record type differs (different label, casing, trailing space) or
+// whose Territory_Manager is one of the approved five is SILENTLY EXCLUDED and
+// shows a blank Record Type in the portal. This audit runs a separate query over
+// every account managed by an approved TM — regardless of record type — and flags
+// any whose record type is not the expected literal. Never mutates anything.
+const EXPECTED_RECORD_TYPE = readEnv('SALESFORCE_DEALER_RECORD_TYPE') || 'Arrowquip Dealer'
+
+async function auditRecordTypes() {
+  const { accessToken, instanceUrl } = await authenticate()
+  const base = `${instanceUrl}/services/data/${apiVersion()}`
+  const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
+  // Every account owned by an approved planning TM, any record type.
+  const rows = await queryAll(base, instanceUrl, accessToken,
+    `SELECT Id, Name, Territory_Manager__c, RecordType.Name, RecordTypeId ` +
+    `FROM Account WHERE Territory_Manager__c IN (${tmList})`)
+  const mismatches = []
+  rows.forEach((a) => {
+    const rt = (a.RecordType && a.RecordType.Name) || null
+    if (rt !== EXPECTED_RECORD_TYPE) {
+      mismatches.push({
+        id: a.Id,
+        name: a.Name || '',
+        tm: a.Territory_Manager__c || '',
+        recordType: rt,                                  // what SF actually has
+        recordTypeId: a.RecordTypeId || null,
+        expected: EXPECTED_RECORD_TYPE,
+        reason: rt == null ? 'RecordType missing/inaccessible'
+          : (rt.trim() === EXPECTED_RECORD_TYPE ? 'whitespace/casing difference'
+          : 'different record type — excluded from dealer feed'),
+      })
+    }
+  })
+  return {
+    expected: EXPECTED_RECORD_TYPE,
+    approvedTmCount: rows.length,
+    matched: rows.length - mismatches.length,
+    mismatchCount: mismatches.length,
+    mismatches,
+  }
+}
+
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────
 let _cache = null // { dealers, fetchedAt }
 function isFresh() { return !!_cache && Date.now() - _cache.fetchedAt < CACHE_TTL_MS }
@@ -283,4 +336,4 @@ async function getDealerById(id) {
   return dealers.find((d) => d.sfAccountId === id || d.id === id) || null
 }
 
-module.exports = { getDealers, getDealerById, ACCESS_TOKEN, CACHE_TTL_MS }
+module.exports = { getDealers, getDealerById, auditRecordTypes, ACCESS_TOKEN, CACHE_TTL_MS }
