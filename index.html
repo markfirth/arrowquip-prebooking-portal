@@ -3191,7 +3191,7 @@ function travelCard(it,wk,tl){
   var autoT=(!it.time&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   /* manually locked: the time is fixed and can't be edited until unlocked */
   var tvFixed=!!(tl&&it.time&&tl.locked);
-  var whenLbl=isHotel?'Check-in':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
+  var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
     +'<input class="tv-in tv-time'+(autoT?' tv-auto':'')+'" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
@@ -3206,14 +3206,11 @@ function travelCard(it,wk,tl){
       +'</div>';
   }
 
-  /* timeline strip: estimated arrival + backward-derived check-out-by */
+  /* timeline strip: the arrival goes straight into the time field above —
+     the only extra hint is the backward-derived check-out-by */
   var tlRow='';
-  if(tl){
-    var bits=[];
-    if(tl.estArr!=null) bits.push((isHotel?'Est. arrival ':'Arrive ~')+'<b>'+tlT(tl.estArr)+'</b>');
-    if(isHotel&&tl.coMin==null&&tl.depSug!=null) bits.push('Check out by <b>'+tlT(tl.depSug)+'</b> to make the next stop');
-    if(bits.length) tlRow='<div class="tv-tl">'+bits.join(' · ')+'</div>';
-  }
+  if(tl&&isHotel&&tl.coMin==null&&tl.depSug!=null)
+    tlRow='<div class="tv-tl">Check out by <b>'+tlT(tl.depSug)+'</b> to make the next stop</div>';
 
   /* airline / flight number / confirmation / notes removed — the box stays
      compact: place + day + time (plus check-out for hotels). */
