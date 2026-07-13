@@ -1558,6 +1558,10 @@ function dayLabels(wk){ if(wk===31) return [["Tue","Jul 28"],["Wed","Jul 29"]]; 
   for(let i=0;i<7;i++){const d=new Date(base);d.setDate(base.getDate()+i);out.push([nm[i],d.toLocaleString('en-US',{month:'short'})+' '+d.getDate()]);}
   return out;
 }
+/* Spec day abbreviations (M/T/W/TH/F/SA/SU) for the narrow day dropdowns, so the
+   day is never clipped. Wider dropdowns keep the full "Mon Jul 28" label. */
+var DAY_SHORT={Sun:'SU',Mon:'M',Tue:'T',Wed:'W',Thu:'TH',Fri:'F',Sat:'SA'};
+function dayShortLabel(l){ return (DAY_SHORT[l[0]]||l[0])+' '+String(l[1]||'').replace(/^[A-Za-z]+\s+/,''); }
 function t12(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; const hr=h%12||12; return hr+':'+String(m).padStart(2,'0')+' '+ap; }
 /* Full AM/PM display (never the truncated 'a'/'p'). Still round-trips through
    parseTimeLoose, which lower-cases and accepts the trailing 'm'. */
@@ -3375,7 +3379,7 @@ function travelCard(it,wk,tl){
   var ty=travelType(it), T=TRAVEL_TYPES[ty];
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var dayOpts=function(sel){ return '<option value="">— day —</option>'+labs.map(function(l,i){
-      return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join(''); };
+      return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+dayShortLabel(l)+'</option>';}).join(''); };
 
   var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
