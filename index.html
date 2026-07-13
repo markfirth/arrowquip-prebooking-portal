@@ -1642,7 +1642,7 @@ function tlSeq(t,wk){
     } else {
       var it=logiById[id];
       s.it=it; s.ty0=it?travelType(it):s.ty;
-      s.isFlight=(s.ty0==='flight_in'||s.ty0==='flight_out');
+      s.isFlight=(s.ty0==='flight_in'||s.ty0==='flight_out'||s.ty0==='flight_stop');
       s.prio=(s.isFlight&&s.anchored)?5:(s.locked?3:(s.anchored?2:0));
       if(s.ty0==='hotel'&&it){
         /* check-out IS the departure: the next morning chains from it */
@@ -2378,6 +2378,7 @@ function renderPlanner(){
 const TRAVEL_TYPES={
   flight_in :{label:'Arrival', icon:'✈', color:'#2563eb', place:'airport'},
   flight_out:{label:'Depart',icon:'✈', color:'#2563eb', place:'airport'},
+  flight_stop:{label:'Flight stop', icon:'✈', color:'#2563eb', place:'airport'},   /* connection / layover between airports */
   rental_pickup:{label:'Pickup', icon:'🚗', color:'#16a34a', place:'address'},
   rental_return:{label:'Return', icon:'🚗', color:'#16a34a', place:'address'},
   hotel     :{label:'Hotel',         icon:'🏨', color:'#7c3aed', place:'address'},
@@ -2387,7 +2388,7 @@ const TRAVEL_TYPES={
   other     :{label:'Other',         icon:'•',  color:'#6b7280', place:'address'}
 };
 /* which budget category an item's expenses default to */
-const TRAVEL_CAT={flight_in:'Flights',flight_out:'Flights',rental_pickup:'Rental Cars',
+const TRAVEL_CAT={flight_in:'Flights',flight_out:'Flights',flight_stop:'Flights',rental_pickup:'Rental Cars',
   rental_return:'Rental Cars',hotel:'Hotels',fuel:'Fuel',food:'Food',
   parking:'Parking / Tolls',other:'Other'};
 
@@ -3213,7 +3214,7 @@ function travelCard(it,wk,tl){
   var dayOpts=function(sel){ return '<option value="">— day —</option>'+labs.map(function(l,i){
       return '<option value="'+i+'"'+(sel===i?' selected':'')+'>'+l[0]+' '+l[1]+'</option>';}).join(''); };
 
-  var isFlight=(ty==='flight_in'||ty==='flight_out');
+  var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
   var located=travelHasLocation(it);
 
@@ -3254,7 +3255,7 @@ function travelCard(it,wk,tl){
   var autoT=(!it.time&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   /* manually locked: the time is fixed and can't be edited until unlocked */
   var tvFixed=!!(tl&&it.time&&tl.locked);
-  var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
+  var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':(ty==='flight_stop'?'Lands':'When'))));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
     +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
@@ -5054,7 +5055,7 @@ let MAPF={};
 let SIDEBAR_TAB='overview';   /* overview | budget | files */
 /* legacy LOGI types predate this view: flight -> airport */
 /* map the location-based travel types onto the map's pin vocabulary */
-const MAP_PIN={flight_in:'airport',flight_out:'airport',rental_pickup:'rental',rental_return:'rental',
+const MAP_PIN={flight_in:'airport',flight_out:'airport',flight_stop:'airport',rental_pickup:'rental',rental_return:'rental',
   hotel:'hotel',fuel:'fuel',food:'meal',parking:'other',other:'other',
   flight:'airport',rental:'rental'};   /* last two: legacy records, pre-migration */
 function normType(t){ if(MAP_PIN[t]) return MAP_PIN[t]; return STOP_TYPES[t]?t:'other'; }
