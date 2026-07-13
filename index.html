@@ -1482,6 +1482,9 @@ function loadSFDealers(opts){
       try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){ console.warn('[SF] renderPlanner after sync failed',e); }
       try{ backfillCoords(); }catch(e){}   /* geocode any Salesforce accounts that arrived without billing coordinates */
       try{ if(typeof runHealth==='function') setTimeout(runHealth,300); }catch(e){}   /* refresh System Health with live sync results */
+      /* A MANUAL Salesforce refresh also kicks the full (throttled) coordinate audit
+         in the background — startup never does, keeping first paint lightweight. */
+      try{ if(force && typeof auditGeoDrift==='function') setTimeout(function(){ auditGeoDrift(function(){ try{renderHealth();}catch(e){} }); },1500); }catch(e){}
     }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; try{if(typeof runHealth==='function')runHealth();}catch(_e){} cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
@@ -3196,15 +3199,22 @@ function geocodeAddress(q,cb){
   tryNext();
 }
 /* throttled queue (~1 req/sec, respects Nominatim usage policy) for background
-   backfill of many addresses at once */
-var _geoQ=[], _geoQBusy=false;
-function geocodeQueue(q,cb){ _geoQ.push({q:q,cb:cb}); _geoQPump(); }
+   backfill of many addresses at once. A transient miss (network/rate-limit) is
+   retried up to twice with a longer backoff before giving up, so a full dealer
+   scan never trips the geocoder's rate limits. */
+var _geoQ=[], _geoQBusy=false, _GEO_GAP_MS=1100, _GEO_RETRY_MS=3000, _GEO_MAX_TRIES=3;
+function geocodeQueue(q,cb){ _geoQ.push({q:q,cb:cb,tries:0}); _geoQPump(); }
 function _geoQPump(){
   if(_geoQBusy) return; var job=_geoQ.shift(); if(!job) return;
   var key=_geoKey(job.q);
   if(_GEOCACHE[key]){ try{ job.cb&&job.cb(_GEOCACHE[key]); }catch(e){} _geoQPump(); return; }
   _geoQBusy=true;
-  geocodeAddress(job.q,function(r){ _geoQBusy=false; try{ job.cb&&job.cb(r); }catch(e){} setTimeout(_geoQPump,1100); });
+  geocodeAddress(job.q,function(r){
+    _geoQBusy=false;
+    if(!r && ++job.tries<_GEO_MAX_TRIES){ _geoQ.unshift(job); setTimeout(_geoQPump,_GEO_RETRY_MS); return; }  /* retry transient failures */
+    try{ job.cb&&job.cb(r); }catch(e){}
+    setTimeout(_geoQPump,_GEO_GAP_MS);
+  });
 }
 /* Fill missing coordinates for dealers (Salesforce accounts with no billing
    lat/lon) and travel items that have an address but no coordinates. Dealer
@@ -3244,8 +3254,11 @@ function refreshAfterGeo(){
    Salesforce, Supabase, geocoding, routing and dealer sync. A background
    coordinate scan re-geocodes every dealer and flags any location that differs
    significantly from its Salesforce coordinates. Read-only; never mutates data. */
-var HEALTH={checks:{},flags:[],geoMissing:[],at:0};
-var GEO_DRIFT_MI=35;   /* geocode-vs-Salesforce distance treated as significant */
+var HEALTH={checks:{},flags:[],geoMissing:[],geoApprox:[],scan:null,at:0};
+/* Drift is judged against the confidence of the fresh geocode: a precise
+   street-level (rooftop) resolve must agree within 5 mi; a looser city-level
+   fallback need only agree within 15 mi. */
+var GEO_DRIFT_STREET_MI=5, GEO_DRIFT_CITY_MI=15;
 function _hcSet(name,status,detail){ HEALTH.checks[name]={status:status,detail:detail}; try{renderHealth();}catch(e){} }
 function _hcOverall(){ var v=Object.keys(HEALTH.checks).map(function(k){return HEALTH.checks[k];}); if(!v.length)return 'pending';
   if(v.some(function(c){return c.status==='fail';}))return 'fail'; if(v.some(function(c){return c.status==='warn';})||HEALTH.flags.length)return 'warn'; return 'ok'; }
@@ -3265,18 +3278,31 @@ function runHealth(){
     _hcSet('Dealer sync',st,(m.matched!=null?(m.matched+' matched · '+(m.fallback||0)+' fallback'):(uni.length+' dealers'))+(noCoord?(' · '+noCoord+' need coords'):'')); }
   catch(e){ _hcSet('Dealer sync','warn','n/a'); }
 }
-/* Deep coordinate audit — re-geocode every dealer and flag drift vs Salesforce. */
-function auditGeoDrift(cb){
+/* Deep coordinate audit — re-geocode every dealer (throttled, with retry) and flag
+   drift vs Salesforce. Verified street-level resolves use a 5-mi threshold; loose
+   city-level (approx) resolves a 15-mi threshold and are reported separately.
+   onProgress(done,total) fires as each dealer resolves. NOT run at startup. */
+function auditGeoDrift(cb,onProgress){
   var uni=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
   var jobs=uni.filter(function(d){return d.address;});
-  var flags=[], missing=[], remaining=jobs.length;
-  if(!remaining){ HEALTH.flags=[]; HEALTH.geoMissing=[]; cb&&cb({flags:[],missing:[]}); return; }
+  var flags=[], missing=[], total=jobs.length, done=0;
+  HEALTH.scan={done:0,total:total,running:true};
+  if(!total){ HEALTH.flags=[]; HEALTH.geoMissing=[]; HEALTH.scan={done:0,total:0,running:false}; cb&&cb({flags:[],missing:[]}); return; }
   jobs.forEach(function(d){ geocodeQueue(d.address,function(g){
     if(!g){ if(d.lat==null||d.lon==null) missing.push(d.name); }
-    else if(d.lat!=null&&d.lon!=null&&!g.approx){ var mi=hav([+d.lat,+d.lon],[g.lat,g.lon]);
-      if(mi!=null&&mi>GEO_DRIFT_MI) flags.push({name:d.name,miles:Math.round(mi),address:d.address}); }
-    if(--remaining<=0){ flags.sort(function(a,b){return b.miles-a.miles;}); HEALTH.flags=flags; HEALTH.geoMissing=missing;
-      try{console.warn('[geo audit] '+flags.length+' drift flag(s), '+missing.length+' unlocatable');}catch(e){} cb&&cb({flags:flags,missing:missing}); }
+    else if(d.lat!=null&&d.lon!=null){
+      var mi=hav([+d.lat,+d.lon],[g.lat,g.lon]);
+      var thr=g.approx?GEO_DRIFT_CITY_MI:GEO_DRIFT_STREET_MI;
+      if(mi!=null&&mi>thr) flags.push({name:d.name,miles:Math.round(mi),address:d.address,
+        level:g.approx?'city':'street', threshold:thr});
+    }
+    done++; HEALTH.scan={done:done,total:total,running:done<total};
+    if(onProgress){ try{ onProgress(done,total); }catch(e){} }
+    if(done>=total){ flags.sort(function(a,b){return b.miles-a.miles;}); HEALTH.flags=flags; HEALTH.geoMissing=missing;
+      // dealers currently sitting on an approximate (city-level) coordinate, surfaced apart from drift
+      HEALTH.geoApprox=uni.filter(function(x){return x._geoApprox;}).map(function(x){return x.name;});
+      try{console.warn('[geo audit] '+flags.length+' drift flag(s), '+missing.length+' unlocatable, '+HEALTH.geoApprox.length+' on approximate coords');}catch(e){}
+      cb&&cb({flags:flags,missing:missing,approx:HEALTH.geoApprox}); }
   }); });
 }
 function renderHealth(){
@@ -3293,10 +3319,13 @@ function renderHealth(){
     +'.shrow.warn2{color:#b45309;font-weight:700;font-size:11.5px;border-top:1px solid var(--line-soft,#eee);margin-top:6px;padding-top:8px;}'
     +'.shflag{font-size:11px;color:#6b7280;padding:2px 0 2px 24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
     +'.shscan{margin-top:10px;width:100%;font-size:10.5px;padding:7px;}'
-    +'@media(max-width:700px){#sysHealth{display:none;}}';
+    +'.shflag .lvl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#9ca3af;}'
+    +'.shprog{font-size:11px;color:#6b7280;margin-top:8px;}'
+    /* Mobile: keep it accessible as a small status dot (never fully hidden). */
+    +'@media(max-width:700px){#sysHealth{left:10px;bottom:10px;} #shChip .shlbl{display:none;} #shChip{padding:8px;} #shPanel{width:270px;}}';
     document.head.appendChild(s); }
   var el=document.getElementById('sysHealth');
-  if(!el){ el=document.createElement('div'); el.id='sysHealth'; el.innerHTML='<div id="shPanel"></div><button id="shChip"><span class="shdot"></span><span class="shlbl"></span></button>';
+  if(!el){ el=document.createElement('div'); el.id='sysHealth'; el.innerHTML='<div id="shPanel"></div><button id="shChip" title="System Health"><span class="shdot"></span><span class="shlbl"></span></button>';
     document.body.appendChild(el); el.querySelector('#shChip').onclick=function(){ el.classList.toggle('open'); }; }
   var ov=_hcOverall(), dot={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626',pending:'#9ca3af'}[ov];
   var chip=el.querySelector('#shChip'); chip.style.setProperty('--shc',dot);
@@ -3306,9 +3335,12 @@ function renderHealth(){
     var col={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626'}[c.status]||'#9ca3af', ic={ok:'✓',warn:'!',fail:'✕'}[c.status]||'…';
     return '<div class="shrow"><span class="shi" style="background:'+col+'">'+ic+'</span><span class="shn">'+n+'</span><span class="shd" title="'+esc(c.detail||'')+'">'+esc(c.detail||'')+'</span></div>'; }).join('');
   var flags=(HEALTH.flags&&HEALTH.flags.length)?('<div class="shrow warn2">⚠ '+HEALTH.flags.length+' coordinate drift flag'+(HEALTH.flags.length===1?'':'s')+'</div>'
-    +HEALTH.flags.slice(0,6).map(function(f){return '<div class="shflag" title="'+esc(f.address)+'">'+esc(f.name)+' · '+f.miles+' mi from Salesforce</div>';}).join('')):'';
-  el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>';
-  var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; sc.textContent='Scanning…'; runHealth(); auditGeoDrift(function(){ sc.disabled=false; sc.textContent='Re-check & scan coordinates'; renderHealth(); }); };
+    +HEALTH.flags.slice(0,6).map(function(f){return '<div class="shflag" title="'+esc(f.address)+'"><span class="lvl">'+(f.level==='city'?'CITY':'STREET')+'</span> '+esc(f.name)+' · '+f.miles+' mi (>'+f.threshold+')</div>';}).join('')):'';
+  var approx=(HEALTH.geoApprox&&HEALTH.geoApprox.length)?('<div class="shrow warn2" style="color:#6b7280">◑ '+HEALTH.geoApprox.length+' on approximate (city-level) coords</div>'):'';
+  var prog=(HEALTH.scan&&HEALTH.scan.running)?('<div class="shprog">Scanning coordinates… '+HEALTH.scan.done+' / '+HEALTH.scan.total+'</div>'):'';
+  el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+approx+prog+'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>';
+  var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; runHealth();
+    auditGeoDrift(function(){ sc.disabled=false; renderHealth(); }, function(done,total){ if(sc) sc.textContent='Scanning… '+done+'/'+total; if((done%10)===0) renderHealth(); }); };
 }
 
 /* ---- model helpers ---- */
