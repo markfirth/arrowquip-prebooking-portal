@@ -3062,8 +3062,11 @@ function apInit(){
    up once, ever; manual corrections are never overwritten. Variations looser
    than the full address are flagged approx so an approximate (city/postal)
    hit is never silently presented as an exact rooftop match. ---- */
-var _GEOCACHE=(function(){ try{ return JSON.parse(localStorage.getItem('aqGeoCacheV1')||'{}'); }catch(e){ return {}; } })();
-function _geoCacheSave(){ try{ localStorage.setItem('aqGeoCacheV1',JSON.stringify(_GEOCACHE)); }catch(e){} }
+/* V2: cache format now carries a verified `state`; the V1 cache may hold
+   wrong-state hits accepted before verification existed, so it is abandoned
+   (entries re-resolve in the throttled background under the new ladder). */
+var _GEOCACHE=(function(){ try{ localStorage.removeItem('aqGeoCacheV1'); }catch(e){} try{ return JSON.parse(localStorage.getItem('aqGeoCacheV2')||'{}'); }catch(e){ return {}; } })();
+function _geoCacheSave(){ try{ localStorage.setItem('aqGeoCacheV2',JSON.stringify(_GEOCACHE)); }catch(e){} }
 /* clean a raw/composed address: drop undefined/null tokens, tidy separators and
    whitespace, and collapse consecutive duplicate comma segments (e.g. a
    Salesforce "Calhoun, GA, GA" or a doubled city). */
@@ -3090,10 +3093,31 @@ function geocodeVariants(q){
   }
   return vs;
 }
+/* US state name→code and Canadian provinces, for verifying a geocode hit lands in
+   the expected state/province rather than a same-named place elsewhere. */
+var _US_STATES={alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY',alberta:'AB','british columbia':'BC',manitoba:'MB','new brunswick':'NB','newfoundland and labrador':'NL','nova scotia':'NS',ontario:'ON','prince edward island':'PE',quebec:'QC',saskatchewan:'SK'};
+var _STATE_CODES=(function(){var s={};for(var k in _US_STATES)s[_US_STATES[k]]=1;return s;})();
+/* Pull a 2-letter state/province code out of an address string (matches a bare
+   code token like ", FL," or a full state name like "Florida"). null if none. */
+function _expectState(q){
+  var parts=String(q||'').split(',').map(function(s){return s.trim();});
+  for(var i=0;i<parts.length;i++){ var t=parts[i].toUpperCase(); if(t.length===2&&_STATE_CODES[t]) return t; }
+  var low=String(q||'').toLowerCase();
+  for(var name in _US_STATES){ if(low.indexOf(name)>=0) return _US_STATES[name]; }
+  return null;
+}
+/* map a geocoder's returned address block to a 2-letter code for comparison */
+function _resultState(addr){
+  if(!addr) return null;
+  var code=(addr['ISO3166-2-lvl4']||'').split('-')[1];
+  if(code&&code.length===2) return code.toUpperCase();
+  var st=(addr.state||addr.province||'').toLowerCase();
+  return _US_STATES[st]||null;
+}
 function _geoNominatim(q){
   return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}})
     .then(function(r){ return r.ok?r.json():[]; })
-    .then(function(j){ return (j&&j[0])?{lat:parseFloat(j[0].lat),lon:parseFloat(j[0].lon),display:j[0].display_name}:null; })
+    .then(function(j){ return (j&&j[0])?{lat:parseFloat(j[0].lat),lon:parseFloat(j[0].lon),display:j[0].display_name,state:_resultState(j[0].address)}:null; })
     .catch(function(){ return null; });
 }
 function _geoPhoton(q){
@@ -3114,12 +3138,17 @@ function geocodeAddress(q,cb){
   if(_geoBusy[key]){ setTimeout(function(){ geocodeAddress(q,cb); },500); return; }
   _geoBusy[key]=1;
   var vars=geocodeVariants(q), i=0;
+  var wantState=_expectState(q);   /* expected state/province from the address */
+  /* A hit whose state disagrees with the address is a same-named place in the
+     wrong location — reject it so the ladder keeps trying instead of caching a
+     wrong pin (the Jones Supply / Okeechobee failure mode). */
+  function stateOK(r){ return !(wantState && r && r.state && r.state!==wantState); }
   function finish(res){ delete _geoBusy[key]; if(res){ _GEOCACHE[key]=res; _geoCacheSave(); } cb(res); }
   function tryNext(){
     if(i>=vars.length){ finish(null); return; }
     var idx=i++, v=vars[idx], approx=idx>0;
     _geoNominatim(v).then(function(r){
-      if(r){ if(approx)r.approx=true; finish(r); return; }
+      if(r&&stateOK(r)){ if(approx)r.approx=true; finish(r); return; }
       _geoPhoton(v).then(function(r2){
         if(r2){ if(approx)r2.approx=true; finish(r2); return; }
         tryNext();
