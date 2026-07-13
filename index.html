@@ -10,9 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Pre-Booking">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png?v=3">
-<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png?v=3">
-<link rel="shortcut icon" href="/icons/icon-192.png?v=3">
+<!-- tab icon: the exact same single-arrow favicon as the Sales Portal -->
+<link rel="icon" href="/favicon.ico?v=4">
+<link rel="shortcut icon" href="/favicon.ico?v=4">
 <title>Pre-Booking Portal</title>
 <style>
 /* ===== Arrowquip design system — ported verbatim from the Sales Portal =====
@@ -962,6 +962,10 @@ body.dnd-on [data-drop].over{outline:2px dashed var(--aq-red);outline-offset:-3p
 .dcard .db{display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .dadd{border:1px dashed var(--line);background:#fff;color:var(--muted);border-radius:9px;font-size:9px;font-weight:700;padding:1px 7px;cursor:pointer;white-space:nowrap;}
 .dadd:hover{color:var(--aq-red);border-color:var(--aq-red);}
+.dadd.pbon{background:#3a7bd5;border:1px solid #3a7bd5;color:#fff;}
+.dadd.pbon:hover{background:#2f66b3;border-color:#2f66b3;color:#fff;}
+.dadd.dvis.von{background:#16a34a;border:1px solid #16a34a;color:#fff;}
+.dadd.dvis.von:hover{background:#128040;border-color:#128040;color:#fff;}
 /* ---- placement mode (the popup-free click path for + Pre-book / + Visit) ---- */
 #placeHint{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100002;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:600 12px 'Open Sans',Arial,sans-serif;color:#111;box-shadow:0 8px 26px rgba(0,0,0,.16);}
 #placeHint .ph-sub{font-weight:400;color:var(--muted);font-size:11px;}
@@ -1527,8 +1531,45 @@ function wkStopSeq(t,wk){
       lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:0,
       ty:normType(it.type),code:(it.airportCode||'').toUpperCase()});
   });
-  out.sort(function(a,b){ return (a.day-b.day)||String(a.time||'99').localeCompare(String(b.time||'99'))||a.key.localeCompare(b.key); });
+  out.sort(function(a,b){ return (a.day-b.day)||(ordEff(a)-ordEff(b))||String(a.time||'99').localeCompare(String(b.time||'99'))||a.key.localeCompare(b.key); });
   return out;
+}
+/* manual within-day ordering: a card dragged to a position keeps it. ORD holds
+   a sort value on the same scale as time-of-day minutes so dragged and timed
+   cards interleave naturally; cards without either sort last. */
+var ORD={};
+function ordEff(s){ var o=ORD[s.key]; if(o!=null) return o; return s.time?minOf(s.time):100000; }
+function ordKeyTime(k){
+  var kind=k.charAt(0), id=k.slice(2);
+  if(kind==='d') return TIME[id]?minOf(TIME[id]):null;
+  if(kind==='x'){ var x=XVISITS.filter(function(v){return v.id===id;})[0]; return (x&&x.time)?minOf(x.time):null; }
+  var it=LOGI.filter(function(v){return v.id===id;})[0]; return (it&&it.time)?minOf(it.time):null;
+}
+/* dropped at pixel y inside the day zone for t: slot the card between its
+   new neighbours and clear its (unlocked) time so the chain recalculates */
+function ordPlace(key,t,y){
+  delete ORD[key];
+  if(y==null) return;
+  var zone=document.querySelector('#weeks [data-drop="'+t+'"]'); if(!zone) return;
+  var effs=[];
+  [].slice.call(zone.querySelectorAll('.kcard[data-id],.tvcard[data-lid]')).forEach(function(el){
+    var k=el.dataset.lid?('m:'+el.dataset.lid)
+      :(el.dataset.id.slice(0,3)==='xv:'?('x:'+el.dataset.id.slice(3)):('d:'+el.dataset.id));
+    if(k===key) return;
+    var r=el.getBoundingClientRect();
+    var eff=ORD[k]; if(eff==null){ var tm=ordKeyTime(k); eff=(tm!=null?tm:100000); }
+    effs.push({mid:r.top+r.height/2, eff:eff});
+  });
+  if(!effs.length) return;
+  effs.sort(function(a,b){ return a.mid-b.mid; });
+  var i=0; while(i<effs.length&&y>effs[i].mid) i++;
+  var prev=(i>0)?effs[i-1].eff:null, next=(i<effs.length)?effs[i].eff:null;
+  ORD[key]=(prev==null)?(next-10):((next==null)?(prev+10):(prev+next)/2);
+}
+function ordClearUnlockedTime(key){
+  var kind=key.charAt(0), id=key.slice(2);
+  if(kind==='d'){ if(!APPT[id]&&!TLE.lock[key]) TIME[id]=''; }
+  else if(kind==='x'){ var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(x&&!x.done&&!TLE.lock[key]) x.time=''; }
 }
 function legMins(s){ return (s.day||0)*1440+(s.time?minOf(s.time):null); }
 function legArriveWarn(endMin,startStop,travelMin){
@@ -2066,10 +2107,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -2281,13 +2322,18 @@ function renderCards(){
 }
 function dealerCard(d){
   d=sfMasterMerge(d);
-  /* Dealer LIBRARY card: identity only — no planning badges, no visit counters.
-     The card itself is not draggable — the + Pre-book / + Visit actions
-     (click to place, or drag into a week/day) are the only creation paths. */
+  /* Dealer LIBRARY card. The card itself is not draggable — the + Pre-book /
+     + Visit actions (click to place, or drag into a week/day) are the only
+     creation paths. Once scheduled, the Pre-book action fills blue and the
+     Visit action fills green with the number of visits planned for this
+     dealer across the whole pre-booking period. */
+  var pb=hasPB(d.id);
+  var vN=((vType(d.id)==='visit'&&ASSIGN[d.id]!=null&&ASSIGN[d.id]!=='pool')?1:0)
+        +XVISITS.filter(function(x){ return x.dealer===d.id&&x.type==='visit'; }).length;
   return `<div class="dcard">
     <div class="dn">${d.name}</div>
     <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${(+d.booking>0)?fmtUSDk(d.booking):'—'}</span></div>
-    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd" data-mk="${d.id}|prebook" data-drag="1" data-id="mk:${d.id}|prebook" title="Pre-book — click to pick a week, or drag into a week">+ Pre-book</button><button class="dadd dvis" data-mk="${d.id}|visit" data-drag="1" data-id="mk:${d.id}|visit" title="Visit — click to pick a week, or drag into a week">+ Visit</button></span></div></div>`;
+    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd${pb?' pbon':''}" data-mk="${d.id}|prebook" data-drag="1" data-id="mk:${d.id}|prebook" title="${pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week'}">${pb?'✓ Pre-book':'+ Pre-book'}</button><button class="dadd dvis${vN?' von':''}" data-mk="${d.id}|visit" data-drag="1" data-id="mk:${d.id}|visit" title="${vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week'}">${vN?('✓ Visits · '+vN):'+ Visit'}</button></span></div></div>`;
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
@@ -3465,12 +3511,13 @@ function deleteVisit(ref){
   if(kind==='i'){
     var d=uniById(id);
     ASSIGN[id]=(d&&d.territory==='Exports')?'remote':'pool';
-    DAY[id]=null; TIME[id]=''; delete PTYPE[id];
+    DAY[id]=null; TIME[id]=''; delete PTYPE[id]; delete ORD['d:'+id];
     if(d&&d.territory==='Exports') ASSIGN[id]='pool';
   } else {
     var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return;
     if((x.tasks||[]).length){ var s=STOPX[x.dealer]=STOPX[x.dealer]||{}; s.tasks=(s.tasks||[]).concat(x.tasks); }
     XVISITS=XVISITS.filter(function(v){return v.id!==x.id;});
+    delete ORD['x:'+id];
   }
   savePlan(); refreshPlanner();
 }
@@ -6296,7 +6343,7 @@ function resetEdits(){ if(!confirm('Reset all Master Sheet edits back to the ori
    xv:<id>        = a scheduled additional card -> moves that card only.
    <id>           = the dealer's initial card -> moves that card only.
    Shared by drag-and-drop AND the click week-picker (via createVisit). */
-function performDrop(raw,t){
+function performDrop(raw,t,y){
   if(!raw||t==null) return;
   if(raw.slice(0,3)==='mk:'){
     var pr=raw.slice(3).split('|');
@@ -6312,13 +6359,22 @@ function performDrop(raw,t){
     if(t==='remote') return;
     var pp=t.split('|'); xv.wk=parseInt(pp[0],10);
     xv.day=(pp[1]!=null&&pp[1]!=='none')?parseInt(pp[1],10):null;
+    /* dropped at a position inside a day: keep that order, recalc the time */
+    if(xv.day!=null){ ordClearUnlockedTime('x:'+xv.id); ordPlace('x:'+xv.id,t,y); }
+    else delete ORD['x:'+xv.id];
     savePlan(); refreshPlanner(); return;
   }
   const id=raw;
   const d=uniById(id); if(!d)return;
-  if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;delete PTYPE[id];}
-  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;}
-  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw; if(parts[1]!=null&&parts[1]!=='none'){DAY[id]=parseInt(parts[1],10);} else if(prev!==nw){DAY[id]=null;} }
+  if(t==='pool'){ASSIGN[id]='pool';DAY[id]=null;delete PTYPE[id];delete ORD['d:'+id];}
+  else if(t==='remote'){ASSIGN[id]='remote';DAY[id]=null;delete ORD['d:'+id];}
+  else { var parts=t.split('|'); var nw=parseInt(parts[0],10); var prev=ASSIGN[id]; ASSIGN[id]=nw;
+    if(parts[1]!=null&&parts[1]!=='none'){
+      DAY[id]=parseInt(parts[1],10);
+      /* dropped at a position inside a day: keep that order, recalc the time */
+      ordClearUnlockedTime('d:'+id); ordPlace('d:'+id,t,y);
+    } else { if(prev!==nw){DAY[id]=null;} delete ORD['d:'+id]; }
+  }
   savePlan(); refreshPlanner();
 }
 /* ---------- unified drag engine (Pointer Events) ----------
@@ -6383,7 +6439,7 @@ function dndMove(e){
   if(z!==DND.zone){ if(DND.zone)DND.zone.classList.remove('over'); DND.zone=z; if(z)z.classList.add('over'); }
   dndAutoScroll(x,y);
 }
-function dndEnd(drop){
+function dndEnd(drop,dropY){
   if(DND.hold){ clearTimeout(DND.hold); DND.hold=null; }
   if(DND.zone) DND.zone.classList.remove('over');
   if(DND.ghost) DND.ghost.remove();
@@ -6394,7 +6450,7 @@ function dndEnd(drop){
   if(was){
     /* a completed drag must not also fire the action's click (week picker) */
     DND.justDragged=true; setTimeout(function(){ DND.justDragged=false; },0);
-    if(drop) performDrop(raw, drop.dataset.drop);
+    if(drop) performDrop(raw, drop.dataset.drop, dropY);
   }
 }
 function dndInit(){
@@ -6416,7 +6472,7 @@ function dndInit(){
   document.addEventListener('pointermove',dndMove,{passive:false});
   document.addEventListener('pointerup',function(e){
     if(!DND.src) return;
-    dndEnd(DND.active?dndZoneAt(e.clientX,e.clientY):null);
+    dndEnd(DND.active?dndZoneAt(e.clientX,e.clientY):null, e.clientY);
   });
   document.addEventListener('pointercancel',function(){ if(DND.src) dndEnd(null); });
   /* while a touch drag is live, the page must not pan underneath it */
