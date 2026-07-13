@@ -1145,7 +1145,16 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .xs b{font-size:.85rem;font-weight:700;color:var(--aq-black);}
 .xs span{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);}
 .xs.muted b{color:var(--muted);font-weight:600;}
-@media(max-width:900px){#cards.cards{flex-direction:column;} .xc-target{flex:1;}}
+/* redesigned KPI dashboard: subtle secondary target, status badge, metric trio */
+.xc-primary{flex:1.7;}
+.xsub{font-size:.82rem;font-weight:700;color:var(--muted);margin-top:.3rem;display:flex;align-items:baseline;gap:7px;}
+.xsub span{font-size:.56rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);}
+.xbadge{display:inline-block;margin-top:5px;padding:2px 10px;border-radius:11px;color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;width:fit-content;}
+.xktrio{display:flex;gap:10px;margin-top:.6rem;padding-top:.55rem;border-top:1px solid var(--line-soft);}
+.xk{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.xk b{font-size:.98rem;font-weight:700;color:var(--aq-black);letter-spacing:-.3px;}
+.xk span{font-size:.53rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--muted-2);white-space:nowrap;}
+@media(max-width:900px){#cards.cards{flex-direction:column;} .xc-target,.xc-primary{flex:1;}}
 /* subtle expandable dealer-program reference below the summary cards */
 .proginfo{flex:1 1 100%;order:9;margin-top:2px;}
 .proginfo summary{cursor:pointer;font-size:.62rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted-2);list-style:none;display:inline-block;padding:2px 0;}
@@ -2356,54 +2365,68 @@ function renderCards(){
   var pc=function(b){ return target?Math.round(b/target*100):0; };
   var tip=function(lbl,b,l){ return lbl+' — '+fmtUSD(b)+' · '+Math.round(l)+' loads · '+pc(b)+'% of target'; };
   var cad=function(v){ return 'CA$'+Math.round(v).toLocaleString(); };
-  /* Loads-first target: ACTUAL confirmed loads from Salesforce (the 2027
-     Actual closed-won prebooking loads — never planner confirmations or
-     appointment counts) against the total load target. Zero until Salesforce
-     has closed-won 2027 opportunities. */
+  /* Consistent Pre-Booking status colour: applied to the ring, badge and
+     percentage everywhere. Above target = deep green, at target = green,
+     approaching = orange, behind = red. */
+  var statusCol=function(r){
+    if(r>1.001) return {c:'#15803d',b:'Above Target'};   // deep green
+    if(r>=0.98) return {c:'#16a34a',b:'At Target'};       // green
+    if(r>=0.75) return {c:'#f59e0b',b:'Approaching'};     // orange
+    return {c:'#dc2626',b:'Behind Target'};               // red
+  };
+  /* Confirmed loads = the 2027 Salesforce Actual (closed-won prebooking loads),
+     never planner confirmations or appointment counts. */
   var actL=0, actB=0;
   ds.forEach(function(d){ var c=CALC.dealer(d); if(!c) return; actL+=(+c.actualLoads||0); actB+=(+c.actual||0); });
   var tgtL=Math.round(targetLoads), cL=Math.round(actL);
-  var overL=Math.max(0,cL-tgtL);
+  var fcL=Math.round(confL+planL); if(!fcL) fcL=tgtL;   /* planner forecast pipeline */
+  var remLd=Math.max(0,tgtL-cL);
   var pctL=tgtL?Math.min(100,cL/tgtL*100):0;
-  var card1='<div class="xc xc-target">'
-    +'<div class="xch">'+Y+' Pre-Booking Target</div>'
-    +'<div class="xcv"><b class="lc">'+cL+'</b><span class="xcl">confirmed loads</span></div>'
-    +'<div class="ltrack" title="'+cL+' Salesforce-confirmed of a '+tgtL+'-load target ('+Y+' Actual, closed-won)">'
-      +'<i class="lfill" style="width:'+pctL.toFixed(1)+'%"></i>'
-      +'<span class="ltgt">'+tgtL+'-load target</span>'
-    +'</div>'
-    +(overL>0
-      ? ('<div class="xhint over">'+overL+' load'+(overL===1?'':'s')+' above target</div>')
-      : ('<div class="xhint">'+Math.max(0,tgtL-cL)+' load'+((tgtL-cL)===1?'':'s')+' to target · '+fmtUSDk(actB)+' actual from Salesforce</div>'))
+  var ratioL=tgtL?cL/tgtL:0;
+  var stL=statusCol(ratioL);
+  var dollarTarget=target>=1e6?('$'+(target/1e6).toFixed(1)+'M'):fmtUSDk(target);
+  /* --- KPI 1: 2027 Pre-Book Actual Target — load target primary, $ subtle --- */
+  var card1='<div class="xc">'
+    +'<div class="xch">'+Y+' Pre-Book Actual Target</div>'
+    +'<div class="xcv"><b>'+tgtL+'</b><span class="xcl">Load Target</span></div>'
+    +'<div class="xsub">'+dollarTarget+' <span>Dollar Target</span></div>'
     +'</div>';
-  /* --- Card 2: Confirmed Pre-Booking — the commitment ledger, Mixed + CAD --- */
-  var cfShare=target?confB/target*100:0;
-  var card2='<div class="xc">'
+  /* --- KPI 2 (PRIMARY): 2027 Confirmed Pre-Booking — loads-first ledger --- */
+  var card2='<div class="xc xc-primary">'
     +'<div class="xch">'+Y+' Confirmed Pre-Booking</div>'
-    +'<div class="xcv">'+fmtUSDk(confB)+'<span class="xcl">'+Math.round(confL)+' loads · '+cad(confCAD)+'</span></div>'
-    +'<div class="xstats" style="margin-top:6px"><div class="xs"><b>'+cfShare.toFixed(0)+'%</b><span>of regional target</span></div></div>'
+    +'<div class="xcb">'+ringSVG(pctL,stL.c)
+      +'<div class="xstats">'
+        +'<div class="xcv" style="font-size:1.15rem"><b style="color:'+stL.c+'">'+cL+'</b><span class="xcl">/ '+tgtL+' Loads</span></div>'
+        +'<div class="xbadge" style="background:'+stL.c+'">'+stL.b+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="xktrio">'
+      +'<div class="xk"><b>'+cL+'</b><span>Confirmed Loads</span></div>'
+      +'<div class="xk"><b>'+fcL+'</b><span>Forecast Loads</span></div>'
+      +'<div class="xk"><b>'+remLd+'</b><span>Remaining Loads</span></div>'
+    +'</div>'
     +'</div>';
-  /* --- Card 3: Confirmation Process — EVERY appointment-type card, confirmed vs
-     not. Counts both Pre-booking appointments and normal dealer Visits (initial
-     visits + additional XVISITS); non-appointment travel (hotels, flights,
-     airports, rentals) is never counted. The two percentages always total 100.
-     No appointments yet → a neutral zero state, never a divide-by-zero. --- */
-  var apptTotal=0, apptConf=0;
-  ds.forEach(function(d){ var a=ASSIGN[d.id]; if(a!=null && a!=='pool'){ apptTotal++; if(APPT[d.id]) apptConf++; } });
-  XVISITS.forEach(function(x){
-    if(!(terr==='All'||terr==='Master')){ var d=byId[x.dealer]||uniById(x.dealer); if(!d||d.territory!==terr) return; }
-    apptTotal++; if(x.done) apptConf++;
-  });
-  var cfPct=apptTotal?apptConf/apptTotal*100:0;
-  var cfC=Math.round(cfPct), cfN=100-cfC;
+  /* --- KPI 3: Pre-Booking Confirmation — DEALER confirmations only. No visit or
+     appointment metrics: this dashboard tracks Pre-Bookings exclusively. --- */
+  var dConf=conf.length, dTot=ds.length, dRem=Math.max(0,dTot-dConf);
+  var dPct=dTot?dConf/dTot*100:0;
+  var stD=statusCol(dTot?dConf/dTot:0);
+  var tw={}; conf.forEach(function(d){ var w=ASSIGN[d.id]; if(w!=null&&w!=='pool') tw[w]=1; });
+  var tripsConf=Object.keys(tw).length;
   var card3='<div class="xc">'
-    +'<div class="xch">Confirmation Process</div>'
-    +(apptTotal
-      ? ('<div class="xcb">'+ringSVG(cfPct,'#16a34a')
-        +'<div class="xstats"><div class="xs"><b>'+cfC+'%</b><span>Confirmed</span></div>'
-        +'<div class="xs muted"><b>'+cfN+'%</b><span>Not Confirmed</span></div></div></div>'
-        +'<div class="xhint">'+apptConf+' of '+apptTotal+' visit &amp; pre-book cards confirmed</div>')
-      : '<div class="xcb">'+ringSVG(0,'#c7ccd1')+'<div class="xstats"><div class="xs muted"><b>—</b><span>No visits scheduled</span></div></div></div>')
+    +'<div class="xch">Pre-Booking Confirmation</div>'
+    +(dTot
+      ? ('<div class="xcb">'+ringSVG(dPct,stD.c)
+        +'<div class="xstats">'
+          +'<div class="xs"><b style="color:'+stD.c+'">'+dConf+'</b><span>Dealers Confirmed</span></div>'
+          +'<div class="xs muted"><b>'+dRem+'</b><span>Dealers Remaining</span></div>'
+        +'</div></div>'
+        +'<div class="xktrio">'
+          +'<div class="xk"><b>'+tripsConf+'</b><span>Trips Confirmed</span></div>'
+          +'<div class="xk"><b>'+dTot+'</b><span>Total Dealers</span></div>'
+          +'<div class="xk"><b>'+Math.round(dPct)+'%</b><span>Confirmation</span></div>'
+        +'</div>')
+      : '<div class="xcb">'+ringSVG(0,'#c7ccd1')+'<div class="xstats"><div class="xs muted"><b>—</b><span>No dealers in scope</span></div></div></div>')
     +'</div>';
   /* subtle expandable program reference — never a banner */
   var prog='<details class="proginfo"><summary>ⓘ '+Y+' Dealer Program</summary>'
