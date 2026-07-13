@@ -977,6 +977,7 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .lwarnTag{color:#b45309;font-weight:700;font-style:normal;white-space:nowrap;}
 .legrow button{border:1px solid var(--line);border-radius:4px;background:#fff;font:700 9px 'Open Sans',Arial,sans-serif;padding:1px 6px;cursor:pointer;color:#374151;}
 /* intelligent timeline */
+.tv-fno{flex:0 0 76px;}
 .tlock{border:0;background:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.45;line-height:1;}
 .tlock.on{opacity:1;}
 .tv-tl{font-size:10px;color:#4b5563;background:#f8fafc;border-radius:4px;padding:3px 7px;margin-top:3px;line-height:1.6;}
@@ -1672,6 +1673,15 @@ function tlCompute(t,wk){
 }
 /* --- timeline writers --- */
 function tlToggleLock(key){ if(TLE.lock[key]) delete TLE.lock[key]; else TLE.lock[key]=1; savePlan(); refreshPlanner(); }
+/* --- shared pick-lists: rental companies + airlines. Rendered as datalists,
+   so the field shows every option on click but still accepts anything typed. */
+var AQ_RENTALS=['Hertz','Enterprise','Avis','Budget','National','Alamo','Sixt','Dollar','Thrifty','Payless','Fox Rent A Car','Zipcar','Turo'];
+var AQ_AIRLINES=['Air Canada','WestJet','Porter Airlines','Flair Airlines','Delta','United Airlines','American Airlines','Alaska Airlines','Southwest','JetBlue','Frontier','Spirit','Sun Country','Allegiant','Air France','British Airways','Lufthansa','KLM','Qantas'];
+function aqEnsurePicklists(){
+  if(document.getElementById('aqRentals')) return;
+  var dl=function(id,arr){ return '<datalist id="'+id+'">'+arr.map(function(x){ return '<option value="'+esc(x)+'">'; }).join('')+'</datalist>'; };
+  document.body.insertAdjacentHTML('beforeend', dl('aqRentals',AQ_RENTALS)+dl('aqAirlines',AQ_AIRLINES));
+}
 function legRowHTML(a,b,wk){
   if(wk===31) return '';                              /* kickoff: head office, no travel */
   var t=a.tnext||tlTravel(a,b);
@@ -3166,6 +3176,7 @@ function travelCard(it,wk,tl){
         return '<option value="'+k+'"'+(k===ty?' selected':'')+'>'+TRAVEL_TYPES[k].label+'</option>';}).join('')
     +'</select>';
 
+  var isRental=(ty==='rental_pickup'||ty==='rental_return');
   /* --- place row: airport picker for flights, address + locate for everything else --- */
   var place;
   if(isFlight){
@@ -3174,10 +3185,16 @@ function travelCard(it,wk,tl){
       +'<input class="tv-in ap-in" data-tv="'+it.id+'" autocomplete="off" spellcheck="false"'
       +' value="'+esc(it.airportCode?(it.airportCode+' — '+(it.airportName||it.address||'')):'')+'"'
       +' placeholder="Search airport, city or code">'
+      +'</div>'
+      /* airline + flight number: pick from the list or type anything */
+      +'<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="airline" list="aqAirlines" value="'+esc(it.airline||'')+'" placeholder="Airline — Delta, United, Air Canada…">'
+      +'<input class="tv-in tv-fno" data-tv="'+it.id+'" data-f="flightNo" value="'+esc(it.flightNo||'')+'" placeholder="Flight #">'
       +'</div>';
   } else {
     place='<div class="tv-row">'
-      +'<input class="tv-in" data-tv="'+it.id+'" data-f="name" value="'+esc(it.name||'')+'" placeholder="'+esc(T.label)+' name">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="name"'+(isRental?' list="aqRentals"':'')+' value="'+esc(it.name||'')+'"'
+      +' placeholder="'+(isRental?'Rental company — Hertz, Enterprise, Sixt…':esc(T.label)+' name')+'">'
       +'</div>'
       +'<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="address" value="'+esc(it.address||'')+'" placeholder="Address">'
@@ -6562,7 +6579,7 @@ function uiInit(){
   });
 }
 function wireDnD(){
-  dndInit(); apInit(); uiInit();
+  dndInit(); apInit(); uiInit(); aqEnsurePicklists();
   /* library creation controls — type is chosen here and never changes.
      Click arms inline placement (no popup); drag creates directly. */
   document.querySelectorAll('[data-mk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(DND.justDragged)return;var pr=b.dataset.mk.split('|');startPlacement(pr[0],pr[1]);}));
