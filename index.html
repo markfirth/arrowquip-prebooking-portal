@@ -977,8 +977,6 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .lwarnTag{color:#b45309;font-weight:700;font-style:normal;white-space:nowrap;}
 .legrow button{border:1px solid var(--line);border-radius:4px;background:#fff;font:700 9px 'Open Sans',Arial,sans-serif;padding:1px 6px;cursor:pointer;color:#374151;}
 /* intelligent timeline */
-.tv-auto,input.tv-auto,input.vtime.tv-auto{color:#2563eb;font-style:italic;}
-.kc-frame.kc-auto{color:#2563eb;font-style:italic;}
 .tlock{border:0;background:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.45;line-height:1;}
 .tlock.on{opacity:1;}
 .tv-tl{font-size:10px;color:#4b5563;background:#f8fafc;border-radius:4px;padding:3px 7px;margin-top:3px;line-height:1.6;}
@@ -1647,7 +1645,9 @@ function tlCompute(t,wk){
     if(s.anchored){
       /* hotels never conflict: arriving before check-in (or after) is fine.
          wk31 is the kickoff at the plant — no warnings there. */
-      if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
+      /* only LOCKED times (manual lock, confirmed appointment, flight) can
+         go red — an unlocked time never flags a conflict */
+      if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.prio>=3&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
       cursor=tlEnd(s);
     } else if(s.estArr!=null){
       s.sug=s.estArr; s.sugSrc='fwd';
@@ -3194,7 +3194,7 @@ function travelCard(it,wk,tl){
   var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
-    +'<input class="tv-in tv-time'+(autoT?' tv-auto':'')+'" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
+    +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
     +(tvFixed?' title="Fixed — unlock to change"':(autoT?' title="Auto-calculated from the trip — change it to set your own time"':' title="15-minute steps; type any exact time"'))+'>'
     +'</div>';
   var when2='';
@@ -3377,7 +3377,7 @@ function dvCard(v,tl){
      arrival shows right in the field (blue) — editing it makes it yours */
   var autoT=(!v.time&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=v.time||autoT;
-  var frame=(showT&&!v.remote)?('<div class="kc-frame'+(v.time?'':' kc-auto')+'">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+(v.time?'':' · auto')+'</div>'):'';
+  var frame=(showT&&!v.remote)?('<div class="kc-frame">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
   var tkey=(v.ref.charAt(0)==='i'?'d:':'x:')+v.ref.slice(2);
   /* confirmed with the dealer, or manually locked: the time is fixed and the
      field can't be edited until it's unlocked / unconfirmed */
@@ -3392,7 +3392,7 @@ function dvCard(v,tl){
   /* week + day come from WHERE the card sits — moving it is the only way to
      change them. The card edits only time, duration and notes inline. */
   var ctl=v.remote?'':'<div class="kc-ctl">'
-      +'<input class="vf vtime'+(autoT?' tv-auto':'')+'" type="time" step="900" '+da+' data-f="time"'+(isFixed?' disabled':'')
+      +'<input class="vf vtime" type="time" step="900" '+da+' data-f="time"'+(isFixed?' disabled':'')
       +' title="'+(isFixed?'Fixed — unlock to change':(autoT?'Auto-calculated from the trip — change it to set your own time':'Start time (15-minute steps; type any exact time)'))+'" value="'+esc(showT)+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
       +lockBtn
