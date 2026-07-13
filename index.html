@@ -931,6 +931,18 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .legrow.lfail{border-left-color:#cbd0d6;font-style:italic;}
 .lwarnTag{color:#b45309;font-weight:700;font-style:normal;white-space:nowrap;}
 .legrow button{border:1px solid var(--line);border-radius:4px;background:#fff;font:700 9px 'Open Sans',Arial,sans-serif;padding:1px 6px;cursor:pointer;color:#374151;}
+/* intelligent timeline */
+.legrow.tfr{border-left-color:#e08a00;color:#7a5b23;}
+.legrow .tl-buf{width:46px;border:1px solid var(--line);border-radius:3px;font:600 10px 'Open Sans',Arial,sans-serif;padding:1px 3px;text-align:right;color:inherit;background:#fff;}
+.kc-sug{font-size:10px;color:#1d4ed8;background:#eff6ff;border:1px dashed #bfdbfe;border-radius:4px;padding:2px 6px;margin-top:4px;line-height:1.5;}
+.kc-sug i{color:#6b7fae;font-style:normal;font-size:9px;}
+.sug-ap{border:1px solid #2563eb;color:#2563eb;background:#fff;border-radius:3px;font:700 9px 'Open Sans',Arial,sans-serif;padding:1px 7px;cursor:pointer;margin-left:4px;}
+.sug-ap:hover{background:#2563eb;color:#fff;}
+.tlock{border:0;background:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.45;line-height:1;}
+.tlock.on{opacity:1;}
+.tv-tl{font-size:10px;color:#4b5563;background:#f8fafc;border-radius:4px;padding:3px 7px;margin-top:3px;line-height:1.6;}
+.tlconf{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:10.5px;border-radius:6px;padding:6px 10px;margin:6px 8px 0;line-height:1.55;}
+.tlconf b{color:#7f1d1d;}
 .legrow button:hover{border-color:#111;}
 .lsug{color:#92610a;white-space:nowrap;}
 .lsug .lsugx{border:0;background:none;padding:0 2px;color:#c2b49a;font-size:11px;}
@@ -1458,63 +1470,241 @@ function legArriveWarn(endMin,startStop,travelMin){
 }
 var _hotelDx=(function(){ try{ return JSON.parse(localStorage.getItem('aqHotelDismiss')||'{}'); }catch(e){ return {}; } })();
 function hotelDismiss(k){ _hotelDx[k]=1; try{ localStorage.setItem('aqHotelDismiss',JSON.stringify(_hotelDx)); }catch(e){} }
+/* ================= INTELLIGENT TIMELINE ENGINE =================
+   One connected timeline per (territory, week). Every stop knows what came
+   before it, the travel required, its duration, and what comes next.
+   Absolute minutes from the start of the week (day*1440 + minutes) keep the
+   math exact across days, overnight stays and any number of stops.
+
+   Forward pass  — earlier events push everything after them.
+   Backward pass — locked future anchors (flights, confirmed appointments,
+                   manually locked times) pull the unplanned stops before them.
+   Priority: flight times > confirmed appointments > manual locks >
+             planned hotel departures > automatic suggestions.               */
+var TLE={lock:{},airBuf:{},hotelDep:{},cfg:{airBuf:45}};
+function tlT(m){ if(m==null) return '—'; return t12s(addMin('00:00',((Math.round(m)%1440)+1440)%1440)); }
+function tlLegKey(a,b){ return a.key+'>'+b.key; }
+/* synchronous drive lookup: the cached road route when we have one, a
+   road-factor estimate otherwise — hydrated to the real number as routes resolve */
+var _tlStoreC=null;
+function tlDriveSync(a,b){
+  var ka=(+a.lat).toFixed(3)+','+(+a.lon).toFixed(3), kb=(+b.lat).toFixed(3)+','+(+b.lon).toFixed(3);
+  if(ka===kb) return {min:0,km:0,est:false};
+  var k=ka+'|'+kb, r=_rtMem[k];
+  if(!r){ if(!_tlStoreC)_tlStoreC=_rtStore(); r=_tlStoreC[k]; if(r)_rtMem[k]=r; }
+  if(r) return {min:Math.max(1,Math.round(r.min)),km:r.km,est:false};
+  var mi=roadMi([+a.lat,+a.lon],[+b.lat,+b.lon])||0;
+  return {min:Math.max(1,Math.round(mi/55*60)),km:mi*1.60934,est:true};
+}
+/* travel between two consecutive stops */
+function tlTravel(a,b){
+  var d=hav([+a.lat,+a.lon],[+b.lat,+b.lon]);
+  /* flight arrival chained to a rental pickup at the same airport: airport
+     transfer (gate → bags → shuttle → paperwork) — never a drive */
+  if(a.ty0==='flight_in'&&b.ty0==='rental_pickup'&&(d==null||d<3)){
+    var m=TLE.airBuf[tlLegKey(a,b)];
+    return {kind:'transfer',dir:'in',lbl:'Airport transfer',min:(m==null?(+TLE.cfg.airBuf||45):+m),km:0,est:false};
+  }
+  /* rental return chained to the departure flight: airport arrival buffer
+     (drop the car, shuttle, security) — the flight pulls this backwards */
+  if(a.ty0==='rental_return'&&b.ty0==='flight_out'&&(d==null||d<3)){
+    var m2=TLE.airBuf[tlLegKey(a,b)];
+    return {kind:'transfer',dir:'out',lbl:'Airport arrival buffer',min:(m2==null?(+TLE.cfg.airArr||120):+m2),km:0,est:false};
+  }
+  if(sameSpot(a,b)) return {kind:'same',min:0,km:0,est:false};
+  if(a.ty==='airport'&&b.ty==='airport'){
+    var gk=(d||0)*1.60934;
+    return {kind:'fly',min:Math.round(gk/750*60+30),km:gk,est:false};
+  }
+  var r=tlDriveSync(a,b);
+  return {kind:'drive',min:r.min,km:r.km,est:r.est};
+}
+/* when does the chain leave this stop? Hotels release the chain at the
+   PLANNED departure — never the checkout deadline. */
+function tlEnd(s){
+  if(s.ty0==='hotel') return (s.depMin!=null?s.depMin:null);
+  if(s.startMin==null) return null;
+  return s.startMin+(s.dur||0);
+}
+function tlSeq(t,wk){
+  var seq=wkStopSeq(t,wk), logiById={};
+  LOGI.forEach(function(it){ logiById[it.id]=it; });
+  /* annotate every stop first */
+  seq.forEach(function(s){
+    var kind=s.key.charAt(0), id=s.key.slice(2);
+    s.startMin=(s.time?(s.day*1440+minOf(s.time)):null);
+    s.anchored=(s.startMin!=null);
+    s.locked=!!TLE.lock[s.key];
+    s.ty0=s.ty;
+    if(kind==='d'){ s.conf=!!APPT[id]; s.prio=s.conf?4:(s.locked?3:(s.anchored?2:0)); }
+    else if(kind==='x'){
+      var x=null; for(var i=0;i<XVISITS.length;i++) if(XVISITS[i].id===id){x=XVISITS[i];break;}
+      s.conf=!!(x&&x.done); s.prio=s.conf?4:(s.locked?3:(s.anchored?2:0));
+    } else {
+      var it=logiById[id];
+      s.it=it; s.ty0=it?travelType(it):s.ty;
+      s.isFlight=(s.ty0==='flight_in'||s.ty0==='flight_out');
+      s.prio=(s.isFlight&&s.anchored)?5:(s.locked?3:(s.anchored?2:0));
+      if(s.ty0==='hotel'&&it){
+        s.coMin=(it.day2!=null&&it.time2)?(it.day2*1440+minOf(it.time2)):null;      /* checkout deadline */
+        var dep=TLE.hotelDep[it.id];
+        s.depMin=(dep&&dep.time&&dep.day!=null)?(dep.day*1440+minOf(dep.time)):null; /* planned departure */
+      }
+    }
+  });
+  /* untimed stops sort to the end of their day, which would break the chain
+     in the two cases whose position is unambiguous: a rental pickup belongs
+     right after the flight that lands at its airport, and a rental return
+     right before the flight that leaves from it */
+  var nearAir=function(a,b){ var d=hav([+a.lat,+a.lon],[+b.lat,+b.lon]); return d==null||d<3; };
+  seq.slice().forEach(function(r){
+    if(r.anchored) return;
+    if(r.ty0!=='rental_pickup'&&r.ty0!=='rental_return') return;
+    var f=null;
+    for(var i=0;i<seq.length;i++){
+      var c=seq[i];
+      if(c.day!==r.day||!c.anchored) continue;
+      if(r.ty0==='rental_pickup'&&c.ty0==='flight_in'&&nearAir(c,r)){ f=c; break; }
+      if(r.ty0==='rental_return'&&c.ty0==='flight_out'&&nearAir(c,r)){ f=c; break; }
+    }
+    if(!f) return;
+    var ri=seq.indexOf(r); seq.splice(ri,1);
+    var fi=seq.indexOf(f);
+    seq.splice(r.ty0==='rental_pickup'?fi+1:fi,0,r);
+  });
+  return seq;
+}
+var _tlCache={};
+function tlInvalidate(){ _tlCache={}; _tlStoreC=null; }
+function tlCompute(t,wk){
+  var ck=t+'|'+wk;
+  if(_tlCache[ck]) return _tlCache[ck];
+  var seq=(typeof wk==='number')?tlSeq(t,wk):[], by={}, conflicts=[];
+  for(var i=0;i<seq.length-1;i++) seq[i].tnext=tlTravel(seq[i],seq[i+1]);
+  /* forward pass */
+  var cursor=null;
+  seq.forEach(function(s,idx){
+    var trav=idx>0?seq[idx-1].tnext:null;
+    s.estArr=(cursor!=null&&trav)?cursor+trav.min:null;   /* when the chain physically gets here */
+    if(s.anchored){
+      /* hotels never conflict: arriving before check-in (or after) is fine */
+      if(s.estArr!=null&&s.ty0!=='hotel'&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
+      cursor=tlEnd(s);
+    } else if(s.estArr!=null){
+      s.sug=s.estArr; s.sugSrc='fwd';
+      cursor=(s.ty0==='hotel')?tlEnd(s):(s.sug+(s.dur||0));
+    } else cursor=(s.ty0==='hotel')?tlEnd(s):null;
+    s.depShow=cursor;
+  });
+  /* backward pass: anchors pull the unplanned stops before them */
+  for(var k=seq.length-2;k>=0;k--){
+    var s2=seq[k], nx=seq[k+1], trav2=s2.tnext;
+    var nStart=(nx.anchored?nx.startMin:(nx.sug!=null?nx.sug:(nx.need!=null?nx.need:null)));
+    if(nStart==null||!trav2) continue;
+    s2.needEnd=nStart-trav2.min;                       /* must leave here by … */
+    s2.need=s2.needEnd-(s2.dur||0);                    /* must start here by … */
+    if(s2.ty0==='hotel'&&s2.depMin==null) s2.depSug=s2.needEnd;
+    /* a rental return before a flight is pulled by the flight, not pushed by
+       the morning — the backward time wins even when a forward one exists */
+    if(!s2.anchored){
+      if(s2.ty0==='rental_return'&&s2.need!=null&&(s2.sug==null||s2.need>s2.sug)){ s2.sug=s2.need; s2.sugSrc='back'; }
+      else if(s2.sug==null&&s2.need!=null){ s2.sug=s2.need; s2.sugSrc='back'; }
+    }
+  }
+  seq.forEach(function(s){ by[s.key]=s; });
+  var out={seq:seq,by:by,conflicts:conflicts};
+  _tlCache[ck]=out;
+  return out;
+}
+/* --- timeline writers --- */
+function tlToggleLock(key){ if(TLE.lock[key]) delete TLE.lock[key]; else TLE.lock[key]=1; savePlan(); refreshPlanner(); }
+function tlSetAirBuf(legKey,val){
+  var v=parseInt(val,10);
+  if(!isFinite(v)||v<0) delete TLE.airBuf[legKey]; else TLE.airBuf[legKey]=v;
+  savePlan(); refreshPlanner();
+}
+function tlSetHotelDep(id,f,val){
+  var h=TLE.hotelDep[id]=TLE.hotelDep[id]||{day:null,time:''};
+  if(f==='day') h.day=(val===''?null:parseInt(val,10)); else h.time=val;
+  if(h.day==null&&!h.time) delete TLE.hotelDep[id];
+  savePlan(); refreshPlanner();
+}
+/* accept a suggested time: writes the real time, which anchors/locks it */
+function tlApply(key,sug){
+  var kind=key.charAt(0), id=key.slice(2);
+  var day=Math.floor(sug/1440), tm=addMin('00:00',((Math.round(sug)%1440)+1440)%1440);
+  if(kind==='d'){ DAY[id]=day; TIME[id]=tm; }
+  else if(kind==='x'){ XVISITS.forEach(function(x){ if(x.id===id){ x.day=day; x.time=tm; } }); }
+  else LOGI.forEach(function(it){ if(it.id===id){ it.day=day; it.time=tm; } });
+  savePlan(); refreshPlanner();
+}
+/* schedule-conflict banner for a week card */
+function tlBanner(TL){
+  if(!TL.conflicts.length) return '';
+  return '<div class="tlconf">'+TL.conflicts.map(function(s){
+    var fix=(s.prio>=5)?'Leave earlier, shorten an earlier stop, or book a later flight.'
+           :'Leave earlier, shorten the previous stop, or move the appointment.';
+    return '<div>⚠ <b>Schedule conflict</b> — you will arrive '+fmtDur(s.lateMin)+' late at '
+      +esc(s.name)+' ('+tlT(s.startMin)+'). '+fix+'</div>';
+  }).join('')+'</div>';
+}
 function legRowHTML(a,b,wk){
   if(wk===31) return '';                              /* kickoff: head office, no travel */
-  var endA=(a.time?((a.day||0)*1440+minOf(a.time)+(a.dur||0)):null);
-  if(sameSpot(a,b)){
-    /* same physical place: no journey — but flag a time overlap */
-    if(endA!=null&&b.time&&endA>((b.day||0)*1440+minOf(b.time)))
+  var t=a.tnext||tlTravel(a,b);
+  var dep=(a.depShow!=null)?a.depShow:tlEnd(a);
+  var arr=(dep!=null)?dep+t.min:null;
+  var late=(arr!=null&&b.anchored&&b.ty0!=='hotel'&&arr>b.startMin+2);
+  if(t.kind==='same'){
+    if(dep!=null&&b.startMin!=null&&a.startMin!=null&&(a.startMin+(a.dur||0))>b.startMin+2)
       return '<div class="legrow lwarn"><span class="ltxt">⚠ Overlaps the previous appointment</span></div>';
     return '';
   }
-  if(a.ty==='airport'&&b.ty==='airport'){
-    var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
-    var fmin=Math.round(gk/750*60+30);
-    return '<div class="legrow fly" title="'+esc(a.name)+' → '+esc(b.name)+'">'
-      +'<span class="ltxt">✈ Flight · '+esc(a.code||a.name)+' → '+esc(b.code||b.name)+' · ~'+fmtDur(fmin)
-      +legArriveWarn(endA,b,fmin)+'</span></div>';
+  if(t.kind==='transfer'){
+    var tip=(t.dir==='in')
+      ?'Airport transfer: aircraft → terminal, baggage, walking, rental shuttle, paperwork — edit to match this airport'
+      :'Airport arrival buffer: drop the car, shuttle, bag drop, security — edit to match this airport';
+    var tail='';
+    if(t.dir==='in'&&arr!=null) tail=' · rental ready <b>'+tlT(arr)+'</b>';
+    if(t.dir==='out'&&b.startMin!=null) tail=' · return the car by <b>'+tlT(b.startMin-t.min)+'</b>';
+    return '<div class="legrow tfr" title="'+tip+'">'
+      +'<span class="ltxt">🛄 '+t.lbl+' · '
+      +'<input class="tl-buf" type="number" min="0" step="5" value="'+t.min+'" data-airbuf="'+esc(tlLegKey(a,b))+'"> min'
+      +tail+'</span></div>';
   }
-  /* drive: placeholder now — hydrated from the road router (cached) */
-  return '<div class="legrow drv" data-lkey="'+esc(a.key+'>'+b.key)+'"'
+  if(t.kind==='fly'){
+    return '<div class="legrow fly" title="'+esc(a.name)+' → '+esc(b.name)+'">'
+      +'<span class="ltxt">✈ Flight · '+esc(a.code||a.name)+' → '+esc(b.code||b.name)+' · ~'+fmtDur(t.min)
+      +(late?(' <span class="lwarnTag">⚠ Arrives '+tlT(arr)+' · starts '+tlT(b.startMin)+'</span>'):'')
+      +'</span></div>';
+  }
+  /* drive: depart → drive time + distance → arrive */
+  var seg=(dep!=null?('Leave <b>'+tlT(dep)+'</b> · '):'')
+    +'🚗 '+(t.est?'~':'')+fmtDur(t.min)+' · '+Math.round(t.km)+' km'
+    +(arr!=null?(' · Arrive <b>'+tlT(arr)+'</b>'):'');
+  var warn=late?(' <span class="lwarnTag">⚠ '+fmtDur(arr-b.startMin)+' late · starts '+tlT(b.startMin)+'</span>'):'';
+  var sug='';
+  var thr=((settingsFor(terr).maxDrive||3))*60;
+  var hot=(a.ty0==='hotel'||b.ty0==='hotel');
+  if(t.min>thr && !hot && !_hotelDx[tlLegKey(a,b)]){
+    sug=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+wk+'">Add hotel?</button>'
+      +'<button class="lsugx" data-lkey="'+esc(tlLegKey(a,b))+'" title="Don’t suggest again for this leg">×</button></span>';
+  }
+  return '<div class="legrow drv'+(late?' lwarn':'')+'"'+(t.est?' data-est="1"':'')
     +' data-la="'+a.lat+','+a.lon+'" data-lb="'+b.lat+','+b.lon+'"'
-    +' data-ea="'+(endA==null?'':endA)+'" data-tb="'+(b.day||0)+'|'+esc(b.time||'')+'"'
-    +' data-names="'+esc(a.name)+'|'+esc(b.name)+'" data-hotel="'+((a.ty==='hotel'||b.ty==='hotel')?1:0)+'"'
-    +' data-wk="'+wk+'" title="'+esc(a.name)+' → '+esc(b.name)+'">'
-    +'<span class="ltxt">🚗 Calculating drive…</span></div>';
+    +' title="'+esc(a.name)+' → '+esc(b.name)+'">'
+    +'<span class="ltxt">'+seg+warn+sug+'</span></div>';
 }
-function legFill(row){
-  var A=row.dataset.la.split(','), B=row.dataset.lb.split(',');
-  roadRoute([+A[0],+A[1]],[+B[0],+B[1]]).then(function(rt){
-    if(!row.isConnected) return;
-    var tx=row.querySelector('.ltxt'); if(!tx) return;
-    if(!rt){
-      tx.innerHTML='🚗 Drive time unavailable · <button class="lretry">Retry</button>';
-      row.classList.add('lfail');
-      return;
-    }
-    var dm=Math.max(1,Math.round(rt.min)), mi=Math.round(rt.km/1.60934);
-    var names=row.dataset.names.split('|');
-    var lbl=(row.dataset.hotel==='1')
-      ? ('🚗 '+esc(names[0])+' → '+esc(names[1])+' · '+fmtDur(dm)+' · '+mi+' mi')
-      : ('🚗 Drive · '+fmtDur(dm)+' · '+mi+' mi');
-    var warn='';
-    var ea=row.dataset.ea, tb=row.dataset.tb.split('|');
-    if(ea!==''&&tb[1]) warn=legArriveWarn(+ea,{day:+tb[0],time:tb[1]},dm);
-    var sug='';
-    var thr=((settingsFor(terr).maxDrive||3))*60;
-    if(dm>thr && row.dataset.hotel!=='1' && !_hotelDx[row.dataset.lkey]){
-      sug=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+row.dataset.wk+'">Add hotel?</button>'
-        +'<button class="lsugx" data-lkey="'+esc(row.dataset.lkey)+'" title="Don’t suggest again for this leg">×</button></span>';
-    }
-    row.classList.remove('lfail');
-    if(warn) row.classList.add('lwarn');
-    tx.innerHTML=lbl+warn+sug;
-  });
-}
+/* estimated drive rows: fetch the real road route, then recompute the
+   timeline once so every dependent time downstream updates */
 function hydrateDriveRows(){
-  document.querySelectorAll('#weeks .legrow.drv').forEach(function(row){
+  document.querySelectorAll('#weeks .legrow[data-est]').forEach(function(row){
     if(row._hy) return; row._hy=true;
-    legFill(row);
+    var A=row.dataset.la.split(','), B=row.dataset.lb.split(',');
+    roadRoute([+A[0],+A[1]],[+B[0],+B[1]]).then(function(rt){
+      if(!rt||!row.isConnected) return;
+      clearTimeout(window._tlHydT);
+      window._tlHydT=setTimeout(function(){ tlInvalidate(); refreshPlanner(); },300);
+    });
   });
 }
 let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
@@ -1856,10 +2046,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{},airBuf:p.tle.airBuf||{},hotelDep:p.tle.hotelDep||{},cfg:Object.assign({airBuf:45},p.tle.cfg||{})};}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -2820,7 +3010,7 @@ function legLabel(l){
 
 
 /* ---------- rebuilt travel card: compact, stacked, no overlapping controls ---------- */
-function travelCard(it,wk){
+function travelCard(it,wk,tl){
   var ty=travelType(it), T=TRAVEL_TYPES[ty];
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var dayOpts=function(sel){ return '<option value="">— day —</option>'+labs.map(function(l,i){
@@ -2862,10 +3052,29 @@ function travelCard(it,wk){
     +'</div>';
   var when2='';
   if(isHotel){
-    when2='<div class="tv-row"><label class="tv-lbl">Check-out</label>'
+    /* planned departure drives the next morning's chain; the checkout
+       deadline is informational only — the two are never confused */
+    var hdep=TLE.hotelDep[it.id]||{};
+    when2='<div class="tv-row"><label class="tv-lbl" title="When you plan to leave — the timeline chains the next morning from this">Departure</label>'
+      +'<select class="tv-in" data-hdep="'+it.id+'" data-f="day">'+dayOpts(hdep.day)+'</select>'
+      +'<input class="tv-in tv-time" type="time" data-hdep="'+it.id+'" data-f="time" value="'+esc(hdep.time||'')+'">'
+      +'</div>'
+      +'<div class="tv-row"><label class="tv-lbl" title="Latest the hotel lets you check out — never used for routing">Checkout by</label>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2)+'</select>'
       +'<input class="tv-in tv-time" type="time" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||'')+'">'
       +'</div>';
+  }
+
+  /* timeline strip: estimated arrival, suggestions, backward-derived leave-by */
+  var tlRow='';
+  if(tl){
+    var bits=[];
+    if(tl.estArr!=null) bits.push((isHotel?'Est. arrival ':'Arrive ~')+'<b>'+tlT(tl.estArr)+'</b>');
+    if(isHotel&&it.time) bits.push('Check-in '+t12s(it.time));
+    if(isHotel&&tl.depMin==null&&tl.depSug!=null) bits.push('Leave by <b>'+tlT(tl.depSug)+'</b>');
+    if(!it.time&&tl.sug!=null&&!isHotel)
+      bits.push('Suggested <b>'+tlT(tl.sug)+'</b> <button class="sug-ap" data-key="m:'+it.id+'" data-sug="'+Math.round(tl.sug)+'" title="Use this time — it becomes fixed and the rest of the trip recalculates">Use</button>');
+    if(bits.length) tlRow='<div class="tv-tl">'+bits.join(' · ')+'</div>';
   }
 
   /* airline / flight number / confirmation / notes removed — the box stays
@@ -2876,14 +3085,23 @@ function travelCard(it,wk){
     ? '<span class="tv-ok" title="Included in routing">Located</span>'
     : '<span class="tv-bad" title="Excluded from routing until it has a location">Needs address</span>';
 
+  var lockBtn='';
+  if(tl&&it.time){
+    var isL=tl.locked||tl.isFlight;
+    lockBtn='<button class="tlock'+(isL?' on':'')+'" data-tlock="m:'+it.id+'" title="'
+      +(tl.isFlight?'Flight times are fixed anchors — the timeline never moves them'
+        :(tl.locked?'Locked — the timeline never moves it; click to unlock':'Click to lock this time as a fixed anchor'))
+      +'">'+(isL?'🔒':'🔓')+'</button>';
+  }
   return '<div class="tvcard t-'+ty+'" data-lid="'+it.id+'">'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
       +typeSel
       +badge
+      +lockBtn
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
-    +'<div class="tv-body">'+place+when+when2+flight+conf+'</div>'
+    +'<div class="tv-body">'+place+when+when2+flight+conf+tlRow+'</div>'
     +'</div>';
 }
 /* printable/trip-plan row */
@@ -2911,16 +3129,19 @@ function weekCard(wk){
   var md=settingsFor(terr).maxDrive;
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
-  var cards;
+  var cards, tlWarn='';
   if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag + Pre-book here from the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
     if(!ds.length && !wlogi.length && !xw.length) cards+='<div class="dcempty">drag + Pre-book or + Visit here from the library</div>';
     /* one ordered, located stop sequence for the whole week: the single
        source of truth for the travel rows woven between the cards below */
-    var seq=wkStopSeq(terr,wk);
+    var TL=tlCompute(terr,wk);
+    var seq=TL.seq;
+    tlWarn=tlBanner(TL);
     var seqIdx={}; seq.forEach(function(s,i){ seqIdx[s.key]=i; });
     var entryKey=function(e){ return e.k==='v'?('d:'+e.d.id):(e.k==='x'?('x:'+e.x.id):('m:'+e.x.id)); };
+    var tlOf=function(e){ return TL.by[entryKey(e)]; };
     var legBefore=function(e){
       var i=seqIdx[entryKey(e)];
       if(i==null||i===0) return '';
@@ -2937,14 +3158,19 @@ function weekCard(wk){
       var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
       var el=wlogi.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',x:x,t:x.time||'99'};});
       var ex=xw.filter(function(x){return x.day===i;}).map(function(x){return {k:'x',x:x,t:x.time||'99'};});
-      var entries=ev.concat(el).concat(ex).sort(function(a,b){return a.t.localeCompare(b.t);});
+      var entries=ev.concat(el).concat(ex).sort(function(a,b){
+        var ia=seqIdx[entryKey(a)], ib=seqIdx[entryKey(b)];
+        if(ia!=null&&ib!=null) return ia-ib;              /* engine order: chains stay adjacent */
+        if(ia!=null) return -1; if(ib!=null) return 1;
+        return a.t.localeCompare(b.t);
+      });
       cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
       /* each day is its own drop zone — the card's day comes from where it sits */
       cards+='<div class="kdaybody" data-drop="'+wk+'|'+i+'">';
       if(!entries.length){ cards+='<div class="dcempty">—</div>'; }
       else entries.forEach(function(e){
         cards+=legBefore(e);
-        cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk)));
+        cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk),tlOf(e)):(e.k==='x'?dvCard(dvViewX(e.x),tlOf(e)):travelCard(e.x,wk,tlOf(e))));
       });
       cards+='</div>';
     });
@@ -2962,6 +3188,7 @@ function weekCard(wk){
       +'<button class="addl" data-add="rental_return|'+wk+'" title="Rental return">🚗 Return</button>'
       +'<button class="addl" data-add="other|'+wk+'" title="Fuel, food, parking or other stop">＋ Stop</button>'
     +'</div>'
+    +tlWarn
     +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
 }
 /* ============ THE dealer scheduling card ============
@@ -3005,17 +3232,35 @@ function dvViewX(x){
     dur:x.dur||60, notes:x.notes||'', done:!!x.done, remote:false,
     att:x.att||'', leader:x.leader||'', joined:(x.joined||[]), terrName:x.terr||''};
 }
-function dvCard(v){
+function dvCard(v,tl){
   if(!v) return '';
   var B=VBADGE[v.type]||VBADGE.prebook;
   var da='data-vref="'+v.ref+'"';
   var days=v.dur>=1440?Math.floor(v.dur/1440):0;
   var frame=(v.time&&!v.remote)?('<div class="kc-frame">'+t12s(v.time)+'–'+t12s(addMin(v.time,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
+  /* timeline: suggested arrival (until a real time is set) + a lock toggle */
+  var tkey=(v.ref.charAt(0)==='i'?'d:':'x:')+v.ref.slice(2);
+  var sugRow='', lockBtn='';
+  if(tl&&!v.remote){
+    if(!v.time&&tl.sug!=null){
+      sugRow='<div class="kc-sug">↳ Suggested <b>'+tlT(tl.sug)+'</b>'
+        +(tl.sugSrc==='back'?' <i>(works back from what follows)</i>':'')
+        +' <button class="sug-ap" data-key="'+tkey+'" data-sug="'+Math.round(tl.sug)+'" title="Use this time — it becomes fixed and the rest of the trip recalculates">Use</button></div>';
+    }
+    if(v.time){
+      var isL=tl.locked||tl.conf;
+      lockBtn='<button class="tlock'+(isL?' on':'')+'" data-tlock="'+tkey+'" title="'
+        +(tl.conf?'Confirmed appointment — the timeline never moves it'
+          :(tl.locked?'Locked — the timeline never moves it; click to unlock':'Click to lock this time as a fixed anchor'))
+        +'">'+(isL?'🔒':'🔓')+'</button>';
+    }
+  }
   /* week + day come from WHERE the card sits — moving it is the only way to
      change them. The card edits only time, duration and notes inline. */
   var ctl=v.remote?'':'<div class="kc-ctl">'
       +'<input class="vf vtime" type="time" '+da+' data-f="time" title="Start time" value="'+esc(v.time)+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
+      +lockBtn
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
   return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+'" data-drag="1" data-id="'+v.dragId+'">'
@@ -3026,7 +3271,7 @@ function dvCard(v){
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
     +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)+'</div>'
-    +ctl+frame
+    +ctl+frame+sugRow
     +'<input class="vnote" '+da+' data-f="notes" placeholder="Notes" value="'+esc(v.notes)+'">'
     +'</div>';
 }
@@ -5976,7 +6221,7 @@ function uiInit(){
     }
     /* travel-row actions */
     var rb=e.target.closest&&e.target.closest('.lretry');
-    if(rb){ _rtDead={}; var row=rb.closest('.legrow'); if(row){ row.querySelector('.ltxt').innerHTML='🚗 Calculating drive…'; legFill(row); } return; }
+    if(rb){ _rtDead={}; tlInvalidate(); refreshPlanner(); return; }
     var hb=e.target.closest&&e.target.closest('.laddh');
     if(hb){ addTravel('hotel', hb.dataset.wk); return; }
     var xb=e.target.closest&&e.target.closest('.lsugx');
@@ -6085,6 +6330,15 @@ function wireDnD(){
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
+  /* intelligent timeline: apply suggestions, lock anchors, airport transfer
+     buffer, planned hotel departures */
+  document.querySelectorAll('#weeks .sug-ap').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlApply(b.dataset.key,+b.dataset.sug);}));
+  document.querySelectorAll('#weeks [data-tlock]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlToggleLock(b.dataset.tlock);}));
+  document.querySelectorAll('#weeks [data-airbuf]').forEach(el=>{
+    el.addEventListener('click',e=>e.stopPropagation());
+    el.addEventListener('change',e=>{e.stopPropagation();tlSetAirBuf(el.dataset.airbuf,el.value);});
+  });
+  document.querySelectorAll('#weeks [data-hdep]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();tlSetHotelDep(el.dataset.hdep,el.dataset.f,el.value);}));
   document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();undoSnap('Travel item deleted');LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();aqToast('Travel item deleted',true);}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
@@ -6840,7 +7094,7 @@ function withPreservedScroll(fn){
   function restore(){ try{ window.scrollTo(wx,wy); }catch(e){} saved.forEach(function(a){ try{ a[0].scrollTop=a[1]; a[0].scrollLeft=a[2]; }catch(e){} }); }
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
 }
-function refreshPlanner(){ withPreservedScroll(function(){ renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
+function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
 /* After a magic-link callback the URL carries auth params (#access_token…, ?code=…,
    type=magiclink). supabase-js consumes them, but strip anything left so the address
    bar is clean and a refresh doesn't re-trigger detection. */
