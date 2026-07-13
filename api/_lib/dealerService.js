@@ -319,15 +319,23 @@ async function auditSync() {
     `SELECT Id, Name, Territory_Manager__c, RecordType.Name, ` +
     `BillingStreet, BillingCity, BillingStateCode, BillingPostalCode, ` +
     `BillingLatitude, BillingLongitude FROM Account WHERE Territory_Manager__c IN (${tmList})`)
-  const rtMismatch = []
+  // Near-miss record types are the ONLY real silent-exclusion bug: an account that
+  // IS meant to be 'Arrowquip Dealer' but differs by whitespace/casing so the feed
+  // drops it. A wholly different record type (Business Account, AQ End User, …) is a
+  // legitimate non-dealer, not an error — those are reported only as a type breakdown.
+  const nearMiss = []
+  const byType = {}
   const missingCoords = []
   const dealers = []
+  const norm = (s) => String(s || '').trim().toLowerCase()
   rows.forEach((a) => {
     const rt = (a.RecordType && a.RecordType.Name) || null
+    byType[rt || '(none)'] = (byType[rt || '(none)'] || 0) + 1
     if (rt !== EXPECTED_RECORD_TYPE) {
-      rtMismatch.push({ id: a.Id, name: a.Name || '', tm: a.Territory_Manager__c || '', recordType: rt,
-        reason: rt == null ? 'RecordType missing/inaccessible'
-          : (rt.trim() === EXPECTED_RECORD_TYPE ? 'whitespace/casing difference' : 'different record type — excluded from feed') })
+      if (rt != null && norm(rt) === norm(EXPECTED_RECORD_TYPE)) {
+        nearMiss.push({ id: a.Id, name: a.Name || '', tm: a.Territory_Manager__c || '', recordType: rt,
+          reason: 'whitespace/casing difference — silently excluded from the dealer feed' })
+      }
       return
     }
     dealers.push(a)
@@ -341,12 +349,13 @@ async function auditSync() {
   const offOwner = await queryAll(base, instanceUrl, accessToken,
     `SELECT Id, Name, Territory_Manager__c FROM Account ` +
     `WHERE RecordType.Name = '${EXPECTED_RECORD_TYPE}' AND Territory_Manager__c NOT IN (${tmList})`)
-  const problems = rtMismatch.length + missingCoords.length
   return {
     expected: EXPECTED_RECORD_TYPE,
     dealerCount: dealers.length,
-    healthy: problems === 0,
-    recordType: { mismatchCount: rtMismatch.length, mismatches: rtMismatch },
+    // Health is defined by real bugs only: near-miss record types. Missing coords and
+    // by-design ownership exclusions are surfaced as info/warnings, not failures.
+    healthy: nearMiss.length === 0,
+    recordType: { nearMissCount: nearMiss.length, nearMiss, byType },
     coordinates: { missingCount: missingCoords.length, missing: missingCoords },
     ownership: { offListCount: offOwner.length,
       offList: offOwner.map((a) => ({ id: a.Id, name: a.Name || '', tm: a.Territory_Manager__c || '' })) },
