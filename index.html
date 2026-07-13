@@ -1679,33 +1679,35 @@ function tlCompute(t,wk){
   if(_tlCache[ck]) return _tlCache[ck];
   var seq=(typeof wk==='number')?tlSeq(t,wk):[], by={}, conflicts=[];
   for(var i=0;i<seq.length-1;i++) seq[i].tnext=tlTravel(seq[i],seq[i+1]);
-  /* forward pass */
+  /* forward pass. Only a FIXED time (manual lock, confirmed appointment,
+     flight) holds its ground; every other time — typed or not — follows the
+     chain and updates automatically. */
   var cursor=null;
   seq.forEach(function(s,idx){
     var trav=idx>0?seq[idx-1].tnext:null;
     s.estArr=(cursor!=null&&trav)?cursor+trav.min:null;   /* when the chain physically gets here */
-    if(s.anchored){
-      /* hotels never conflict: arriving before check-in (or after) is fine.
-         wk31 is the kickoff at the plant — no warnings there. */
-      /* only LOCKED times (manual lock, confirmed appointment, flight) can
-         go red — an unlocked time never flags a conflict */
-      if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.prio>=3&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
+    s.fixed=(s.anchored&&(s.locked||s.conf||s.isFlight));
+    if(s.fixed){
+      /* hotels never conflict; wk31 is the kickoff at the plant — no warnings */
+      if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
       cursor=tlEnd(s);
     } else if(s.estArr!=null){
       s.sug=s.estArr; s.sugSrc='fwd';
       cursor=(s.ty0==='hotel')?tlEnd(s):(s.sug+(s.dur||0));
+    } else if(s.startMin!=null){
+      cursor=tlEnd(s);            /* soft seed: nothing before it, its own time starts the chain */
     } else cursor=(s.ty0==='hotel')?tlEnd(s):null;
     s.depShow=cursor;
   });
-  /* backward pass: anchors pull the unplanned stops before them */
+  /* backward pass: fixed anchors pull everything unlocked before them */
   for(var k=seq.length-2;k>=0;k--){
     var s2=seq[k], nx=seq[k+1], trav2=s2.tnext;
-    var nStart=(nx.anchored?nx.startMin:(nx.sug!=null?nx.sug:(nx.need!=null?nx.need:null)));
+    var nStart=(nx.fixed?nx.startMin:(nx.sug!=null?nx.sug:(nx.need!=null?nx.need:nx.startMin)));
     if(nStart==null||!trav2) continue;
     s2.needEnd=nStart-trav2.min;                       /* must leave here by … */
     s2.need=s2.needEnd-(s2.dur||0);                    /* must start here by … */
     if(s2.ty0==='hotel'&&s2.coMin==null) s2.depSug=s2.needEnd;   /* check out by … */
-    if(!s2.anchored&&s2.sug==null&&s2.need!=null){ s2.sug=s2.need; s2.sugSrc='back'; }
+    if(!s2.fixed&&s2.sug==null&&s2.need!=null){ s2.sug=s2.need; s2.sugSrc='back'; }
   }
   seq.forEach(function(s){ by[s.key]=s; });
   var out={seq:seq,by:by,conflicts:conflicts};
@@ -1713,7 +1715,39 @@ function tlCompute(t,wk){
   return out;
 }
 /* --- timeline writers --- */
-function tlToggleLock(key){ if(TLE.lock[key]) delete TLE.lock[key]; else TLE.lock[key]=1; savePlan(); refreshPlanner(); }
+/* lock = the ONLY thing that fixes a time. Locking a card freezes whatever
+   time it is currently showing (computed or typed); unlocking clears the
+   stored time so it goes back to updating automatically. Confirmed
+   appointments and flights anchor on their own. */
+function tlToggleLock(key){
+  var kind=key.charAt(0), id=key.slice(2);
+  var x=(kind==='x')?XVISITS.filter(function(v){return v.id===id;})[0]:null;
+  var it=(kind==='m')?LOGI.filter(function(v){return v.id===id;})[0]:null;
+  var fly=it&&(function(ty){return ty==='flight_in'||ty==='flight_out'||ty==='flight_stop';})(travelType(it));
+  if(TLE.lock[key]){
+    delete TLE.lock[key];
+    if(kind==='d'){ if(!APPT[id]) TIME[id]=''; }
+    else if(x){ if(!x.done) x.time=''; }
+    else if(it&&!fly){ it.time=''; }
+  } else {
+    /* freeze the time currently showing: commit the computed one if none typed */
+    var has=(kind==='d')?!!TIME[id]:(x?!!x.time:(it?!!it.time:false));
+    if(!has){
+      var wk=(kind==='d')?ASSIGN[id]:(x?x.wk:(it?it.wk:null));
+      if(typeof wk==='number'){
+        var s=tlCompute(terr,wk).by[key];
+        if(s&&s.sug!=null){
+          var day=Math.floor(s.sug/1440), tm=addMin('00:00',((Math.round(s.sug)%1440)+1440)%1440);
+          if(kind==='d'){ DAY[id]=day; TIME[id]=tm; }
+          else if(x){ x.day=day; x.time=tm; }
+          else if(it){ it.day=day; it.time=tm; }
+        }
+      }
+    }
+    TLE.lock[key]=1;
+  }
+  savePlan(); refreshPlanner();
+}
 /* --- shared pick-lists: rental companies + airlines. Rendered as datalists,
    so the field shows every option on click but still accepts anything typed. */
 var AQ_RENTALS=['Hertz','Enterprise','Avis','Budget','National','Alamo','Sixt','Dollar','Thrifty','Payless','Fox Rent A Car','Zipcar','Turo'];
@@ -3110,6 +3144,7 @@ function addTravel(type,wk){
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
+  else if(field==='time'){ it.time=val; if(val) TLE.lock['m:'+id]=1; else delete TLE.lock['m:'+id]; }  /* typing a time fixes it */
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='airportCode'){
     var a=airportByCode(val);
@@ -3252,13 +3287,14 @@ function travelCard(it,wk,tl){
   /* --- when --- */
   /* auto-populated time: when no time is entered, the timeline's computed
      time shows right in the field (blue) — editing it makes it yours */
-  var autoT=(!it.time&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
-  /* manually locked: the time is fixed and can't be edited until unlocked */
-  var tvFixed=!!(tl&&it.time&&tl.locked);
+  /* fixed = locked (or a flight with its time set). Everything else shows the
+     LIVE computed time and updates automatically. */
+  var tvFixed=!!((tl&&(tl.locked||(tl.isFlight&&it.time)))||(!tl&&TLE.lock['m:'+it.id]&&it.time));
+  var autoT=(!tvFixed&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':(ty==='flight_stop'?'Lands':'When'))));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
-    +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
+    +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(tvFixed?it.time:(autoT||it.time))+'"'+(tvFixed?' disabled':'')
     +(tvFixed?' title="Fixed — unlock to change"':(autoT?' title="Auto-calculated from the trip — change it to set your own time"':' title="15-minute steps; type any exact time"'))+'>'
     +'</div>';
   var when2='';
@@ -3283,14 +3319,12 @@ function travelCard(it,wk,tl){
     ? '<span class="tv-ok" title="Included in routing">Located</span>'
     : '<span class="tv-bad" title="Excluded from routing until it has a location">Needs address</span>';
 
-  var lockBtn='';
-  if(tl&&it.time){
-    var isL=tl.locked||tl.isFlight;
-    lockBtn='<button class="tlock'+(isL?' on':'')+'" data-tlock="m:'+it.id+'" title="'
-      +(tl.isFlight?'Flight times are fixed anchors — the timeline never moves them'
-        :(tl.locked?'Locked — the time is fixed; click to unlock':'Click to lock this time so it can\'t change'))
-      +'">'+(isL?'🔒':'🔓')+'</button>';
-  }
+  /* the lock is always on the card — lock now or after the fact */
+  var lockBtn='<button class="tlock'+(tvFixed?' on':'')+'" data-tlock="m:'+it.id+'" title="'
+    +((tl&&tl.isFlight&&it.time)?'Flight times are fixed anchors — the timeline never moves them'
+      :(tvFixed?'Locked — the time is fixed; click to unlock and it updates automatically again'
+        :'Click to lock the time this card is showing so it can\'t change'))
+    +'">'+(tvFixed?'🔒':'🔓')+'</button>';
   /* unreachable at its set time: fade the card red instead of a banner */
   var lateCls=(tl&&tl.lateMin)?' tl-late':'';
   var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
@@ -3438,20 +3472,20 @@ function dvCard(v,tl){
   var B=VBADGE[v.type]||VBADGE.prebook;
   var da='data-vref="'+v.ref+'"';
   var days=v.dur>=1440?Math.floor(v.dur/1440):0;
-  /* auto-populated time: when no time is entered, the timeline's computed
-     arrival shows right in the field (blue) — editing it makes it yours */
-  var autoT=(!v.time&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
-  var showT=v.time||autoT;
-  var frame=(showT&&!v.remote)?('<div class="kc-frame">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
   var tkey=(v.ref.charAt(0)==='i'?'d:':'x:')+v.ref.slice(2);
-  /* confirmed with the dealer, or manually locked: the time is fixed and the
-     field can't be edited until it's unlocked / unconfirmed */
-  var isFixed=!!(tl&&!v.remote&&v.time&&(tl.locked||tl.conf));
+  /* fixed = locked or confirmed. Everything else shows the LIVE computed
+     time — it updates automatically whenever anything upstream changes. */
+  var isFixed=!v.remote&&((tl&&(tl.locked||tl.conf))||(!tl&&(TLE.lock[tkey]||v.done)));
+  var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
+  var showT=isFixed?v.time:(autoT||v.time);
+  var frame=(showT&&!v.remote)?('<div class="kc-frame">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
+  /* the lock is always on the card — lock now or after the fact */
   var lockBtn='';
-  if(tl&&!v.remote&&v.time){
+  if(!v.remote){
     lockBtn='<button class="tlock'+(isFixed?' on':'')+'" data-tlock="'+tkey+'" title="'
-      +(tl.conf?'Confirmed appointment — the time is fixed (unconfirm to change it)'
-        :(tl.locked?'Locked — the time is fixed; click to unlock':'Click to lock this time so it can\'t change'))
+      +((tl&&tl.conf)||(!tl&&v.done)?'Confirmed appointment — the time is fixed (unconfirm to change it)'
+        :(isFixed?'Locked — the time is fixed; click to unlock and it updates automatically again'
+          :'Click to lock the time this card is showing so it can\'t change'))
       +'">'+(isFixed?'🔒':'🔓')+'</button>';
   }
   /* week + day come from WHERE the card sits — moving it is the only way to
@@ -3483,14 +3517,14 @@ function setVisitField(ref,f,val){
   if(kind==='i'){
     if(f==='wk'){ var prev=ASSIGN[id]; ASSIGN[id]=(val==='remote')?'remote':parseInt(val,10); if(ASSIGN[id]!==prev) DAY[id]=null; }
     else if(f==='day') DAY[id]=(val===''?null:parseInt(val,10));
-    else if(f==='time') TIME[id]=val;
+    else if(f==='time'){ TIME[id]=val; if(val) TLE.lock['d:'+id]=1; else delete TLE.lock['d:'+id]; }   /* typing a time fixes it */
     else if(f==='dur'){ var n=normDur(parseDur(val)); if(n==null) return false; DUR[id]=n; }
     else if(f==='notes'){ var s=STOPX[id]=STOPX[id]||{}; s.notes=val; }
   } else {
     var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return false;
     if(f==='wk'){ var nw=parseInt(val,10); if(!isFinite(nw)) return false; if(x.wk!==nw) x.day=null; x.wk=nw; }
     else if(f==='day') x.day=(val===''?null:parseInt(val,10));
-    else if(f==='time') x.time=val;
+    else if(f==='time'){ x.time=val; if(val) TLE.lock['x:'+id]=1; else delete TLE.lock['x:'+id]; }    /* typing a time fixes it */
     else if(f==='dur'){ var n2=normDur(parseDur(val)); if(n2==null) return false; x.dur=n2; }
     else if(f==='notes') x.notes=val;
   }
