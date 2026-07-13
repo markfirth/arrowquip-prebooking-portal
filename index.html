@@ -446,7 +446,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tbody{padding:6px 10px 14px;}
 .tday{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:9px 4px 5px;} .tday b{color:var(--ink);} .tday.todo{color:#9a6a12;}
 .tstop{border:1px solid var(--line-soft);border-left:3px solid #c1c6c8;border-radius:6px;padding:7px 9px;margin-bottom:5px;} .tstop.ok{border-left-color:var(--green);background:#f6faf7;}
-.tst{display:flex;align-items:baseline;gap:8px;} .ttime{font-size:10px;font-weight:700;color:var(--aq-red);min-width:46px;} .tnm{font-size:11.5px;font-weight:600;color:var(--aq-black);flex:1 1 auto;} .tamt{font-size:10.5px;font-weight:600;color:var(--ink);}
+.tst{display:flex;align-items:baseline;gap:8px;} .ttime{font-size:10px;font-weight:700;color:var(--aq-red);min-width:46px;white-space:nowrap;flex:0 0 auto;} .tnm{font-size:11.5px;font-weight:600;color:var(--aq-black);flex:1 1 auto;} .tamt{font-size:10.5px;font-weight:600;color:var(--ink);}
 .tloc{font-size:10px;color:var(--muted);margin-top:2px;margin-left:54px;}
 .addbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px 8px 0;}
 .addl{flex:1 1 30%;font-family:inherit;font-size:9px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:5px 4px;cursor:pointer;white-space:nowrap;}
@@ -806,7 +806,14 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .lvkpi{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:14px 16px;min-width:0;}
 .lvkpi .k{font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);}
 .lvkpi .v{font-size:1.05rem;font-weight:700;color:var(--aq-black);letter-spacing:-.3px;margin-top:5px;}
-.lvctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+/* All-Territories filter bar: even spacing, a common control baseline and
+   consistent heights so no control touches its neighbour or the container edge */
+.lvctl{display:flex;gap:14px;row-gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--panel);}
+.lvctl>select.msearch,.lvctl>.btn,.lvctl .daystep .dsbtn{height:38px;box-sizing:border-box;display:inline-flex;align-items:center;}
+.lvctl>.btn{padding:0 18px;}
+.lvctl .daystep{gap:6px;}
+.lvctl .lvlegend{margin:0 !important;gap:8px;}
+#allShowAll{margin-left:auto;}
 .lvmapgrid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(280px,1fr);gap:14px;align-items:start;}
 #leaderMap{height:560px;border-radius:var(--radius);border:1px solid var(--line);z-index:1;}
 .lvlegend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;}
@@ -1552,7 +1559,9 @@ function dayLabels(wk){ if(wk===31) return [["Tue","Jul 28"],["Wed","Jul 29"]]; 
   return out;
 }
 function t12(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; const hr=h%12||12; return hr+':'+String(m).padStart(2,'0')+' '+ap; }
-function t12s(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h<12?'a':'p'; const hr=h%12||12; return hr+(m?(':'+String(m).padStart(2,'0')):'')+ap; }
+/* Full AM/PM display (never the truncated 'a'/'p'). Still round-trips through
+   parseTimeLoose, which lower-cases and accepts the trailing 'm'. */
+function t12s(t){ if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h<12?'AM':'PM'; const hr=h%12||12; return hr+(m?(':'+String(m).padStart(2,'0')):'')+' '+ap; }
 function hav(a,b){ if(a==null||b==null||a[0]==null||b[0]==null) return null; const R=3958.8,dl=(b[0]-a[0])*Math.PI/180,dn=(b[1]-a[1])*Math.PI/180,la1=a[0]*Math.PI/180,la2=b[0]*Math.PI/180; const x=Math.sin(dl/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 function roadMi(a,b){ const d=hav(a,b); return d==null?null:d*1.2; }
 function minOf(t){var x=(t||'0:0').split(':');return (+x[0])*60+(+x[1]);}
