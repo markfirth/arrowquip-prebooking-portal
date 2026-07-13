@@ -982,8 +982,9 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .tlock{border:0;background:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.45;line-height:1;}
 .tlock.on{opacity:1;}
 .tv-tl{font-size:10px;color:#4b5563;background:#f8fafc;border-radius:4px;padding:3px 7px;margin-top:3px;line-height:1.6;}
-.tlconf{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:10.5px;border-radius:6px;padding:6px 10px;margin:6px 8px 0;line-height:1.55;}
-.tlconf b{color:#7f1d1d;}
+/* an appointment the chain can't reach in time: a quiet red fade on the card */
+.kcard.tl-late,.tvcard.tl-late{background:#fdf0f0;border-color:#f3c1c1;box-shadow:inset 3px 0 0 #dc8a8a;opacity:.92;}
+.tl-late input:disabled{color:#6b7280;}
 .legrow button:hover{border-color:#111;}
 .lsug{color:#92610a;white-space:nowrap;}
 .lsug .lsugx{border:0;background:none;padding:0 2px;color:#c2b49a;font-size:11px;}
@@ -1671,22 +1672,11 @@ function tlCompute(t,wk){
 }
 /* --- timeline writers --- */
 function tlToggleLock(key){ if(TLE.lock[key]) delete TLE.lock[key]; else TLE.lock[key]=1; savePlan(); refreshPlanner(); }
-/* schedule-conflict banner for a week card */
-function tlBanner(TL){
-  if(!TL.conflicts.length) return '';
-  return '<div class="tlconf">'+TL.conflicts.map(function(s){
-    var fix=(s.prio>=5)?'Leave earlier, shorten an earlier stop, or book a later flight.'
-           :'Leave earlier, shorten the previous stop, or move the appointment.';
-    return '<div>⚠ <b>Schedule conflict</b> — you will arrive '+fmtDur(s.lateMin)+' late at '
-      +esc(s.name)+' ('+tlT(s.startMin)+'). '+fix+'</div>';
-  }).join('')+'</div>';
-}
 function legRowHTML(a,b,wk){
   if(wk===31) return '';                              /* kickoff: head office, no travel */
   var t=a.tnext||tlTravel(a,b);
   var dep=(a.depShow!=null)?a.depShow:tlEnd(a);
   var arr=(dep!=null)?dep+t.min:null;
-  var late=(arr!=null&&b.anchored&&b.ty0!=='hotel'&&arr>b.startMin+2);
   if(t.kind==='same'){
     if(dep!=null&&b.startMin!=null&&a.startMin!=null&&(a.startMin+(a.dur||0))>b.startMin+2)
       return '<div class="legrow lwarn"><span class="ltxt">⚠ Overlaps the previous appointment</span></div>';
@@ -1695,14 +1685,13 @@ function legRowHTML(a,b,wk){
   if(t.kind==='fly'){
     return '<div class="legrow fly" title="'+esc(a.name)+' → '+esc(b.name)+'">'
       +'<span class="ltxt">✈ Flight · '+esc(a.code||a.name)+' → '+esc(b.code||b.name)+' · ~'+fmtDur(t.min)
-      +(late?(' <span class="lwarnTag">⚠ Arrives '+tlT(arr)+' · starts '+tlT(b.startMin)+'</span>'):'')
       +'</span></div>';
   }
-  /* drive: depart → drive time + distance → arrive */
+  /* drive: depart → drive time + distance → arrive. An unreachable stop is
+     shown by fading its own card red — no warning text here. */
   var seg=(dep!=null?('Leave <b>'+tlT(dep)+'</b> · '):'')
     +'🚗 '+(t.est?'~':'')+fmtDur(t.min)+' · '+Math.round(t.km)+' km'
     +(arr!=null?(' · Arrive <b>'+tlT(arr)+'</b>'):'');
-  var warn=late?(' <span class="lwarnTag">⚠ '+fmtDur(arr-b.startMin)+' late · starts '+tlT(b.startMin)+'</span>'):'';
   var sug='';
   var thr=((settingsFor(terr).maxDrive||3))*60;
   var hot=(a.ty0==='hotel'||b.ty0==='hotel');
@@ -1710,10 +1699,10 @@ function legRowHTML(a,b,wk){
     sug=' <span class="lsug">Long drive · <button class="laddh" data-wk="'+wk+'">Add hotel?</button>'
       +'<button class="lsugx" data-lkey="'+esc(tlLegKey(a,b))+'" title="Don’t suggest again for this leg">×</button></span>';
   }
-  return '<div class="legrow drv'+(late?' lwarn':'')+'"'+(t.est?' data-est="1"':'')
+  return '<div class="legrow drv"'+(t.est?' data-est="1"':'')
     +' data-la="'+a.lat+','+a.lon+'" data-lb="'+b.lat+','+b.lon+'"'
     +' title="'+esc(a.name)+' → '+esc(b.name)+'">'
-    +'<span class="ltxt">'+seg+warn+sug+'</span></div>';
+    +'<span class="ltxt">'+seg+sug+'</span></div>';
 }
 /* estimated drive rows: fetch the real road route, then recompute the
    timeline once so every dependent time downstream updates */
@@ -3200,11 +3189,13 @@ function travelCard(it,wk,tl){
   /* auto-populated time: when no time is entered, the timeline's computed
      time shows right in the field (blue) — editing it makes it yours */
   var autoT=(!it.time&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
+  /* manually locked: the time is fixed and can't be edited until unlocked */
+  var tvFixed=!!(tl&&it.time&&tl.locked);
   var whenLbl=isHotel?'Check-in':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'When')));
   var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
     +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
-    +'<input class="tv-in tv-time'+(autoT?' tv-auto':'')+'" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'
-    +(autoT?' title="Auto-calculated from the trip — change it to set your own time"':' title="15-minute steps; type any exact time"')+'>'
+    +'<input class="tv-in tv-time'+(autoT?' tv-auto':'')+'" type="time" step="900" data-tv="'+it.id+'" data-f="time" value="'+esc(it.time||autoT)+'"'+(tvFixed?' disabled':'')
+    +(tvFixed?' title="Fixed — unlock to change"':(autoT?' title="Auto-calculated from the trip — change it to set your own time"':' title="15-minute steps; type any exact time"'))+'>'
     +'</div>';
   var when2='';
   if(isHotel){
@@ -3237,10 +3228,13 @@ function travelCard(it,wk,tl){
     var isL=tl.locked||tl.isFlight;
     lockBtn='<button class="tlock'+(isL?' on':'')+'" data-tlock="m:'+it.id+'" title="'
       +(tl.isFlight?'Flight times are fixed anchors — the timeline never moves them'
-        :(tl.locked?'Locked — the timeline never moves it; click to unlock':'Click to lock this time as a fixed anchor'))
+        :(tl.locked?'Locked — the time is fixed; click to unlock':'Click to lock this time so it can\'t change'))
       +'">'+(isL?'🔒':'🔓')+'</button>';
   }
-  return '<div class="tvcard t-'+ty+'" data-lid="'+it.id+'">'
+  /* unreachable at its set time: fade the card red instead of a banner */
+  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
+  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
       +typeSel
@@ -3276,7 +3270,7 @@ function weekCard(wk){
   var md=settingsFor(terr).maxDrive;
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
-  var cards, tlWarn='';
+  var cards;
   if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag + Pre-book here from the library</div>'; }
   else {
     var labs=dayLabels(wk); cards='';
@@ -3285,7 +3279,6 @@ function weekCard(wk){
        source of truth for the travel rows woven between the cards below */
     var TL=tlCompute(terr,wk);
     var seq=TL.seq;
-    tlWarn=tlBanner(TL);
     var seqIdx={}; seq.forEach(function(s,i){ seqIdx[s.key]=i; });
     var entryKey=function(e){ return e.k==='v'?('d:'+e.d.id):(e.k==='x'?('x:'+e.x.id):('m:'+e.x.id)); };
     var tlOf=function(e){ return TL.by[entryKey(e)]; };
@@ -3335,7 +3328,6 @@ function weekCard(wk){
       +'<button class="addl" data-add="rental_return|'+wk+'" title="Rental return">🚗 Return</button>'
       +'<button class="addl" data-add="other|'+wk+'" title="Fuel, food, parking or other stop">＋ Stop</button>'
     +'</div>'
-    +tlWarn
     +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
 }
 /* ============ THE dealer scheduling card ============
@@ -3390,24 +3382,29 @@ function dvCard(v,tl){
   var showT=v.time||autoT;
   var frame=(showT&&!v.remote)?('<div class="kc-frame'+(v.time?'':' kc-auto')+'">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+(v.time?'':' · auto')+'</div>'):'';
   var tkey=(v.ref.charAt(0)==='i'?'d:':'x:')+v.ref.slice(2);
+  /* confirmed with the dealer, or manually locked: the time is fixed and the
+     field can't be edited until it's unlocked / unconfirmed */
+  var isFixed=!!(tl&&!v.remote&&v.time&&(tl.locked||tl.conf));
   var lockBtn='';
   if(tl&&!v.remote&&v.time){
-    var isL=tl.locked||tl.conf;
-    lockBtn='<button class="tlock'+(isL?' on':'')+'" data-tlock="'+tkey+'" title="'
-      +(tl.conf?'Confirmed appointment — the timeline never moves it'
-        :(tl.locked?'Locked — the timeline never moves it; click to unlock':'Click to lock this time as a fixed anchor'))
-      +'">'+(isL?'🔒':'🔓')+'</button>';
+    lockBtn='<button class="tlock'+(isFixed?' on':'')+'" data-tlock="'+tkey+'" title="'
+      +(tl.conf?'Confirmed appointment — the time is fixed (unconfirm to change it)'
+        :(tl.locked?'Locked — the time is fixed; click to unlock':'Click to lock this time so it can\'t change'))
+      +'">'+(isFixed?'🔒':'🔓')+'</button>';
   }
   /* week + day come from WHERE the card sits — moving it is the only way to
      change them. The card edits only time, duration and notes inline. */
   var ctl=v.remote?'':'<div class="kc-ctl">'
-      +'<input class="vf vtime'+(autoT?' tv-auto':'')+'" type="time" step="900" '+da+' data-f="time"'
-      +' title="'+(autoT?'Auto-calculated from the trip — change it to set your own time':'Start time (15-minute steps; type any exact time)')+'" value="'+esc(showT)+'">'
+      +'<input class="vf vtime'+(autoT?' tv-auto':'')+'" type="time" step="900" '+da+' data-f="time"'+(isFixed?' disabled':'')
+      +' title="'+(isFixed?'Fixed — unlock to change':(autoT?'Auto-calculated from the trip — change it to set your own time':'Start time (15-minute steps; type any exact time)'))+'" value="'+esc(showT)+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
       +lockBtn
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
-  return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+'" data-drag="1" data-id="'+v.dragId+'">'
+  /* unreachable at its set time: fade the card red instead of a banner */
+  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
+  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
