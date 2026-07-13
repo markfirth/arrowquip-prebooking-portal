@@ -1309,7 +1309,8 @@ var SF_ALIAS={
   "High Point Stockmans Supply":"001ON00000JHefBYAT",
   "Southern States - Stanford":"001ON00000LOKjEYAX",
   "Stenberg Trailers & Cattle Supply":"001ON00000JHTrpYAH",
-  "Cattleman's Resource Inc":"001ON00000Jyc9NYAR"
+  "Cattleman's Resource Inc":"001ON00000Jyc9NYAR",
+  "Roster Thompson":"001ON00000JHegSYAT"  /* planner mis-spelling of SF "Rusty Thomson" (Arrowquip Dealer, East) */
 };
 /* normalization for name matching: case/punctuation-insensitive, '&' = 'and',
    and legal suffixes (Inc, LLC, Ltd, Co, Corp, Company, The) never break a match */
@@ -1480,7 +1481,8 @@ function loadSFDealers(opts){
       try{ if(document.getElementById('cards')) renderCards(); }catch(e){ console.warn('[SF] renderCards after sync failed',e); }
       try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){ console.warn('[SF] renderPlanner after sync failed',e); }
       try{ backfillCoords(); }catch(e){}   /* geocode any Salesforce accounts that arrived without billing coordinates */
-    }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); });
+      try{ if(typeof runHealth==='function') setTimeout(runHealth,300); }catch(e){}   /* refresh System Health with live sync results */
+    }).catch(function(e){ console.warn('[SF] Master Sheet sync failed',e); _sfSync={connected:false,at:Date.now()}; try{if(typeof runHealth==='function')runHealth();}catch(_e){} cloudBadge('Salesforce sync failed'); });
   }catch(e){ console.warn('[SF] Master Sheet sync error',e); }
 }
 /* Arrowquip Pre-Booking Supabase project. Publishable key only; every write goes
@@ -3235,6 +3237,78 @@ function backfillCoords(){
 function refreshAfterGeo(){
   try{ if(document.getElementById('cards')) renderCards(); }catch(e){}
   try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){}
+}
+
+/* ===================== System Health ==============================
+   Lightweight startup self-check of the five subsystems the portal depends on:
+   Salesforce, Supabase, geocoding, routing and dealer sync. A background
+   coordinate scan re-geocodes every dealer and flags any location that differs
+   significantly from its Salesforce coordinates. Read-only; never mutates data. */
+var HEALTH={checks:{},flags:[],geoMissing:[],at:0};
+var GEO_DRIFT_MI=35;   /* geocode-vs-Salesforce distance treated as significant */
+function _hcSet(name,status,detail){ HEALTH.checks[name]={status:status,detail:detail}; try{renderHealth();}catch(e){} }
+function _hcOverall(){ var v=Object.keys(HEALTH.checks).map(function(k){return HEALTH.checks[k];}); if(!v.length)return 'pending';
+  if(v.some(function(c){return c.status==='fail';}))return 'fail'; if(v.some(function(c){return c.status==='warn';})||HEALTH.flags.length)return 'warn'; return 'ok'; }
+function runHealth(){
+  HEALTH.at=Date.now();
+  fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    if(j&&j.ok&&Array.isArray(j.dealers)&&j.dealers.length){ _hcSet('Salesforce','ok',j.count+' dealers'+((j.meta&&j.meta.stale)?' · cached':'')); }
+    else _hcSet('Salesforce','warn','no dealer data returned');
+  }).catch(function(){ _hcSet('Salesforce','fail','endpoint unreachable'); });
+  try{ if(SB&&SB.auth&&SB.auth.getSession){ SB.auth.getSession().then(function(r){ var s=r&&r.data&&r.data.session; _hcSet('Supabase',s?'ok':'warn',s?'session active':'no active session'); }).catch(function(){ _hcSet('Supabase','fail','auth error'); }); }
+    else _hcSet('Supabase','warn','client not initialised'); }catch(e){ _hcSet('Supabase','fail','error'); }
+  try{ geocodeAddress('Okeechobee, FL, US',function(g){ _hcSet('Geocoding',(g&&g.lat&&g.state==='FL')?'ok':(g&&g.lat?'warn':'fail'),(g&&g.lat)?'provider responding':'no response'); }); }catch(e){ _hcSet('Geocoding','fail','error'); }
+  try{ roadRoute([27.24,-80.83],[28.54,-81.38]).then(function(rt){ _hcSet('Routing',rt?'ok':'warn',rt?'road router responding':'router down · straight-line fallback'); }).catch(function(){ _hcSet('Routing','warn','router down · fallback'); }); }catch(e){ _hcSet('Routing','warn','n/a'); }
+  try{ var uni=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
+    var noCoord=uni.filter(function(d){return d.lat==null||d.lon==null;}).length;
+    var m=_sfSync||{}; var st=(m.connected===false)?'warn':(noCoord>0?'warn':'ok');
+    _hcSet('Dealer sync',st,(m.matched!=null?(m.matched+' matched · '+(m.fallback||0)+' fallback'):(uni.length+' dealers'))+(noCoord?(' · '+noCoord+' need coords'):'')); }
+  catch(e){ _hcSet('Dealer sync','warn','n/a'); }
+}
+/* Deep coordinate audit — re-geocode every dealer and flag drift vs Salesforce. */
+function auditGeoDrift(cb){
+  var uni=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
+  var jobs=uni.filter(function(d){return d.address;});
+  var flags=[], missing=[], remaining=jobs.length;
+  if(!remaining){ HEALTH.flags=[]; HEALTH.geoMissing=[]; cb&&cb({flags:[],missing:[]}); return; }
+  jobs.forEach(function(d){ geocodeQueue(d.address,function(g){
+    if(!g){ if(d.lat==null||d.lon==null) missing.push(d.name); }
+    else if(d.lat!=null&&d.lon!=null&&!g.approx){ var mi=hav([+d.lat,+d.lon],[g.lat,g.lon]);
+      if(mi!=null&&mi>GEO_DRIFT_MI) flags.push({name:d.name,miles:Math.round(mi),address:d.address}); }
+    if(--remaining<=0){ flags.sort(function(a,b){return b.miles-a.miles;}); HEALTH.flags=flags; HEALTH.geoMissing=missing;
+      try{console.warn('[geo audit] '+flags.length+' drift flag(s), '+missing.length+' unlocatable');}catch(e){} cb&&cb({flags:flags,missing:missing}); }
+  }); });
+}
+function renderHealth(){
+  if(!document.getElementById('sysHealthCSS')){ var s=document.createElement('style'); s.id='sysHealthCSS';
+    s.textContent='#sysHealth{position:fixed;left:14px;bottom:14px;z-index:100000;font-family:inherit;}'
+    +'#shChip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line,#d1d5db);border-radius:20px;padding:6px 13px;font-size:11px;font-weight:700;color:#374151;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.12);}'
+    +'#shChip .shdot{width:9px;height:9px;border-radius:50%;background:var(--shc,#9ca3af);flex:0 0 auto;}'
+    +'#shPanel{display:none;margin-bottom:8px;width:300px;max-width:82vw;background:#fff;border:1px solid var(--line,#d1d5db);border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.18);padding:12px 13px;position:absolute;bottom:100%;left:0;}'
+    +'#sysHealth.open #shPanel{display:block;}'
+    +'.shhdr{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;margin-bottom:9px;}'
+    +'.shrow{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;}'
+    +'.shi{width:16px;height:16px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}'
+    +'.shn{font-weight:700;color:#1f2937;flex:0 0 84px;}.shd{color:#6b7280;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    +'.shrow.warn2{color:#b45309;font-weight:700;font-size:11.5px;border-top:1px solid var(--line-soft,#eee);margin-top:6px;padding-top:8px;}'
+    +'.shflag{font-size:11px;color:#6b7280;padding:2px 0 2px 24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    +'.shscan{margin-top:10px;width:100%;font-size:10.5px;padding:7px;}'
+    +'@media(max-width:700px){#sysHealth{display:none;}}';
+    document.head.appendChild(s); }
+  var el=document.getElementById('sysHealth');
+  if(!el){ el=document.createElement('div'); el.id='sysHealth'; el.innerHTML='<div id="shPanel"></div><button id="shChip"><span class="shdot"></span><span class="shlbl"></span></button>';
+    document.body.appendChild(el); el.querySelector('#shChip').onclick=function(){ el.classList.toggle('open'); }; }
+  var ov=_hcOverall(), dot={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626',pending:'#9ca3af'}[ov];
+  var chip=el.querySelector('#shChip'); chip.style.setProperty('--shc',dot);
+  chip.querySelector('.shlbl').textContent='System '+({ok:'Healthy',warn:'Check',fail:'Issues',pending:'…'}[ov]);
+  var order=['Salesforce','Supabase','Geocoding','Routing','Dealer sync'];
+  var rows=order.filter(function(n){return HEALTH.checks[n];}).map(function(n){ var c=HEALTH.checks[n];
+    var col={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626'}[c.status]||'#9ca3af', ic={ok:'✓',warn:'!',fail:'✕'}[c.status]||'…';
+    return '<div class="shrow"><span class="shi" style="background:'+col+'">'+ic+'</span><span class="shn">'+n+'</span><span class="shd" title="'+esc(c.detail||'')+'">'+esc(c.detail||'')+'</span></div>'; }).join('');
+  var flags=(HEALTH.flags&&HEALTH.flags.length)?('<div class="shrow warn2">⚠ '+HEALTH.flags.length+' coordinate drift flag'+(HEALTH.flags.length===1?'':'s')+'</div>'
+    +HEALTH.flags.slice(0,6).map(function(f){return '<div class="shflag" title="'+esc(f.address)+'">'+esc(f.name)+' · '+f.miles+' mi from Salesforce</div>';}).join('')):'';
+  el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>';
+  var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; sc.textContent='Scanning…'; runHealth(); auditGeoDrift(function(){ sc.disabled=false; sc.textContent='Re-check & scan coordinates'; renderHealth(); }); };
 }
 
 /* ---- model helpers ---- */
@@ -7663,6 +7737,7 @@ function unlockApp(){
     try{ backfillCoords(); }catch(e){}   /* resolve any missing coordinates in the background */
   });
   initRealtime(); loadSFDealers();
+  try{ setTimeout(runHealth,1800); }catch(e){}   /* System Health self-check once SF/render settle */
   try{ fxAutoRefresh(false); }catch(e){}   /* currency engine: daily auto-refresh, last good rate kept */
   try{ pbPhotoBackfill(); }catch(e){}   /* drain any photos captured while signed-out/offline */
 }

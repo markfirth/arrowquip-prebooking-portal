@@ -305,6 +305,54 @@ async function auditRecordTypes() {
   }
 }
 
+/**
+ * Comprehensive post-sync validation — Record Type + coordinates + ownership,
+ * all read-only. Returns a single report the refresh endpoint surfaces so the
+ * portal can flag problems automatically after every refresh.
+ */
+async function auditSync() {
+  const { accessToken, instanceUrl } = await authenticate()
+  const base = `${instanceUrl}/services/data/${apiVersion()}`
+  const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
+  // approved-TM accounts (any record type) → record-type + coordinate checks
+  const rows = await queryAll(base, instanceUrl, accessToken,
+    `SELECT Id, Name, Territory_Manager__c, RecordType.Name, ` +
+    `BillingStreet, BillingCity, BillingStateCode, BillingPostalCode, ` +
+    `BillingLatitude, BillingLongitude FROM Account WHERE Territory_Manager__c IN (${tmList})`)
+  const rtMismatch = []
+  const missingCoords = []
+  const dealers = []
+  rows.forEach((a) => {
+    const rt = (a.RecordType && a.RecordType.Name) || null
+    if (rt !== EXPECTED_RECORD_TYPE) {
+      rtMismatch.push({ id: a.Id, name: a.Name || '', tm: a.Territory_Manager__c || '', recordType: rt,
+        reason: rt == null ? 'RecordType missing/inaccessible'
+          : (rt.trim() === EXPECTED_RECORD_TYPE ? 'whitespace/casing difference' : 'different record type — excluded from feed') })
+      return
+    }
+    dealers.push(a)
+    if (a.BillingLatitude == null || a.BillingLongitude == null) {
+      missingCoords.push({ id: a.Id, name: a.Name || '',
+        address: [a.BillingStreet, a.BillingCity, a.BillingStateCode, a.BillingPostalCode].filter(Boolean).join(', ') })
+    }
+  })
+  // ownership: genuine dealers (Arrowquip Dealer record type) owned by a NON-approved
+  // TM — excluded from planning by design, surfaced so the exclusion is never silent.
+  const offOwner = await queryAll(base, instanceUrl, accessToken,
+    `SELECT Id, Name, Territory_Manager__c FROM Account ` +
+    `WHERE RecordType.Name = '${EXPECTED_RECORD_TYPE}' AND Territory_Manager__c NOT IN (${tmList})`)
+  const problems = rtMismatch.length + missingCoords.length
+  return {
+    expected: EXPECTED_RECORD_TYPE,
+    dealerCount: dealers.length,
+    healthy: problems === 0,
+    recordType: { mismatchCount: rtMismatch.length, mismatches: rtMismatch },
+    coordinates: { missingCount: missingCoords.length, missing: missingCoords },
+    ownership: { offListCount: offOwner.length,
+      offList: offOwner.map((a) => ({ id: a.Id, name: a.Name || '', tm: a.Territory_Manager__c || '' })) },
+  }
+}
+
 // ── cache (module scope, per runtime instance) + stale-while-error ───────────
 let _cache = null // { dealers, fetchedAt }
 function isFresh() { return !!_cache && Date.now() - _cache.fetchedAt < CACHE_TTL_MS }
@@ -336,4 +384,4 @@ async function getDealerById(id) {
   return dealers.find((d) => d.sfAccountId === id || d.id === id) || null
 }
 
-module.exports = { getDealers, getDealerById, auditRecordTypes, ACCESS_TOKEN, CACHE_TTL_MS }
+module.exports = { getDealers, getDealerById, auditRecordTypes, auditSync, ACCESS_TOKEN, CACHE_TTL_MS }
