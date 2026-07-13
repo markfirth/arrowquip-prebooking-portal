@@ -3144,7 +3144,7 @@ function addTravel(type,wk){
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
-  else if(field==='time'){ it.time=val; if(val) TLE.lock['m:'+id]=1; else delete TLE.lock['m:'+id]; }  /* typing a time fixes it */
+  else if(field==='time') it.time=val;  /* typing never locks — only the 🔒 does */
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='airportCode'){
     var a=airportByCode(val);
@@ -3517,14 +3517,14 @@ function setVisitField(ref,f,val){
   if(kind==='i'){
     if(f==='wk'){ var prev=ASSIGN[id]; ASSIGN[id]=(val==='remote')?'remote':parseInt(val,10); if(ASSIGN[id]!==prev) DAY[id]=null; }
     else if(f==='day') DAY[id]=(val===''?null:parseInt(val,10));
-    else if(f==='time'){ TIME[id]=val; if(val) TLE.lock['d:'+id]=1; else delete TLE.lock['d:'+id]; }   /* typing a time fixes it */
+    else if(f==='time') TIME[id]=val;   /* typing never locks — only the 🔒 does */
     else if(f==='dur'){ var n=normDur(parseDur(val)); if(n==null) return false; DUR[id]=n; }
     else if(f==='notes'){ var s=STOPX[id]=STOPX[id]||{}; s.notes=val; }
   } else {
     var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return false;
     if(f==='wk'){ var nw=parseInt(val,10); if(!isFinite(nw)) return false; if(x.wk!==nw) x.day=null; x.wk=nw; }
     else if(f==='day') x.day=(val===''?null:parseInt(val,10));
-    else if(f==='time'){ x.time=val; if(val) TLE.lock['x:'+id]=1; else delete TLE.lock['x:'+id]; }    /* typing a time fixes it */
+    else if(f==='time') x.time=val;     /* typing never locks — only the 🔒 does */
     else if(f==='dur'){ var n2=normDur(parseDur(val)); if(n2==null) return false; x.dur=n2; }
     else if(f==='notes') x.notes=val;
   }
