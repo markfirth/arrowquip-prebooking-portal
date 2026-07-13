@@ -3263,18 +3263,17 @@ function travelCard(it,wk,tl){
     +'</div>';
   var when2='';
   if(isHotel){
-    /* check-out IS the departure: the next morning chains from it */
+    /* check-out IS the departure: the next morning chains from it. With no
+       checkout entered, a locked appointment the next day pulls it backwards
+       and the computed leave-by time shows right in the field. */
+    var autoCo=(!it.time2&&tl&&tl.depSug!=null)?addMin('00:00',((Math.round(tl.depSug)%1440)+1440)%1440):'';
     when2='<div class="tv-row"><label class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">Checkout by</label>'
-      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2)+'</select>'
-      +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||'')+'">'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:(autoCo?Math.floor(tl.depSug/1440):null))+'</select>'
+      +'<input class="tv-in tv-time" type="time" step="900" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2||autoCo)+'"'
+      +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':'')+'>'
       +'</div>';
   }
-
-  /* timeline strip: the arrival goes straight into the time field above —
-     the only extra hint is the backward-derived check-out-by */
   var tlRow='';
-  if(tl&&isHotel&&tl.coMin==null&&tl.depSug!=null)
-    tlRow='<div class="tv-tl">Check out by <b>'+tlT(tl.depSug)+'</b> to make the next stop</div>';
 
   /* airline / flight number / confirmation / notes removed — the box stays
      compact: place + day + time (plus check-out for hotels). */
@@ -3295,7 +3294,9 @@ function travelCard(it,wk,tl){
   /* unreachable at its set time: fade the card red instead of a banner */
   var lateCls=(tl&&tl.lateMin)?' tl-late':'';
   var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
-  return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'"'+lateTitle+'>'
+  /* travel cards move exactly like visit cards: drag to a day (or a position
+     within one) and every arrival downstream recalculates */
+  return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
       +typeSel
@@ -6354,6 +6355,18 @@ function performDrop(raw,t,y){
     createVisit(pr[0], pr[1], parseInt(tp[0],10), tp[1]);
     return;
   }
+  if(raw.slice(0,3)==='lg:'){
+    /* travel item (hotel, rental, flight, stop) dragged to a day/position */
+    var lg=LOGI.filter(function(v){return v.id===raw.slice(3);})[0]; if(!lg) return;
+    if(t==='pool'||t==='remote') return;
+    var lp=t.split('|'); lg.wk=parseInt(lp[0],10);
+    lg.day=(lp[1]!=null&&lp[1]!=='none')?parseInt(lp[1],10):null;
+    if(lg.day!=null){
+      if(!TLE.lock['m:'+lg.id]) lg.time='';   /* unlocked: the new position recalculates the time */
+      ordPlace('m:'+lg.id,t,y);
+    } else delete ORD['m:'+lg.id];
+    savePlan(); refreshPlanner(); return;
+  }
   if(raw.slice(0,3)==='xv:'){
     var xv=XVISITS.filter(function(v){return v.id===raw.slice(3);})[0]; if(!xv) return;
     if(t==='pool'){ deleteVisit('x:'+xv.id); return; }
@@ -6701,7 +6714,7 @@ function wireDnD(){
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
   document.querySelectorAll('#weeks [data-tlock]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlToggleLock(b.dataset.tlock);}));
-  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();undoSnap('Travel item deleted');LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});savePlan();refreshPlanner();aqToast('Travel item deleted',true);}));
+  document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();undoSnap('Travel item deleted');LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});delete ORD['m:'+b.dataset.ldel];savePlan();refreshPlanner();aqToast('Travel item deleted',true);}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
   hydrateDriveRows();          /* fill the drive rows from the cached router */
