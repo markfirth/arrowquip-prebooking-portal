@@ -173,6 +173,10 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
     sfPrebook2026: opp26any ? num(opp26any.Prebooked_Value__c) : null,
     // 2027 Actual — the CLOSED WON 2027 prebooking value. Read-only in the app.
     actual2027: (opp27 && opp27.StageName === 'Closed Won') ? num(opp27.Prebooked_Value__c) : null,
+    // 2027 Actual LOADS — the CLOSED WON 2027 prebooking load count. This is the
+    // number the dashboards call "confirmed loads": real Salesforce actuals, not
+    // planner confirmations. null until Salesforce has a closed-won 2027 opp.
+    actualLoads2027: (opp27 && opp27.StageName === 'Closed Won') ? num(opp27.Number_of_Loads__c) : null,
   }
 }
 

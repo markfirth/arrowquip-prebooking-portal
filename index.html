@@ -737,8 +737,8 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 #masterView tfoot td{position:sticky;bottom:0;background:#fff;z-index:35;box-shadow:0 -1px 0 var(--line);}
 /* frozen #, Dealer and Territory columns during horizontal scrolling */
 #masterView tr.colhdr th:nth-child(1),#mBody td:nth-child(1),#mFoot td:nth-child(1){position:sticky;left:0;z-index:45;min-width:34px;}
-#masterView tr.colhdr th:nth-child(2),#mBody td:nth-child(2),#mFoot td:nth-child(2){position:sticky;left:34px;z-index:45;min-width:190px;max-width:230px;}
-#masterView tr.colhdr th:nth-child(3),#mBody td:nth-child(3),#mFoot td:nth-child(3){position:sticky;left:224px;z-index:45;box-shadow:2px 0 4px -2px rgba(0,0,0,.12);}
+#masterView tr.colhdr th:nth-child(2),#mBody td:nth-child(2),#mFoot td:nth-child(2){position:sticky;left:34px;z-index:45;min-width:150px;max-width:185px;}
+#masterView tr.colhdr th:nth-child(3),#mBody td:nth-child(3),#mFoot td:nth-child(3){position:sticky;left:184px;z-index:45;box-shadow:2px 0 4px -2px rgba(0,0,0,.12);}
 #masterView tr.colhdr th:nth-child(-n+3){z-index:55;}
 #mBody td{background:#fff;}
 #mBody tr.plannerrow td{background:#fffdf6;}
@@ -909,7 +909,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .kc-top{min-width:0;gap:6px;}
 .kc-top .kc-name{overflow:hidden;text-overflow:ellipsis;}
 /* Master Sheet: tighter grid, narrow tier column, ellipsised address */
-#masterView th,#masterView td{padding:3px 6px;font-size:10.5px;}
+#masterView th,#masterView td{padding:2px 4px;font-size:10px;}
 #masterView tr.colhdr th{padding-top:6px;padding-bottom:6px;font-size:9.5px;}
 #mBody td:nth-child(7){max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #mBody td:nth-child(13){width:40px;text-align:center;}
@@ -1295,10 +1295,58 @@ var SF_ALIAS={
   "Stenberg Trailers & Cattle Supply":"001ON00000JHTrpYAH",
   "Cattleman's Resource Inc":"001ON00000Jyc9NYAR"
 };
-function _sfNorm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+/* normalization for name matching: case/punctuation-insensitive, '&' = 'and',
+   and legal suffixes (Inc, LLC, Ltd, Co, Corp, Company, The) never break a match */
+function _sfNorm(s){
+  return (s||'').toLowerCase()
+    .replace(/['’]/g,'')
+    .replace(/&/g,' and ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\b(inc|incorporated|llc|ltd|limited|co|corp|corporation|company|the)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+/* last-resort fuzzy: unique prefix containment between normalized names —
+   only ever used when id, alias and exact normalized name all miss, and only
+   when exactly ONE Salesforce account matches (never guesses between two). */
+function _sfFuzzy(n){
+  if(!n||n.length<6) return null;
+  var hit=null;
+  for(var k in SF_BY_NAME){
+    if(k.indexOf(n)===0||n.indexOf(k)===0){ if(hit) return null; hit=SF_BY_NAME[k]; }
+  }
+  return hit;
+}
+var _sfLkMemo={};
 function sfLookup(d){
+  if(!d) return null;
+  var m=_sfLkMemo[d.id]; if(m!==undefined) return m;
   var byAlias=SF_ALIAS[d.name]?SF_BY_ID[SF_ALIAS[d.name]]:null;
-  return SF_BY_ID[d.id]||byAlias||SF_BY_NAME[_sfNorm(d.name)]||null;
+  var n=_sfNorm(d.name);
+  var r=SF_BY_ID[d.id]||byAlias||SF_BY_NAME[n]||_sfFuzzy(n)||null;
+  _sfLkMemo[d.id]=r;
+  return r;
+}
+/* full sync check: which planner dealers have NO Salesforce account, and which
+   Salesforce accounts matched no planner dealer — with closest-name guesses.
+   Runs after every sync (console) and on demand: sfAuditSync() */
+function sfAuditSync(){
+  var used={}, un=[];
+  DEALERS.forEach(function(d){ var sf=sfLookup(d); if(sf) used[sf.id]=1; else un.push(d.name); });
+  var extra=Object.keys(SF_BY_ID).filter(function(id){ return !used[id]; }).map(function(id){ return SF_BY_ID[id].name; });
+  var guess=function(name){
+    var tn=_sfNorm(name).split(' '), best=null, bs=0;
+    extra.forEach(function(x){
+      var tx=_sfNorm(x).split(' '), s=0;
+      tn.forEach(function(w){ if(w.length>2&&tx.indexOf(w)>=0) s++; });
+      if(s>bs){ bs=s; best=x; }
+    });
+    return best?(name+'  →  closest unmatched Salesforce account: "'+best+'"'):name;
+  };
+  var rep={unmatchedPlanner:un.map(guess), unmatchedSalesforce:extra};
+  if(un.length) console.warn('[SF audit] '+un.length+' planner dealer(s) with NO Salesforce match:\n  '+rep.unmatchedPlanner.join('\n  '));
+  if(extra.length) console.warn('[SF audit] '+extra.length+' Salesforce account(s) not matched to a planner dealer:\n  '+extra.join('\n  '));
+  if(!un.length&&!extra.length) console.log('[SF audit] every planner dealer matches a Salesforce account and vice versa ✓');
+  return rep;
 }
 function sfMasterMerge(d){
   var sf=sfLookup(d);
@@ -1404,10 +1452,11 @@ function loadSFDealers(opts){
   try{
     fetch('/api/salesforce-dealers?k=aq-d3-4e8a1f60d9b2'+(force?'&refresh=1&_='+Date.now():''),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
       if(!j||!j.ok||!Array.isArray(j.dealers)){ console.warn('[SF] Master Sheet sync: no data returned',j); _sfSync={connected:false,at:Date.now()}; cloudBadge('Salesforce sync failed'); return; }
-      SF_BY_ID={}; SF_BY_NAME={}; var matched=0;
+      SF_BY_ID={}; SF_BY_NAME={}; _sfLkMemo={}; var matched=0;
       j.dealers.forEach(function(sf){ if(sf.id)SF_BY_ID[sf.id]=sf; if(sf.name)SF_BY_NAME[_sfNorm(sf.name)]=sf; });
       invalidateUniverse();
       try{ DEALERS.forEach(function(d){ if(sfLookup(d))matched++; }); }catch(e){}
+      try{ sfAuditSync(); }catch(e){}
       console.log('[SF] Master Sheet: loaded '+j.dealers.length+' Salesforce dealers · matched '+matched+' of '+DEALERS.length+' planner dealers');
       _sfSync={connected:true,loaded:j.dealers.length,matched:matched,fallback:DEALERS.length-matched,at:Date.now(),meta:j.meta||null};
       cloudBadge('Salesforce ✓ · '+j.dealers.length+' loaded · '+matched+' matched · '+(DEALERS.length-matched)+' fallback');
@@ -2102,6 +2151,7 @@ CALC.dealer=function(d){
      confRevCAD:act.reduce(function(s,x){return s+(+x.revCAD||0);},0),
      commitments:act.length,
      actual:(sf&&+sf.actual2027)||0,
+     actualLoads:(sf&&+sf.actualLoads2027)||0,   /* Salesforce 2027 Actual loads — the real confirmed loads */
      recordType:(sf&&(sf.recordType||''))||'',
      problem:(!mkt)||(loads>0&&!rp)};
   c.gap=Math.max(0,revMixed-c.actual);
@@ -2306,22 +2356,25 @@ function renderCards(){
   var pc=function(b){ return target?Math.round(b/target*100):0; };
   var tip=function(lbl,b,l){ return lbl+' — '+fmtUSD(b)+' · '+Math.round(l)+' loads · '+pc(b)+'% of target'; };
   var cad=function(v){ return 'CA$'+Math.round(v).toLocaleString(); };
-  /* Loads-first target: confirmed pre-booking loads (green) against the total
-     load target (labelled at the far end). No blue block, no CAD, no surplus
-     dollars — the unit here is loads. */
-  var tgtL=Math.round(targetLoads), cL=Math.round(confL);
+  /* Loads-first target: ACTUAL confirmed loads from Salesforce (the 2027
+     Actual closed-won prebooking loads — never planner confirmations or
+     appointment counts) against the total load target. Zero until Salesforce
+     has closed-won 2027 opportunities. */
+  var actL=0, actB=0;
+  ds.forEach(function(d){ var c=CALC.dealer(d); if(!c) return; actL+=(+c.actualLoads||0); actB+=(+c.actual||0); });
+  var tgtL=Math.round(targetLoads), cL=Math.round(actL);
   var overL=Math.max(0,cL-tgtL);
   var pctL=tgtL?Math.min(100,cL/tgtL*100):0;
   var card1='<div class="xc xc-target">'
     +'<div class="xch">'+Y+' Pre-Booking Target</div>'
     +'<div class="xcv"><b class="lc">'+cL+'</b><span class="xcl">confirmed loads</span></div>'
-    +'<div class="ltrack" title="'+cL+' confirmed of a '+tgtL+'-load target">'
+    +'<div class="ltrack" title="'+cL+' Salesforce-confirmed of a '+tgtL+'-load target ('+Y+' Actual, closed-won)">'
       +'<i class="lfill" style="width:'+pctL.toFixed(1)+'%"></i>'
       +'<span class="ltgt">'+tgtL+'-load target</span>'
     +'</div>'
     +(overL>0
       ? ('<div class="xhint over">'+overL+' load'+(overL===1?'':'s')+' above target</div>')
-      : ('<div class="xhint">'+Math.max(0,tgtL-cL)+' load'+((tgtL-cL)===1?'':'s')+' to target · '+fmtUSDk(confB)+' confirmed</div>'))
+      : ('<div class="xhint">'+Math.max(0,tgtL-cL)+' load'+((tgtL-cL)===1?'':'s')+' to target · '+fmtUSDk(actB)+' actual from Salesforce</div>'))
     +'</div>';
   /* --- Card 2: Confirmed Pre-Booking — the commitment ledger, Mixed + CAD --- */
   var cfShare=target?confB/target*100:0;
@@ -6091,7 +6144,7 @@ function buildMasterUniverse(){
 /* The Master Sheet universe is the single source of truth for every planning view.
    Cached per mutation (invalidated by reindex/saveDealers/Salesforce sync/overlay change). */
 var _uni=null, _uniById=null;
-function invalidateUniverse(){ _uni=null; _uniById=null; }
+function invalidateUniverse(){ _uni=null; _uniById=null; try{ _sfLkMemo={}; }catch(e){} }
 function planningUniverse(){
   if(!_uni){
     _uni=buildMasterUniverse();
@@ -6114,7 +6167,7 @@ function masterHeadHTML(){
     +'<th class="srt num" data-mk="t27loads">'+Y+' Target Loads<span class="hinfo" title="Editable. The ONLY input — revenue, tier, margin and co-op all calculate from it."> ⓘ</span></th>'
     +'<th class="srt num" data-mk="booking">'+Y+' Target<span class="hsub">Revenue (Mixed)</span></th>'
     +'<th class="num">'+Y+' Target<span class="hsub">Revenue (CAD)</span></th>'
-    +'<th>'+Y+' Target Tier</th>'
+    +'<th>Tier</th>'
     +'<th class="num">Margin<span class="hsub">Dealer %</span></th>'
     +'<th class="num">Co-op<span class="hsub">%</span></th>'
     +'<th class="num">'+Y+' Confirmed<span class="hsub">Loads</span></th>'
