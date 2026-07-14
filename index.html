@@ -218,6 +218,9 @@ td.sflock b.lockval{font-weight:700;color:#2a2f36;}
 td.rownum{background:#f3f4f6;color:#6b7280;text-align:center;font-weight:600;font-size:11px;}
 tr.colhdr th .hsub{display:block;font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;color:#9aa1ac;margin-top:1px;}
 td.statuscell{text-align:center;}
+td.arcell{text-align:center;}
+select.arpill{width:auto;max-width:120px;font-family:inherit;font-size:10px;border-radius:6px;padding:3px 6px;border:1px solid var(--line);color:var(--muted);cursor:pointer;background:transparent;}
+select.arpill.aron{border-color:#f59e0b;color:#b45309;font-weight:700;background:#fff7ed;}
 select.statuspill{width:auto;min-width:0;font-family:inherit;font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:20px;padding:3px 8px;border:1px solid;cursor:pointer;}
 select.st-committed{color:#1f7a46;background:#eaf6ee;border-color:#cfe6d8;}
 select.st-working{color:#8a6d1a;background:#fbf5e6;border-color:#eee0bf;}
@@ -1274,7 +1277,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
       <div class="tabletools"><div><div class="h">Dealer Master Sheet — Editable</div><div class="sub" id="mSub"></div></div>
-        <div class="mtools-r"><label class="goalwrap"><span id="goalLbl">Goal $</span><input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><button class="btn" id="mCsvBtn" title="Export every dealer with targets, tiers, margins, confirmations and record types">⤓ CSV</button><select class="msel" id="mRT" style="display:none"></select><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select></div></div>
+        <div class="mtools-r"><label class="goalwrap"><span id="goalLbl">Goal $</span><input id="goalInput" type="number" class="goalinp" placeholder="set goal"></label><button class="btn" id="mCsvBtn" title="Export every dealer with targets, tiers, margins, confirmations and record types">⤓ CSV</button><select class="msel" id="mRT" style="display:none"></select><select class="msel" id="mTerr"></select><select class="msel" id="mAM"></select><select class="msel" id="mArea"><option value="">All planning</option><option value="in">In area planning</option><option value="out">Excluded</option></select><select class="msel" id="mStatus"><option value="">All statuses</option><option>Committed</option><option>Working</option><option>Not Started</option><option>Complete</option></select><select class="msel" id="mAR" title="Accounts-receivable filter"><option value="">All AR</option><option value="has">Has AR issue</option><option value="no">No AR issue</option></select></div></div>
       <table>
         <thead id="mHead"></thead>
         <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
@@ -1520,12 +1523,16 @@ let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
-let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="";
+let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="", mFilterAR="";
 /* Planner-owned planning status (default Not Started). Rendered as a coloured pill <select>. */
 var STATUSES=['Committed','Working','Not Started','Complete'];
 function statusCls(s){ return 'st-'+String(s||'Not Started').toLowerCase().replace(/\s+/g,''); }
 function statusSel(d){ var cur=d.status||'Not Started';
   return '<select class="ed statuspill '+statusCls(cur)+'" data-f="status">'+STATUSES.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'; }
+/* compact AR-Issues picker — amber when there is an open concern */
+function arSel(d){ var cur=arIssueOf(d.id); var flag=hasArIssue(d.id);
+  return '<select class="ed arpill'+(flag?' aron':'')+'" data-f="arIssue" title="AR concern — manually managed">'
+    +AR_OPTIONS.map(function(s){return '<option value="'+esc(s)+'"'+(s===cur?' selected':'')+'>'+(s||'—')+'</option>';}).join('')+'</select>'; }
 let terrMode='plan', terrMapWeek='all', terrMapDay='all';
 let SETTINGS={};
 let LOGI=[];
@@ -1893,6 +1900,34 @@ function hydrateDriveRows(){
   });
 }
 let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
+/* AR Issues — a MANUALLY-MANAGED portal field (no Salesforce AR integration).
+   Keyed by dealer id in its own map so it survives Salesforce sync (which only
+   replaces DEALERS) and is never overwritten by other dealers' updates. */
+let ARISSUES={};
+const AR_OPTIONS=['','No current issue','Past due','Credit hold','Payment plan','Disputed invoice','High balance','Finance review required'];
+function arIssueOf(id){ return ARISSUES[id]||''; }
+function hasArIssue(id){ var v=arIssueOf(id); return !!v && v!=='No current issue'; }
+/* QA: AQ_QA.ar() — proves set → persist round-trip + filter + survives a sync. */
+window.AQ_QA=window.AQ_QA||{};
+window.AQ_QA.ar=function(){
+  var rows=[],ok=true; var snap=Object.assign({},ARISSUES);
+  function chk(l,c){ok=ok&&c;rows.push({case:l,pass:c});}
+  var id=(DEALERS&&DEALERS[0]&&DEALERS[0].id)||'D001';
+  ARISSUES[id]='Credit hold';
+  chk('set value',arIssueOf(id)==='Credit hold');
+  chk('hasArIssue true',hasArIssue(id)===true);
+  var payload=JSON.parse(JSON.stringify(planPayload()));
+  chk('in plan payload',payload.arissues[id]==='Credit hold');
+  ARISSUES={};                                     /* simulate reload/sync wiping memory */
+  chk('cleared',arIssueOf(id)==='');
+  if(payload.arissues)ARISSUES=Object.assign({},payload.arissues);  /* restore like applyCloudRow */
+  chk('survives sync/reload',arIssueOf(id)==='Credit hold');
+  ARISSUES[id]='No current issue';
+  chk('“No current issue” ≠ open concern',hasArIssue(id)===false);
+  ARISSUES=snap;
+  console.table(rows); console.log(ok?'✅ AR TESTS PASSED':'❌ AR TESTS FAILED');
+  return {passed:ok,rows:rows};
+};
 /* ---- Multiple visits per dealer ----
    The dealer record stays single (Master Sheet unchanged). ASSIGN/DAY/TIME/APPT
    remain the dealer's INITIAL visit exactly as before; XVISITS holds unlimited
@@ -2308,10 +2343,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -4528,6 +4563,8 @@ function allDealerModal(id){
         +row('Appointment',(APPT[id]?'<span style="color:#15803d">Confirmed</span>':'Pending'))
         +row('Primary Contact',esc(sf.contactName||''))
         +row('Phone',esc(sf.contactMobile||sf.contactPhone||''))
+        +row('Tier',esc(dealerTierLabel(d)))
+        +(hasArIssue(id)?row('AR Issue','<span style="color:#b45309;font-weight:700">'+esc(arIssueOf(id))+'</span>'):(arIssueOf(id)?row('AR Issue',esc(arIssueOf(id))):''))
         +row('Address',esc(d.address||''));
     }
     if(TAB==='history'){
@@ -6403,7 +6440,7 @@ function planningUniverse(){
 function uniById(id){ planningUniverse(); return _uniById[id]||byId[id]||null; }
 function masterHeadHTML(){
   var Y=planYear(), PY=Y-1;
-  return '<tr class="grprow"><th class="grp-sf" colspan="10"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="14">Planner (Editable)<span class="gsub">Targets, tiers, margins and confirmations calculate automatically</span></th><th></th></tr>'
+  return '<tr class="grprow"><th class="grp-sf" colspan="10"><span class="glk"></span>Salesforce (Locked)<span class="gsub">Updates automatically from Salesforce</span></th><th class="grp-pln" colspan="15">Planner (Editable)<span class="gsub">Targets, tiers, margins and confirmations calculate automatically</span></th><th></th></tr>'
     +'<tr class="colhdr">'
     +'<th>#</th><th class="srt" data-mk="name">Dealer<span class="hlock"></span></th><th class="srt" data-mk="territory">Territory<span class="hlock"></span></th><th class="srt" data-mk="tm">Acct. Mgr<span class="hlock"></span></th>'
     +'<th class="srt" data-mk="tier">Tier<span class="hlock"></span></th><th class="srt" data-mk="loc">State<span class="hlock"></span></th><th>Address<span class="hlock"></span></th>'
@@ -6423,7 +6460,8 @@ function masterHeadHTML(){
     +'<th class="num">'+Y+' Actual<span class="hlock"></span></th>'
     +'<th class="srt" data-mk="areaPlanning">Area Planning</th>'
     +'<th class="srt" data-mk="atKickoff">Kickoff</th>'
-    +'<th class="srt" data-mk="status">Status</th><th>Actions</th>'
+    +'<th class="srt" data-mk="status">Status</th>'
+    +'<th class="srt" data-mk="arIssue" title="Accounts-receivable concern — manually managed, saved to the plan">AR</th><th>Actions</th>'
     +'</tr>';
 }
 function renderMaster(){
@@ -6437,6 +6475,8 @@ function renderMaster(){
   else if(mFilterArea==='out') rows=rows.filter(function(d){return d.areaPlanning===false;});
   if(mFilterStatus) rows=rows.filter(function(d){return (d.status||'Not Started')===mFilterStatus;});
   if(mFilterRT) rows=rows.filter(function(d){return (d.recordType||'')===mFilterRT;});
+  if(mFilterAR==='has') rows=rows.filter(function(d){return hasArIssue(d.id);});
+  else if(mFilterAR==='no') rows=rows.filter(function(d){return !hasArIssue(d.id);});
   var terrOpts=["East","South","Central","West","Exports"];
   var amList=[]; _allMerged.forEach(function(d){ if(d.tm && d.tm!=='—' && amList.indexOf(d.tm)<0) amList.push(d.tm); }); amList.sort();
   var rtList=[]; _allMerged.forEach(function(d){ if(d.recordType && rtList.indexOf(d.recordType)<0) rtList.push(d.recordType); }); rtList.sort();
@@ -6488,6 +6528,7 @@ function renderMaster(){
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="areaPlanning" ${d.areaPlanning!==false?'checked':''}></td>
     <td class="pln" style="text-align:center"><input type="checkbox" class="edk" data-f="atKickoff" ${d.atKickoff?'checked':''}></td>
     <td class="pln statuscell">${statusSel(d)}</td>
+    <td class="pln arcell">${arSel(d)}</td>
     <td class="act"><button class="delx" data-del="${d.id}" title="Delete dealer">✕</button></td></tr>`;}).join("");
   /* totals reflect the VISIBLE (filtered) rows only */
   var _fTot=rows.reduce(function(a,d){ var c=CALC.dealer(d)||{};
@@ -6511,7 +6552,7 @@ function dealerReportRows(){
   return buildMasterUniverse().map(function(d){
     var c=CALC.dealer(d)||{};
     var visits=pbCardsOf(d.id).length+XVISITS.filter(function(x){return x.dealer===d.id&&x.type==='visit';}).length+((typeof ASSIGN[d.id]==='number'&&vType(d.id)==='visit')?1:0);
-    return {Dealer:d.name, Territory:d.territory, State:d.loc, 'Record Type':c.recordType||'',
+    return {Dealer:d.name, Territory:d.territory, State:d.loc, 'Record Type':c.recordType||'', 'AR Issues':arIssueOf(d.id),
       ['Target Loads '+Y]:c.loads||'', ['Target Revenue Mixed '+Y]:c.revMixed||'', ['Target Revenue CAD '+Y]:c.revCAD||'',
       Tier:c.tierLabel||'', 'Margin %':(c.margin!=null?c.margin:''), 'Co-op %':(c.coop!=null?c.coop:''),
       ['Actual '+Y]:c.actual||'', Gap:c.gap||'',
@@ -6641,6 +6682,10 @@ function renderSettings(){
 function onMasterEdit(e){
   const el=e.target.closest('.ed,.edk'); if(!el) return;
   const tr=el.closest('tr'); const id=tr.dataset.id; const f=el.dataset.f; const d=byId[id];
+  if(f==='arIssue'){ /* manually-managed AR field: id-keyed, independent, saved to the plan */
+    var arOld=arIssueOf(id); var arNew=(el.value||'').trim();
+    if(arNew) ARISSUES[id]=arNew; else delete ARISSUES[id];
+    audit('ar-issue',{dealer:id,old:arOld,neu:arNew}); savePlan(); withPreservedScroll(renderMaster); return; }
   if(!d){ /* Phase B: lazy Account-Id overlay for no-overlay Salesforce dealers — planner fields only; writes ONLY overlay_v1, never DEALERS/ASSIGN */
     if(SF_BY_ID[id] && ['booking','prebook2026','t27loads','visitConfirmed','atKickoff','remote','areaPlanning','status'].indexOf(f)>=0){
       var ov=SF_OVERLAY[id]||(SF_OVERLAY[id]={booking:0,prebook2026:0,visitConfirmed:false,atKickoff:false,remote:false,areaPlanning:true,status:'Not Started'});
@@ -6899,7 +6944,7 @@ function applyPlanSnapshot(p){
   ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
-  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{};
+  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{};
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
@@ -7598,6 +7643,7 @@ document.getElementById("mTerr").addEventListener("change",function(e){mFilterTe
 document.getElementById("mAM").addEventListener("change",function(e){mFilterAM=e.target.value;renderMaster();});
 document.getElementById("mArea").addEventListener("change",function(e){mFilterArea=e.target.value;renderMaster();});
 document.getElementById("mStatus").addEventListener("change",function(e){mFilterStatus=e.target.value;renderMaster();});
+document.getElementById("mAR").addEventListener("change",function(e){mFilterAR=e.target.value;renderMaster();});
 document.getElementById("goalInput").addEventListener("change",function(e){GOAL2027=Math.max(0,Math.round(parseFloat(e.target.value)||0));savePlan();renderMaster();});
 document.getElementById("mBody").addEventListener("change",onMasterEdit);
 document.getElementById("mBody").addEventListener("click",e=>{
@@ -7764,7 +7810,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
