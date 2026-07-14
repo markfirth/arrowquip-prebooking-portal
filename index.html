@@ -1764,8 +1764,42 @@ function tlSeq(t,wk){
   });
   return seq;
 }
+/* ===================== CANONICAL TRIP ORDER =====================
+   The visible schedule sequence (tlSeq, which honours the ORD manual-drag
+   order) is the ONE source of truth for trip order. Every map, route line,
+   marker number, drive-time, arrival/departure, report, download and mobile
+   view orders its stops through tripPosMap(), so those surfaces can never
+   independently sort by time, location, id, lock, type or anything else.
+
+   tripPosMap(t,wk) → { seqKey: position } where position is a gapless 1..N in
+   schedule order and seqKey is the wkStopSeq key form ('d:'+dealerId,
+   'x:'+xvisitId, 'm:'+logiId). A stop that is not in the schedule sequence
+   (no coordinates, or no day assigned) simply has no position; bySeq() sorts
+   those after every sequenced stop, preserving the old day+time fallback so a
+   failed geocode or an un-dated stop never corrupts the order of the rest.   */
+var _tripPosCache={};
+function tripPosMap(t,wk){
+  if(typeof wk!=='number') return {};
+  var ck=t+'|'+wk, hit=_tripPosCache[ck]; if(hit) return hit;
+  var pos={}, seq=tlSeq(t,wk);
+  seq.forEach(function(s,i){ pos[s.key]=i+1; });   /* 1..N, gapless, no dupes */
+  _tripPosCache[ck]=pos; return pos;
+}
+/* comparator: canonical schedule position first, day+time only as a fallback
+   for stops the schedule sequence doesn't cover. keyOf/dayOf/timeOf adapt each
+   consumer's row shape to the shared seqKey / day / time. */
+function bySeq(pos, keyOf, dayOf, timeOf){
+  return function(a,b){
+    var pa=pos[keyOf(a)], pb=pos[keyOf(b)];
+    if(pa!=null&&pb!=null) return pa-pb;
+    if(pa!=null) return -1;
+    if(pb!=null) return 1;
+    var ad=(dayOf(a)==null?99:dayOf(a)), bd=(dayOf(b)==null?99:dayOf(b));
+    return (ad-bd) || String(timeOf(a)||'zz').localeCompare(String(timeOf(b)||'zz'));
+  };
+}
 var _tlCache={};
-function tlInvalidate(){ _tlCache={}; _tlStoreC=null; }
+function tlInvalidate(){ _tlCache={}; _tlStoreC=null; _tripPosCache={}; }
 function tlCompute(t,wk){
   var ck=t+'|'+wk;
   if(_tlCache[ck]) return _tlCache[ck];
@@ -3440,10 +3474,13 @@ function itineraryFor(t,wk){
         located:travelHasLocation(it), raw:it});
     }
   });
-  items.sort(function(a,b){
-    var ad=(a.day==null?99:a.day), bd=(b.day==null?99:b.day);
-    return (ad-bd) || String(a.time||'zz').localeCompare(String(b.time||'zz'));
-  });
+  /* order = the schedule sequence (the single source of truth), never time.
+     map each row to its wkStopSeq key: dealer→d:, xvisit→x: (strip xv:), travel→m: */
+  items.sort(bySeq(tripPosMap(t,wk),
+    function(i){ return i.kind==='dealer' ? 'd:'+i.id
+      : i.kind==='xvisit' ? 'x:'+String(i.id).replace(/^xv:/,'')
+      : 'm:'+i.id; },
+    function(i){return i.day;}, function(i){return i.time;}));
   return items;
 }
 /* legs between consecutive LOCATED items; unlocated items break no legs, they're skipped */
@@ -5231,7 +5268,8 @@ function mapHTML(tl, weekSel, colorBy){
     total+=ds.length;
     var byWk={}; ds.forEach(function(d){ var k=ASSIGN[d.id]; (byWk[k]=byWk[k]||[]).push(d); });
     Object.keys(byWk).forEach(function(k){ var g=byWk[k];
-      g.sort(function(a,b){return ((DAY[a.id]==null?9:DAY[a.id])-(DAY[b.id]==null?9:DAY[b.id]))||((TIME[a.id]||'99').localeCompare(TIME[b.id]||'99'));});
+      g.sort(bySeq(tripPosMap(t,+k),
+        function(d){return 'd:'+d.id;}, function(d){return DAY[d.id];}, function(d){return TIME[d.id];}));
       var col=(colorBy==='week')?weekColor(+k):(MAPTERR_COLOR[t]||'#6c7073');
       var lk=(colorBy==='week')?('Wk '+k):t; if(!leg[lk]){leg[lk]={c:col,n:0,lab:(colorBy==='week')?('Week '+k+' · '+WEEKDATES[k]):(t+' · '+(FLAT.tm[t]||'—'))};order.push(lk);} leg[lk].n+=g.length;
       var pts=g.map(function(d){var j=jit(d.id); var xy=proj(d.lon+j[1],d.lat+j[0]); return {d:d,x:xy[0],y:xy[1]};});
@@ -5299,7 +5337,9 @@ function tripDetailHTML(terr,wk){
   labs.forEach(function(l,i){
     var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
     var el=wlogi.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',x:x,t:x.time||'99'};});
-    var entries=ev.concat(el).sort(function(a,b){return a.t.localeCompare(b.t);}); if(!entries.length)return;
+    var entries=ev.concat(el).sort(bySeq(tripPosMap(terr,wk),
+      function(e){return e.k==='v'?'d:'+e.d.id:'m:'+e.x.id;},
+      function(){return i;}, function(e){return e.t;})); if(!entries.length)return;
     body+='<div class="tday"><b>'+l[0]+'</b> '+l[1]+'</div>';
     entries.forEach(function(e,j){ body+=(e.k==='v'?row(e.d):logiRowDetail(e.x)); if(wk!==31 && j<entries.length-1 && e.k==='v' && entries[j+1].k==='v'){ body+=travelRow(e.d,entries[j+1].d,md); } });
   });
@@ -5419,10 +5459,9 @@ function stopsForWeek(t,wk){
         loads:0, revenue:0});
     });
   }
-  out.sort(function(a,b){
-    var ad=(a.dayIdx==null?99:a.dayIdx), bd=(b.dayIdx==null?99:b.dayIdx);
-    return (ad-bd) || String(a.time||'zz').localeCompare(String(b.time||'zz'));
-  });
+  /* order = the schedule sequence (the single source of truth), never time */
+  out.sort(bySeq(tripPosMap(t,wk),
+    function(s){return s.key;}, function(s){return s.dayIdx;}, function(s){return s.time;}));
   return out;
 }
 /* Budget derives from manual expenses only. Estimate and actual are separate rows in
@@ -6999,7 +7038,7 @@ function tpCoord(e){ if(e.k==='v') return [e.o.lat,e.o.lon]; var s=e.o.loc; retu
 function tpDriveRow(a,b){ var ca=tpCoord(a),cb=tpCoord(b); var txt; if(!ca||!cb||ca[0]==null||cb[0]==null){txt='drive — (add location)';} else { var mi=roadMi(ca,cb); if(mi==null)mi=0; var dmin=Math.max(15,Math.round(mi/55*60)); txt='drive ~'+fmtDur(dmin)+(mi>=1?(' · ~'+Math.round(mi)+' mi'):' · local'); } return '<tr class="dr"><td colspan="5">↓ '+txt+'</td></tr>'; }
 function tpRowV(d,showRep){ var ok=!!APPT[d.id]; var rep=showRep?(' <span class="tag">'+esc(d.territory)+' · '+esc(FLAT.tm[d.territory]||'')+'</span>'):''; return '<tr class="r v"><td class="tm">'+tpVRange(d)+'</td><td class="du">'+(TIME[d.id]?fmtDur(DUR[d.id]||90):'')+'</td><td class="ty"><span class="dot v"></span>Visit</td><td class="nm">'+esc(d.name)+rep+(ok?' <span class="ok">✓</span>':'')+'</td><td class="lo">'+esc(d.loc||'')+(d.address?(' · '+esc(d.address)):'')+'</td></tr>'; }
 function tpRowL(x){ var label={flight:'Flight',hotel:'Hotel',rental:'Rental'}[x.type]||x.type; var tcell,dur=''; if(x.type==='flight'){var dep=x.time?t12s(x.time):'',arr=x.arr?t12s(x.arr):''; tcell=(dep||'—')+(arr?(' → '+arr):''); if(x.time&&x.arr)dur=fmtDur(Math.max(0,minOf(x.arr)-minOf(x.time)));} else {tcell=x.time?t12s(x.time):'';} var det=esc(x.label||x.type)+(x.link?(' · <a href="'+esc(x.link)+'">link</a>'):''); return '<tr class="r '+x.type+'"><td class="tm">'+tcell+'</td><td class="du">'+dur+'</td><td class="ty"><span class="dot '+x.type+'"></span>'+label+'</td><td class="nm">'+det+'</td><td class="lo">'+(x.loc?esc(x.loc):'')+'</td></tr>'; }
-function tpWeekTable(wk,vs,ls,showRep){
+function tpWeekTable(wk,vs,ls,showRep,t){
   var rows=''; var labs=(typeof wk==='number')?dayLabels(wk):[];
   var ndv=vs.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;});
   var ndl=ls.filter(function(x){return x.day==null||x.day>=labs.length;});
@@ -7008,7 +7047,9 @@ function tpWeekTable(wk,vs,ls,showRep){
   else { labs.forEach(function(l,i){
     var ev=vs.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',o:d,t:TIME[d.id]||'99'};});
     var el=ls.filter(function(x){return x.day===i;}).map(function(x){return {k:'l',o:x,t:x.time||'99'};});
-    var en=ev.concat(el).sort(function(a,b){return a.t.localeCompare(b.t);}); if(!en.length)return;
+    var en=ev.concat(el).sort(bySeq(tripPosMap(t,wk),
+      function(e){return e.k==='v'?'d:'+e.o.id:'m:'+e.o.id;},
+      function(){return i;}, function(e){return e.t;})); if(!en.length)return;
     rows+='<tr class="dh"><td colspan="5">'+l[0]+' · '+l[1]+'</td></tr>';
     en.forEach(function(e,j){ rows+=(e.k==='v'?tpRowV(e.o,showRep):tpRowL(e.o)); if(j<en.length-1 && wk!==31) rows+=tpDriveRow(e,en[j+1]); });
   }); }
@@ -7025,7 +7066,7 @@ function exportWeek(t,wk){
   var _wf=wkForecast(t,wk);
   var _ride=rideLine(t,wk);
   body+='<div class="meta">'+(_ride?('<span class="lead">'+esc(_ride)+'</span> &nbsp;|&nbsp; '):'')+vs.length+' visits · '+_wf.l+' loads · '+fmtUSD(_wf.b)+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
-  body+=tpWeekTable(wk,vs,ls,false);
+  body+=tpWeekTable(wk,vs,ls,false,t);
   tpOpen(t+' — '+wlabel, body);
 }
 function exportTripPlans(){
@@ -7044,7 +7085,7 @@ function exportTripPlans(){
       var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
       var _wf2=wkForecast(t,wk);
       var _ride2=rideLine(t,wk);
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(_ride2?(' · '+esc(_ride2)):'')+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false);
+      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(_ride2?(' · '+esc(_ride2)):'')+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false,t);
       if(xs.length){ wh+='<div style="font-size:11px;margin:2px 0 10px"><b>Additional visits:</b> '+xs.map(function(x){var dd=byId[x.dealer]||uniById(x.dealer);var aTag=(x.att==='leader'?' · Leader only'+(x.leader?(' ('+((execById(x.leader)||{name:x.leader}).name)+')'):''):(x.att==='joint'?' · Joint':''));return esc((dd?dd.name:x.dealer))+' — '+xvType(x.type).label+' ('+esc(xvWhen(x))+')'+aTag;}).join(' · ')+'</div>'; }
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+t+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">2027 Pre-Booking Travel</div></div>'+wh+'</div>';
