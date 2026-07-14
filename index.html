@@ -1401,8 +1401,19 @@ function sfMasterMerge(d){
   var seedLat=(d.lat!=null&&isFinite(+d.lat))?+d.lat:null, seedLon=(d.lon!=null&&isFinite(+d.lon))?+d.lon:null;
   var _exp=expectedLoc(o);
   var _ci={source:null,confidence:null,status:null,expectState:_exp.state,expectCountry:_exp.country,
-           resolvedState:null,reason:null,sfRejected:false,cacheReplaced:false};
+           resolvedState:null,reason:null,sfRejected:false,cacheReplaced:false,distanceMi:null};
   o.lat=null; o.lon=null; o._geoApprox=false;
+  /* the address geocode (validated) is both the correction of last resort AND
+     the yardstick for the distance cross-check that catches an in-state but
+     wrong-city coordinate (Jones Supply: right state FL, ~155mi from the real
+     Okeechobee address). The ladder falls back to the city, so it stays
+     reliable even when a rooftop street can't be resolved. */
+  var _gc=null;
+  if(o.address){ try{ var _cg0=_cacheGetValidated(_geoKey(o.address),_exp);
+    if(_cg0.replaced) _ci.cacheReplaced=true; _gc=_cg0.entry; }catch(e){} }
+  function _agreesWithAddr(la,lo){ if(!_gc) return true;   /* no reference yet → don't reject */
+    var mi=hav([la,lo],[_gc.lat,_gc.lon]); return !(mi>_COORD_MAX_MI); }
+  function _distTo(la,lo){ return _gc?Math.round(hav([la,lo],[_gc.lat,_gc.lon])):null; }
   var _ov=(typeof COORDOVR!=='undefined')&&COORDOVR[d.id];
   if(_ov&&isFinite(+_ov.lat)&&isFinite(+_ov.lon)){
     o.lat=+_ov.lat; o.lon=+_ov.lon; src.lat=src.lon='manual';
@@ -1410,23 +1421,24 @@ function sfMasterMerge(d){
   }
   if(o.lat==null && sf && sf.lat!=null && sf.lon!=null){
     var _vs=validateCoord(sf.lat,sf.lon,_exp,null); _ci.resolvedState=_vs.resolvedState;
-    if(_vs.status!=='rejected'){ o.lat=+sf.lat; o.lon=+sf.lon; src.lat=src.lon='salesforce';
+    var _sfFar=(_vs.status!=='rejected' && !_agreesWithAddr(sf.lat,sf.lon));
+    if(_vs.status!=='rejected' && !_sfFar){ o.lat=+sf.lat; o.lon=+sf.lon; src.lat=src.lon='salesforce';
       _ci.source='salesforce'; _ci.confidence=_vs.confidence; _ci.status=_vs.status; o._geoApprox=(_vs.confidence==='approximate'); }
-    else { _ci.sfRejected=true; _ci.reason=_vs.reason; }   /* SF point rejected — fall through to a verified geocode */
+    else { _ci.sfRejected=true; _ci.reason=_sfFar?('disagrees-with-address('+_distTo(sf.lat,sf.lon)+'mi)'):_vs.reason;
+      _ci.distanceMi=_distTo(sf.lat,sf.lon); }   /* rejected → fall through to the verified geocode */
   }
   if(o.lat==null && seedLat!=null && seedLon!=null){
     var _vd=validateCoord(seedLat,seedLon,_exp,null);
     if(_vd.resolvedState&&!_ci.resolvedState) _ci.resolvedState=_vd.resolvedState;
-    if(_vd.status!=='rejected'){ o.lat=seedLat; o.lon=seedLon; src.lat=src.lon='seed';
+    var _seedFar=(_vd.status!=='rejected' && !_agreesWithAddr(seedLat,seedLon));
+    if(_vd.status!=='rejected' && !_seedFar){ o.lat=seedLat; o.lon=seedLon; src.lat=src.lon='seed';
       _ci.source=_ci.source||'seed'; _ci.confidence=_vd.confidence; _ci.status=_vd.status; o._geoApprox=(_vd.confidence==='approximate'); }
-    else if(!_ci.reason){ _ci.reason=_vd.reason; }
+    else { if(_seedFar){ _ci.reason=_ci.reason||('disagrees-with-address('+_distTo(seedLat,seedLon)+'mi)'); _ci.distanceMi=_ci.distanceMi||_distTo(seedLat,seedLon); if(!_ci.source)_ci.sfRejected=_ci.sfRejected; }
+      else if(!_ci.reason){ _ci.reason=_vd.reason; } }
   }
-  if(o.lat==null && o.address){
-    try{ var _cg=_cacheGetValidated(_geoKey(o.address),_exp);
-      if(_cg.replaced) _ci.cacheReplaced=true;
-      if(_cg.entry){ o.lat=_cg.entry.lat; o.lon=_cg.entry.lon; o._geoApprox=(_cg.entry.confidence==='approximate'); src.lat=src.lon='geocoded';
-        _ci.source=_cg.entry.source||'geocoded'; _ci.confidence=_cg.entry.confidence; _ci.status=_cg.entry.validationStatus; if(_cg.entry.state)_ci.resolvedState=_cg.entry.state; }
-    }catch(e){}
+  if(o.lat==null && _gc){
+    o.lat=_gc.lat; o.lon=_gc.lon; o._geoApprox=(_gc.confidence==='approximate'); src.lat=src.lon='geocoded';
+    _ci.source=_gc.source||'geocoded'; _ci.confidence=_gc.confidence; _ci.status=_gc.validationStatus; if(_gc.state)_ci.resolvedState=_gc.state;
   }
   if(o.lat==null){ src.lat=src.lon=(_ci.sfRejected?'sf-rejected':'planner-fallback'); }
   o._coord=_ci;
@@ -3248,6 +3260,12 @@ var _STATE_BBOX={
  ON:[41.6,57.0,-95.2,-74.3],PE:[45.9,47.1,-64.5,-61.9],QC:[44.9,62.7,-79.8,-57.1],SK:[48.9,60.1,-110.1,-101.3],
  YT:[59.9,69.7,-141.1,-123.7]};
 var _BBOX_PAD=0.35;   /* ~24mi border tolerance so valid dealers aren't rejected */
+/* an accepted Salesforce/seed coordinate more than this far from the dealer's
+   own geocoded address is treated as wrong-location (in-state, wrong-city) and
+   rejected in favour of the geocode. Measured against real data: legitimate
+   dealers sit <1mi from their geocoded city; Jones Supply sat 155mi away — so
+   60mi separates them with a wide safety margin either way. */
+var _COORD_MAX_MI=60;
 function _bboxHas(code,lat,lon){ var b=_STATE_BBOX[code]; if(!b) return null;
   return lat>=b[0]-_BBOX_PAD&&lat<=b[1]+_BBOX_PAD&&lon>=b[2]-_BBOX_PAD&&lon<=b[3]+_BBOX_PAD; }
 function _bboxCenter(code){ var b=_STATE_BBOX[code]; return b?[(b[0]+b[1])/2,(b[2]+b[3])/2]:null; }
@@ -3323,6 +3341,9 @@ function validateCoord(lat,lon,expected,returned){
   /* bounding-box: does the point sit in the expected state at all? */
   if(es&&_STATE_BBOX[es]&&_bboxHas(es,lat,lon)===false){
     out.reason='outside-'+es+(out.resolvedState?('(in '+out.resolvedState+')'):''); return out; }
+  /* confirmed in the expected state — report that, not a same-region neighbour
+     whose padded box also overlaps (border towns like Gainesville TX / OK). */
+  if(es&&_STATE_BBOX[es]&&_bboxHas(es,lat,lon)===true){ out.resolvedState=es; out.resolvedCountry=_countryOfState(es)||out.resolvedCountry; }
   /* broad state / country centroid masquerading as a real address */
   var cen=es?_bboxCenter(es):null;
   var isCentroid=(cen&&Math.abs(lat-cen[0])<0.12&&Math.abs(lon-cen[1])<0.12&&(expected.city||expected.postal||expected.addr));
@@ -3435,12 +3456,14 @@ function _geoQPump(){
 function backfillCoords(){
   var jobs=[], lchanged=false;
   try{ (typeof planningUniverse==='function'?planningUniverse():DEALERS).forEach(function(d){
-    /* use the VALIDATED merge: a dealer whose Salesforce point was rejected (or
-       whose cache entry was purged) resolves to no coordinate here, so it is
-       queued for a fresh, validated geocode instead of showing the bad pin. */
+    /* geocode EVERY dealer's address once (one-time, cache-guarded so it never
+       repeats) — the validated geocode is both the fallback for unlocated
+       dealers AND the reference that the distance cross-check uses to catch an
+       in-state, wrong-city coordinate like Jones Supply. Already-cached
+       addresses are skipped, so this is not a per-load or per-render cost. */
     var m=(typeof sfMasterMerge==='function')?sfMasterMerge(d):d;
     var addr=m.address||d.address;
-    if((m.lat==null||m.lon==null) && addr && !_GEOCACHE[_geoKey(addr)]) jobs.push({q:addr});
+    if(addr && !_GEOCACHE[_geoKey(addr)]) jobs.push({q:addr});
   }); }catch(e){}
   (LOGI||[]).forEach(function(it){
     if(travelHasLocation(it)) return;
@@ -3458,8 +3481,13 @@ function backfillCoords(){
   }); });
 }
 function refreshAfterGeo(){
+  /* new geocode references may have flipped an in-state/wrong-city coordinate to
+     its corrected location — drop memoized merges so every surface re-reads. */
+  try{ if(typeof invalidateUniverse==='function') invalidateUniverse(); }catch(e){}
+  try{ if(typeof CALC!=='undefined'&&CALC.dirtyAll) CALC.dirtyAll(); }catch(e){}
   try{ if(document.getElementById('cards')) renderCards(); }catch(e){}
   try{ var pv=document.getElementById('plannerView'); if(pv && pv.style.display!=='none'){ renderPlanner(); wireDnD(); } }catch(e){}
+  try{ if(typeof _coordAuditRender==='function'&&document.getElementById('coordAuditModal')) _coordAuditRender(); }catch(e){}
 }
 
 /* ===================== System Health ==============================
@@ -3553,7 +3581,7 @@ function renderHealth(){
   var prog=(HEALTH.scan&&HEALTH.scan.running)?('<div class="shprog">Scanning coordinates… '+HEALTH.scan.done+' / '+HEALTH.scan.total+'</div>'):'';
   el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+approx+prog
     +'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>'
-    +'<button class="btn shscan" id="shCoordAudit" style="margin-top:6px">Coordinate audit…</button>';
+    +((typeof pbAuthed==='function'&&pbAuthed())?'<button class="btn shscan" id="shCoordAudit" style="margin-top:6px">Coordinate audit…</button>':'');
   var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; runHealth();
     auditGeoDrift(function(){ sc.disabled=false; renderHealth(); }, function(done,total){ if(sc) sc.textContent='Scanning… '+done+'/'+total; if((done%10)===0) renderHealth(); }); };
   var ca=el.querySelector('#shCoordAudit'); if(ca) ca.onclick=function(){ openCoordAudit(); };
@@ -3582,6 +3610,7 @@ function _coordRows(filter){
 }
 var _coordAuditFilter='problems';
 function openCoordAudit(){
+  if(typeof pbAuthed==='function' && !pbAuthed()){ if(typeof cloudBadge==='function') cloudBadge('Sign in to view coordinate diagnostics'); return; }
   var ov=document.getElementById('coordAuditModal');
   if(!ov){ ov=document.createElement('div'); ov.id='coordAuditModal';
     ov.innerHTML='<div class="cam-back"></div><div class="cam-box"><div class="cam-hd">'
@@ -3694,6 +3723,8 @@ function coordIntegrityTests(){
   var results=[]; function assert(n,c){ results.push({test:n,pass:!!c}); }
   var snapCache=JSON.stringify(_GEOCACHE), snapOvr=JSON.stringify(COORDOVR);
   var _sfOrig=(typeof sfLookup==='function')?sfLookup:null;
+  var _TIDS=['__CIT_JONES','__CIT_OK','__G'];
+  _TIDS.forEach(function(id){ delete COORDOVR[id]; });   /* purge any leaked override from a prior run (survives reload via savePlan) */
   var ADDR='1200 US-441, Okeechobee, FL 34974';
   var expFL=expectedLoc({address:ADDR,loc:'FL'});
   var expON=expectedLoc({address:'100 King St W, Toronto, ON M5X',loc:'ON'});
@@ -3738,11 +3769,26 @@ function coordIntegrityTests(){
     /* 9. a valid dealer is NOT falsely rejected (no over-eager rejection) */
     assert('9. valid FL street coord not rejected', validateCoord(27.24,-80.83,expFL,{state:'FL',country:'US',precision:'street'}).status!=='rejected');
     assert('9. valid near-border coord not rejected', validateCoord(31.0,-85.0,expectedLoc({address:'Dothan, AL',loc:'AL'}),{state:'AL',country:'US'}).status!=='rejected');
+    /* 10. IN-STATE but WRONG-CITY (the real Jones Supply case): stored FL coord
+          155mi from the geocoded Okeechobee address is rejected and corrected. */
+    sfLookup=_sfOrig; delete COORDOVR[TID];   /* Jones has no SF row / override here; test the seed path */
+    var jones2={id:TID,name:'Jones Supply A.I. Sales & Service',loc:'FL',state:'FL',
+      address:'801 SW Park St, Okeechobee, FL 34972',city:'Okeechobee',postal:'34972',lat:29.19,lon:-82.13};
+    _GEOCACHE[_geoKey(jones2.address)]={lat:27.2432,lon:-80.8439,source:'nominatim',state:'FL',country:'US',
+      city:'Okeechobee',postal:'34972',display:'SW Park St, Okeechobee, FL',confidence:'verified',validationStatus:'verified',validatedAt:Date.now(),approx:false};
+    var mWrongCity=sfMasterMerge(jones2);
+    assert('10. in-state wrong-city seed rejected', mWrongCity._coord.source!=='seed' && /disagrees-with-address/.test(mWrongCity._coord.reason||''));
+    assert('10. corrected to Okeechobee geocode', mWrongCity.lat!=null && Math.abs(mWrongCity.lat-27.2432)<0.05 && _stateOfPoint(mWrongCity.lat,mWrongCity.lon)==='FL');
+    /* a nearby (same-city) coord must NOT be rejected */
+    var jonesOK={id:'__CIT_OK',loc:'FL',address:'801 SW Park St, Okeechobee, FL 34972',lat:27.25,lon:-80.85};
+    var mNear=sfMasterMerge(jonesOK);
+    assert('10. same-city coord kept (no false reject)', mNear.lat===27.25 && mNear._coord.source==='seed');
   }catch(e){ results.push({test:'EXCEPTION: '+e+' @ '+((e.stack||'').split('\n')[1]||''),pass:false}); }
   finally{
     if(_sfOrig) sfLookup=_sfOrig;
     try{ _GEOCACHE=JSON.parse(snapCache); _geoCacheSave(); }catch(e){}
-    try{ COORDOVR=JSON.parse(snapOvr); }catch(e){}
+    try{ COORDOVR=JSON.parse(snapOvr); _TIDS.forEach(function(id){ delete COORDOVR[id]; }); }catch(e){}
+    try{ savePlan(); }catch(e){}   /* persist the cleanup so overrides don't leak across reloads */
     if(typeof invalidateUniverse==='function') invalidateUniverse();
   }
   var passed=results.filter(function(r){return r.pass;}).length;
