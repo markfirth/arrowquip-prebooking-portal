@@ -3534,7 +3534,7 @@ function itineraryFor(t,wk){
   var items=[];
   mapScope(t).map(sfMasterMerge).forEach(function(d){
     if(ASSIGN[d.id]===wk){
-      items.push({kind:'dealer', id:d.id, type:'dealer', name:d.name,
+      items.push({kind:'dealer', id:d.id, key:'d:'+d.id, type:'dealer', name:d.name,
         address:d.address||'', lat:d.lat, lon:d.lon,
         day:(DAY[d.id]==null?null:DAY[d.id]), time:TIME[d.id]||'',
         located:(d.lat!=null&&d.lon!=null), revenue:fbWk(d,wk), loads:flWk(d,wk),
@@ -3544,7 +3544,7 @@ function itineraryFor(t,wk){
   XVISITS.forEach(function(x){
     if(!((t==='All'||x.terr===t) && x.wk===wk)) return;
     var d=byId[x.dealer]||uniById(x.dealer); if(!d) return; var m=sfMasterMerge(d);
-    items.push({kind:'xvisit', id:'xv:'+x.id, type:'dealer', name:m.name+' — '+xvType(x.type).label,
+    items.push({kind:'xvisit', id:'xv:'+x.id, key:'x:'+x.id, type:'dealer', name:m.name+' — '+xvType(x.type).label,
       address:m.address||'', lat:m.lat, lon:m.lon,
       day:(x.day==null?null:x.day), time:x.time||'',
       located:(m.lat!=null&&m.lon!=null), revenue:0, loads:0,
@@ -3553,7 +3553,7 @@ function itineraryFor(t,wk){
   LOGI.forEach(function(it){
     if((t==='All'||it.terr===t) && it.wk===wk){
       var ty=travelType(it);
-      items.push({kind:'travel', id:it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
+      items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
         address:it.address||'', lat:it.lat, lon:it.lon,
         day:(it.day==null?null:it.day), time:it.time||'',
         day2:it.day2, time2:it.time2,
@@ -3561,12 +3561,32 @@ function itineraryFor(t,wk){
         located:travelHasLocation(it), raw:it});
     }
   });
+  /* ONE authoritative order for every surface (cards, map, routes, reports):
+     day first, then the exact manual card order (ORD via ordEff), then time.
+     The map must never re-sort by time/type/name independently of the cards. */
   items.sort(function(a,b){
     var ad=(a.day==null?99:a.day), bd=(b.day==null?99:b.day);
-    return (ad-bd) || String(a.time||'zz').localeCompare(String(b.time||'zz'));
+    return (ad-bd) || (ordEff(a)-ordEff(b)) || String(a.time||'zz').localeCompare(String(b.time||'zz')) || String(a.key).localeCompare(String(b.key));
   });
   return items;
 }
+/* QA: AQ_QA.sequence() — proves the map order follows the manual card order (ORD). */
+window.AQ_QA=window.AQ_QA||{};
+window.AQ_QA.sequence=function(){
+  var ds=dealersIn('East').filter(function(d){return d.lat!=null&&d.lon!=null;}).slice(0,2);
+  if(ds.length<2){ console.log('need 2 located dealers'); return {passed:false}; }
+  var A=ds[0], B=ds[1], sA=ASSIGN[A.id],dA=DAY[A.id],tA=TIME[A.id],sB=ASSIGN[B.id],dB=DAY[B.id],tB=TIME[B.id],oA=ORD['d:'+A.id],oB=ORD['d:'+B.id];
+  ASSIGN[A.id]=32;DAY[A.id]=0;TIME[A.id]='09:00'; ASSIGN[B.id]=32;DAY[B.id]=0;TIME[B.id]='11:00';
+  delete ORD['d:'+A.id];delete ORD['d:'+B.id];
+  var byTime=itineraryFor('East',32).filter(function(x){return x.day===0;}).map(function(x){return x.name;});
+  ORD['d:'+A.id]=200;ORD['d:'+B.id]=100;   /* drag B above A */
+  var byDrag=itineraryFor('East',32).filter(function(x){return x.day===0;}).map(function(x){return x.name;});
+  var pass=(byTime[0]===A.name && byDrag[0]===B.name);
+  ASSIGN[A.id]=sA;DAY[A.id]=dA;TIME[A.id]=tA;ASSIGN[B.id]=sB;DAY[B.id]=dB;TIME[B.id]=tB;
+  if(oA==null)delete ORD['d:'+A.id];else ORD['d:'+A.id]=oA; if(oB==null)delete ORD['d:'+B.id];else ORD['d:'+B.id]=oB;
+  console.log(pass?'✅ MAP FOLLOWS CARD ORDER':'❌ MAP IGNORES CARD ORDER',{byTime:byTime,byDrag:byDrag});
+  return {passed:pass,byTime:byTime,byDrag:byDrag};
+};
 /* legs between consecutive LOCATED items; unlocated items break no legs, they're skipped */
 function sameSpot(a,b){ return a&&b&&a.lat!=null&&b.lat!=null
   &&Math.abs(a.lat-b.lat)<0.0005&&Math.abs(a.lon-b.lon)<0.0005; }
@@ -7831,7 +7851,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
