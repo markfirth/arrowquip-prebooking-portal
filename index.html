@@ -1988,8 +1988,55 @@ let T27_TIERS=[];
 function dealerIsCA(d){ var sf=(typeof sfLookup==='function')?sfLookup(d):null; if(sf&&sf.country) return sf.country==='CA'; return !!CA_PROVS[d.loc]; }
 /* per-load values now live in ADMIN.revPerLoad (Planning Settings) — LOAD_USD/LOAD_CAD are seeds only */
 function t27Loads(d){ var ov=(d._accountId&&SF_OVERLAY[d._accountId])||null; var v=(d.t27loads!=null?d.t27loads:(ov&&ov.t27loads)); return +v||0; }
-/* tier label comes from the official program in Planning Settings */
-function t27Tier(loads){ if(!(+loads>0)) return ''; var p=programOf(loads); return p?('Tier '+p.tier):'Not Qualified'; }
+/* ============================================================
+   SINGLE SHARED TIER ENGINE — one calculation, used everywhere.
+   The tier is ALWAYS derived from a numeric LOAD COUNT via the
+   program bands (programList()). Nothing trusts the free-text
+   Account_Tier_Text__c field, and there are NO dealer-specific
+   overrides. Rules:
+     • blank / null / non-numeric  → not qualified, no tier
+     • zero                        → no tier (blank label)
+     • 1–2 loads                   → "Not Qualified" (min is 3)
+     • decimals                    → rounded to the nearest load
+     • band boundaries             → inclusive of min AND max
+   Returns { tier, label, qualified, loads, reason } so callers
+   can show the value, the tier, and WHY it was chosen. */
+function tierForLoads(rawLoads){
+  var n=(rawLoads==null||rawLoads==='')?NaN:Number(rawLoads);
+  if(!isFinite(n)) return {tier:null,label:'',qualified:false,loads:null,reason:'no numeric load count'};
+  var loads=Math.round(n);                     /* load counts are whole; round stray decimals */
+  if(loads<=0) return {tier:null,label:'',qualified:false,loads:loads,reason:'zero loads'};
+  if(loads<3)  return {tier:null,label:'Not Qualified',qualified:false,loads:loads,reason:loads+' load(s) — below the 3-load minimum'};
+  var p=programOf(loads);
+  if(!p)       return {tier:null,label:'Not Qualified',qualified:false,loads:loads,reason:loads+' loads fall outside every band'};
+  return {tier:p.tier,label:'Tier '+p.tier,qualified:true,loads:loads,
+          reason:loads+' loads ∈ band '+p.min+(p.max==null?'+':('–'+p.max))+' → Tier '+p.tier};
+}
+/* THE field that determines a dealer's account tier: the Salesforce
+   Dealer-Loads COUNT (d.loads) — Salesforce-owned and numeric. */
+function tierLoadsOf(d){ return d?d.loads:null; }
+function dealerTier(d){ return tierForLoads(tierLoadsOf(d)); }
+function dealerTierLabel(d){ var t=dealerTier(d); return t.label||'—'; }
+/* 2027 program tier: same band math, driven by 2027 Target Loads. */
+function t27Tier(loads){ return tierForLoads(loads).label; }
+/* QA: run in the console as AQ_QA.tier() — proves boundaries + All American Panel. */
+window.AQ_QA=window.AQ_QA||{};
+window.AQ_QA.tier=function(){
+  var rows=[],ok=true;
+  function T(label,input,expTier){var r=tierForLoads(input);var pass=(r.tier===expTier);ok=ok&&pass;
+    rows.push({case:label,input:String(input),tier:r.tier,label:r.label,reason:r.reason,pass:pass});}
+  T('zero',0,null); T('blank','',null); T('null',null,null); T('text','abc',null);
+  T('below min (2)',2,null); T('band min (3)',3,7);
+  T('just below T4 (14)',14,5); T('exactly T4 min (15)',15,4);
+  T('T4 max (19)',19,4); T('just above T4 (20)',20,3);
+  T('decimal 44.4',44.4,2); T('decimal 44.6',44.6,1); T('T1 min (45)',45,1);
+  try{ var aap=(DEALERS||[]).filter(function(d){return /all american panel/i.test(d.name||'');})[0];
+    if(aap){ var r=dealerTier(aap); rows.push({case:'All American Panel',input:'loads='+aap.loads,
+      tier:r.tier,label:r.label,reason:r.reason,pass:true}); } }catch(e){}
+  console.table(rows);
+  console.log(ok?'✅ TIER TESTS PASSED':'❌ TIER TESTS FAILED');
+  return {passed:ok,rows:rows};
+};
 /* keep booking (used app-wide as planned revenue) derived from Target Loads */
 function recalcTargets(){
   /* Target revenue is ALWAYS derived by the engine: Target Loads × the
@@ -2166,12 +2213,14 @@ CALC.dealer=function(d){
   var loads=t27Loads(d), fx=fxRate();
   var revMixed=dealerRevMixedFor(d,loads);
   var prog=(loads>0)?programOf(loads):undefined;
+  var t27=tierForLoads(loads);                 /* 2027 program tier via the shared engine */
   var act=COMMITS.filter(function(x){ return x.dealer===d.id&&x.year===planYear()&&!x.void; });
   var sf=(typeof sfLookup==='function')?sfLookup(d):null;
   c={id:d.id, market:mkt,
      loads:loads, revMixed:revMixed, revCAD:revMixed?Math.round(revMixed/fx):0,
-     tier:(prog?prog.tier:null),
-     tierLabel:(loads>0?(prog?('Tier '+prog.tier):'Not Qualified'):''),
+     tier:t27.tier,
+     tierLabel:t27.label,
+     tierReason:t27.reason,
      margin:(prog?+prog.margin:null), coop:(prog?+prog.coop:null),
      confLoads:act.reduce(function(s,x){return s+(+x.loads||0);},0),
      confRevMixed:act.reduce(function(s,x){return s+(+x.revMixed||0);},0),
@@ -2474,7 +2523,7 @@ function dealerCard(d){
         +XVISITS.filter(function(x){ return x.dealer===d.id&&x.type==='visit'; }).length;
   return `<div class="dcard">
     <div class="dn">${d.name}</div>
-    <div class="dm"><span class="dloc">${d.loc} · ${d.tier}</span><span class="dval">${(+d.booking>0)?fmtUSDk(d.booking):'—'}</span></div>
+    <div class="dm"><span class="dloc">${d.loc} · ${dealerTierLabel(d)}</span><span class="dval">${(+d.booking>0)?fmtUSDk(d.booking):'—'}</span></div>
     <div class="db">${d.loads} loads<span class="dmk"><button class="dadd${pb?' pbon':''}" data-mk="${d.id}|prebook" data-drag="1" data-id="mk:${d.id}|prebook" title="${pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week'}">${pb?'✓ Pre-book':'+ Pre-book'}</button><button class="dadd dvis${vN?' von':''}" data-mk="${d.id}|visit" data-drag="1" data-id="mk:${d.id}|visit" title="${vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week'}">${vN?('✓ Visits · '+vN):'+ Visit'}</button></span></div></div>`;
 }
 function renderPlanner(){
@@ -5342,7 +5391,7 @@ function poolFiltered(t){
   return mapScope(t).filter(function(d){
     if(MAPF.state && d.loc!==MAPF.state) return false;
     if(MAPF.county && (d.county||'')!==MAPF.county) return false;
-    if(MAPF.tier && d.tier!==MAPF.tier) return false;
+    if(MAPF.tier && dealerTierLabel(d)!==MAPF.tier) return false;
     if(MAPF.tm && d.tm!==MAPF.tm) return false;
     if(MAPF.status && (d.status||'')!==MAPF.status) return false;
     if(q && (d.name||'').toLowerCase().indexOf(q)<0) return false;
@@ -6388,7 +6437,7 @@ function renderMaster(){
     ${sfLock(d,'name')?lockTD('dealer',d.name,'b',sfLockTitle(d)):`<td class="dealer"><input class="ed nm" data-f="name" value="${(d.name||'').replace(/"/g,'&quot;')}"><span class="ponly" title="Not in Salesforce — planner-managed until linked to an Arrowquip Dealer">Planner Only</span></td>`}
     ${sfLock(d,'territory')?lockTD('',d.territory,'span',sfLockTitle(d)):`<td><select class="ed" data-f="territory">${selOpts(TERRS,d.territory)}</select></td>`}
     ${sfLock(d,'tm')?lockTD('',d.tm,'span',sfLockTitle(d)):`<td><input class="ed" data-f="tm" value="${(d.tm||'').replace(/"/g,'&quot;')}"></td>`}
-    ${sfLock(d,'tier')?lockTD('',d.tier,'span',sfLockTitle(d)):`<td><select class="ed" data-f="tier">${selOpts(TIERS,d.tier)}</select></td>`}
+    ${(function(){var t=dealerTier(d);return `<td><span class="tiercalc" title="${esc(t.reason||'no load count')}">${t.label||'—'}</span></td>`;})()}
     ${sfLock(d,'loc')?lockTD('',d.loc,'span',sfLockTitle(d)):`<td><input class="ed loc" data-f="loc" maxlength="3" value="${d.loc||''}"></td>`}
     ${sfLock(d,'address')?lockTD('',d.address,'span',sfLockTitle(d)):`<td><input class="ed" data-f="address" value="${(d.address||'').replace(/"/g,'&quot;')}"></td>`}
     ${d.recordType?lockTD('',d.recordType,'span','Salesforce Account Record Type — read-only.'):'<td'+mut+'>—</td>'}
@@ -8674,7 +8723,7 @@ function mobDealer_page(id){
   var h='<div class="tm-screen">';
   h+='<div class="vd-head">'
     +'<div class="vd-name">'+esc(d.name)+'</div>'
-    +'<div class="vd-num">Dealer '+esc(d.id)+(d.tier?(' · '+esc(d.tier)):'')+'</div>'
+    +'<div class="vd-num">Dealer '+esc(d.id)+(dealerTier(d).label?(' · '+esc(dealerTier(d).label)):'')+'</div>'
     +'<div class="vd-badges">'
       +'<span class="vd-badge">'+esc(when)+'</span>'
       +'<span class="vd-badge">'+(Math.round(dur/60*10)/10)+'h visit</span>'
@@ -9471,7 +9520,7 @@ function mobVisitDetail(id){
   var inner=''
     +'<div class="vd-head">'
       +'<div class="vd-name">'+esc(d.name)+'</div>'
-      +'<div class="vd-num">Dealer '+esc(d.id)+(d.tier?(' · '+esc(d.tier)):'')+'</div>'
+      +'<div class="vd-num">Dealer '+esc(d.id)+(dealerTier(d).label?(' · '+esc(dealerTier(d).label)):'')+'</div>'
       +(d.address?'<div class="vd-meta">'+esc(d.address)+(d.loc?', '+esc(d.loc):'')+'</div>':'')
       +'<div class="vd-badges">'
         +'<span class="vd-badge">'+esc(when)+'</span>'
