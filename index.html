@@ -1407,6 +1407,11 @@ function sfMasterMerge(d){
       if(_g){ o.lat=_g.lat; o.lon=_g.lon; o._geoApprox=!!_g.approx; src.lat=src.lon='geocoded'; }
     }catch(e){}
   }
+  /* TOP PRIORITY: a manually confirmed location overrides everything above —
+     Salesforce sync never touches it (#6/#1). */
+  var _cl=confLocOf(d.id);
+  if(_cl){ o.lat=_cl.lat; o.lon=_cl.lon; if(_cl.address)o.address=_cl.address;
+    o._geoApprox=false; o.addressSource='manual-confirmed'; src.lat=src.lon='manual-confirmed'; src.address='manual-confirmed'; }
   /* planner-owned, editable: 2027 Target and both 2026 commitments */
   src.booking='planner-fallback'; src.prebook2026='planner-fallback';
   /* local planner-owned */
@@ -1910,6 +1915,69 @@ let ARISSUES={};
 const AR_OPTIONS=['','No current issue','Past due','Credit hold','Payment plan','Disputed invoice','High balance','Finance review required'];
 function arIssueOf(id){ return ARISSUES[id]||''; }
 function hasArIssue(id){ var v=arIssueOf(id); return !!v && v!=='No current issue'; }
+/* Manual location corrections — the TOP of the address-source priority (#6/#1).
+   Keyed by dealer id, persisted in the plan, and NEVER overwritten by a normal
+   Salesforce sync. Shape: {address,lat,lon,confirmed,by,at}. When confirmed,
+   sfMasterMerge uses these coordinates before any Salesforce address. */
+let CONFLOC={};
+function confLocOf(id){ var c=CONFLOC[id]; return (c&&c.confirmed&&c.lat!=null&&c.lon!=null)?c:null; }
+/* Location review tool (#6): view current + Salesforce address, edit the physical
+   address, search for coordinates, confirm, or reset to the Salesforce address. */
+function aqLocationReview(id){
+  var d=byId[id]; if(!d) return;
+  var merged=sfMasterMerge(d);
+  var cl=CONFLOC[id]||{};
+  var sfAddr=d.address||'';                 /* raw planner/SF address before manual override */
+  var cur=cl.address||merged.address||sfAddr;
+  var lat=(cl.lat!=null?cl.lat:merged.lat), lon=(cl.lon!=null?cl.lon:merged.lon);
+  var wrap=document.getElementById('aqLocModal'); if(wrap) wrap.remove();
+  wrap=document.createElement('div'); wrap.id='aqLocModal';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:6px;padding:7px 9px;font:400 12.5px Open Sans,Arial,sans-serif;margin-top:3px"';
+  var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
+  wrap.innerHTML='<div style="background:#fff;border-radius:12px;max-width:440px;width:100%;padding:18px 20px;font-family:Open Sans,Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.3)">'
+    +'<div style="font-weight:800;font-size:15px;margin-bottom:2px">Location review</div>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:12px">'+esc(d.name)+(confLocOf(id)?' · <b style="color:#15803d">Confirmed</b>':(merged._geoApprox?' · <b style="color:#b45309">Approximate</b>':''))+'</div>'
+    +'<div style="font-size:11px;color:#888;margin-bottom:10px"><b>Salesforce address</b> ('+esc(d.addressSource||'billing')+'):<br>'+esc(sfAddr||'—')+'</div>'
+    +'<label '+lbl+'>Physical address<input id="alrAddr" '+inp+' value="'+esc(cur)+'"></label>'
+    +'<div style="display:flex;gap:8px;margin-top:8px"><label '+lbl+' style="flex:1">Latitude<input id="alrLat" '+inp+' value="'+(lat!=null?lat:'')+'"></label>'
+    +'<label '+lbl+' style="flex:1">Longitude<input id="alrLon" '+inp+' value="'+(lon!=null?lon:'')+'"></label></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px"><button id="alrLocate" class="btn" style="flex:1;padding:7px">🔍 Search address</button></div>'
+    +'<div id="alrMsg" style="font-size:11px;color:#666;min-height:16px;margin-top:8px"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px">'
+    +'<button id="alrConfirm" class="btn" style="flex:1;padding:9px;background:#15803d;color:#fff;border-color:#15803d;font-weight:700">✓ Confirm location</button>'
+    +'<button id="alrReset" class="btn" style="padding:9px">Reset to Salesforce</button>'
+    +'<button id="alrClose" class="btn" style="padding:9px">Close</button></div>'
+    +'</div>';
+  document.body.appendChild(wrap);
+  var $=function(x){return wrap.querySelector(x);};
+  var msg=function(t){ $('#alrMsg').innerHTML=t; };
+  $('#alrClose').onclick=function(){ wrap.remove(); };
+  wrap.onclick=function(e){ if(e.target===wrap) wrap.remove(); };
+  $('#alrLocate').onclick=function(){
+    var q=$('#alrAddr').value.trim(); if(!q){ msg('Enter an address first.'); return; }
+    msg('Searching…');
+    geocodeAddress(q,function(g){
+      if(!g||g.lat==null){ msg('❌ No confident match — check the address, or enter lat/lon manually.'); return; }
+      $('#alrLat').value=g.lat; $('#alrLon').value=g.lon;
+      msg((g.approx?'⚠ Approximate (city/postal-level) match':'✓ Found')+' — review, then Confirm.');
+    });
+  };
+  $('#alrConfirm').onclick=function(){
+    var la=parseFloat($('#alrLat').value), lo=parseFloat($('#alrLon').value);
+    if(!(isFinite(la)&&isFinite(lo)&&la>=-90&&la<=90&&lo>=-180&&lo<=180)){ msg('❌ Latitude/Longitude look invalid.'); return; }
+    CONFLOC[id]={address:$('#alrAddr').value.trim(),lat:la,lon:lo,confirmed:true,by:(typeof pbWho==='function'?pbWho():'planner'),at:new Date().toISOString()};
+    audit&&audit('location-confirm',{dealer:id,lat:la,lon:lo});
+    savePlan(); invalidateUniverse(); wrap.remove();
+    try{ withPreservedScroll(render); }catch(e){ try{render();}catch(_){} }
+  };
+  $('#alrReset').onclick=function(){
+    delete CONFLOC[id]; audit&&audit('location-reset',{dealer:id});
+    savePlan(); invalidateUniverse(); wrap.remove();
+    try{ withPreservedScroll(render); }catch(e){ try{render();}catch(_){} }
+  };
+}
+document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.alr-open'); if(b){ e.preventDefault(); e.stopPropagation(); aqLocationReview(b.dataset.alr); } });
 /* QA: AQ_QA.ar() — proves set → persist round-trip + filter + survives a sync. */
 window.AQ_QA=window.AQ_QA||{};
 window.AQ_QA.ar=function(){
@@ -2346,10 +2414,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -4609,7 +4677,7 @@ function allDealerModal(id){
         +row('Phone',esc(sf.contactMobile||sf.contactPhone||''))
         +row('Tier',esc(dealerTierLabel(d)))
         +(hasArIssue(id)?row('AR Issue','<span style="color:#b45309;font-weight:700">'+esc(arIssueOf(id))+'</span>'):(arIssueOf(id)?row('AR Issue',esc(arIssueOf(id))):''))
-        +row('Address',esc(d.address||''));
+        +row('Address',esc(d.address||'')+' <button class="btn alr-open" data-alr="'+esc(id)+'" style="padding:1px 7px;font-size:10px;margin-left:4px">'+(confLocOf(id)?'✓ Location confirmed':'Review location')+'</button>');
     }
     if(TAB==='history'){
       var all=xvAll(id).slice().reverse();   /* newest first */
@@ -6988,7 +7056,7 @@ function applyPlanSnapshot(p){
   ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
-  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{};
+  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{};
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
@@ -7854,7 +7922,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
