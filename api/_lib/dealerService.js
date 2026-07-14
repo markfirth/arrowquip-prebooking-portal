@@ -124,15 +124,33 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
   const lastYearRaw = opp26won ? num(opp26won.Prebooked_Value__c) : 0
   const area = TM_TO_AREA[acc.Territory_Manager__c] || null
 
-  let loc = acc.BillingStateCode || ''
-  if (!loc && area === 'Exports') loc = acc.BillingCountryCode || '' // Exports: country code when no state
-  if (!loc) loc = acc.BillingState || ''
+  // ── Address source priority: PHYSICAL (Shipping) address before Billing.
+  // Billing is the accounting/HQ address and frequently differs from where the
+  // dealer physically operates (this is why e.g. Dance Steel mapped to the wrong
+  // place). We pick the shipping address when it has a real street, else billing,
+  // and we keep the lat/lon that BELONGS to the chosen address so a stale billing
+  // coordinate never overrides a physical-address dealer.
+  const hasShip = !!(acc.ShippingStreet && String(acc.ShippingStreet).trim())
+  const addrSource = hasShip ? 'salesforce-shipping' : 'salesforce-billing'
+  const pick = (ship, bill) => (hasShip ? ship : bill)
+  const aStreet = pick(acc.ShippingStreet, acc.BillingStreet)
+  const aCity = pick(acc.ShippingCity, acc.BillingCity)
+  const aState = pick(acc.ShippingState, acc.BillingState)
+  const aStateCode = pick(acc.ShippingStateCode, acc.BillingStateCode)
+  const aPostal = pick(acc.ShippingPostalCode, acc.BillingPostalCode)
+  const aCountry = pick(acc.ShippingCountryCode, acc.BillingCountryCode)
+  const aLat = pick(acc.ShippingLatitude, acc.BillingLatitude)
+  const aLon = pick(acc.ShippingLongitude, acc.BillingLongitude)
+
+  let loc = aStateCode || ''
+  if (!loc && area === 'Exports') loc = aCountry || '' // Exports: country code when no state
+  if (!loc) loc = aState || ''
 
   const booking = bookingRaw > 0 ? bookingRaw : null
   // 2026 Revenue is Salesforce-owned and LOCKED even at zero — 0 is valid data.
   const lastYear = lastYearRaw
-  const lat = acc.BillingLatitude != null ? Number(acc.BillingLatitude) : null
-  const lon = acc.BillingLongitude != null ? Number(acc.BillingLongitude) : null
+  const lat = aLat != null ? Number(aLat) : null
+  const lon = aLon != null ? Number(aLon) : null
 
   return {
     // existing wire contract (do not remove — Master Sheet / KPI depend on these)
@@ -145,13 +163,15 @@ function mapDealer(acc, opp27, opp26won, loadCount, contact, opp26any) {
     // postal code and country so the geocoder's lookup ladder can disambiguate
     // same-named streets/cities in other states (fixes wrong-location mapping).
     address: [
-      acc.BillingStreet,
-      acc.BillingCity,
-      acc.BillingState || acc.BillingStateCode,
-      acc.BillingPostalCode,
-      acc.BillingCountryCode,
+      aStreet,
+      aCity,
+      aState || aStateCode,
+      aPostal,
+      aCountry,
     ].filter(Boolean).join(', '),
-    postal: acc.BillingPostalCode || null,
+    postal: aPostal || null,
+    // which Salesforce address these coordinates/address came from (shipping/billing)
+    addressSource: addrSource,
     tier: acc.Account_Tier_Text__c || 'New',
     // 2026 Loads — Salesforce-derived COUNT of Dealer Loads opportunities
     // (Production_Estimated_Ship_Date__c in 2026, stage Closed Won or Prebooked).
@@ -196,7 +216,9 @@ async function fetchAllDealers() {
   const base = `${instanceUrl}/services/data/${apiVersion()}`
   const teamList = Object.keys(TEAM_TO_AREA).map((t) => `'${t}'`).join(', ')
   const aliasIn = ALIAS_IDS.map((id) => `'${id}'`).join(', ')
-  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, RecordType.Name, BillingStreet, BillingCity, BillingState, BillingStateCode, BillingPostalCode, BillingCountryCode, BillingLatitude, BillingLongitude`
+  const fields = `Id, Name, Team__c, Territory_Manager__c, Account_Tier_Text__c, Dealer_Stage__c, RecordType.Name, ` +
+    `ShippingStreet, ShippingCity, ShippingState, ShippingStateCode, ShippingPostalCode, ShippingCountryCode, ShippingLatitude, ShippingLongitude, ` +
+    `BillingStreet, BillingCity, BillingState, BillingStateCode, BillingPostalCode, BillingCountryCode, BillingLatitude, BillingLongitude`
 
   const tmList = APPROVED_TMS.map((n) => `'${n}'`).join(', ')
   const [accounts, opp27, opp26, pb26] = await Promise.all([
@@ -317,6 +339,7 @@ async function auditSync() {
   // approved-TM accounts (any record type) → record-type + coordinate checks
   const rows = await queryAll(base, instanceUrl, accessToken,
     `SELECT Id, Name, Territory_Manager__c, RecordType.Name, ` +
+    `ShippingStreet, ShippingCity, ShippingStateCode, ShippingPostalCode, ShippingLatitude, ShippingLongitude, ` +
     `BillingStreet, BillingCity, BillingStateCode, BillingPostalCode, ` +
     `BillingLatitude, BillingLongitude FROM Account WHERE Territory_Manager__c IN (${tmList})`)
   // Near-miss record types are the ONLY real silent-exclusion bug: an account that
@@ -339,9 +362,15 @@ async function auditSync() {
       return
     }
     dealers.push(a)
-    if (a.BillingLatitude == null || a.BillingLongitude == null) {
-      missingCoords.push({ id: a.Id, name: a.Name || '',
-        address: [a.BillingStreet, a.BillingCity, a.BillingStateCode, a.BillingPostalCode].filter(Boolean).join(', ') })
+    // Coordinates come from the chosen address source (shipping preferred, billing fallback).
+    const hasShip = !!(a.ShippingStreet && String(a.ShippingStreet).trim())
+    const cLat = hasShip ? a.ShippingLatitude : a.BillingLatitude
+    const cLon = hasShip ? a.ShippingLongitude : a.BillingLongitude
+    if (cLat == null || cLon == null) {
+      missingCoords.push({ id: a.Id, name: a.Name || '', source: hasShip ? 'shipping' : 'billing',
+        address: hasShip
+          ? [a.ShippingStreet, a.ShippingCity, a.ShippingStateCode, a.ShippingPostalCode].filter(Boolean).join(', ')
+          : [a.BillingStreet, a.BillingCity, a.BillingStateCode, a.BillingPostalCode].filter(Boolean).join(', ') })
     }
   })
   // ownership: genuine dealers (Arrowquip Dealer record type) owned by a NON-approved

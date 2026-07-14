@@ -1389,6 +1389,7 @@ function sfMasterMerge(d){
        Salesforce revenue is never copied into it — it stays planner-owned
        and independent of the Updated Commitment. */
     o.recordType=sf.recordType||'';                    /* Account Record Type — read-only */
+    o.addressSource=sf.addressSource||'';              /* which SF address the coords came from (shipping/billing) */
     o._sfId=sf.id; o._sf=true;
   } else {
     src.name=src.territory=src.tm=src.loc=src.address=src.tier=src.lastYear=src.lat=src.lon='planner-fallback';
