@@ -1648,14 +1648,36 @@ function wkStopSeq(t,wk){
       lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:travelDur(it),
       ty:normType(it.type),code:(it.airportCode||'').toUpperCase()});
   });
-  out.sort(function(a,b){ return (a.day-b.day)||(ordEff(a)-ordEff(b))||String(a.time||'99').localeCompare(String(b.time||'99'))||a.key.localeCompare(b.key); });
+  out.sort(function(a,b){ return (a.day-b.day)||(ordEff(a)-ordEff(b))||a.key.localeCompare(b.key); });
+  seedOrder(out);                    /* lock in the manual order; time never reorders again */
   return out;
 }
-/* manual within-day ordering: a card dragged to a position keeps it. ORD holds
-   a sort value on the same scale as time-of-day minutes so dragged and timed
-   cards interleave naturally; cards without either sort last. */
+/* MANUAL ORDER IS THE ONLY RULE. Every stop in a day gets a permanent position
+   number in ORD. Order changes ONLY when the user drags a card — never from a
+   time edit, item type, name, id or anything else. ORD is the single source the
+   cards AND the map both read, so the map always matches the cards exactly. */
 var ORD={};
-function ordEff(s){ var o=ORD[s.key]; if(o!=null) return o; return s.time?minOf(s.time):100000; }
+/* ordEff is used only to establish a NEW item's initial slot before it is
+   seeded: an unseeded stop with a typed time seeds near that time, otherwise it
+   lands at the end. Once seeded, ORD is authoritative and time is ignored. */
+function ordEff(s){ var o=ORD[s.key]; if(o!=null) return o; return s.time?minOf(s.time):1e9; }
+var _ordSeedDirty=false, _ordSaveT=null;
+function _ordSaveSoon(){ if(_ordSaveT) return; _ordSaveT=setTimeout(function(){ _ordSaveT=null; try{ savePlan(); }catch(e){} },400); }
+/* Give every stop in a day a permanent manual position, preserving the order it
+   is ALREADY shown in. Runs when a day contains a not-yet-positioned stop (e.g.
+   a freshly added one); a fully-positioned day is never touched, so nothing the
+   user arranged ever moves on its own. `sorted` must already be in display order. */
+function seedOrder(sorted){
+  var byDay={};
+  sorted.forEach(function(s){ var d=(s.day==null?'_':s.day); (byDay[d]=byDay[d]||[]).push(s); });
+  Object.keys(byDay).forEach(function(d){
+    var arr=byDay[d];
+    if(!arr.some(function(s){ return ORD[s.key]==null; })) return;   /* already fully manual */
+    arr.forEach(function(s,i){ ORD[s.key]=(i+1)*10; });              /* number in current order */
+    _ordSeedDirty=true;
+  });
+  if(_ordSeedDirty){ _ordSeedDirty=false; _ordSaveSoon(); }
+}
 function ordKeyTime(k){
   var kind=k.charAt(0), id=k.slice(2);
   if(kind==='d') return TIME[id]?minOf(TIME[id]):null;
@@ -3643,12 +3665,13 @@ function itineraryFor(t,wk){
     }
   });
   /* ONE authoritative order for every surface (cards, map, routes, reports):
-     day first, then the exact manual card order (ORD via ordEff), then time.
-     The map must never re-sort by time/type/name independently of the cards. */
+     day, then the exact manual card order (ORD). NO time/type/name/id rule —
+     the map mirrors the cards exactly. */
   items.sort(function(a,b){
     var ad=(a.day==null?99:a.day), bd=(b.day==null?99:b.day);
-    return (ad-bd) || (ordEff(a)-ordEff(b)) || String(a.time||'zz').localeCompare(String(b.time||'zz')) || String(a.key).localeCompare(String(b.key));
+    return (ad-bd) || (ordEff(a)-ordEff(b)) || String(a.key).localeCompare(String(b.key));
   });
+  seedOrder(items);
   return items;
 }
 /* QA: AQ_QA.sequence() — proves the map order follows the manual card order (ORD). */
