@@ -461,7 +461,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tvcard.t-rental_pickup,.tvcard.t-rental_return{border-left-color:#0f766e;}
 .tvcard.t-fuel{border-left-color:#dc2626;} .tvcard.t-food{border-left-color:#ea580c;}
 .tvcard.t-parking,.tvcard.t-other{border-left-color:#6b7280;}
-.tv-head{display:flex;align-items:center;gap:6px;padding:6px 7px;border-bottom:1px solid var(--line-soft);background:var(--surface);}
+.tv-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 7px;border-bottom:1px solid var(--line-soft);background:var(--surface);}
 .tv-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;flex:0 0 auto;}
 .tv-type{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;font-weight:600;color:var(--aq-black);border:1px solid var(--line);border-radius:3px;background:#fff;padding:2px 3px;cursor:pointer;}
 .tv-ok,.tv-bad{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 5px;border-radius:3px;white-space:nowrap;}
@@ -469,8 +469,10 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tv-del{border:0;background:transparent;color:#b9bdbf;font-size:15px;line-height:1;cursor:pointer;padding:0 2px;}
 .tv-del:hover{color:var(--aq-red);}
 .tv-body{padding:6px 7px 7px;}
-.tv-row{display:flex;align-items:center;gap:5px;margin-top:5px;}
+.tv-row{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:5px;}
 .tv-row:first-child{margin-top:0;}
+.tv-dur{flex:0 0 auto;width:auto;min-width:78px;max-width:120px;white-space:nowrap;}
+.tv-dep{flex:0 0 auto;font-size:9.5px;font-weight:600;color:#2563eb;white-space:nowrap;}
 .tv-lbl{flex:0 0 54px;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
 .tv-in{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 5px;background:#fff;}
 .tv-in:focus{outline:none;border-color:#2563eb;}
@@ -1628,7 +1630,7 @@ function wkStopSeq(t,wk){
   LOGI.forEach(function(it){
     if(it.terr!==t||it.wk!==wk||it.day==null||!travelHasLocation(it)) return;
     out.push({key:'m:'+it.id,name:travelPlaceLabel(it)||TRAVEL_TYPES[travelType(it)].label,
-      lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:0,
+      lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:travelDur(it),
       ty:normType(it.type),code:(it.airportCode||'').toUpperCase()});
   });
   out.sort(function(a,b){ return (a.day-b.day)||(ordEff(a)-ordEff(b))||String(a.time||'99').localeCompare(String(b.time||'99'))||a.key.localeCompare(b.key); });
@@ -2641,6 +2643,12 @@ const TRAVEL_TYPES={
   parking   :{label:'Parking',icon:'🅿',  color:'#6b7280', place:'address'},
   other     :{label:'Other',         icon:'•',  color:'#6b7280', place:'address'}
 };
+/* Dwell stops carry a DURATION like a visit — the time you spend there pushes
+   every following unlocked item later. Transit items (flights, hotel, airport)
+   use their own arrival/checkout times instead, so they get no duration. */
+const DWELL_TYPES={other:1,food:1,fuel:1,parking:1,rental_pickup:1,rental_return:1};
+function travelHasDuration(ty){ return !!DWELL_TYPES[ty]; }
+function travelDur(it){ return travelHasDuration(travelType(it))?(+it.dur||60):0; }  /* dwell default 60m, matches the card field */
 /* which budget category an item's expenses default to */
 const TRAVEL_CAT={flight_in:'Flights',flight_out:'Flights',flight_stop:'Flights',rental_pickup:'Rental Cars',
   rental_return:'Rental Cars',hotel:'Hotels',fuel:'Fuel',food:'Food',
@@ -3496,6 +3504,7 @@ function setTravelField(id,field,val){
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
   else if(field==='time'||field==='time2'){ var pv=parseTimeLoose(val); if(pv==null){ refreshPlanner(); return; } it[field]=pv; }  /* typing never locks — only the 🔒 does */
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
+  else if(field==='dur'){ var nd=normDur(parseDur(val)); if(nd==null){ refreshPlanner(); return; } it.dur=nd; }
   else if(field==='airportCode'){
     var a=airportByCode(val);
     it.airportCode=(val||'').toUpperCase();
@@ -3648,6 +3657,17 @@ function travelCard(it,wk,tl){
     +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time" value="'+esc(showW?t12s(showW):'')+'"'+(tvFixed?' disabled':'')
     +(tvFixed?' title="Fixed — unlock to change"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'>'
     +'</div>';
+  /* --- duration (dwell stops only): the time spent here, like a visit. It
+     pushes every following unlocked item later. Departure shows live. --- */
+  var durRow='';
+  if(travelHasDuration(ty)){
+    var depMin=(tl&&tl.sug!=null)?(tl.sug+(+it.dur||0)):null;
+    var depLbl=(depMin!=null)?t12s(addMin('00:00',((Math.round(depMin)%1440)+1440)%1440)):'';
+    durRow='<div class="tv-row"><label class="tv-lbl">Duration</label>'
+      +'<input class="tv-in tv-dur" data-tv="'+it.id+'" data-f="dur" title="How long you stay — e.g. 30m, 1h, 1h 30m, 2h. Pushes the stops after it later." value="'+esc(fmtDur(+it.dur||60))+'">'
+      +(depLbl?'<span class="tv-dep" title="Calculated departure">→ leaves '+esc(depLbl)+'</span>':'')
+      +'</div>';
+  }
   var when2='';
   if(isHotel){
     /* check-out IS the departure: the next morning chains from it. With no
@@ -3689,7 +3709,7 @@ function travelCard(it,wk,tl){
       +lockBtn
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
-    +'<div class="tv-body">'+place+when+when2+flight+conf+tlRow+'</div>'
+    +'<div class="tv-body">'+place+when+durRow+when2+flight+conf+tlRow+'</div>'
     +'</div>';
 }
 /* printable/trip-plan row */
