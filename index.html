@@ -1980,7 +1980,7 @@ function wkForecast(t,wk){
    d.booking, so recalcTargets() keeps booking derived from Target Loads and
    the whole app (KPIs, planner, maps, dashboard) recalculates instantly. */
 const LOAD_USD=75000, LOAD_CAD=85000;
-let FX=0.73;                       /* CAD → USD, editable on the dashboard, saved in the plan */
+let FX=1.36;                       /* USD → CAD (1 USD = X CAD), editable on the dashboard, saved in the plan */
 const CA_PROVS={ON:1,QC:1,MB:1,SK:1,AB:1,BC:1,NS:1,NB:1,PE:1,NL:1,YT:1,NT:1,NU:1};
 /* 7-tier dealer program bands: [minLoads,label], highest first. Editable in
    the ⚙ 2027 Program settings on the Master Sheet; saved in the shared plan. */
@@ -2109,7 +2109,10 @@ const PROGRAM_DEFAULT=[
 ];
 function adminInit(){
   ADMIN=ADMIN||{};
-  ADMIN.currency=ADMIN.currency||{rate:(+FX>0?+FX:0.73),source:'seed',timestamp:null,updatedBy:'seed',override:null};
+  ADMIN.currency=ADMIN.currency||{rate:(+FX>0?+FX:1.36),source:'seed',timestamp:null,updatedBy:'seed',override:null};
+  /* migrate any legacy CAD→USD rate (<1) to the USD→CAD setting, once, idempotently */
+  if(ADMIN.currency.rate>0) ADMIN.currency.rate=normUsdCad(ADMIN.currency.rate);
+  if(ADMIN.currency.override&&ADMIN.currency.override.rate>0) ADMIN.currency.override.rate=normUsdCad(ADMIN.currency.override.rate);
   ADMIN.revPerLoad=ADMIN.revPerLoad||{};
   var seedR=function(k,v,cur,label){ if(!ADMIN.revPerLoad[k]) ADMIN.revPerLoad[k]={value:v,currency:cur,label:label,effective:'2026-07-01',updatedBy:'seed'}; };
   seedR('US',75000,'USD','United States'); seedR('CA',85000,'CAD','Canada');
@@ -2147,17 +2150,41 @@ function programOf(loads){
   for(var i=0;i<P.length;i++){ var p=P[i]; if(loads>=+p.min&&(p.max==null||p.max===''||loads<=+p.max)) return p; }
   return null;
 }
-/* ---- currency engine: one CAD→USD rate, auto-refreshed, override in Admin ---- */
-function fxRate(){
+/* ---- currency engine: ONE setting that means "1 USD = X CAD" (USD→CAD).
+   Example: 1.36 → $100 USD = $136 CAD. Internally, CAD amounts convert to
+   USD-equivalent ("mixed") with cadToUsd() = 1 / (USD→CAD), and USD amounts
+   convert to CAD with usdToCad(). Legacy plans stored the inverse CAD→USD
+   value (~0.73); normUsdCad() migrates any sub-1 rate on read so old saved
+   figures are never double-converted. ---- */
+function normUsdCad(r){ r=+r||0; return (r>0&&r<1)?(1/r):r; }  /* idempotent: 0.73→1.37, 1.36→1.36 */
+function usdToCad(){
   var c=(ADMIN&&ADMIN.currency)||{};
-  if(c.override&&+c.override.rate>0) return +c.override.rate;
-  return (+c.rate>0)?+c.rate:((+FX>0)?+FX:0.73);
+  var r=(c.override&&+c.override.rate>0)?+c.override.rate:((+c.rate>0)?+c.rate:((+FX>0)?+FX:1.36));
+  return normUsdCad(r);
 }
-function fxSync(){ FX=fxRate(); }                        /* FX = read-only mirror for legacy call sites */
+function cadToUsd(){ var r=usdToCad(); return r>0?(1/r):0; }
+function fxRate(){ return cadToUsd(); }                  /* legacy alias — still means CAD→USD for untouched call sites */
+function fxSync(){ FX=usdToCad(); }                      /* FX mirror now holds the USD→CAD setting */
 var _FX_PROVIDERS=[
-  {name:'frankfurter.dev (ECB)', url:'https://api.frankfurter.dev/v1/latest?base=CAD&symbols=USD', pick:function(j){ return j&&j.rates&&+j.rates.USD; }},
-  {name:'open.er-api.com',       url:'https://open.er-api.com/v6/latest/CAD',                      pick:function(j){ return j&&j.rates&&+j.rates.USD; }}
+  {name:'frankfurter.dev (ECB)', url:'https://api.frankfurter.dev/v1/latest?base=USD&symbols=CAD', pick:function(j){ return j&&j.rates&&+j.rates.CAD; }},
+  {name:'open.er-api.com',       url:'https://open.er-api.com/v6/latest/USD',                      pick:function(j){ return j&&j.rates&&+j.rates.CAD; }}
 ];
+/* QA: AQ_QA.currency() — proves USD→CAD direction, migration, no double-convert. */
+window.AQ_QA=window.AQ_QA||{};
+window.AQ_QA.currency=function(){
+  var rows=[],ok=true; var save=ADMIN.currency;
+  function chk(label,got,exp){var pass=Math.abs(got-exp)<0.5;ok=ok&&pass;rows.push({case:label,got:Math.round(got*100)/100,expected:exp,pass:pass});}
+  ADMIN.currency={rate:1.36,override:null,source:'test'};
+  chk('setting 1.36 → usdToCad',usdToCad(),1.36);
+  chk('$100 USD → CAD',100*usdToCad(),136);
+  chk('$136 CAD → USD',136*cadToUsd(),100);
+  ADMIN.currency={rate:0.735,override:null,source:'test-legacy'};   /* legacy CAD→USD stored */
+  chk('legacy 0.735 migrates → ~1.36',usdToCad(),1.36);
+  chk('legacy: $100 USD → CAD (no double-convert)',100*usdToCad(),136);
+  ADMIN.currency=save;
+  console.table(rows); console.log(ok?'✅ CURRENCY TESTS PASSED':'❌ CURRENCY TESTS FAILED');
+  return {passed:ok,rows:rows};
+};
 function fxAutoRefresh(force,cb){
   var c=ADMIN.currency;
   if(!force&&c.timestamp&&(Date.now()-new Date(c.timestamp).getTime())<20*3600e3){ cb&&cb(false); return; }
@@ -2281,7 +2308,7 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;}
 adminInit(); fxSync();
 normalizeVisitData();})();
 function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD};}
@@ -6518,13 +6545,13 @@ function renderSettings(){
   var fld=function(l,html){ return '<label style="display:flex;flex-direction:column;gap:3px"><span '+lbl+'>'+l+'</span>'+html+'</label>'; };
   /* currency */
   var curBody='<div '+row+'>'
-    +fld('Automatic rate (CAD → USD)','<span style="font:700 15px \'Open Sans\';padding:6px 0">'+(+c.rate).toFixed(4)+'</span>')
+    +fld('Automatic rate (1 USD = X CAD)','<span style="font:700 15px \'Open Sans\';padding:6px 0" title="$100 USD = $'+(100*usdToCad()).toFixed(0)+' CAD">'+usdToCad().toFixed(4)+'</span>')
     +fld('Source','<span style="font-size:12px;color:var(--muted);padding:8px 0">'+esc(c.source||'—')+'</span>')
     +fld('Updated','<span style="font-size:12px;color:var(--muted);padding:8px 0">'+(c.timestamp?new Date(c.timestamp).toLocaleString():'—')+' · '+esc(c.updatedBy||'')+'</span>')
     +'<button class="btn" id="fxRefreshBtn">↻ Refresh now</button>'
     +'</div><div '+row.replace('border-bottom:1px solid var(--line-soft)','border-bottom:0')+'>'
-    +fld('Manual override','<input id="fxOverride" type="number" step="0.0001" min="0.1" max="2" '+inp+' value="'+(c.override?c.override.rate:'')+'" placeholder="auto">')
-    +'<span style="font-size:11px;color:var(--muted-2);max-width:420px">Leave blank to follow the automatic rate. An override applies everywhere immediately and is recorded in the audit log.'+(c.override?(' <b>Override active</b> — set by '+esc(c.override.by||'')+' '+(c.override.at?new Date(c.override.at).toLocaleString():'')):'')+'</span>'
+    +fld('Manual override (1 USD = X CAD)','<input id="fxOverride" type="number" step="0.0001" min="0.5" max="3" '+inp+' value="'+(c.override?c.override.rate:'')+'" placeholder="auto">')
+    +'<span style="font-size:11px;color:var(--muted-2);max-width:420px">1 USD = X CAD (e.g. 1.36 → $100 USD = $136 CAD). Leave blank to follow the automatic rate. An override applies everywhere immediately and is recorded in the audit log.'+(c.override?(' <b>Override active</b> — set by '+esc(c.override.by||'')+' '+(c.override.at?new Date(c.override.at).toLocaleString():'')):'')+'</span>'
     +'</div>';
   /* revenue per load */
   var rplBody=Object.keys(ADMIN.revPerLoad).map(function(k){
@@ -6873,7 +6900,7 @@ function applyPlanSnapshot(p){
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
   VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{};
-  if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
+  if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
 function undoRestore(){
@@ -7737,7 +7764,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
