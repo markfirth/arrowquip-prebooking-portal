@@ -7784,6 +7784,109 @@ function withPreservedScroll(fn){
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
 }
 function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
+/* ============ TRIP-ORDER INVARIANT TESTS ============================
+   Non-destructive: snapshots ASSIGN/DAY/TIME/ORD/LOGI/APPT/TLE, builds
+   synthetic scenarios, asserts every surface (schedule tlSeq == desktop map
+   stopsForWeek == mobile itineraryFor == report routeSummaryRows == the
+   canonical tripPosMap) agrees, then restores. Never runs on load — call
+   tripOrderTests() from the console. Covers the spec's scenarios. */
+function tripOrderTests(){
+  var T='East', WK=48, results=[], hid1='__T_H1', hid2='__T_A1';
+  var snap={ASSIGN:JSON.parse(JSON.stringify(ASSIGN)),DAY:JSON.parse(JSON.stringify(DAY)),
+    TIME:JSON.parse(JSON.stringify(TIME)),ORD:JSON.parse(JSON.stringify(ORD)),
+    APPT:(typeof APPT!=='undefined')?JSON.parse(JSON.stringify(APPT)):{},
+    LOGI:JSON.parse(JSON.stringify(LOGI)),
+    lock:(typeof TLE!=='undefined')?JSON.parse(JSON.stringify(TLE.lock)):{}};
+  function eq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+  function assert(name,cond){ results.push({test:name,pass:!!cond}); }
+  function sched(){ return tlSeq(T,WK).map(function(s){return s.key;}); }
+  function map(){ return stopsForWeek(T,WK).map(function(s){return s.key;}); }
+  function mob(){ return itineraryFor(T,WK).map(function(i){ return i.kind==='dealer'?'d:'+i.id
+      : i.kind==='xvisit'?'x:'+String(i.id).replace(/^xv:/,'') : 'm:'+i.id; }); }
+  function allAgree(label){ var s=sched(); assert(label+': map==schedule',eq(map(),s));
+    assert(label+': mobile==schedule',eq(mob(),s)); }
+  try{
+    var cands=dealersIn(T).map(sfMasterMerge).filter(function(d){return d.lat!=null&&d.lon!=null;});
+    if(cands.length<4){ return [{test:'insufficient located East dealers for test',pass:false}]; }
+    var ids=cands.slice(0,4).map(function(d){return d.id;});
+    function reset(){ LOGI=snap.LOGI.slice?LOGI.filter(function(x){return x.id!==hid1&&x.id!==hid2;}):LOGI;
+      ids.forEach(function(id,i){ ASSIGN[id]=WK; DAY[id]=0; TIME[id]=['09:00','10:00','11:00','12:00'][i];
+        delete ORD['d:'+id]; if(typeof APPT!=='undefined') delete APPT[id]; if(typeof TLE!=='undefined') delete TLE.lock['d:'+id]; });
+      tlInvalidate(); }
+
+    reset(); allAgree('1. baseline');
+
+    // (1) drag visit 4 into position 1
+    reset(); ORD['d:'+ids[3]]=1; tlInvalidate();
+    assert('drag v4→pos1: is first', sched()[0]==='d:'+ids[3]); allAgree('2. drag');
+
+    // (2) moving a locked appointment keeps its lock but changes route position
+    reset(); if(typeof TLE!=='undefined') TLE.lock['d:'+ids[1]]=1; ORD['d:'+ids[1]]=1; tlInvalidate();
+    assert('locked move: locked item is first', sched()[0]==='d:'+ids[1]);
+    assert('locked move: still locked', !(typeof TLE!=='undefined') || TLE.lock['d:'+ids[1]]===1);
+    allAgree('3. locked-move');
+
+    // (3) lock does NOT reorder on its own
+    reset(); var before=sched(); if(typeof TLE!=='undefined') TLE.lock['d:'+ids[2]]=1; tlInvalidate();
+    assert('lock alone: order unchanged', eq(sched(),before)); allAgree('4. lock-alone');
+
+    // (4) cross-day move
+    reset(); DAY[ids[0]]=1; TIME[ids[0]]='08:00'; tlInvalidate();
+    assert('cross-day: day1 item sorts after day0', sched()[sched().length-1]==='d:'+ids[0]);
+    allAgree('5. cross-day');
+
+    // (5) add hotel + airport between visits, drag to interleave
+    reset();
+    LOGI.push({id:hid1,terr:T,wk:WK,day:0,time:'',type:'hotel',name:'T Hotel',lat:cands[0].lat+0.04,lon:cands[0].lon+0.04});
+    LOGI.push({id:hid2,terr:T,wk:WK,day:0,time:'',type:'flight_in',airportCode:'YYZ',name:'T Airport',lat:cands[0].lat+0.06,lon:cands[0].lon+0.06});
+    ORD['m:'+hid2]=0.5; ORD['m:'+hid1]=1.5; tlInvalidate();
+    allAgree('6. add-hotel-airport');
+    assert('mixed types present in order', sched().indexOf('m:'+hid1)>=0 && sched().indexOf('m:'+hid2)>=0);
+
+    // (6) delete from the middle → still 1..N gapless
+    LOGI=LOGI.filter(function(x){return x.id!==hid2;}); tlInvalidate();
+    var pv=tripPosMap(T,WK), vals=Object.keys(pv).map(function(k){return pv[k];}).sort(function(a,b){return a-b;});
+    assert('delete-middle: positions gapless 1..N', vals.every(function(v,i){return v===i+1;}));
+    allAgree('7. delete-middle');
+
+    // (7) rapid reorder: many ORD writes, final state consistent
+    reset(); for(var r=0;r<8;r++){ ORD['d:'+ids[r%4]]=Math.random()*10; tlInvalidate(); }
+    allAgree('8. rapid-reorder');
+    var pv2=tripPosMap(T,WK), vals2=Object.keys(pv2).map(function(k){return pv2[k];});
+    assert('rapid: no duplicate positions', vals2.length===new Set(vals2).size);
+
+    // (8) report/download path uses the same order
+    reset(); ORD['d:'+ids[3]]=1; tlInvalidate();
+    var rr=routeSummaryRows(T,WK);
+    var firstFrom=rr.length?rr[0].From:null;
+    assert('report: route summary leads with dragged stop',
+      !firstFrom || firstFrom.indexOf(cands[3].name)>=0);
+
+    // (9) failed geocode: a dated dealer with no coords must not corrupt the rest
+    reset(); var saveLat=cands[1].lat;
+    // simulate by adding a coordless logistics stop with a day — falls to fallback, others intact
+    LOGI.push({id:hid1,terr:T,wk:WK,day:0,time:'13:00',type:'other',name:'No Coords'});
+    tlInvalidate();
+    // contract: coordless stop is absent from the route sequence but present last
+    // in the map table / mobile list; all LOCATED stops still agree in order.
+    var s9=sched();
+    assert('failed-geocode: coordless stop excluded from route', s9.indexOf('m:'+hid1)<0);
+    assert('failed-geocode: located stops agree (map)',   eq(map().filter(function(k){return s9.indexOf(k)>=0;}),s9));
+    assert('failed-geocode: located stops agree (mobile)',eq(mob().filter(function(k){return s9.indexOf(k)>=0;}),s9));
+    assert('failed-geocode: coordless stop sorts last on map', map()[map().length-1]==='m:'+hid1);
+  }catch(e){ results.push({test:'EXCEPTION: '+e,pass:false}); }
+  finally{
+    ASSIGN=snap.ASSIGN; DAY=snap.DAY; TIME=snap.TIME; ORD=snap.ORD;
+    if(typeof APPT!=='undefined') APPT=snap.APPT;
+    LOGI=snap.LOGI; if(typeof TLE!=='undefined') TLE.lock=snap.lock;
+    tlInvalidate();
+  }
+  var passed=results.filter(function(r){return r.pass;}).length;
+  console.log('tripOrderTests: '+passed+'/'+results.length+' passed');
+  results.filter(function(r){return !r.pass;}).forEach(function(r){ console.warn('FAIL: '+r.test); });
+  return {passed:passed,total:results.length,results:results};
+}
+if(typeof window!=='undefined') window.tripOrderTests=tripOrderTests;
 /* After a magic-link callback the URL carries auth params (#access_token…, ?code=…,
    type=magiclink). supabase-js consumes them, but strip anything left so the address
    bar is clean and a refresh doesn't re-trigger detection. */
