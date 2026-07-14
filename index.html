@@ -1377,8 +1377,8 @@ function sfMasterMerge(d){
     if(sf.address){ o.address=sf.address; src.address='salesforce'; } else { src.address='planner-fallback'; }
     if(sf.tier){ o.tier=sf.tier; src.tier='salesforce'; } else { src.tier='planner-fallback'; }
     if(sf.lastYear!=null){ o.lastYear=sf.lastYear; src.lastYear='salesforce'; } else { src.lastYear='planner-fallback'; } /* 0/null → keep planner fallback */
-    if(sf.lat!=null){ o.lat=sf.lat; src.lat='salesforce'; } else { src.lat='planner-fallback'; }
-    if(sf.lon!=null){ o.lon=sf.lon; src.lon='salesforce'; } else { src.lon='planner-fallback'; }
+    /* coordinates are NOT trusted from Salesforce here — the validated
+       precedence block below decides which source (if any) is accepted. */
     /* 2026 Loads: Salesforce-derived Dealer-Loads count. Salesforce-owned — locked and
        read-only; overrides any saved planner value. Always a number (0..n) for SF dealers. */
     if(sf.loads!=null){ o.loads=+sf.loads; src.loads='salesforce'; } else { src.loads='planner-fallback'; }
@@ -1392,15 +1392,44 @@ function sfMasterMerge(d){
     src.loads='planner-fallback';   /* local-only dealer: no Salesforce loads, planner may enter one */
     o._sf=false;
   }
-  /* geocoded fallback: a dealer with no Salesforce/seed coordinates but a usable
-     address is located from the geocode cache (filled in the background). This
-     never overrides real coordinates and is device-local (not written to the
-     plan), so manual corrections and Salesforce data always win. */
-  if((o.lat==null||o.lon==null) && o.address){
-    try{ var _g=_GEOCACHE[_geoKey(o.address)];
-      if(_g){ o.lat=_g.lat; o.lon=_g.lon; o._geoApprox=!!_g.approx; src.lat=src.lon='geocoded'; }
+  /* ---- Coordinate integrity: one validated precedence for every dealer ----
+     manual override → validated Salesforce → validated planner seed → validated
+     geocode cache. No source is accepted without passing validateCoord(), so a
+     wrong Salesforce point or a stale cache entry can never place a dealer in
+     the wrong state. Geocode/seed coords stay device-local (never written to the
+     plan); overrides are shared. o._coord carries the audit trail. */
+  var seedLat=(d.lat!=null&&isFinite(+d.lat))?+d.lat:null, seedLon=(d.lon!=null&&isFinite(+d.lon))?+d.lon:null;
+  var _exp=expectedLoc(o);
+  var _ci={source:null,confidence:null,status:null,expectState:_exp.state,expectCountry:_exp.country,
+           resolvedState:null,reason:null,sfRejected:false,cacheReplaced:false};
+  o.lat=null; o.lon=null; o._geoApprox=false;
+  var _ov=(typeof COORDOVR!=='undefined')&&COORDOVR[d.id];
+  if(_ov&&isFinite(+_ov.lat)&&isFinite(+_ov.lon)){
+    o.lat=+_ov.lat; o.lon=+_ov.lon; src.lat=src.lon='manual';
+    _ci.source='manual'; _ci.confidence='manual'; _ci.status='manual'; _ci.resolvedState=_stateOfPoint(o.lat,o.lon);
+  }
+  if(o.lat==null && sf && sf.lat!=null && sf.lon!=null){
+    var _vs=validateCoord(sf.lat,sf.lon,_exp,null); _ci.resolvedState=_vs.resolvedState;
+    if(_vs.status!=='rejected'){ o.lat=+sf.lat; o.lon=+sf.lon; src.lat=src.lon='salesforce';
+      _ci.source='salesforce'; _ci.confidence=_vs.confidence; _ci.status=_vs.status; o._geoApprox=(_vs.confidence==='approximate'); }
+    else { _ci.sfRejected=true; _ci.reason=_vs.reason; }   /* SF point rejected — fall through to a verified geocode */
+  }
+  if(o.lat==null && seedLat!=null && seedLon!=null){
+    var _vd=validateCoord(seedLat,seedLon,_exp,null);
+    if(_vd.resolvedState&&!_ci.resolvedState) _ci.resolvedState=_vd.resolvedState;
+    if(_vd.status!=='rejected'){ o.lat=seedLat; o.lon=seedLon; src.lat=src.lon='seed';
+      _ci.source=_ci.source||'seed'; _ci.confidence=_vd.confidence; _ci.status=_vd.status; o._geoApprox=(_vd.confidence==='approximate'); }
+    else if(!_ci.reason){ _ci.reason=_vd.reason; }
+  }
+  if(o.lat==null && o.address){
+    try{ var _cg=_cacheGetValidated(_geoKey(o.address),_exp);
+      if(_cg.replaced) _ci.cacheReplaced=true;
+      if(_cg.entry){ o.lat=_cg.entry.lat; o.lon=_cg.entry.lon; o._geoApprox=(_cg.entry.confidence==='approximate'); src.lat=src.lon='geocoded';
+        _ci.source=_cg.entry.source||'geocoded'; _ci.confidence=_cg.entry.confidence; _ci.status=_cg.entry.validationStatus; if(_cg.entry.state)_ci.resolvedState=_cg.entry.state; }
     }catch(e){}
   }
+  if(o.lat==null){ src.lat=src.lon=(_ci.sfRejected?'sf-rejected':'planner-fallback'); }
+  o._coord=_ci;
   /* planner-owned, editable: 2027 Target and both 2026 commitments */
   src.booking='planner-fallback'; src.prebook2026='planner-fallback';
   /* local planner-owned */
@@ -1533,6 +1562,20 @@ let LOGI=[];
    from ASSIGN/DAY/TIME, so their budget fields live here keyed by dealer id.
    Manual stops carry their own fields on the LOGI record. */
 let STOPX={};
+/* Manual coordinate overrides for exceptional dealer records. Keyed by dealer id
+   → {lat,lon,reason,by,at}. Persisted in the shared plan payload (coordovr), NOT
+   only in localStorage, so every device sees the same corrected location. Takes
+   precedence over Salesforce and geocode ONLY when explicitly set. */
+let COORDOVR={};
+function setCoordOverride(id,lat,lon,reason){
+  lat=+lat; lon=+lon;
+  if(!id||!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180){ return false; }
+  COORDOVR[id]={lat:lat,lon:lon,reason:String(reason||'').slice(0,240),
+    by:(typeof pbWho==='function'?pbWho():'user'),at:new Date().toISOString().slice(0,10)};
+  savePlan(); if(typeof invalidateUniverse==='function') invalidateUniverse();
+  return true;
+}
+function clearCoordOverride(id){ if(COORDOVR[id]){ delete COORDOVR[id]; savePlan(); if(typeof invalidateUniverse==='function') invalidateUniverse(); return true; } return false; }
 /* Manual trip expenses (Option A: stored in the plan document, so they inherit optimistic
    concurrency, history snapshots, auto-backup and logging without widening anon access).
    pb_change_summary() already counts data->'expenses'. Migrates to prebooking_expenses
@@ -2266,10 +2309,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=+p.fx;if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.coordovr)COORDOVR=p.coordovr;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,coordovr:COORDOVR};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -3137,11 +3180,14 @@ function apInit(){
    up once, ever; manual corrections are never overwritten. Variations looser
    than the full address are flagged approx so an approximate (city/postal)
    hit is never silently presented as an exact rooftop match. ---- */
-/* V2: cache format now carries a verified `state`; the V1 cache may hold
-   wrong-state hits accepted before verification existed, so it is abandoned
-   (entries re-resolve in the throttled background under the new ladder). */
-var _GEOCACHE=(function(){ try{ localStorage.removeItem('aqGeoCacheV1'); }catch(e){} try{ return JSON.parse(localStorage.getItem('aqGeoCacheV2')||'{}'); }catch(e){ return {}; } })();
-function _geoCacheSave(){ try{ localStorage.setItem('aqGeoCacheV2',JSON.stringify(_GEOCACHE)); }catch(e){} }
+/* V3: every entry now carries source + validation metadata (state, country,
+   city, postal, display, confidence, validationStatus, validatedAt) and is
+   re-validated on read. V1/V2 held hits accepted before the full validator
+   existed (wrong-state Photon fallbacks, unverified Salesforce points), so they
+   are abandoned — entries re-resolve in the throttled background, each one
+   validated before it is trusted. */
+var _GEOCACHE=(function(){ try{ localStorage.removeItem('aqGeoCacheV1'); localStorage.removeItem('aqGeoCacheV2'); }catch(e){} try{ return JSON.parse(localStorage.getItem('aqGeoCacheV3')||'{}'); }catch(e){ return {}; } })();
+function _geoCacheSave(){ try{ localStorage.setItem('aqGeoCacheV3',JSON.stringify(_GEOCACHE)); }catch(e){} }
 /* clean a raw/composed address: drop undefined/null tokens, tidy separators and
    whitespace, and collapse consecutive duplicate comma segments (e.g. a
    Salesforce "Calhoun, GA, GA" or a doubled city). */
@@ -3168,31 +3214,139 @@ function geocodeVariants(q){
   }
   return vs;
 }
-/* US state name→code and Canadian provinces, for verifying a geocode hit lands in
-   the expected state/province rather than a same-named place elsewhere. */
-var _US_STATES={alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY',alberta:'AB','british columbia':'BC',manitoba:'MB','new brunswick':'NB','newfoundland and labrador':'NL','nova scotia':'NS',ontario:'ON','prince edward island':'PE',quebec:'QC',saskatchewan:'SK'};
+/* ==================== COORDINATE INTEGRITY =========================
+   One validation system that EVERY coordinate source (Salesforce billing,
+   geocode cache, Nominatim, Photon, manual import) must pass before its point
+   is accepted. No provider has its own accept rule — they all call
+   validateCoord(). This is what stops the Jones Supply / Okeechobee class of
+   bug where a wrong same-named place, a bad Salesforce coordinate, or an
+   unvalidated Photon fallback silently pins a dealer in the wrong state.      */
+/* US state / Canadian province name→code. */
+var _US_STATES={alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',connecticut:'CT',delaware:'DE','district of columbia':'DC',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV','new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY','north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA','west virginia':'WV',wisconsin:'WI',wyoming:'WY',alberta:'AB','british columbia':'BC',manitoba:'MB','new brunswick':'NB','newfoundland and labrador':'NL','newfoundland':'NL',labrador:'NL','nova scotia':'NS','northwest territories':'NT',nunavut:'NU',ontario:'ON','prince edward island':'PE',quebec:'QC','québec':'QC',saskatchewan:'SK',yukon:'YT'};
 var _STATE_CODES=(function(){var s={};for(var k in _US_STATES)s[_US_STATES[k]]=1;return s;})();
-/* Pull a 2-letter state/province code out of an address string (matches a bare
-   code token like ", FL," or a full state name like "Florida"). null if none. */
+var _CA_PROV={AB:1,BC:1,MB:1,NB:1,NL:1,NS:1,NT:1,NU:1,ON:1,PE:1,QC:1,SK:1,YT:1};
+/* State / province bounding boxes [south, north, west, east]. Coarse but enough
+   to catch a point that lands in the wrong state (hundreds of miles off); a small
+   pad is applied at containment time so genuine near-border dealers are not
+   rejected. */
+var _STATE_BBOX={
+ AL:[30.1,35.1,-88.6,-84.8],AK:[51.0,71.6,-179.9,-129.0],AZ:[31.2,37.1,-114.9,-108.9],AR:[32.9,36.6,-94.7,-89.6],
+ CA:[32.5,42.1,-124.5,-114.0],CO:[36.9,41.1,-109.1,-101.9],CT:[40.9,42.2,-73.8,-71.7],DE:[38.4,39.9,-75.8,-74.9],
+ DC:[38.7,39.1,-77.2,-76.8],FL:[24.3,31.1,-87.7,-79.8],GA:[30.3,35.1,-85.7,-80.7],HI:[18.8,22.4,-160.4,-154.7],
+ ID:[41.9,49.1,-117.3,-110.9],IL:[36.9,42.6,-91.6,-87.4],IN:[37.7,41.8,-88.2,-84.7],IA:[40.3,43.6,-96.7,-90.0],
+ KS:[36.9,40.1,-102.1,-94.5],KY:[36.4,39.2,-89.7,-81.9],LA:[28.9,33.1,-94.1,-88.7],ME:[42.9,47.6,-71.2,-66.9],
+ MD:[37.8,39.8,-79.5,-74.9],MA:[41.1,42.95,-73.6,-69.8],MI:[41.6,48.3,-90.5,-82.1],MN:[43.4,49.5,-97.3,-89.4],
+ MS:[30.1,35.1,-91.7,-88.0],MO:[35.9,40.7,-95.8,-88.9],MT:[44.3,49.1,-116.1,-103.9],NE:[39.9,43.1,-104.1,-95.2],
+ NV:[35.0,42.1,-120.1,-113.9],NH:[42.6,45.4,-72.6,-70.5],NJ:[38.9,41.4,-75.6,-73.8],NM:[31.2,37.1,-109.1,-102.9],
+ NY:[40.4,45.1,-79.8,-71.8],NC:[33.7,36.6,-84.4,-75.4],ND:[45.9,49.1,-104.1,-96.5],OH:[38.3,42.4,-84.9,-80.5],
+ OK:[33.6,37.1,-103.1,-94.4],OR:[41.9,46.4,-124.6,-116.4],PA:[39.7,42.4,-80.6,-74.6],RI:[41.1,42.1,-71.9,-71.0],
+ SC:[32.0,35.3,-83.4,-78.4],SD:[42.4,46.0,-104.1,-96.4],TN:[34.9,36.7,-90.4,-81.6],TX:[25.8,36.6,-106.7,-93.5],
+ UT:[36.9,42.1,-114.1,-108.9],VT:[42.7,45.1,-73.5,-71.4],VA:[36.5,39.5,-83.7,-75.1],WA:[45.5,49.1,-124.9,-116.9],
+ WV:[37.1,40.7,-82.7,-77.7],WI:[42.4,47.4,-92.9,-86.7],WY:[40.9,45.1,-111.1,-103.9],
+ AB:[48.9,60.1,-120.1,-109.9],BC:[48.2,60.1,-139.2,-114.0],MB:[48.9,60.1,-102.2,-88.9],NB:[44.5,48.1,-69.1,-63.7],
+ NL:[46.5,60.5,-67.9,-52.5],NS:[43.3,47.1,-66.5,-59.7],NT:[59.9,78.9,-136.6,-101.9],NU:[51.5,83.2,-121.0,-60.9],
+ ON:[41.6,57.0,-95.2,-74.3],PE:[45.9,47.1,-64.5,-61.9],QC:[44.9,62.7,-79.8,-57.1],SK:[48.9,60.1,-110.1,-101.3],
+ YT:[59.9,69.7,-141.1,-123.7]};
+var _BBOX_PAD=0.35;   /* ~24mi border tolerance so valid dealers aren't rejected */
+function _bboxHas(code,lat,lon){ var b=_STATE_BBOX[code]; if(!b) return null;
+  return lat>=b[0]-_BBOX_PAD&&lat<=b[1]+_BBOX_PAD&&lon>=b[2]-_BBOX_PAD&&lon<=b[3]+_BBOX_PAD; }
+function _bboxCenter(code){ var b=_STATE_BBOX[code]; return b?[(b[0]+b[1])/2,(b[2]+b[3])/2]:null; }
+function _stateOfPoint(lat,lon){ for(var c in _STATE_BBOX){ var b=_STATE_BBOX[c];
+  if(lat>=b[0]&&lat<=b[1]&&lon>=b[2]&&lon<=b[3]) return c; } return null; }
+/* normalise any state/province spelling to a 2-letter code: FL, Florida,
+   US-FL, us-fl, CA-ON all resolve correctly. */
+function _normState(x){ if(x==null) return null; var s=String(x).trim(); if(!s) return null;
+  var iso=s.match(/^[A-Za-z]{2}-([A-Za-z]{2})$/); if(iso) s=iso[1];        /* US-FL / CA-ON */
+  var up=s.toUpperCase(); if(up.length===2&&_STATE_CODES[up]) return up;
+  var lo=s.toLowerCase(); if(_US_STATES[lo]) return _US_STATES[lo]; return null; }
+function _normCountry(x){ if(x==null) return null; var s=String(x).trim().toUpperCase();
+  if(/^US-/.test(s)) return 'US'; if(/^CA-/.test(s)) return 'CA';
+  if(s==='US'||s==='USA'||s==='UNITED STATES'||s==='UNITED STATES OF AMERICA') return 'US';
+  if(s==='CA'||s==='CAN'||s==='CANADA') return 'CA'; return null; }
+function _countryOfState(code){ if(!code) return null; return _CA_PROV[code]?'CA':(_STATE_CODES[code]?'US':null); }
+/* pull a 2-letter state/province code out of a free address string. */
 function _expectState(q){
   var parts=String(q||'').split(',').map(function(s){return s.trim();});
-  for(var i=0;i<parts.length;i++){ var t=parts[i].toUpperCase(); if(t.length===2&&_STATE_CODES[t]) return t; }
+  for(var i=parts.length-1;i>=0;i--){ var t=parts[i].replace(/\s+\d.*$/,'').trim(); var n=_normState(t); if(n) return n; }
   var low=String(q||'').toLowerCase();
   for(var name in _US_STATES){ if(low.indexOf(name)>=0) return _US_STATES[name]; }
   return null;
 }
-/* map a geocoder's returned address block to a 2-letter code for comparison */
-function _resultState(addr){
-  if(!addr) return null;
-  var code=(addr['ISO3166-2-lvl4']||'').split('-')[1];
-  if(code&&code.length===2) return code.toUpperCase();
-  var st=(addr.state||addr.province||'').toLowerCase();
-  return _US_STATES[st]||null;
+function _postalOf(q){ var s=String(q||'');
+  var us=s.match(/\b\d{5}(?:-\d{4})?\b/); if(us) return us[0];
+  var ca=s.match(/[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d/); if(ca) return ca[0].toUpperCase(); return null; }
+function _cityOf(q){ var parts=cleanAddr(q).split(',').map(function(s){return s.trim();}).filter(Boolean);
+  for(var i=0;i<parts.length;i++){ if(_normState(parts[i].replace(/\s+\d.*$/,'').trim())){ return i>0?parts[i-1]:null; } }
+  return parts.length>=2?parts[parts.length-2]:null; }
+/* the expected location for a dealer record — the yardstick every coordinate is
+   measured against. loc is this app's 2-letter state field; address supplies the
+   rest. */
+function expectedLoc(d){
+  d=d||{};
+  var state=_normState(d.loc||d.state)|| _expectState(d.address||'');
+  var country=_normCountry(d.country)||_countryOfState(state);
+  return {state:state,country:country,city:d.city||_cityOf(d.address||''),
+    postal:d.postal||d.zip||_postalOf(d.address||''),addr:d.address||''};
+}
+/* map a Nominatim address block to normalised fields */
+function _resultState(addr){ if(!addr) return null;
+  var code=(addr['ISO3166-2-lvl4']||'').split('-')[1]; if(code&&code.length===2){ var u=code.toUpperCase(); if(_STATE_BBOX[u]) return u; }
+  return _normState(addr.state||addr.province||''); }
+function _resultCountry(addr){ if(!addr) return null; return _normCountry(addr.country_code||addr.country); }
+function _resultCity(addr){ if(!addr) return null; return addr.city||addr.town||addr.village||addr.hamlet||addr.municipality||null; }
+/* =============== THE ONE VALIDATOR ===============
+   returns {status:'verified'|'approximate'|'rejected', confidence, reason,
+   resolvedState, resolvedCountry, distanceMi}. `returned` (optional) carries a
+   geocoder's structured answer; when absent (e.g. raw Salesforce lat/lon) the
+   point is judged structurally and by state bounding box alone. */
+function validateCoord(lat,lon,expected,returned){
+  expected=expected||{}; returned=returned||{};
+  var out={status:'rejected',confidence:'rejected',reason:'',resolvedState:null,resolvedCountry:null,distanceMi:null};
+  lat=+lat; lon=+lon;
+  /* structural sanity */
+  if(!isFinite(lat)||!isFinite(lon)){ out.reason='malformed'; return out; }
+  if(Math.abs(lat)>90||Math.abs(lon)>180){ out.reason='out-of-range'; return out; }
+  if(Math.abs(lat)<0.01&&Math.abs(lon)<0.01){ out.reason='null-island'; return out; }
+  out.resolvedState=_stateOfPoint(lat,lon);
+  out.resolvedCountry=_countryOfState(out.resolvedState);
+  var es=expected.state, ec=expected.country||_countryOfState(es);
+  /* transposition: point misses the expected box but the swapped point hits it */
+  if(es&&_STATE_BBOX[es]){
+    if(_bboxHas(es,lat,lon)===false && _bboxHas(es,lon,lat)===true){ out.reason='transposed'; return out; }
+  }
+  /* structured conflicts from the geocoder answer */
+  var rs=returned.state?_normState(returned.state):null;
+  var rc=returned.country?_normCountry(returned.country):null;
+  if(rs){ out.resolvedState=rs; out.resolvedCountry=_countryOfState(rs)||out.resolvedCountry; }
+  if(es&&rs&&rs!==es){ out.reason='state-conflict:'+rs+'≠'+es; return out; }
+  if(ec&&rc&&rc!==ec){ out.reason='country-conflict:'+rc+'≠'+ec; return out; }
+  /* bounding-box: does the point sit in the expected state at all? */
+  if(es&&_STATE_BBOX[es]&&_bboxHas(es,lat,lon)===false){
+    out.reason='outside-'+es+(out.resolvedState?('(in '+out.resolvedState+')'):''); return out; }
+  /* broad state / country centroid masquerading as a real address */
+  var cen=es?_bboxCenter(es):null;
+  var isCentroid=(cen&&Math.abs(lat-cen[0])<0.12&&Math.abs(lon-cen[1])<0.12&&(expected.city||expected.postal||expected.addr));
+  /* distance from the expected city / postal reference, when we have one */
+  if(expected.ref&&isFinite(expected.ref[0])){
+    out.distanceMi=Math.round(hav([lat,lon],expected.ref)||0);
+    if(out.distanceMi>120){ out.reason='far-from-'+(expected.city||'city')+' ('+out.distanceMi+'mi)'; return out; }
+  }
+  /* accepted — grade the confidence */
+  var streetLevel=(returned.precision==='street');
+  var cityLevel=(returned.precision==='city'||returned.approx);
+  if(isCentroid){ out.status='approximate'; out.confidence='approximate'; out.reason='state-centroid'; return out; }
+  if(streetLevel && !(out.distanceMi>40)){ out.status='verified'; out.confidence='verified'; }
+  else if(cityLevel || (out.distanceMi!=null&&out.distanceMi>40)){ out.status='approximate'; out.confidence='approximate'; }
+  else { out.status='verified'; out.confidence='verified'; }
+  return out;
 }
 function _geoNominatim(q){
   return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}})
     .then(function(r){ return r.ok?r.json():[]; })
-    .then(function(j){ return (j&&j[0])?{lat:parseFloat(j[0].lat),lon:parseFloat(j[0].lon),display:j[0].display_name,state:_resultState(j[0].address)}:null; })
+    .then(function(j){ if(!j||!j[0]) return null; var a=j[0].address||{};
+      return {lat:parseFloat(j[0].lat),lon:parseFloat(j[0].lon),display:j[0].display_name,
+        state:_resultState(a),country:_resultCountry(a),city:_resultCity(a),postal:a.postcode||null,
+        precision:(a.house_number||a.road)?'street':((a.city||a.town||a.village||a.hamlet)?'city':'area')}; })
     .catch(function(){ return null; });
 }
 function _geoPhoton(q){
@@ -3201,31 +3355,54 @@ function _geoPhoton(q){
     .then(function(j){ var f=j&&j.features&&j.features[0]; if(!f||!f.geometry||!f.geometry.coordinates) return null;
       var c=f.geometry.coordinates, p=f.properties||{};
       var disp=[p.name,p.street,p.city,p.state,p.country].filter(Boolean).join(', ');
-      return {lat:c[1],lon:c[0],display:disp||q}; })
+      /* Photon now returns structured fields so it is validated exactly like
+         Nominatim — a lat/lon alone is never enough to be accepted. */
+      return {lat:c[1],lon:c[0],display:disp||q,
+        state:_normState(p.state)||(p.state||null),country:_normCountry(p.countrycode||p.country),
+        city:p.city||null,postal:p.postcode||null,
+        precision:(p.housenumber||p.street)?'street':(p.city?'city':'area')}; })
     .catch(function(){ return null; });
+}
+/* attach validation metadata to a result and stamp the cache record */
+function _stampResult(r,src,exp,v){
+  return {lat:r.lat,lon:r.lon,source:src,state:(v.resolvedState||(r.state?_normState(r.state):null)||exp.state||null),
+    country:(v.resolvedCountry||exp.country||null),city:r.city||exp.city||null,postal:r.postal||exp.postal||null,
+    display:r.display||'',confidence:v.confidence,validationStatus:v.status,validatedAt:Date.now(),
+    approx:(v.confidence==='approximate')};
+}
+/* read a cache entry ONLY if it still validates against the given expected
+   location; a stale wrong entry is deleted so it can never be reused. Returns
+   {entry, replaced:true} when a bad entry was purged. */
+function _cacheGetValidated(key,exp){
+  var e=_GEOCACHE[key]; if(!e) return {entry:null,replaced:false};
+  var v=validateCoord(e.lat,e.lon,exp,{state:e.state,country:e.country,precision:e.approx?'city':'street'});
+  if(v.status==='rejected'){ delete _GEOCACHE[key]; _geoCacheSave(); return {entry:null,replaced:true}; }
+  return {entry:e,replaced:false};
 }
 var _geoBusy={};
 function geocodeAddress(q,cb){
   q=cleanAddr(q);
   if(!q){ cb(null); return; }
   var key=_geoKey(q);
-  if(_GEOCACHE[key]){ cb(_GEOCACHE[key]); return; }
+  var exp=expectedLoc({address:q,loc:_expectState(q)});
+  var cached=_cacheGetValidated(key,exp);
+  if(cached.entry){ cb(cached.entry); return; }
   if(_geoBusy[key]){ setTimeout(function(){ geocodeAddress(q,cb); },500); return; }
   _geoBusy[key]=1;
   var vars=geocodeVariants(q), i=0;
-  var wantState=_expectState(q);   /* expected state/province from the address */
-  /* A hit whose state disagrees with the address is a same-named place in the
-     wrong location — reject it so the ladder keeps trying instead of caching a
-     wrong pin (the Jones Supply / Okeechobee failure mode). */
-  function stateOK(r){ return !(wantState && r && r.state && r.state!==wantState); }
-  function finish(res){ delete _geoBusy[key]; if(res){ _GEOCACHE[key]=res; _geoCacheSave(); } cb(res); }
+  function finish(res){ delete _geoBusy[key]; if(res){ _GEOCACHE[key]=res; _geoCacheSave(); } cb(res||null); }
+  /* try each ladder rung against BOTH providers, and run every candidate
+     through the one validator. The first non-rejected result wins; a wrong
+     state/country/out-of-box hit is skipped instead of cached. */
   function tryNext(){
     if(i>=vars.length){ finish(null); return; }
-    var idx=i++, v=vars[idx], approx=idx>0;
+    var idx=i++, v=vars[idx], looser=idx>0;
     _geoNominatim(v).then(function(r){
-      if(r&&stateOK(r)){ if(approx)r.approx=true; finish(r); return; }
+      if(r){ var vr=validateCoord(r.lat,r.lon,exp,{state:r.state,country:r.country,precision:looser?'city':r.precision});
+        if(vr.status!=='rejected'){ finish(_stampResult(r,'nominatim',exp,vr)); return; } }
       _geoPhoton(v).then(function(r2){
-        if(r2){ if(approx)r2.approx=true; finish(r2); return; }
+        if(r2){ var vr2=validateCoord(r2.lat,r2.lon,exp,{state:r2.state,country:r2.country,precision:looser?'city':r2.precision});
+          if(vr2.status!=='rejected'){ finish(_stampResult(r2,'photon',exp,vr2)); return; } }
         tryNext();
       });
     });
@@ -3258,10 +3435,12 @@ function _geoQPump(){
 function backfillCoords(){
   var jobs=[], lchanged=false;
   try{ (typeof planningUniverse==='function'?planningUniverse():DEALERS).forEach(function(d){
-    var lat=d.lat, lon=d.lon, addr=d.address;
-    var sf=(typeof sfLookup==='function')?sfLookup(d):null;
-    if(sf){ if(sf.lat!=null)lat=sf.lat; if(sf.lon!=null)lon=sf.lon; if(sf.address)addr=sf.address; }
-    if((lat==null||lon==null) && addr && !_GEOCACHE[_geoKey(addr)]) jobs.push({q:addr});
+    /* use the VALIDATED merge: a dealer whose Salesforce point was rejected (or
+       whose cache entry was purged) resolves to no coordinate here, so it is
+       queued for a fresh, validated geocode instead of showing the bad pin. */
+    var m=(typeof sfMasterMerge==='function')?sfMasterMerge(d):d;
+    var addr=m.address||d.address;
+    if((m.lat==null||m.lon==null) && addr && !_GEOCACHE[_geoKey(addr)]) jobs.push({q:addr});
   }); }catch(e){}
   (LOGI||[]).forEach(function(it){
     if(travelHasLocation(it)) return;
@@ -3372,11 +3551,206 @@ function renderHealth(){
     +HEALTH.flags.slice(0,6).map(function(f){return '<div class="shflag" title="'+esc(f.address)+'"><span class="lvl">'+(f.level==='city'?'CITY':'STREET')+'</span> '+esc(f.name)+' · '+f.miles+' mi (>'+f.threshold+')</div>';}).join('')):'';
   var approx=(HEALTH.geoApprox&&HEALTH.geoApprox.length)?('<div class="shrow warn2" style="color:#6b7280">◑ '+HEALTH.geoApprox.length+' on approximate (city-level) coords</div>'):'';
   var prog=(HEALTH.scan&&HEALTH.scan.running)?('<div class="shprog">Scanning coordinates… '+HEALTH.scan.done+' / '+HEALTH.scan.total+'</div>'):'';
-  el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+approx+prog+'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>';
+  el.querySelector('#shPanel').innerHTML='<div class="shhdr">System Health</div>'+rows+flags+approx+prog
+    +'<button class="btn shscan" id="shScan">Re-check &amp; scan coordinates</button>'
+    +'<button class="btn shscan" id="shCoordAudit" style="margin-top:6px">Coordinate audit…</button>';
   var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; runHealth();
     auditGeoDrift(function(){ sc.disabled=false; renderHealth(); }, function(done,total){ if(sc) sc.textContent='Scanning… '+done+'/'+total; if((done%10)===0) renderHealth(); }); };
+  var ca=el.querySelector('#shCoordAudit'); if(ca) ca.onclick=function(){ openCoordAudit(); };
+}
+/* ===================== COORDINATE AUDIT VIEW =====================
+   Per-dealer coordinate integrity, no console required. Shows source, expected
+   vs resolved state, validation status, confidence, distance, whether the
+   Salesforce point was accepted or rejected and whether a stale cache value was
+   replaced — with a per-dealer rescan and a manual-override form. */
+function _coordRows(filter){
+  var uni=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
+  var rows=uni.map(function(d){ var m=sfMasterMerge(d); var c=m._coord||{}; var ov=COORDOVR[d.id];
+    var located=(m.lat!=null&&m.lon!=null);
+    var status=ov?'manual':(c.sfRejected&&!located?'rejected':(!located?'unlocated':(c.confidence||'—')));
+    return {id:d.id,name:m.name||d.name,loc:(m.loc||d.loc||''),addr:m.address||'',
+      source:c.source||(located?'?':'none'),expect:(c.expectState||'?')+(c.expectCountry?('/'+c.expectCountry):''),
+      resolved:c.resolvedState||(located?_stateOfPoint(m.lat,m.lon):'—')||'—',
+      status:status,confidence:c.confidence||'—',reason:c.reason||'',
+      sfRejected:!!c.sfRejected,cacheReplaced:!!c.cacheReplaced,
+      lat:m.lat,lon:m.lon,located:located,override:!!ov,ovInfo:ov};
+  });
+  if(filter==='problems') rows=rows.filter(function(r){ return !r.located||r.sfRejected||r.status==='approximate'||r.status==='rejected'; });
+  rows.sort(function(a,b){ var rank=function(r){ return (!r.located?0:(r.sfRejected?1:(r.status==='approximate'?2:3))); };
+    return rank(a)-rank(b) || String(a.name).localeCompare(String(b.name)); });
+  return rows;
+}
+var _coordAuditFilter='problems';
+function openCoordAudit(){
+  var ov=document.getElementById('coordAuditModal');
+  if(!ov){ ov=document.createElement('div'); ov.id='coordAuditModal';
+    ov.innerHTML='<div class="cam-back"></div><div class="cam-box"><div class="cam-hd">'
+      +'<b>Coordinate Audit</b><span class="cam-sub" id="camSub"></span>'
+      +'<span style="flex:1"></span>'
+      +'<select id="camFilter" class="msearch" style="max-width:150px"><option value="problems">Needs attention</option><option value="all">All dealers</option></select>'
+      +'<button class="btn" id="camRescanAll" style="margin-left:6px">Rescan all missing</button>'
+      +'<button class="cam-x" id="camClose">✕</button></div>'
+      +'<div class="cam-body" id="camBody"></div></div>';
+    document.body.appendChild(ov);
+    if(!document.getElementById('camCSS')){ var st=document.createElement('style'); st.id='camCSS';
+      st.textContent='#coordAuditModal{position:fixed;inset:0;z-index:9999;}'
+       +'#coordAuditModal .cam-back{position:absolute;inset:0;background:rgba(15,23,42,.45);}'
+       +'#coordAuditModal .cam-box{position:absolute;top:4vh;left:50%;transform:translateX(-50%);width:960px;max-width:96vw;height:90vh;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;}'
+       +'#coordAuditModal .cam-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #e5e7eb;font-size:14px;}'
+       +'#coordAuditModal .cam-sub{color:#6b7280;font-size:12px;}'
+       +'#coordAuditModal .cam-x{border:0;background:transparent;font-size:18px;cursor:pointer;color:#6b7280;}'
+       +'#coordAuditModal .cam-body{overflow:auto;padding:0;}'
+       +'#coordAuditModal table{width:100%;border-collapse:collapse;font-size:12px;}'
+       +'#coordAuditModal th,#coordAuditModal td{text-align:left;padding:7px 9px;border-bottom:1px solid #f0f1f3;vertical-align:top;}'
+       +'#coordAuditModal th{position:sticky;top:0;background:#f8fafc;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:#6b7280;z-index:1;}'
+       +'#coordAuditModal .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:700;}'
+       +'#coordAuditModal .st-verified{background:#dcfce7;color:#166534;} #coordAuditModal .st-approximate{background:#fef9c3;color:#854d0e;}'
+       +'#coordAuditModal .st-rejected,#coordAuditModal .st-unlocated{background:#fee2e2;color:#991b1b;} #coordAuditModal .st-manual{background:#dbeafe;color:#1e40af;}'
+       +'#coordAuditModal .cambtn{font-size:11px;border:1px solid #d1d5db;background:#fff;border-radius:5px;padding:3px 8px;cursor:pointer;margin-right:4px;}'
+       +'#coordAuditModal .cambtn:hover{border-color:#2563eb;color:#2563eb;}'
+       +'#coordAuditModal .ovform{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;}'
+       +'#coordAuditModal .ovform input{font-size:11px;border:1px solid #d1d5db;border-radius:4px;padding:3px 5px;}'
+       +'#coordAuditModal .muted{color:#9ca3af;} #coordAuditModal .rsn{color:#b91c1c;font-size:10.5px;}';
+      document.head.appendChild(st); }
+    ov.querySelector('#camClose').onclick=function(){ ov.remove(); };
+    ov.querySelector('.cam-back').onclick=function(){ ov.remove(); };
+    ov.querySelector('#camFilter').onchange=function(e){ _coordAuditFilter=e.target.value; _coordAuditRender(); };
+    ov.querySelector('#camRescanAll').onclick=function(){ if(typeof backfillCoords==='function'){ backfillCoords(); }
+      var b=ov.querySelector('#camRescanAll'); b.textContent='Rescanning…'; b.disabled=true;
+      setTimeout(function(){ b.textContent='Rescan all missing'; b.disabled=false; _coordAuditRender(); },1500); };
+  }
+  ov.querySelector('#camFilter').value=_coordAuditFilter;
+  _coordAuditRender();
+}
+function _coordAuditRender(){
+  var ov=document.getElementById('coordAuditModal'); if(!ov) return;
+  var rows=_coordRows(_coordAuditFilter);
+  var bad=rows.filter(function(r){return !r.located||r.sfRejected||r.status==='rejected';}).length;
+  ov.querySelector('#camSub').textContent=rows.length+' shown · '+bad+' need attention';
+  var body='<table><thead><tr><th>Dealer</th><th>Expected</th><th>Resolved</th><th>Source</th><th>Status</th><th>Distance</th><th>Notes</th><th>Actions</th></tr></thead><tbody>';
+  body+=rows.map(function(r){
+    var stCls='st-'+(r.status==='verified'||r.status==='approximate'||r.status==='rejected'||r.status==='manual'||r.status==='unlocated'?r.status:(r.located?'verified':'unlocated'));
+    var notes=[]; if(r.sfRejected) notes.push('Salesforce point rejected'); if(r.cacheReplaced) notes.push('stale cache replaced'); if(r.reason) notes.push(esc(r.reason));
+    var ovLine=r.override?('<div class="muted">override by '+esc(r.ovInfo.by||'?')+' · '+esc(r.ovInfo.at||'')+(r.ovInfo.reason?(' · '+esc(r.ovInfo.reason)):'')+'</div>'):'';
+    return '<tr data-cid="'+esc(r.id)+'">'
+      +'<td><b>'+esc(r.name)+'</b><div class="muted">'+esc(r.addr||r.loc||'')+'</div></td>'
+      +'<td>'+esc(r.expect)+'</td>'
+      +'<td>'+(r.resolved!==r.expect.split('/')[0]&&r.resolved!=='—'?('<span class="rsn">'+esc(r.resolved)+'</span>'):esc(r.resolved))+'</td>'
+      +'<td>'+esc(r.source)+'</td>'
+      +'<td><span class="pill '+stCls+'">'+esc(r.status)+'</span>'+(r.confidence!=='—'&&r.confidence!==r.status?('<div class="muted">'+esc(r.confidence)+'</div>'):'')+'</td>'
+      +'<td>'+(r.located?(r.lat.toFixed(2)+', '+r.lon.toFixed(2)):'<span class="rsn">no pin</span>')+'</td>'
+      +'<td>'+(notes.length?notes.join('<br>'):'<span class="muted">—</span>')+ovLine+'</td>'
+      +'<td><button class="cambtn" data-carescan="'+esc(r.id)+'">Rescan</button>'
+        +'<button class="cambtn" data-caov="'+esc(r.id)+'">'+(r.override?'Edit override':'Set location')+'</button>'
+        +(r.override?('<button class="cambtn" data-caclear="'+esc(r.id)+'">Clear</button>'):'')
+      +'</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:24px">Nothing to show.</td></tr>';
+  body+='</tbody></table>';
+  var bd=ov.querySelector('#camBody'); bd.innerHTML=body;
+  bd.querySelectorAll('[data-carescan]').forEach(function(btn){ btn.onclick=function(){ _coordRescanOne(btn.getAttribute('data-carescan'),btn); }; });
+  bd.querySelectorAll('[data-caov]').forEach(function(btn){ btn.onclick=function(){ _coordOverrideForm(btn.getAttribute('data-caov')); }; });
+  bd.querySelectorAll('[data-caclear]').forEach(function(btn){ btn.onclick=function(){ clearCoordOverride(btn.getAttribute('data-caclear')); _coordAuditRender(); }; });
+}
+/* rescan ONE dealer: drop its cached entry and re-resolve just this address */
+function _coordRescanOne(id,btn){
+  var d=(byId&&byId[id])||(DEALERS||[]).filter(function(x){return x.id===id;})[0]; if(!d) return;
+  var m=sfMasterMerge(d); var addr=m.address||d.address; if(!addr){ if(btn){btn.textContent='no address';} return; }
+  try{ delete _GEOCACHE[_geoKey(addr)]; _geoCacheSave(); }catch(e){}
+  if(btn){ btn.textContent='Rescanning…'; btn.disabled=true; }
+  geocodeQueue(addr,function(){ if(typeof invalidateUniverse==='function') invalidateUniverse();
+    try{ if(typeof CALC!=='undefined'&&CALC.dirtyAll) CALC.dirtyAll(); }catch(e){}
+    _coordAuditRender(); });
+}
+/* inline manual-override form for one dealer */
+function _coordOverrideForm(id){
+  var ov=document.getElementById('coordAuditModal'); if(!ov) return;
+  var tr=ov.querySelector('tr[data-cid="'+id+'"]'); if(!tr) return;
+  if(tr.nextSibling&&tr.nextSibling.className==='cam-ovrow'){ tr.parentNode.removeChild(tr.nextSibling); return; }
+  var cur=COORDOVR[id]||{};
+  var row=document.createElement('tr'); row.className='cam-ovrow';
+  row.innerHTML='<td colspan="8"><div class="ovform">'
+    +'<b>Set correct location:</b> '
+    +'<input id="ovLat" placeholder="latitude" value="'+(cur.lat!=null?cur.lat:'')+'" style="width:100px">'
+    +'<input id="ovLon" placeholder="longitude" value="'+(cur.lon!=null?cur.lon:'')+'" style="width:100px">'
+    +'<input id="ovReason" placeholder="reason (why this override)" value="'+esc(cur.reason||'')+'" style="width:240px">'
+    +'<button class="cambtn" id="ovSave">Save override</button>'
+    +'<span class="muted">tip: right-click the correct spot in Google Maps to copy lat, lon</span>'
+    +'</div></td>';
+  tr.parentNode.insertBefore(row,tr.nextSibling);
+  row.querySelector('#ovSave').onclick=function(){
+    var la=parseFloat(row.querySelector('#ovLat').value), lo=parseFloat(row.querySelector('#ovLon').value);
+    var rs=row.querySelector('#ovReason').value;
+    if(!setCoordOverride(id,la,lo,rs)){ alert('Enter a valid latitude (−90..90) and longitude (−180..180).'); return; }
+    _coordAuditRender();
+  };
 }
 
+/* ============ COORDINATE-INTEGRITY REGRESSION TESTS ============
+   Non-destructive: snapshots _GEOCACHE / COORDOVR / DEALERS / sfLookup, drives
+   the Jones Supply / Okeechobee scenarios through the real resolution path, then
+   restores. General system — Jones is only the fixture, not a hard-coded answer.
+   Call coordIntegrityTests() from the console (also run by the audit's dev hook). */
+function coordIntegrityTests(){
+  var results=[]; function assert(n,c){ results.push({test:n,pass:!!c}); }
+  var snapCache=JSON.stringify(_GEOCACHE), snapOvr=JSON.stringify(COORDOVR);
+  var _sfOrig=(typeof sfLookup==='function')?sfLookup:null;
+  var ADDR='1200 US-441, Okeechobee, FL 34974';
+  var expFL=expectedLoc({address:ADDR,loc:'FL'});
+  var expON=expectedLoc({address:'100 King St W, Toronto, ON M5X',loc:'ON'});
+  try{
+    /* 1. correct FL coordinate is verified & lands in Florida */
+    var okFL=validateCoord(27.2439,-80.8298,expFL,{state:'FL',country:'US',precision:'street'});
+    assert('1. correct Okeechobee coord verified', okFL.status==='verified');
+    assert('1. correct coord resolves inside FL', _stateOfPoint(27.2439,-80.8298)==='FL');
+    /* 2. same-named result in another state rejected (structured conflict) */
+    assert('2. same-name other-state (TX) rejected', validateCoord(31.0,-97.0,expFL,{state:'TX',country:'US'}).status==='rejected');
+    /* 3. wrong Photon result rejected even with NO state field (bbox catches it) */
+    assert('3. wrong Photon (CA coords, no state) rejected', validateCoord(34.05,-118.24,expFL,{precision:'city'}).status==='rejected');
+    /* 4. wrong Salesforce coordinates rejected via the real SF branch */
+    var TID='__CIT_JONES';
+    var dealer={id:TID,name:'Jones Supply',loc:'FL',state:'FL',address:ADDR,city:'Okeechobee',postal:'34974'};
+    sfLookup=function(d){ return (d&&d.id===TID)?{lat:31.0,lon:-97.0,address:ADDR,name:'Jones Supply',loc:'FL'}:(_sfOrig?_sfOrig(d):null); };
+    try{ delete _GEOCACHE[_geoKey(ADDR)]; }catch(e){}
+    var mBad=sfMasterMerge(dealer);
+    assert('4. wrong Salesforce coord rejected (no pin)', mBad.lat==null && mBad._coord.sfRejected===true);
+    assert('4. rejection reason recorded', /outside-FL|state-conflict|transposed/.test(mBad._coord.reason||''));
+    /* 5. a verified geocode result is then used instead of the bad SF point */
+    _GEOCACHE[_geoKey(ADDR)]={lat:27.2439,lon:-80.8298,source:'nominatim',state:'FL',country:'US',city:'Okeechobee',postal:'34974',display:'Okeechobee, FL',confidence:'verified',validationStatus:'verified',validatedAt:Date.now(),approx:false};
+    var mGeo=sfMasterMerge(dealer);
+    assert('5. falls back to verified geocode', mGeo.lat!=null && _stateOfPoint(mGeo.lat,mGeo.lon)==='FL' && mGeo._coord.source==='nominatim');
+    /* 6. a stale INVALID cache entry is deleted on read, not reused */
+    _GEOCACHE[_geoKey(ADDR)]={lat:34.05,lon:-118.24,source:'photon',state:'CA',country:'US',display:'Los Angeles, CA',confidence:'verified',validationStatus:'verified',approx:false};
+    var mStale=sfMasterMerge(dealer);
+    assert('6. stale wrong cache entry deleted', !_GEOCACHE[_geoKey(ADDR)] && mStale._coord.cacheReplaced===true);
+    /* 7. manual override wins and persists across a save/load round-trip
+          (simulates refresh AND another device loading the shared plan) */
+    setCoordOverride(TID,27.2439,-80.8298,'verified by rep');
+    var payload=JSON.parse(JSON.stringify(planPayload()));   /* what syncs to the cloud */
+    COORDOVR={};                                             /* wipe local as if a fresh device */
+    if(payload.coordovr) COORDOVR=payload.coordovr;          /* applyCloudRow does this */
+    var mOvr=sfMasterMerge(dealer);
+    assert('7. override present after reload/other device', !!COORDOVR[TID]);
+    assert('7. override wins & lands in FL', mOvr._coord.source==='manual' && _stateOfPoint(mOvr.lat,mOvr.lon)==='FL');
+    assert('7. override records who/why', COORDOVR[TID].reason==='verified by rep' && !!COORDOVR[TID].by);
+    /* 8. Canadian province validation works both ways */
+    assert('8. ON dealer, AB point rejected', validateCoord(51.0,-114.0,expON,{state:'AB',country:'CA'}).status==='rejected');
+    assert('8. ON dealer, Toronto point accepted', validateCoord(43.65,-79.38,expON,{state:'ON',country:'CA',precision:'street'}).status!=='rejected');
+    /* 9. a valid dealer is NOT falsely rejected (no over-eager rejection) */
+    assert('9. valid FL street coord not rejected', validateCoord(27.24,-80.83,expFL,{state:'FL',country:'US',precision:'street'}).status!=='rejected');
+    assert('9. valid near-border coord not rejected', validateCoord(31.0,-85.0,expectedLoc({address:'Dothan, AL',loc:'AL'}),{state:'AL',country:'US'}).status!=='rejected');
+  }catch(e){ results.push({test:'EXCEPTION: '+e+' @ '+((e.stack||'').split('\n')[1]||''),pass:false}); }
+  finally{
+    if(_sfOrig) sfLookup=_sfOrig;
+    try{ _GEOCACHE=JSON.parse(snapCache); _geoCacheSave(); }catch(e){}
+    try{ COORDOVR=JSON.parse(snapOvr); }catch(e){}
+    if(typeof invalidateUniverse==='function') invalidateUniverse();
+  }
+  var passed=results.filter(function(r){return r.pass;}).length;
+  console.log('coordIntegrityTests: '+passed+'/'+results.length+' passed');
+  results.filter(function(r){return !r.pass;}).forEach(function(r){ console.warn('FAIL: '+r.test); });
+  return {passed:passed,total:results.length,results:results};
+}
+if(typeof window!=='undefined') window.coordIntegrityTests=coordIntegrityTests;
 /* ---- model helpers ---- */
 function travelType(it){ return TRAVEL_TYPES[it.type]?it.type:'other'; }
 function travelHasLocation(it){
@@ -7729,7 +8103,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=+p.fx; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
