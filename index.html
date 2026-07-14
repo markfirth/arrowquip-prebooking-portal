@@ -473,6 +473,16 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .tv-row:first-child{margin-top:0;}
 .tv-dur{flex:0 0 auto;width:auto;min-width:78px;max-width:120px;white-space:nowrap;}
 .tv-dep{flex:0 0 auto;font-size:9.5px;font-weight:600;color:#2563eb;white-space:nowrap;}
+/* Day · Time · Duration on one line: labelled columns that never wrap */
+.tv-when3{display:flex;flex-wrap:nowrap;gap:4px;align-items:flex-end;}
+.tv-when3 .tvcol{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.tv-when3 .tvcol .tv-lbl{flex:none;}
+.tv-when3 .tvcol .tv-in{width:100%;min-width:0;box-sizing:border-box;height:28px;padding-left:5px;padding-right:5px;}
+.tvcol-day{flex:1 1 auto;min-width:50px;}
+.tvcol-time{flex:0 0 68px;}
+.tvcol-dur{flex:0 0 50px;}
+.tv-when3 input.tv-in{padding-right:5px !important;}   /* reclaim the select-arrow gap on text inputs */
+.tv-deprow{font-size:9.5px;font-weight:600;color:#2563eb;margin-top:4px;}
 .tv-lbl{flex:0 0 54px;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;}
 .tv-in{flex:1 1 auto;min-width:0;font-family:inherit;font-size:10.5px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 5px;background:#fff;}
 .tv-in:focus{outline:none;border-color:#2563eb;}
@@ -3743,22 +3753,23 @@ function travelCard(it,wk,tl){
   var autoT=(!tvFixed&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':(ty==='flight_stop'?'Lands':'When'))));
   var showW=tvFixed?it.time:(autoT||it.time);
-  var when='<div class="tv-row"><label class="tv-lbl">'+whenLbl+'</label>'
-    +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select>'
-    +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time" value="'+esc(showW?t12s(showW):'')+'"'+(tvFixed?' disabled':'')
-    +(tvFixed?' title="Fixed — unlock to change"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'>'
-    +'</div>';
-  /* --- duration (dwell stops only): the time spent here, like a visit. It
-     pushes every following unlocked item later. Departure shows live. --- */
+  /* Day · Time · Duration on ONE line, each with a small label above. The
+     dwell duration (when present) is the third column; the calculated
+     departure shows on a subtle line below. */
+  var hasDur=travelHasDuration(ty);
+  var depMin=(hasDur&&tl&&tl.sug!=null)?(tl.sug+(+it.dur||0)):null;
+  var depLbl=(depMin!=null)?t12s(addMin('00:00',((Math.round(depMin)%1440)+1440)%1440)):'';
+  var when='<div class="tv-row tv-when3">'
+    +'<div class="tvcol tvcol-day"><span class="tv-lbl">'+whenLbl+'</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select></div>'
+    +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
+      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time" value="'+esc(showW?t12s(showW):'')+'"'+(tvFixed?' disabled':'')
+      +(tvFixed?' title="Fixed — unlock to change"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'></div>'
+    +(hasDur?('<div class="tvcol tvcol-dur"><span class="tv-lbl">Dur</span>'
+      +'<input class="tv-in tv-dur" data-tv="'+it.id+'" data-f="dur" title="How long you stay — e.g. 30m, 1h, 1h 30m, 2h. Pushes the stops after it later." value="'+esc(fmtDur(+it.dur||60))+'"></div>'):'')
+    +'</div>'
+    +(depLbl?'<div class="tv-deprow" title="Calculated departure">→ leaves '+esc(depLbl)+'</div>':'');
   var durRow='';
-  if(travelHasDuration(ty)){
-    var depMin=(tl&&tl.sug!=null)?(tl.sug+(+it.dur||0)):null;
-    var depLbl=(depMin!=null)?t12s(addMin('00:00',((Math.round(depMin)%1440)+1440)%1440)):'';
-    durRow='<div class="tv-row"><label class="tv-lbl">Duration</label>'
-      +'<input class="tv-in tv-dur" data-tv="'+it.id+'" data-f="dur" title="How long you stay — e.g. 30m, 1h, 1h 30m, 2h. Pushes the stops after it later." value="'+esc(fmtDur(+it.dur||60))+'">'
-      +(depLbl?'<span class="tv-dep" title="Calculated departure">→ leaves '+esc(depLbl)+'</span>':'')
-      +'</div>';
-  }
   var when2='';
   if(isHotel){
     /* check-out IS the departure: the next morning chains from it. With no
@@ -3766,10 +3777,12 @@ function travelCard(it,wk,tl){
        and the computed leave-by time shows right in the field. */
     var autoCo=(!it.time2&&tl&&tl.depSug!=null)?addMin('00:00',((Math.round(tl.depSug)%1440)+1440)%1440):'';
     var showCo=it.time2||autoCo;
-    when2='<div class="tv-row"><label class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">Checkout by</label>'
-      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:(autoCo?Math.floor(tl.depSug/1440):null))+'</select>'
+    when2='<div class="tv-row tv-when3">'
+      +'<div class="tvcol tvcol-day"><span class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">Checkout</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:(autoCo?Math.floor(tl.depSug/1440):null))+'</select></div>'
+      +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
       +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time2" value="'+esc(showCo?t12s(showCo):'')+'"'
-      +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'>'
+      +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'></div>'
       +'</div>';
   }
   var tlRow='';
