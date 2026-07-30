@@ -1377,6 +1377,15 @@ let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
 let PROSPECTS=[];   /* planner-created accounts — declared before reindex() uses it */
 /* event-level merge state — declared before loadPlan() uses EVMETA (avoid TDZ) */
 let EVENT_LEVEL_MERGE=true, EVMETA={}, EVSNAP={}, EVBASE={}, EVDIRTY={}, EVCONFLICT={};
+/* ===== Collaboration Test Mode (?collabTest=1) =====
+   HARD ISOLATION: every cloud read/write/realtime/history op uses PLAN_KEY, which
+   becomes 'plan_collaboration_test' in test mode. It is IMPOSSIBLE for a collabTest
+   session to touch the live 'plan' row (no code path references the literal cloud
+   key any more — they all go through PLAN_KEY). Local storage is isolated too. */
+const COLLAB_TEST = (function(){ try{ return new URLSearchParams(location.search).get('collabTest')==='1'; }catch(e){ return false; } })();
+const PLAN_KEY = COLLAB_TEST ? 'plan_collaboration_test' : 'plan';
+const LS_PLAN_KEY = COLLAB_TEST ? 'aq2027planv2_collabtest' : 'aq2027planv2';
+function collabLog(op){ if(COLLAB_TEST){ try{ console.log('[collabTest] '+op+' → plan key = '+PLAN_KEY); }catch(e){} } }
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
 let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); (PROSPECTS||[]).forEach(function(p){byId[p.id]=p;}); invalidateUniverse();} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
@@ -2655,7 +2664,7 @@ function syncCommitments(dealerId){
   CALC.dirtyDealer(dealerId,d.territory);
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
-function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
+function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
 (function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;}
 adminInit(); fxSync();
 normalizeVisitData();
@@ -2855,9 +2864,35 @@ window.AQ_QA.merge=function(){
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   if(EVENT_LEVEL_MERGE){ try{ evTouchAll(); }catch(e){} }
-  try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
-  cloudSave('plan',planPayload());
+  try{localStorage.setItem(LS_PLAN_KEY,JSON.stringify(planPayload()));}catch(e){}
+  collabLog('save'); cloudSave(PLAN_KEY,planPayload());
 }
+/* Collaboration Test Mode: seed an isolated, clearly-fake trip so testers never
+   touch a real plan — 2 dealer visits, 1 hotel, 1 flight, 1 Other stop, 2 weeks. */
+function seedCollabTest(){
+  ASSIGN={};DAY={};TIME={};DUR={};PTYPE={};APPT={};STOPX={};JOINA={};ORD={};XVISITS=[];LOGI=[];PROSPECTS=[];EVMETA={};EVSNAP={};EVBASE={};EVDIRTY={};EVCONFLICT={};
+  try{ ensureAssignDefaults(); }catch(e){}
+  var east=(typeof dealersIn==='function')?dealersIn('East').filter(function(d){return d.lat!=null;}):[];
+  var d1=east[0], d2=east[1]; var W1=32, W2=36;
+  if(d1){ ASSIGN[d1.id]=W1; DAY[d1.id]=0; TIME[d1.id]='09:00'; PTYPE[d1.id]='visit'; }
+  if(d2){ ASSIGN[d2.id]=W2; DAY[d2.id]=0; TIME[d2.id]='10:00'; PTYPE[d2.id]='visit'; }
+  LOGI.push({id:'CT_HOTEL', type:'hotel',      terr:'East',wk:W1,day:0,time:'21:00',name:'TEST — Hotel',      address:'123 Test St',  lat:(d1?d1.lat:34.5),  lon:(d1?d1.lon:-84.9)});
+  LOGI.push({id:'CT_FLIGHT',type:'flight_out', terr:'East',wk:W1,day:1,time:'17:00',airportCode:'ATL',airportName:'Atlanta',lat:33.6407,lon:-84.4277});
+  LOGI.push({id:'CT_OTHER', type:'other',      terr:'East',wk:W2,day:0,time:'',dur:60,name:'TEST — Other Stop',address:'456 Test Ave', lat:(d2?d2.lat:40),    lon:(d2?d2.lon:-83)});
+  try{ reindex(); invalidateUniverse(); tlInvalidate(); }catch(e){}
+  try{ evEnsureMeta(); evBaseline(); }catch(e){}
+}
+function resetCollabTest(){ if(!COLLAB_TEST) return; seedCollabTest(); collabLog('reset'); try{ savePlan(); }catch(e){} try{ withPreservedScroll(render); }catch(e){ try{render();}catch(_){} } }
+function injectCollabBanner(){ if(!COLLAB_TEST || document.getElementById('collabBanner')) return;
+  var b=document.createElement('div'); b.id='collabBanner';
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:100001;background:#b45309;color:#fff;font:700 12.5px \'Open Sans\',Arial,sans-serif;padding:8px 14px;display:flex;align-items:center;justify-content:center;gap:16px;box-shadow:0 2px 10px rgba(0,0,0,.25)';
+  b.innerHTML='<span>⚠ COLLABORATION TEST MODE — Changes do not affect the live planner</span>'
+    +'<button id="collabReset" style="background:#fff;color:#b45309;border:0;border-radius:5px;padding:5px 12px;font:700 11px inherit;cursor:pointer">Reset Test Plan</button>';
+  document.body.appendChild(b);
+  document.body.style.paddingTop='34px';
+  document.getElementById('collabReset').onclick=function(){ if(confirm('Reset the isolated test plan to its seeded state?')) resetCollabTest(); };
+}
+if(COLLAB_TEST){ if(document.readyState!=='loading'){ setTimeout(injectCollabBanner,0); } else document.addEventListener('DOMContentLoaded',injectCollabBanner); }
 
 /* ---------------- Trip Plans -> History (preview / compare / restore) --------------- */
 function pbFmtTs(s){ try{ return new Date(s).toLocaleString(); }catch(e){ return s; } }
@@ -2898,13 +2933,13 @@ function openHistory(){
   document.getElementById('h_x').onclick=close;
 
   SB.from('prebooking_history').select('new_version,prev_version,saved_at,saved_by,territory,change_summary,reason')
-    .eq('row_id','plan').order('new_version',{ascending:false}).limit(100)
+    .eq('row_id',PLAN_KEY).order('new_version',{ascending:false}).limit(100)
     .then(function(res){
       var box=document.getElementById('h_body'); if(!box)return;
       if(res&&res.error){ box.textContent='Could not load history: '+res.error.message; return; }
       var rows=(res&&res.data)||[];
       if(!rows.length){ box.innerHTML='<div style="padding:1rem 0;color:var(--muted-2)">No history yet. The first snapshot is written on the next save.</div>'; return; }
-      box.innerHTML='<div style="margin-bottom:8px">Current version <b>'+(PB_VER['plan']!=null?PB_VER['plan']:'?')
+      box.innerHTML='<div style="margin-bottom:8px">Current version <b>'+(PB_VER[PLAN_KEY]!=null?PB_VER[PLAN_KEY]:'?')
         +'</b>. Restoring version <i>N</i> returns the plan to its state <i>before</i> save N.</div>'
         +'<table class="stoptab"><thead><tr><th>Version</th><th>When</th><th>Who</th><th>Territory</th><th>Reason</th><th>Changes</th><th></th></tr></thead><tbody>'
         +rows.map(function(r){
@@ -2928,7 +2963,7 @@ function openHistory(){
 }
 /* Preview + compare a snapshot against what is currently loaded. Read-only. */
 function pbPreviewVersion(v){
-  SB.from('prebooking_history').select('data').eq('row_id','plan').eq('new_version',v).limit(1)
+  SB.from('prebooking_history').select('data').eq('row_id',PLAN_KEY).eq('new_version',v).limit(1)
     .then(function(res){
       var el=document.getElementById('h_prev'); if(!el)return;
       if(res&&res.error){ el.textContent='Preview failed: '+res.error.message; return; }
@@ -2951,7 +2986,7 @@ function pbPreviewVersion(v){
 }
 function pbRestoreVersion(v,onDone){
   if(!confirm('Restore the plan to its state before save '+v+'?\n\nThe current plan is backed up automatically first.')) return;
-  SB.rpc('pb_restore_version',{p_id:'plan',p_version:v,p_actor:pbActor()}).then(function(r){
+  SB.rpc('pb_restore_version',{p_id:PLAN_KEY,p_version:v,p_actor:pbActor()}).then(function(r){
     if(r&&r.error){ alert('Restore failed: '+r.error.message); return; }
     var out=r&&r.data;
     if(!out||!out.ok){ alert('Restore failed: '+((out&&out.reason)||'unknown')); return; }
@@ -8836,12 +8871,13 @@ function pbHandleStale(key){
   SB.from('prebooking_state').select('data,version').eq('id',key).maybeSingle().then(function(r){
     if(!r||r.error||!r.data){ pbSaveErr('Could not fetch the latest Trip Plan — check your connection and press Retry.'); return; }
     var latest=r.data;
-    if(key==='plan' && EVENT_LEVEL_MERGE){
+    if(key===PLAN_KEY && EVENT_LEVEL_MERGE){
       /* pre-save merge protocol: fetch latest → merge by event id → retry once
          against the newer version. Conflicts surface per-card, never as a
          whole-plan block. */
       PB_VER[key]=latest.version;
-      applyCloudRow('plan',latest.data);
+      collabLog('stale retry');
+      applyCloudRow(PLAN_KEY,latest.data);
       var cf=applyCloudRow._conflicts||[];
       _pbPending[key]=planPayload();
       try{ withPreservedScroll(render); }catch(e){ try{ render(); }catch(e2){} }
@@ -8957,7 +8993,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{};
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id===PLAN_KEY){ var p=data||{};
   if(EVENT_LEVEL_MERGE){
     /* EVENTS (dealer visits, prospects, hotels, flights, rentals, trade shows,
        other stops + their order) merge by id — unrelated changes are absorbed
@@ -8990,14 +9026,17 @@ function cloudLoad(cb){
     }
     var hadDealers=false;
     rows.forEach(function(row){
+      /* Collaboration Test Mode: never read the live 'plan' row — only PLAN_KEY. */
+      if(COLLAB_TEST && row.id==='plan') return;
       PB_VER[row.id]=row.version;                       /* the version this tab is now based on */
       if(row.id==='dealers'&&Array.isArray(row.data)&&row.data.length)hadDealers=true;
       applyCloudRow(row.id,row.data);
     });
+    collabLog('initial load');
     /* A known row that is genuinely absent (others loaded fine) may be created:
        null expected version => the RPC inserts if absent, rejects if it exists. */
-    ['dealers','plan','overlay_v1'].forEach(function(id){ if(PB_VER[id]===undefined) PB_VER[id]=null; });
-    if(PB_VER['plan']===null){ cloudSave('plan',planPayload()); }
+    ['dealers',PLAN_KEY,'overlay_v1'].forEach(function(id){ if(PB_VER[id]===undefined) PB_VER[id]=null; });
+    if(PB_VER[PLAN_KEY]===null){ if(COLLAB_TEST){ try{ seedCollabTest(); }catch(e){} } collabLog('seed save'); cloudSave(PLAN_KEY,planPayload()); }
     if(!hadDealers){
       cloudBadge('Loaded from cloud');
       pbLog('sync_failure','dealers',{reason:'dealers_row_empty_no_autoseed'});
@@ -9011,19 +9050,23 @@ function cloudLoad(cb){
     pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb();
   });
 }
-function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; var editing=(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); var row=payload&&payload.new; if(!row||!row.id) return; if(row.version!=null)PB_VER[row.id]=row.version;
-  if(row.id==='plan' && EVENT_LEVEL_MERGE){
+function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; var editing=(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); var row=payload&&payload.new; if(!row||!row.id) return;
+  /* Collaboration Test Mode: ignore realtime for the OTHER plan key entirely */
+  if((row.id==='plan'||row.id==='plan_collaboration_test') && row.id!==PLAN_KEY) return;
+  if(row.version!=null)PB_VER[row.id]=row.version;
+  if(row.id===PLAN_KEY && EVENT_LEVEL_MERGE){
     /* merge the teammate's events in (keeps our unsaved edits); no whole-plan
        warning — only same-event edits surface, and only on that card. */
-    applyCloudRow('plan',row.data);
+    collabLog('realtime update');
+    applyCloudRow(PLAN_KEY,row.data);
     var cf=applyCloudRow._conflicts||[];
-    if(_pbPending['plan']!==undefined) _pbPending['plan']=planPayload();   /* rebase our pending save onto the merged state */
+    if(_pbPending[PLAN_KEY]!==undefined) _pbPending[PLAN_KEY]=planPayload();   /* rebase our pending save onto the merged state */
     if(!editing){ withPreservedScroll(render); }                          /* don't yank a field being typed in */
     if(cf&&cf.length){ try{ renderEventConflicts(cf); }catch(e){} } else { cloudBadge('Updated by teammate'); }
     return;
   }
   if(editing) return;                                                      /* legacy path: don't disrupt typing */
-  if(_pbPending[row.id]!==undefined){ if(row.id==='plan')_pbPending[row.id]=planPayload(); cloudBadge('Teammate saved — rebasing your edit'); }
+  if(_pbPending[row.id]!==undefined){ if(row.id===PLAN_KEY)_pbPending[row.id]=planPayload(); cloudBadge('Teammate saved — rebasing your edit'); }
   else { applyCloudRow(row.id,row.data); withPreservedScroll(render); cloudBadge('Updated by teammate'); }
  }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
@@ -9370,7 +9413,7 @@ function pbCaptureDocuments(meta, done){
    (savePlan) so they persist offline; push to cloud when connectivity returns. --- */
 function pbFlushOnline(){
   if(!SB) return;
-  try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER['plan']!==undefined && !PB_READONLY){ cloudSave('plan', planPayload()); } }catch(e){}
+  try{ if(navigator.onLine && typeof planPayload==='function' && PB_VER[PLAN_KEY]!==undefined && !PB_READONLY){ cloudSave(PLAN_KEY, planPayload()); } }catch(e){}
 }
 window.addEventListener('online', function(){ cloudBadge('Back online — syncing'); pbFlushOnline(); try{ pbPhotoBackfill(); }catch(e){} });
 
