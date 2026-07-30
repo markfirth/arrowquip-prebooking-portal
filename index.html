@@ -3013,6 +3013,17 @@ function ringSVG(pct,color){
     +'</svg><div class="xringpct">'+Math.round(pct)+'%</div></div>';
 }
 function renderCards(){
+  /* TRIPS page (any territory) has NO business metrics: remove the entire KPI
+     panel set from the DOM (not CSS-hidden) and collapse the container, then
+     stop before any target/confirmation figure is built. The executive summary
+     lives only on the Dashboard (All) and reporting pages. */
+  if(terr!=='All' && terr!=='Master'){
+    var _cards=document.getElementById('cards');
+    if(_cards){ _cards.innerHTML=''; _cards.style.display='none'; }        /* panels removed from DOM */
+    var _pg=document.getElementById('progText'); if(_pg) _pg.innerHTML=''; /* no dealer-program/sales reference either */
+    return;
+  }
+  var _cardsD=document.getElementById('cards'); if(_cardsD) _cardsD.style.display='';   /* Dashboard: metrics remain */
   /* Executive summary — every figure comes from the CALC engine.
      Confirmed values are the commitment ledger (Mixed + CAD); percentages
      always compare Mixed to Mixed. */
