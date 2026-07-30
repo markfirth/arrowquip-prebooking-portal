@@ -318,6 +318,7 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .wsum-stats{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;}
 .wsum-stat{font-size:12.5px;color:#5c6169;white-space:nowrap;}
 .wsum-stat b{color:var(--aq-black,#1c1c1e);font-weight:700;}
+.wsum-ico{flex:0 0 auto;font-size:13px;opacity:.75;}
 .wsum-badge{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#15803d;background:#e7f3ec;border-radius:20px;padding:3px 10px;white-space:nowrap;}
 .wsum.kick .wsum-id b{color:#7a3b41;}
 .wbody{padding:4px 14px 14px;}
@@ -1313,7 +1314,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div class="aqUtilityRight">
       <button class="tab aqAction" data-t="Master">Master Sheet</button>
       <button class="tab aqAction" data-t="Settings" title="Admin — currency, revenue per load, planning defaults, dealer program, audit log">Settings</button>
-      <button id="exportBtn" class="aqAction aqAction--solid">Trip Plans</button>
+      <button id="exportBtn" class="aqAction aqAction--solid">Trips</button>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
   </div>
@@ -1341,7 +1342,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div class="planwrap" id="planwrap">
       <div class="sidebar">
         <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
-          <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="pot_desc">Potential ↓ (high→low)</option><option value="pot_asc">Potential ↑ (low→high)</option><option value="state">By state</option></select></div></div>
+          <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
         <div class="sbbody" id="poolBody" data-drop="pool"></div>
       </div>
       <div class="boardcol"><div class="boardscroll"><div class="weeks" id="weeks"></div></div><div class="hint">Drag a dealer into a week, set day &amp; time, confirm each appointment, then Confirm week. Saves automatically.</div></div>
@@ -3128,19 +3129,19 @@ function dealerCard(d){
   var typeLbl=prospectTypeLabel(d);
   var badgeCls=isPro?('pt-'+d.ptype2):'pt-current';
   var badge=typeLbl?('<span class="ptbadge '+badgeCls+'">'+esc(typeLbl)+'</span>'):'';
-  var meta=isPro
-    ? ('<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>')
-    : ('<span class="dloc">'+esc(d.loc)+' · '+dealerTierLabel(d)+'</span><span class="dval">'+((+d.booking>0)?fmtUSDk(d.booking):'—')+'</span>');
+  /* travel-only: location (+ territory for cross-territory search). No revenue,
+     no loads, no tier — business data lives on the Dashboard/Territory pages. */
+  var meta='<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>';
   var actions=isPro
     ? ('<span class="dmk"><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>')
     : ('<span class="dmk"><button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>');
   return '<div class="dcard'+(isPro?' dcard-pro':'')+'">'
     +'<div class="dn">'+esc(d.name)+' '+badge+'</div>'
     +'<div class="dm">'+meta+'</div>'
-    +'<div class="db">'+(isPro?(d.contactName?esc(d.contactName):'Prospect'):(d.loads+' loads'))+actions+'</div></div>';
+    +'<div class="db">'+(isPro&&d.contactName?('<span class="dloc">'+esc(d.contactName)+'</span>'):'')+actions+'</div></div>';
 }
 function renderPlanner(){
-  document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
+  document.getElementById("planTitle").textContent=terr+" · Trips";
   const isExp=terr==='Exports';
   /* the Dealer Pool is a permanent library: it ALWAYS contains every dealer in
      the territory. Scheduling never removes a dealer from here. */
@@ -3156,9 +3157,8 @@ function renderPlanner(){
     var sortsel=document.getElementById("poolSort"); if(sortsel) sortsel.value=poolSort; }
   if(search) pool=pool.filter(function(d){ return (d.name||'').toLowerCase().includes(search)||(d.loc||'').toLowerCase().includes(search)||(d.territory||'').toLowerCase().includes(search); });
   if(poolState) pool=pool.filter(function(d){return d.loc===poolState;});
-  if(poolSort==='pot_asc') pool.sort(function(a,b){return a.booking-b.booking;});
-  else if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(b.booking-a.booking);});
-  else pool.sort(function(a,b){return b.booking-a.booking;});
+  if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(a.name||'').localeCompare(b.name||'');});
+  else pool.sort(function(a,b){return (a.name||'').localeCompare(b.name||'');});   /* A–Z by name — no revenue sort */
   document.getElementById("sbTitle").textContent=master?("Master Library — all territories"):("Dealer Library — "+terr);
   /* dealer-count and drag instructions removed — the library starts cleanly at its controls */
   var _sbSub=document.getElementById("sbSub"); if(_sbSub){ _sbSub.textContent=''; _sbSub.style.display='none'; }
@@ -4757,15 +4757,16 @@ function weekCard(wk){
   var open=wkIsOpen(wk);
   var wkShort=isRemote?'Remote':(isk?'WK 31':'WK '+wk);
   var dateRange=isRemote?'direct / book remotely':(WEEKDATES[wk]||'');
-  /* Summary row — always visible, one clean line: week · dates · the key stats. */
-  var stat=function(v,l){ return '<span class="wsum-stat"><b>'+v+'</b> '+l+'</span>'; };
+  /* Summary row — TRAVEL only: week · dates · how many stops. No business metrics. */
+  var evCount=ds.length+wlogi.length+xw.length;
+  var hasFlight=wlogi.some(function(x){ return /^flight/.test(travelType(x)); });
+  var hasHotel=wlogi.some(function(x){ return travelType(x)==='hotel'; });
   var summary='<button class="wsum'+(open?' open':'')+(confirmed?' conf':'')+(isk?' kick':'')+'" data-wktoggle="'+wk+'" aria-expanded="'+open+'">'
     +'<span class="wsum-caret">'+(open?'▾':'▸')+'</span>'
     +'<span class="wsum-id"><b>'+wkShort+'</b><i>'+esc(dateRange)+'</i></span>'
-    +'<span class="wsum-stats">'
-      +stat(loads,'Loads')+stat(fmtUSD(rev),'')+stat(ds.length,ds.length===1?'Dealer':'Dealers')
-      +stat(apc+'/'+ds.length,'Appts')+stat(pct.toFixed(0)+'%','')
-    +'</span>'
+    +'<span class="wsum-stats"><span class="wsum-stat"><b>'+evCount+'</b> '+(evCount===1?'Event':'Events')+'</span></span>'
+    +(hasFlight?'<span class="wsum-ico" title="Flight booked">✈</span>':'')
+    +(hasHotel?'<span class="wsum-ico" title="Hotel booked">🏨</span>':'')
     +(confirmed?'<span class="wsum-badge">✓ Confirmed</span>':'')
     +'</button>';
   if(!open) return '<div class="wsec'+(isk?' kick':'')+(confirmed?' confirmed':'')+'" data-wk="'+wk+'">'+summary+'</div>';
@@ -8798,7 +8799,7 @@ function render(){
     document.getElementById('terrMap').style.display=isMap?'':'none';
     if(isPlan){ renderPlanner(); wireDnD(); }
     else { renderTerrMap(); }
-    document.getElementById('planTitle').textContent=terr+' — '+(FLAT.tm[terr]||'')+' · '+(isPlan?'Schedule':'Map');
+    document.getElementById('planTitle').textContent=terr+' · Trips';
   }
 }
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
@@ -9081,7 +9082,7 @@ function withPreservedScroll(fn){
   function restore(){ try{ window.scrollTo(wx,wy); }catch(e){} saved.forEach(function(a){ try{ a[0].scrollTop=a[1]; a[0].scrollLeft=a[2]; }catch(e){} }); }
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
 }
-function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' — '+(FLAT.tm[terr]||'')+' · Schedule'; }); }
+function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
 /* ============ TRIP-ORDER INVARIANT TESTS ============================
    Non-destructive: snapshots ASSIGN/DAY/TIME/ORD/LOGI/APPT/TLE, builds
    synthetic scenarios, asserts every surface (schedule tlSeq == desktop map
