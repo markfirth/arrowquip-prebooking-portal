@@ -1375,6 +1375,8 @@ const TERRS=["East","South","Central","West","Exports"];
 const TIERS=["Tier 2","Tier 3","Tier 4","Tier 5","Tier 6","New"];
 let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
 let PROSPECTS=[];   /* planner-created accounts — declared before reindex() uses it */
+/* event-level merge state — declared before loadPlan() uses EVMETA (avoid TDZ) */
+let EVENT_LEVEL_MERGE=true, EVMETA={}, EVSNAP={}, EVBASE={}, EVDIRTY={}, EVCONFLICT={};
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
 let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); (PROSPECTS||[]).forEach(function(p){byId[p.id]=p;}); invalidateUniverse();} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
@@ -2654,12 +2656,205 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;}
 adminInit(); fxSync();
-normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR};}
+normalizeVisitData();
+try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
+})();
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA};}
+/* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
+   Sync stays on the single prebooking_state.plan row (NO new tables), but
+   unrelated events (different visits / weeks / stops) merge automatically
+   instead of triggering a whole-plan "updated in another session" warning.
+   Each scheduled event carries its own version in EVMETA (persisted as
+   plan.evmeta). A conflict is raised ONLY when the SAME event was changed by
+   both sides from the same base version — and it is shown on that card alone.
+   Event keys reuse the app-wide scheme: d:<dealerId> (initial visit),
+   x:<visitId> (extra visit), m:<logiId> (hotel/flight/rental/tradeshow/other),
+   p:<prospectId> (prospect/competitor account). State vars (EVENT_LEVEL_MERGE,
+   EVMETA, EVSNAP, EVBASE, EVDIRTY, EVCONFLICT) are declared earlier, before
+   loadPlan() first reads EVMETA. Rollback: set EVENT_LEVEL_MERGE=false. */
+function evMe(){ try{ return (typeof pbWho==='function'?pbWho():'planner'); }catch(e){ return 'planner'; } }
+function evData(k){
+  var t=k.charAt(0), id=k.slice(2);
+  if(t==='d'){ var a=ASSIGN[id]; if(a==null||a==='pool') return null;
+    return {a:a,day:(DAY[id]==null?null:DAY[id]),time:TIME[id]||'',dur:(DUR[id]==null?null:DUR[id]),pt:(PTYPE[id]||null),ap:!!APPT[id],sx:(STOPX[id]||null),ja:(JOINA[id]||null),o:(ORD[k]!=null?ORD[k]:null)}; }
+  if(t==='x'){ var x=null; for(var i=0;i<XVISITS.length;i++) if(XVISITS[i].id===id){x=XVISITS[i];break;} return x?Object.assign({},x,{o:(ORD[k]!=null?ORD[k]:null)}):null; }
+  if(t==='m'){ var m=null; for(var j=0;j<LOGI.length;j++) if(LOGI[j].id===id){m=LOGI[j];break;} return m?Object.assign({},m,{o:(ORD[k]!=null?ORD[k]:null)}):null; }
+  if(t==='p'){ var p=null; for(var q=0;q<PROSPECTS.length;q++) if(PROSPECTS[q].id===id){p=PROSPECTS[q];break;} return p?Object.assign({},p):null; }
+  return null;
+}
+function evDataFrom(P,k){
+  var t=k.charAt(0), id=k.slice(2);
+  var A=P.a||{},D=P.day||{},T=P.time||{},DU=P.dur||{},PT=P.ptype||{},AP=P.appt||{},SX=P.stopx||{},JA=P.joina||{},OR=P.ordx||{};
+  if(t==='d'){ var a=A[id]; if(a==null||a==='pool') return null;
+    return {a:a,day:(D[id]==null?null:D[id]),time:T[id]||'',dur:(DU[id]==null?null:DU[id]),pt:(PT[id]||null),ap:!!AP[id],sx:(SX[id]||null),ja:(JA[id]||null),o:(OR[k]!=null?OR[k]:null)}; }
+  if(t==='x'){ var xs=P.xvisits||[]; for(var i=0;i<xs.length;i++) if(xs[i].id===id) return Object.assign({},xs[i],{o:(OR[k]!=null?OR[k]:null)}); return null; }
+  if(t==='m'){ var ls=P.logi||[]; for(var j=0;j<ls.length;j++) if(ls[j].id===id) return Object.assign({},ls[j],{o:(OR[k]!=null?OR[k]:null)}); return null; }
+  if(t==='p'){ var ps=P.prospects||[]; for(var q=0;q<ps.length;q++) if(ps[q].id===id) return Object.assign({},ps[q]); return null; }
+  return null;
+}
+function evKeysCurrent(){ var s={};
+  Object.keys(ASSIGN).forEach(function(id){ if(ASSIGN[id]!=null&&ASSIGN[id]!=='pool') s['d:'+id]=1; });
+  XVISITS.forEach(function(x){ s['x:'+x.id]=1; }); LOGI.forEach(function(it){ s['m:'+it.id]=1; }); PROSPECTS.forEach(function(p){ s['p:'+p.id]=1; });
+  Object.keys(EVMETA).forEach(function(k){ s[k]=1; }); return Object.keys(s); }
+function evKeysPayload(P){ var s={}; var A=P.a||{};
+  Object.keys(A).forEach(function(id){ if(A[id]!=null&&A[id]!=='pool') s['d:'+id]=1; });
+  (P.xvisits||[]).forEach(function(x){ s['x:'+x.id]=1; }); (P.logi||[]).forEach(function(it){ s['m:'+it.id]=1; }); (P.prospects||[]).forEach(function(p){ s['p:'+p.id]=1; });
+  Object.keys(P.evmeta||{}).forEach(function(k){ s[k]=1; }); return Object.keys(s); }
+/* legacy upgrade: any existing event without metadata gets a permanent id+v */
+function evEnsureMeta(){ var now=Date.now();
+  evKeysCurrent().forEach(function(k){ if(evData(k)!=null && !EVMETA[k]) EVMETA[k]={v:1,at:now,by:'legacy'}; }); }
+/* bump versions ONLY for events whose data changed; tombstone vanished ones */
+function evTouchAll(){ evEnsureMeta(); var now=Date.now(), me=evMe();
+  evKeysCurrent().forEach(function(k){
+    var d=evData(k);
+    if(d==null){ if(EVSNAP[k]!==undefined && !(EVMETA[k]&&EVMETA[k].del)){ EVMETA[k]=EVMETA[k]||{v:0}; EVMETA[k].v=(EVMETA[k].v||0)+1; EVMETA[k].at=now; EVMETA[k].by=me; EVMETA[k].del=now; EVDIRTY[k]=true; } return; }
+    var ser=JSON.stringify(d);
+    if(EVSNAP[k]!==undefined && EVSNAP[k]!==ser){ EVMETA[k]=EVMETA[k]||{v:1}; EVMETA[k].v=(EVMETA[k].v||1)+1; EVMETA[k].at=now; EVMETA[k].by=me; delete EVMETA[k].del; EVDIRTY[k]=true; }
+  });
+}
+/* snapshot the current event state as the agreed baseline (after a sync) */
+function evBaseline(){ EVSNAP={}; EVBASE={}; EVDIRTY={};
+  evKeysCurrent().forEach(function(k){ var d=evData(k); if(d!=null) EVSNAP[k]=JSON.stringify(d); EVBASE[k]=(EVMETA[k]&&EVMETA[k].v)||0; }); }
+/* merge a remote plan payload into the live state by event id; returns conflicts */
+function mergeEventPayload(P){
+  evTouchAll();                     /* version any pending LOCAL edits first, so a
+                                       remote change can never silently overwrite them */
+  var conflicts=[]; var keys={}; evKeysCurrent().concat(evKeysPayload(P)).forEach(function(k){keys[k]=1;});
+  var out={};
+  Object.keys(keys).forEach(function(k){
+    var lm=EVMETA[k], rm=(P.evmeta||{})[k];
+    var ld=evData(k), rd=evDataFrom(P,k);
+    var lv=(lm&&lm.v)||0, rv=(rm&&rm.v)||0, base=EVBASE[k]||0;
+    var lDel=!!(lm&&lm.del), rDel=!!(rm&&rm.del);
+    /* tombstone: the higher-version side decides; a delete there wins */
+    if(lDel||rDel){ var hiDel=(lv>=rv)?lDel:rDel; var hiMeta=(lv>=rv)?lm:rm;
+      if(hiDel){ out[k]={data:null,meta:hiMeta}; return; } }
+    if(ld&&rd){
+      var localChanged=!!EVDIRTY[k]||lv>base, remoteChanged=rv>base;
+      if(localChanged&&remoteChanged&&JSON.stringify(ld)!==JSON.stringify(rd)){
+        conflicts.push({key:k,by:(rm&&rm.by)||'a teammate',at:(rm&&rm.at)||Date.now()});
+        EVCONFLICT[k]={by:(rm&&rm.by)||'a teammate',at:(rm&&rm.at)||Date.now(),theirs:{data:rd,meta:rm}};
+        out[k]={data:ld,meta:lm};                          /* keep mine; card offers Accept Theirs */
+      } else if(rv>lv){ out[k]={data:rd,meta:rm}; }
+      else { out[k]={data:ld,meta:lm}; }
+    } else if(ld&&!rd){ out[k]={data:ld,meta:lm}; }         /* local-only addition */
+    else if(!ld&&rd){ if(lDel&&lv>=rv){ out[k]={data:null,meta:lm}; } else { out[k]={data:rd,meta:rm}; } }
+  });
+  evApplyMerged(out); return conflicts;
+}
+/* rebuild the live event structures from a merged {key:{data,meta}} map */
+function evApplyMerged(out){
+  var nx=[],nl=[],np=[];
+  Object.keys(out).forEach(function(k){
+    var e=out[k], t=k.charAt(0), id=k.slice(2);
+    if(e.meta) EVMETA[k]=e.meta;
+    if(e.data==null){ if(t==='d'){ ASSIGN[id]='pool'; DAY[id]=null; TIME[id]=''; delete PTYPE[id]; delete APPT[id]; } delete ORD[k]; return; }
+    var d=e.data;
+    if(t==='d'){ ASSIGN[id]=d.a; DAY[id]=(d.day==null?null:d.day); TIME[id]=d.time||''; if(d.dur!=null)DUR[id]=d.dur; if(d.pt!=null)PTYPE[id]=d.pt; else delete PTYPE[id]; if(d.ap)APPT[id]=true; else delete APPT[id]; if(d.sx)STOPX[id]=d.sx; if(d.ja)JOINA[id]=d.ja; if(d.o!=null)ORD[k]=d.o; }
+    else if(t==='x'){ var xo=Object.assign({},d); delete xo.o; nx.push(xo); if(d.o!=null)ORD[k]=d.o; }
+    else if(t==='m'){ var mo=Object.assign({},d); delete mo.o; nl.push(mo); if(d.o!=null)ORD[k]=d.o; }
+    else if(t==='p'){ var po=Object.assign({},d); np.push(po); }
+  });
+  XVISITS=nx; LOGI=nl; PROSPECTS=np;
+  try{reindex();}catch(e){} try{invalidateUniverse();}catch(e){} try{tlInvalidate();}catch(e){} try{CALC.dirtyAll();}catch(e){}
+}
+/* human label for an event key, for the conflict notice */
+function evLabel(k){ var t=k.charAt(0), id=k.slice(2);
+  try{ if(t==='d'){ var d=byId[id]||uniById(id); return d?d.name:('Visit '+id); }
+    if(t==='x'){ var x=XVISITS.filter(function(v){return v.id===id;})[0]; var dd=x&&(byId[x.dealer]||uniById(x.dealer)); return dd?dd.name:'Visit'; }
+    if(t==='m'){ var m=LOGI.filter(function(v){return v.id===id;})[0]; return m?(travelPlaceLabel(m)||TRAVEL_TYPES[travelType(m)].label):'Stop'; }
+    if(t==='p'){ var p=PROSPECTS.filter(function(v){return v.id===id;})[0]; return p?p.name:'Account'; }
+  }catch(e){} return 'Event'; }
+/* same-event conflicts surface here — isolated per event, never whole-plan */
+function renderEventConflicts(cf){
+  (cf||[]).forEach(function(c){ EVCONFLICT[c.key]=EVCONFLICT[c.key]||{by:c.by,at:c.at}; });
+  var keys=Object.keys(EVCONFLICT); var box=document.getElementById('evConflicts');
+  if(!keys.length){ if(box)box.remove(); return; }
+  if(!box){ box=document.createElement('div'); box.id='evConflicts';
+    box.style.cssText='position:fixed;right:16px;bottom:16px;z-index:5200;display:flex;flex-direction:column;gap:8px;max-width:340px'; document.body.appendChild(box); }
+  box.innerHTML=keys.map(function(k){ var c=EVCONFLICT[k];
+    return '<div class="evconf" style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid #b45309;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.16);padding:11px 13px;font:400 12.5px \'Open Sans\',Arial">'
+      +'<div style="font-weight:700;color:#111">'+esc(evLabel(k))+'</div>'
+      +'<div style="color:#6b7280;margin:2px 0 9px">Updated by '+esc((c&&c.by)||'a teammate')+' while you were editing</div>'
+      +'<div style="display:flex;gap:8px"><button data-evkeep="'+esc(k)+'" style="flex:1;background:#111;color:#fff;border:0;border-radius:6px;padding:7px;font:700 11px inherit;cursor:pointer">Keep Mine</button>'
+      +'<button data-evtheirs="'+esc(k)+'" style="flex:1;background:#fff;color:#111;border:1px solid #d1d5db;border-radius:6px;padding:7px;font:700 11px inherit;cursor:pointer">Accept Theirs</button></div></div>';
+  }).join('');
+  box.querySelectorAll('[data-evkeep]').forEach(function(b){ b.onclick=function(){ evKeepMine(b.dataset.evkeep); }; });
+  box.querySelectorAll('[data-evtheirs]').forEach(function(b){ b.onclick=function(){ evAcceptTheirs(b.dataset.evtheirs); }; });
+}
+function evKeepMine(k){ var c=EVCONFLICT[k]; delete EVCONFLICT[k];
+  var tv=(c&&c.theirs&&c.theirs.meta&&c.theirs.meta.v)||0;
+  EVMETA[k]=EVMETA[k]||{v:1}; EVMETA[k].v=Math.max(EVMETA[k].v||1,tv)+1; EVMETA[k].at=Date.now(); EVMETA[k].by=evMe();
+  EVSNAP[k]=JSON.stringify(evData(k));                          /* so evTouchAll doesn't re-bump */
+  try{savePlan();refreshPlanner();}catch(e){} renderEventConflicts([]); }
+function evAcceptTheirs(k){ var c=EVCONFLICT[k]; delete EVCONFLICT[k]; if(c&&c.theirs){ var out={}; out[k]={data:c.theirs.data,meta:c.theirs.meta}; evApplyMerged(out); EVBASE[k]=(c.theirs.meta&&c.theirs.meta.v)||0; delete EVDIRTY[k]; EVSNAP[k]=evData(k)?JSON.stringify(evData(k)):undefined; }
+  try{savePlan();refreshPlanner();}catch(e){} renderEventConflicts([]); }
+/* QA: AQ_QA.merge() — the 8 deterministic event-merge scenarios */
+window.AQ_QA=window.AQ_QA||{};
+window.AQ_QA.merge=function(){
+  var rows=[],ok=true; function chk(l,c){ok=ok&&c;rows.push({case:l,pass:!!c});}
+  var save={XVISITS:XVISITS,LOGI:LOGI,PROSPECTS:PROSPECTS,EVMETA:JSON.parse(JSON.stringify(EVMETA)),ASSIGN:Object.assign({},ASSIGN),DAY:Object.assign({},DAY),TIME:Object.assign({},TIME),ORD:Object.assign({},ORD),EVSNAP:Object.assign({},EVSNAP),EVBASE:Object.assign({},EVBASE),EVDIRTY:Object.assign({},EVDIRTY)};
+  function reset(){ XVISITS=[];LOGI=[];PROSPECTS=[];EVMETA={};EVSNAP={};EVBASE={};EVDIRTY={};EVCONFLICT={};
+    [D1,D2].forEach(function(id){ delete ASSIGN[id];delete DAY[id];delete TIME[id];delete ORD['d:'+id]; }); }
+  var ds=dealersIn('East').filter(function(d){return d.lat!=null;}); var D1=ds[0].id,D2=ds[1].id;
+  // helper: make a remote payload from a partial state
+  function remote(x){ return Object.assign({a:{},day:{},time:{},dur:{},ptype:{},appt:{},stopx:{},joina:{},ordx:{},xvisits:[],logi:[],prospects:[],evmeta:{}},x); }
+  // 1) two users edit DIFFERENT weeks (different d: events) → both survive, no conflict
+  reset(); ASSIGN[D1]=32;DAY[D1]=0;TIME[D1]='09:00'; evTouchAll(); evBaseline();
+  var P1=remote({a:{},day:{},time:{},evmeta:{}}); P1.a[D2]=36;P1.day[D2]=1;P1.time[D2]='10:00';P1.evmeta['d:'+D2]={v:1,at:Date.now(),by:'Dane'};
+  var c1=mergeEventPayload(P1);
+  chk('1 different weeks merge, no conflict', c1.length===0 && ASSIGN[D1]===32 && ASSIGN[D2]===36);
+  // 2) two users add DIFFERENT events to the SAME week → both kept
+  reset(); LOGI=[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'A'}]; ORD['m:H1']=10; evTouchAll(); evBaseline();
+  var P2=remote({logi:[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'A'},{id:'F1',type:'flight_out',terr:'East',wk:32,day:0,name:'B'}]}); P2.evmeta['m:H1']=EVMETA['m:H1']; P2.evmeta['m:F1']={v:1,at:Date.now(),by:'Dane'};
+  var c2=mergeEventPayload(P2);
+  chk('2 both additions kept', c2.length===0 && LOGI.length===2);
+  // 3) edit hotel while other reorders a visit (different events) → no conflict
+  reset(); LOGI=[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'A'}]; ASSIGN[D1]=32;DAY[D1]=0;TIME[D1]='09:00';ORD['d:'+D1]=10; evTouchAll(); evBaseline();
+  LOGI[0].name='A2'; evTouchAll();                    // local edits hotel
+  var P3=remote({logi:[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'A'}],ordx:{}}); P3.a[D1]=32;P3.day[D1]=0;P3.time[D1]='09:00';P3.ordx['d:'+D1]=99; P3.evmeta['m:H1']={v:1,at:1,by:'x'}; P3.evmeta['d:'+D1]={v:2,at:Date.now(),by:'Dane'};
+  var c3=mergeEventPayload(P3);
+  chk('3 hotel-edit + visit-reorder no conflict', c3.length===0 && LOGI[0].name==='A2' && ORD['d:'+D1]===99);
+  // 4) one deletes an event while the other has stale data → stays deleted
+  reset(); LOGI=[{id:'H1',type:'hotel',terr:'East',wk:32,day:0}]; evTouchAll(); evBaseline();
+  LOGI=[]; evTouchAll();                               // local deletes → tombstone
+  var P4=remote({logi:[{id:'H1',type:'hotel',terr:'East',wk:32,day:0}]}); P4.evmeta['m:H1']={v:1,at:1,by:'stale'};
+  var c4=mergeEventPayload(P4);
+  chk('4 deletion beats stale add (tombstone)', LOGI.length===0 && EVMETA['m:H1'] && EVMETA['m:H1'].del);
+  // 5) both edit the SAME event from same base → conflict, keep mine
+  reset(); LOGI=[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'A'}]; evTouchAll(); evBaseline();
+  LOGI[0].name='MINE'; evTouchAll();
+  var P5=remote({logi:[{id:'H1',type:'hotel',terr:'East',wk:32,day:0,name:'THEIRS'}]}); P5.evmeta['m:H1']={v:2,at:Date.now(),by:'Dane'};
+  var c5=mergeEventPayload(P5);
+  chk('5 same-event conflict raised + keep mine', c5.length===1 && LOGI[0].name==='MINE');
+  // 6) stale save retries against newer cloud (simulated: merge newer remote, local preserved)
+  reset(); ASSIGN[D1]=32;DAY[D1]=0;TIME[D1]='09:00'; evTouchAll(); evBaseline();
+  TIME[D1]='08:00'; evTouchAll();                     // local unsaved edit
+  var P6=remote({}); P6.a[D2]=33;P6.day[D2]=0;P6.time[D2]='11:00';P6.evmeta['d:'+D2]={v:1,at:Date.now(),by:'Dane'};
+  var c6=mergeEventPayload(P6);                        // newer remote unrelated
+  chk('6 stale merge keeps local + gains remote', c6.length===0 && TIME[D1]==='08:00' && ASSIGN[D2]===33);
+  // 7) legacy events without ids upgrade safely
+  reset(); XVISITS=[{id:'X9',dealer:D1,terr:'East',wk:32,day:0,type:'visit'}]; EVMETA={}; evEnsureMeta();
+  chk('7 legacy event gets meta', !!EVMETA['x:X9'] && EVMETA['x:X9'].v===1);
+  // 8) deleted events remain deleted after reload (tombstone persists in payload)
+  reset(); LOGI=[{id:'H1',type:'hotel',terr:'East',wk:32,day:0}]; evTouchAll(); evBaseline(); LOGI=[]; evTouchAll();
+  var pay=JSON.parse(JSON.stringify(planPayload()));   // save
+  // reload: fresh state loads the payload, then a STALE session tries to re-add H1
+  XVISITS=[];LOGI=[];PROSPECTS=[];EVMETA=pay.evmeta||{};EVSNAP={};EVBASE={};EVDIRTY={}; evBaseline();
+  var P8=remote({logi:[{id:'H1',type:'hotel',terr:'East',wk:32,day:0}]}); P8.evmeta['m:H1']={v:1,at:1,by:'stale'};
+  mergeEventPayload(P8);
+  chk('8 tombstone survives reload, no resurrection', LOGI.length===0);
+  // restore
+  XVISITS=save.XVISITS;LOGI=save.LOGI;PROSPECTS=save.PROSPECTS;EVMETA=save.EVMETA;ASSIGN=save.ASSIGN;DAY=save.DAY;TIME=save.TIME;ORD=save.ORD;EVSNAP=save.EVSNAP;EVBASE=save.EVBASE;EVDIRTY=save.EVDIRTY;EVCONFLICT={};
+  try{reindex();invalidateUniverse();tlInvalidate();}catch(e){}
+  console.table(rows); console.log(ok?'✅ EVENT-MERGE TESTS PASSED':'❌ EVENT-MERGE TESTS FAILED');
+  return {passed:ok,rows:rows};
+};
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
+  if(EVENT_LEVEL_MERGE){ try{ evTouchAll(); }catch(e){} }
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
   cloudSave('plan',planPayload());
 }
@@ -7872,7 +8067,7 @@ function applyPlanSnapshot(p){
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
   VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{}; PROSPECTS=Array.isArray(p.prospects)?p.prospects:[];
-  ORD=p.ordx||{}; COORDOVR=p.coordovr||{};
+  ORD=p.ordx||{}; COORDOVR=p.coordovr||{}; EVMETA=p.evmeta||{};
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
@@ -8641,6 +8836,19 @@ function pbHandleStale(key){
   SB.from('prebooking_state').select('data,version').eq('id',key).maybeSingle().then(function(r){
     if(!r||r.error||!r.data){ pbSaveErr('Could not fetch the latest Trip Plan — check your connection and press Retry.'); return; }
     var latest=r.data;
+    if(key==='plan' && EVENT_LEVEL_MERGE){
+      /* pre-save merge protocol: fetch latest → merge by event id → retry once
+         against the newer version. Conflicts surface per-card, never as a
+         whole-plan block. */
+      PB_VER[key]=latest.version;
+      applyCloudRow('plan',latest.data);
+      var cf=applyCloudRow._conflicts||[];
+      _pbPending[key]=planPayload();
+      try{ withPreservedScroll(render); }catch(e){ try{ render(); }catch(e2){} }
+      if(cf&&cf.length){ try{ renderEventConflicts(cf); }catch(e){} }
+      pbSendSave(key);
+      return;
+    }
     if(_pbPending[key]===undefined){
       PB_VER[key]=latest.version;
       applyCloudRow(key,latest.data);
@@ -8749,7 +8957,20 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{};
+  if(EVENT_LEVEL_MERGE){
+    /* EVENTS (dealer visits, prospects, hotels, flights, rentals, trade shows,
+       other stops + their order) merge by id — unrelated changes are absorbed
+       automatically; same-event edits become per-card conflicts. */
+    var _confl=mergeEventPayload(p);
+    /* non-event settings adopt the incoming value (not scheduled events) */
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride);
+    adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
+    applyCloudRow._conflicts=_confl||[];
+  } else {
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+  }
+} else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
@@ -8790,7 +9011,21 @@ function cloudLoad(cb){
     pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb();
   });
 }
-function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return; var row=payload&&payload.new; if(row&&row.id){ if(row.version!=null)PB_VER[row.id]=row.version; /* adopt teammate's version */ if(_pbPending[row.id]!==undefined){ /* we hold unsaved edits: keep them and rebase the pending save onto the newer version */ if(row.id==='plan')_pbPending[row.id]=planPayload(); cloudBadge('Teammate saved — rebasing your edit'); } else { applyCloudRow(row.id,row.data); withPreservedScroll(render); cloudBadge('Updated by teammate'); } } }).subscribe(); }catch(e){} }
+function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; var editing=(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); var row=payload&&payload.new; if(!row||!row.id) return; if(row.version!=null)PB_VER[row.id]=row.version;
+  if(row.id==='plan' && EVENT_LEVEL_MERGE){
+    /* merge the teammate's events in (keeps our unsaved edits); no whole-plan
+       warning — only same-event edits surface, and only on that card. */
+    applyCloudRow('plan',row.data);
+    var cf=applyCloudRow._conflicts||[];
+    if(_pbPending['plan']!==undefined) _pbPending['plan']=planPayload();   /* rebase our pending save onto the merged state */
+    if(!editing){ withPreservedScroll(render); }                          /* don't yank a field being typed in */
+    if(cf&&cf.length){ try{ renderEventConflicts(cf); }catch(e){} } else { cloudBadge('Updated by teammate'); }
+    return;
+  }
+  if(editing) return;                                                      /* legacy path: don't disrupt typing */
+  if(_pbPending[row.id]!==undefined){ if(row.id==='plan')_pbPending[row.id]=planPayload(); cloudBadge('Teammate saved — rebasing your edit'); }
+  else { applyCloudRow(row.id,row.data); withPreservedScroll(render); cloudBadge('Updated by teammate'); }
+ }).subscribe(); }catch(e){} }
 /* --- Performance: scoped planner refresh + scroll preservation (no UI/logic/data change).
    withPreservedScroll captures/restores scroll of the planner + master scroll containers and
    the window across a re-render. refreshPlanner re-renders only the planner + KPI (conservative:
