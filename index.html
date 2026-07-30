@@ -303,6 +303,29 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .plansum .pl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
 .plansum .pv{font-size:15px;font-weight:600;color:var(--aq-black);margin-top:2px;}
 
+/* ===== Notebook layout: collapsible week sections, stacked full-width ===== */
+#weeks.weeks{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+.wsec{background:#fff;border:1px solid var(--line-soft,#eceef0);border-radius:12px;overflow:hidden;}
+.wsec.open{box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.wsec.confirmed{border-color:var(--green-bd,#bfe3cd);}
+.wsum{display:flex;align-items:center;gap:14px;width:100%;padding:12px 16px;background:none;border:0;cursor:pointer;text-align:left;font-family:inherit;color:var(--aq-black,#1c1c1e);}
+.wsum:hover{background:#fafbfc;}
+.wsum.open{background:#f7f8fa;}
+.wsum-caret{flex:0 0 auto;font-size:11px;color:#9aa0a6;width:12px;}
+.wsum-id{flex:0 0 auto;display:flex;flex-direction:column;line-height:1.25;min-width:96px;}
+.wsum-id b{font-size:13.5px;font-weight:700;letter-spacing:.01em;}
+.wsum-id i{font-size:11px;color:#8b9096;font-style:normal;}
+.wsum-stats{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;}
+.wsum-stat{font-size:12.5px;color:#5c6169;white-space:nowrap;}
+.wsum-stat b{color:var(--aq-black,#1c1c1e);font-weight:700;}
+.wsum-badge{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#15803d;background:#e7f3ec;border-radius:20px;padding:3px 10px;white-space:nowrap;}
+.wsum.kick .wsum-id b{color:#7a3b41;}
+.wbody{padding:4px 14px 14px;}
+.wbtools{display:flex;gap:8px;align-items:center;padding:6px 0 10px;}
+.wbtools .confbtn{flex:0 0 auto;width:auto;}
+.wbtools .wkdl{margin-top:0;width:auto;}
+.wsec .addbar{border:0;padding:0 0 8px;}
+.wsec .kbody{padding:0;}
 .wkcard{flex:0 0 264px;width:264px;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .wkcard.confirmed{background:#fff;border-color:var(--green-bd);}
 .wkhead{background:var(--aq-charcoal);color:#fff;padding:8px 10px 10px;border:0;display:block;text-align:center;}
@@ -1552,6 +1575,16 @@ function arSel(d){ var cur=arIssueOf(d.id); var flag=hasArIssue(d.id);
   return '<select class="ed arpill'+(flag?' aron':'')+'" data-f="arIssue" title="AR concern — manually managed">'
     +AR_OPTIONS.map(function(s){return '<option value="'+esc(s)+'"'+(s===cur?' selected':'')+'>'+(s||'—')+'</option>';}).join('')+'</select>'; }
 let terrMode='plan', terrMapWeek='all', terrMapDay='all';
+/* Collapsible week sections (notebook layout). WKOPEN['terr|wk']=true when a
+   week is expanded. Only one week is open by default. */
+let WKOPEN={};
+function wkNumsFor(){ return (terr==='Exports')?['remote']:[31].concat(FIELD_NUMS,['remote']); }
+function _wkAnyStateForTerr(){ var pfx=terr+'|'; return Object.keys(WKOPEN).some(function(k){return k.indexOf(pfx)===0;}); }
+function _wkDefaultOpen(){ return (terr==='Exports')?'remote':(FIELD_NUMS[0]!=null?FIELD_NUMS[0]:31); }
+function wkEnsureState(){ if(!_wkAnyStateForTerr()){ WKOPEN[terr+'|'+_wkDefaultOpen()]=true; } }
+function wkIsOpen(wk){ wkEnsureState(); return !!WKOPEN[terr+'|'+wk]; }
+function wkToggle(wk){ wkEnsureState(); var k=terr+'|'+wk; WKOPEN[k]=!WKOPEN[k]; withPreservedScroll(function(){ renderPlanner(); renderCards&&renderCards(); wireDnD(); }); }
+function wkSetAll(open){ wkNumsFor().forEach(function(w){ WKOPEN[terr+'|'+w]=open; }); withPreservedScroll(function(){ renderPlanner(); renderCards&&renderCards(); wireDnD(); }); }
 let SETTINGS={};
 let LOGI=[];
 /* Per-dealer trip-stop extras (cost/notes/confirmation). Dealer stops are derived
@@ -2720,7 +2753,8 @@ function renderPlanner(){
   var _psum=document.getElementById("planSummary");
   var _showReset=(terr!=='All'&&terr!=='Master');
   _psum.className='plansum bare';
-  _psum.innerHTML=(_showReset?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
+  _psum.innerHTML='<div class="tctl"><button class="tbtn" data-wkall="1">Expand all weeks</button><button class="tbtn" data-wkall="0">Collapse all weeks</button></div>'
+    +(_showReset?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
   document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -3910,10 +3944,23 @@ function weekCard(wk){
     });
   }
   var confBtn='<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>';
-  return '<div class="wkcard '+(isk?'kick ':'')+(confirmed?'confirmed':'')+'">'
-    +'<div class="wkhead"><div class="wl">'+title+'</div>'
-    +'<div class="kpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSD(rev)+'</span><span class="kpill sub">'+apc+'/'+ds.length+' appts · '+pct.toFixed(0)+'%</span></div></div>'
-    +'<div class="wmeta"><div><b>Dates:</b> '+dates+'</div><div><b>Dealers:</b> '+ds.length+' &nbsp;·&nbsp; <b>Loads:</b> '+loads+'</div>'+confBtn+'<button class="wkdl" data-dl="'+wk+'">⤓ Trip plan</button></div>'
+  var open=wkIsOpen(wk);
+  var wkShort=isRemote?'Remote':(isk?'WK 31':'WK '+wk);
+  var dateRange=isRemote?'direct / book remotely':(WEEKDATES[wk]||'');
+  /* Summary row — always visible, one clean line: week · dates · the key stats. */
+  var stat=function(v,l){ return '<span class="wsum-stat"><b>'+v+'</b> '+l+'</span>'; };
+  var summary='<button class="wsum'+(open?' open':'')+(confirmed?' conf':'')+(isk?' kick':'')+'" data-wktoggle="'+wk+'" aria-expanded="'+open+'">'
+    +'<span class="wsum-caret">'+(open?'▾':'▸')+'</span>'
+    +'<span class="wsum-id"><b>'+wkShort+'</b><i>'+esc(dateRange)+'</i></span>'
+    +'<span class="wsum-stats">'
+      +stat(loads,'Loads')+stat(fmtUSD(rev),'')+stat(ds.length,ds.length===1?'Dealer':'Dealers')
+      +stat(apc+'/'+ds.length,'Appts')+stat(pct.toFixed(0)+'%','')
+    +'</span>'
+    +(confirmed?'<span class="wsum-badge">✓ Confirmed</span>':'')
+    +'</button>';
+  if(!open) return '<div class="wsec'+(isk?' kick':'')+(confirmed?' confirmed':'')+'" data-wk="'+wk+'">'+summary+'</div>';
+  var body='<div class="wbody">'
+    +'<div class="wbtools">'+confBtn+'<button class="wkdl" data-dl="'+wk+'">⤓ Trip plan</button></div>'
     +'<div class="addbar">'
       +'<button class="addl" data-add="flight_in|'+wk+'" title="Inbound flight">✈ Arrive</button>'
       +'<button class="addl" data-add="flight_out|'+wk+'" title="Outbound flight">✈ Depart</button>'
@@ -3922,7 +3969,9 @@ function weekCard(wk){
       +'<button class="addl" data-add="rental_return|'+wk+'" title="Rental return">🚗 Return</button>'
       +'<button class="addl" data-add="other|'+wk+'" title="Fuel, food, parking or other stop">＋ Stop</button>'
     +'</div>'
-    +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
+    +'<div class="kbody" data-drop="'+wk+'">'+cards+'</div>';
+  body+='</div>';
+  return '<div class="wsec open'+(isk?' kick':'')+(confirmed?' confirmed':'')+'" data-wk="'+wk+'">'+summary+body+'</div>';
 }
 /* ============ THE dealer scheduling card ============
    ONE component for every Pre-book and every Visit, everywhere. The badge
@@ -7247,6 +7296,8 @@ function wireDnD(){
     }
     clearTimeout(b._t); resetTerritory(b.dataset.treset);
   }));
+  document.querySelectorAll('[data-wktoggle]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var v=b.dataset.wktoggle;wkToggle(v==='remote'?'remote':parseInt(v,10));}));
+  document.querySelectorAll('[data-wkall]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();wkSetAll(b.dataset.wkall==='1');}));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id.slice(0,3)==='xv:'?(XVISITS.filter(function(x){return 'xv:'+x.id===id;})[0]||{}).dealer:id);}));
