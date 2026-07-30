@@ -338,6 +338,24 @@ table.gantt{border-collapse:separate;border-spacing:0;width:100%;}
 .addmenu-item:hover{background:#f2f4f7;}
 .addmenu-item .ami{width:18px;text-align:center;}
 body.wkfull-on{overflow:hidden;}
+/* account type badges — the ONLY visual difference between dealer types */
+.ptbadge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:20px;vertical-align:middle;white-space:nowrap;}
+.pt-current{background:#e7f3ec;color:#15803d;}
+.pt-potential{background:#fff2e0;color:#b45309;}
+.pt-prospect{background:#e8eefc;color:#2547b0;}
+.pt-competitor{background:#fdeaea;color:#b42318;}
+.dcard-pro{border-left:3px solid #f59e0b;}
+/* add-account modal */
+.aqmodal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.aqmodal-box{background:#fff;border-radius:14px;max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:18px 20px;font-family:Open Sans,Arial,sans-serif;box-shadow:0 16px 50px rgba(0,0,0,.3);}
+.aqmodal-h{font-weight:800;font-size:16px;margin-bottom:12px;}
+.dp-results{margin-top:8px;max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:2px;}
+.dp-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 9px;cursor:pointer;font:inherit;}
+.dp-row:hover{background:#f2f4f7;}
+.dp-nm{font-weight:600;font-size:13px;flex:0 1 auto;}
+.dp-terr{margin-left:auto;font-size:11px;color:#8b9096;}
+.dp-hint{font-size:12px;color:#9aa0a6;padding:10px 4px;}
+.dp-div{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b0b5bb;margin:14px 0 2px;border-top:1px solid #eee;padding-top:12px;}
 .addl.addprimary{background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700;}
 @media(max-width:920px){.wgrid{flex-direction:column;}.wkmapcol{min-width:0;}.wkmapslot,.wkmap-inner,.wkmapghost{min-height:320px;}}
 .wbtools{display:flex;gap:8px;align-items:center;padding:6px 0 10px;flex-wrap:wrap;}
@@ -1346,8 +1364,9 @@ const COORD={"FR":[45.83,1.26],"UK":[52.7,-2.75],"QC":[45.63,-72.95],"MB":[49.85
 const TERRS=["East","South","Central","West","Exports"];
 const TIERS=["Tier 2","Tier 3","Tier 4","Tier 5","Tier 6","New"];
 let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
+let PROSPECTS=[];   /* planner-created accounts — declared before reindex() uses it */
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
-let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); invalidateUniverse();} reindex();
+let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); (PROSPECTS||[]).forEach(function(p){byId[p.id]=p;}); invalidateUniverse();} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
 /* --- Salesforce overlay for the MASTER SHEET ONLY (Deliverable 3). Read-only.
    Salesforce is fetched from a server-side Netlify Function (no credentials in
@@ -2015,6 +2034,28 @@ function hasArIssue(id){ var v=arIssueOf(id); return !!v && v!=='No current issu
    sfMasterMerge uses these coordinates before any Salesforce address. */
 let CONFLOC={};
 function confLocOf(id){ var c=CONFLOC[id]; return (c&&c.confirmed&&c.lat!=null&&c.lon!=null)?c:null; }
+/* Prospects: planner-created accounts (Potential Dealer / New Prospect /
+   Competitor). They are FULL scheduling citizens — same visit card, duration,
+   routing, drag-and-drop and map as a current dealer — but live only in the
+   planner (never the Master Sheet or company KPIs). Persisted in the plan.
+   (PROSPECTS is declared earlier, before reindex() first runs.) */
+const PROSPECT_TYPES={potential:'Potential Dealer',prospect:'New Prospect',competitor:'Competitor'};
+function prospectTypeLabel(d){ return d&&d._prospect?(PROSPECT_TYPES[d.ptype2]||'Prospect'):(d&&d._sf===false?'':'Current Dealer'); }
+function makeProspect(o){
+  var n=1; while(byId['P'+n]||PROSPECTS.some(function(p){return p.id==='P'+n;})) n++;
+  return { id:'P'+n, name:o.name||'New account', ptype2:(PROSPECT_TYPES[o.ptype2]?o.ptype2:'potential'),
+    territory:o.territory||terr||'East', loc:o.loc||'', address:o.address||'',
+    lat:(o.lat!=null?+o.lat:null), lon:(o.lon!=null?+o.lon:null),
+    contactName:o.contact||'', contactPhone:o.phone||'', notes:o.notes||'',
+    booking:0, loads:0, lastYear:0, t27loads:0, tier:'', areaPlanning:true,
+    status:'Not Started', _prospect:true, _sf:false };
+}
+function addProspect(o,cb){
+  var p=makeProspect(o);
+  var finish=function(){ PROSPECTS.push(p); invalidateUniverse(); reindex(); savePlan(); cb&&cb(p); };
+  if((p.lat==null||p.lon==null) && p.address){ geocodeAddress(p.address,function(g){ if(g&&g.lat!=null){ p.lat=g.lat; p.lon=g.lon; if(g.state)p.loc=g.state; } finish(); }); }
+  else finish();
+}
 /* Location review tool (#6): view current + Salesforce address, edit the physical
    address, search for coordinates, confirm, or reset to the Salesforce address. */
 function aqLocationReview(id){
@@ -2508,10 +2549,10 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem('aq2027planv2');if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;}
 adminInit(); fxSync();
 normalizeVisitData();})();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS};}
 function savePlan(){
   if(PB_READONLY) return;                       /* verification screens never write */
   try{localStorage.setItem('aq2027planv2',JSON.stringify(planPayload()));}catch(e){}
@@ -2748,27 +2789,42 @@ function dealerCard(d){
   var pb=hasPB(d.id);
   var vN=((vType(d.id)==='visit'&&ASSIGN[d.id]!=null&&ASSIGN[d.id]!=='pool')?1:0)
         +XVISITS.filter(function(x){ return x.dealer===d.id&&x.type==='visit'; }).length;
-  return `<div class="dcard">
-    <div class="dn">${d.name}</div>
-    <div class="dm"><span class="dloc">${d.loc} · ${dealerTierLabel(d)}</span><span class="dval">${(+d.booking>0)?fmtUSDk(d.booking):'—'}</span></div>
-    <div class="db">${d.loads} loads<span class="dmk"><button class="dadd${pb?' pbon':''}" data-mk="${d.id}|prebook" data-drag="1" data-id="mk:${d.id}|prebook" title="${pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week'}">${pb?'✓ Pre-book':'+ Pre-book'}</button><button class="dadd dvis${vN?' von':''}" data-mk="${d.id}|visit" data-drag="1" data-id="mk:${d.id}|visit" title="${vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week'}">${vN?('✓ Visits · '+vN):'+ Visit'}</button></span></div></div>`;
+  var isPro=!!d._prospect;
+  var typeLbl=prospectTypeLabel(d);
+  var badgeCls=isPro?('pt-'+d.ptype2):'pt-current';
+  var badge=typeLbl?('<span class="ptbadge '+badgeCls+'">'+esc(typeLbl)+'</span>'):'';
+  var meta=isPro
+    ? ('<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>')
+    : ('<span class="dloc">'+esc(d.loc)+' · '+dealerTierLabel(d)+'</span><span class="dval">'+((+d.booking>0)?fmtUSDk(d.booking):'—')+'</span>');
+  var actions=isPro
+    ? ('<span class="dmk"><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>')
+    : ('<span class="dmk"><button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>');
+  return '<div class="dcard'+(isPro?' dcard-pro':'')+'">'
+    +'<div class="dn">'+esc(d.name)+' '+badge+'</div>'
+    +'<div class="dm">'+meta+'</div>'
+    +'<div class="db">'+(isPro?(d.contactName?esc(d.contactName):'Prospect'):(d.loads+' loads'))+actions+'</div></div>';
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" — "+(FLAT.tm[terr]||'')+" · Week Planner";
   const isExp=terr==='Exports';
   /* the Dealer Pool is a permanent library: it ALWAYS contains every dealer in
      the territory. Scheduling never removes a dealer from here. */
-  let pool=dealersIn(terr).slice(); const poolAll=pool.slice();
+  /* MASTER LIBRARY: a search looks across EVERY territory + prospects, so any
+     dealer in the company (or a potential/prospect/competitor) can be found and
+     dragged into this trip. Empty search = this territory only. */
+  var master=!!search;
+  let pool=master ? planningUniverse().slice() : dealersIn(terr).slice();
+  const poolAll=pool.slice();
   var stsel=document.getElementById("poolState");
   if(stsel){ var sts=[]; poolAll.forEach(function(d){ if(d.loc && d.loc!=='—' && sts.indexOf(d.loc)<0) sts.push(d.loc); }); sts.sort(function(a,b){return REGION_ORDER.indexOf(a)-REGION_ORDER.indexOf(b);});
     stsel.innerHTML='<option value="">All states</option>'+sts.map(function(s){return '<option value="'+s+'"'+(poolState===s?' selected':'')+'>'+s+'</option>';}).join('');
     var sortsel=document.getElementById("poolSort"); if(sortsel) sortsel.value=poolSort; }
-  if(search) pool=pool.filter(d=>d.name.toLowerCase().includes(search));
+  if(search) pool=pool.filter(function(d){ return (d.name||'').toLowerCase().includes(search)||(d.loc||'').toLowerCase().includes(search)||(d.territory||'').toLowerCase().includes(search); });
   if(poolState) pool=pool.filter(function(d){return d.loc===poolState;});
   if(poolSort==='pot_asc') pool.sort(function(a,b){return a.booking-b.booking;});
   else if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(b.booking-a.booking);});
   else pool.sort(function(a,b){return b.booking-a.booking;});
-  document.getElementById("sbTitle").textContent="Dealer Library — "+terr;
+  document.getElementById("sbTitle").textContent=master?("Master Library — all territories"):("Dealer Library — "+terr);
   /* dealer-count and drag instructions removed — the library starts cleanly at its controls */
   var _sbSub=document.getElementById("sbSub"); if(_sbSub){ _sbSub.textContent=''; _sbSub.style.display='none'; }
   let body="";
@@ -6328,9 +6384,68 @@ function openAddMenu(wk,anchor){
   pop.querySelectorAll('[data-ai]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); var fn=items[+b.dataset.ai][2]; _closeAddMenu(); fn(); }); });
   setTimeout(function(){ document.addEventListener('click',_closeAddMenu,true); },0);
 }
-/* Dealer / Prospect add — full master-library search is built in the next phase.
-   Interim: focus the dealer library so a dealer can be dragged into the week. */
-function openDealerAdd(wk){ var s=document.getElementById('sbSearch'); if(s){ s.focus(); s.scrollIntoView({block:'center'}); } }
+/* Add any account (current dealer, cross-territory dealer, or prospect) to THIS
+   trip's week as a visit — stamped with the CURRENT territory so it appears in
+   this schedule/map even if the dealer's home territory is different (#10). */
+function addDealerToWeek(dealerId,wk,day){
+  var d=uniById(dealerId)||byId[dealerId]; if(!d) return;
+  XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
+    terr:terr, wk:parseInt(wk,10), day:(day==null?0:day), time:'', dur:60, type:'visit', notes:'', done:false});
+  savePlan(); refreshPlanner();
+}
+/* Dealer / Prospect picker: search the master library or quick-create a
+   potential/prospect/competitor, then drop it straight into the week. */
+function openDealerAdd(wk){
+  _closeAddMenu();
+  var wrap=document.getElementById('dpModal'); if(wrap) wrap.remove();
+  wrap=document.createElement('div'); wrap.id='dpModal'; wrap.className='aqmodal';
+  var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
+  var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
+  wrap.innerHTML='<div class="aqmodal-box">'
+    +'<div class="aqmodal-h">Add to '+esc(typeof wk==='number'?('WK '+wk):'trip')+'</div>'
+    +'<input id="dpSearch" '+inp+' placeholder="Search any dealer, prospect or territory…" autocomplete="off">'
+    +'<div id="dpResults" class="dp-results"></div>'
+    +'<div class="dp-div">or create a new account</div>'
+    +'<label '+lbl+'>Name<input id="dpName" '+inp+'></label>'
+    +'<label '+lbl+'>Address<input id="dpAddr" '+inp+' placeholder="Street, City, State"></label>'
+    +'<div style="display:flex;gap:8px;margin-top:8px">'
+      +'<label '+lbl+' style="flex:1">Type<select id="dpType" '+inp+'><option value="potential">Potential Dealer</option><option value="prospect">New Prospect</option><option value="competitor">Competitor</option></select></label>'
+      +'<label '+lbl+' style="flex:1">Contact (optional)<input id="dpContact" '+inp+'></label>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:8px">'
+      +'<label '+lbl+' style="flex:1">Phone (optional)<input id="dpPhone" '+inp+'></label>'
+    +'</div>'
+    +'<label '+lbl+'>Notes (optional)<input id="dpNotes" '+inp+'></label>'
+    +'<div id="dpMsg" style="font-size:11px;color:#666;min-height:15px;margin-top:8px"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px"><button id="dpCreate" class="btn" style="flex:1;padding:9px;background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700">Create & add to trip</button>'
+    +'<button id="dpClose" class="btn" style="padding:9px">Close</button></div>'
+    +'</div>';
+  document.body.appendChild(wrap);
+  var $=function(s){return wrap.querySelector(s);};
+  $('#dpClose').onclick=function(){ wrap.remove(); };
+  wrap.onclick=function(e){ if(e.target===wrap) wrap.remove(); };
+  var renderResults=function(){
+    var q=($('#dpSearch').value||'').toLowerCase().trim();
+    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type to search every territory…</div>'; return; }
+    var rows=planningUniverse().filter(function(d){ return (d.name||'').toLowerCase().includes(q)||(d.loc||'').toLowerCase().includes(q)||(d.territory||'').toLowerCase().includes(q); }).slice(0,30);
+    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — create it below.</div>'; return; }
+    $('#dpResults').innerHTML=rows.map(function(d){
+      var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
+      return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
+        +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span></button>';
+    }).join('');
+    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){ b.onclick=function(){ addDealerToWeek(b.dataset.pick,wk); wrap.remove(); }; });
+  };
+  $('#dpSearch').addEventListener('input',renderResults); renderResults();
+  $('#dpCreate').onclick=function(){
+    var nm=$('#dpName').value.trim(); if(!nm){ $('#dpMsg').textContent='Enter a name.'; return; }
+    $('#dpMsg').textContent='Locating address…';
+    addProspect({ name:nm, address:$('#dpAddr').value.trim(), ptype2:$('#dpType').value,
+      contact:$('#dpContact').value.trim(), phone:$('#dpPhone').value.trim(), notes:$('#dpNotes').value.trim(), territory:terr },
+      function(p){ addDealerToWeek(p.id,wk); wrap.remove(); });
+  };
+  setTimeout(function(){ $('#dpSearch').focus(); },30);
+}
 /* ---------- Leader Map (company-wide) ---------- */
 let _lvMap=null;
 function lvDrawMap(){
@@ -6749,6 +6864,7 @@ function invalidateUniverse(){ _uni=null; _uniById=null; try{ _sfLkMemo={}; }cat
 function planningUniverse(){
   if(!_uni){
     _uni=buildMasterUniverse();
+    if(PROSPECTS&&PROSPECTS.length) _uni=_uni.concat(PROSPECTS);   /* planner-only accounts */
     _uniById={}; _uni.forEach(function(d){ _uniById[d.id]=d; });
     ensureAssignDefaults(_uni); /* in-memory scheduling defaults for dealers new to the planner */
   }
@@ -7261,7 +7377,7 @@ function applyPlanSnapshot(p){
   ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
-  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{};
+  VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{}; PROSPECTS=Array.isArray(p.prospects)?p.prospects:[];
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
@@ -8135,7 +8251,7 @@ function pbFlushPending(hidden){
 window.addEventListener('pagehide',function(){ pbFlushPending(true); });
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') pbFlushPending(true); });
 function ensureAssignDefaults(list){ (list||DEALERS).forEach(function(d){ if(ASSIGN[d.id]===undefined)ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool'; if(DAY[d.id]===undefined)DAY[d.id]=null; if(TIME[d.id]===undefined)TIME[d.id]=''; }); }
-function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
+function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&data.length){ DEALERS=data.map(function(d){return Object.assign({},d);}); reindex(); ensureAssignDefaults(); } } else if(id==='plan'){ var p=data||{}; if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
   if(!SB){cb&&cb();return;}
   SB.from('prebooking_state').select('id,data,version').then(function(res){
