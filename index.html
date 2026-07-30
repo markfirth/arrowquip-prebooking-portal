@@ -550,6 +550,16 @@ body.wkfull-on{overflow:hidden;}
 .tv-code{flex:0 0 96px;text-transform:uppercase;font-weight:700;}
 .tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tv-place i{color:var(--muted-2);}
+/* compact collapsed flight / hotel row */
+.tvcard.tvcompact{display:flex;align-items:center;}
+.tvc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:8px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
+.tvc-row:hover{background:#fafbfc;}
+.tvc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
+.tvc-main{flex:0 1 auto;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tvc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;}
+.tvc-caret{flex:0 0 auto;margin-left:auto;font-size:10px;color:#aab0b6;}
+.tvc-del{flex:0 0 auto;}
+.tv-collapse{flex:0 0 auto;border:0;background:transparent;color:#9aa0a6;font-size:12px;cursor:pointer;padding:0 3px;}
 .tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
 .tv-geo:hover{border-color:#2563eb;color:#2563eb;}
 /* itinerary + legs */
@@ -1633,6 +1643,11 @@ let _mapWk=null;                /* which wk currently hosts the map (per current
 let _activeMapHost=null;        /* resolved host wk for this render */
 let _wkFull=null;               /* 'terr|wk' shown full-screen, or null */
 function wkMapOn(wk){ return WKMAPON[terr+'|'+wk]!==false; }
+/* Flights & hotels render as COMPACT one-line rows by default; click to expand
+   the full editing form. Device-local view state (not persisted). */
+let TVEXP={};
+function tvExpanded(id){ return !!TVEXP[id]; }
+function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; refreshPlanner(); }
 let SETTINGS={};
 let LOGI=[];
 /* Per-dealer trip-stop extras (cost/notes/confirmation). Dealer stops are derived
@@ -3860,6 +3875,24 @@ function travelCard(it,wk,tl){
   var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
   var located=travelHasLocation(it);
+  /* ---- compact collapsed row for flights & hotels (click to expand) ---- */
+  var _mainT=it.time?t12s(it.time):((tl&&tl.sug!=null)?t12s(addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440)):'');
+  if((isFlight||isHotel) && !tvExpanded(it.id)){
+    var whenWord=isHotel?'Check-in':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'Lands'));
+    var label=isFlight
+      ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
+      : (esc(it.name||'Hotel'));
+    var timePart=_mainT?('<span class="tvc-time">'+whenWord+' '+_mainT+'</span>'):'';
+    var stat=located?'':'<span class="tv-bad">Needs address</span>';
+    return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
+      +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
+        +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
+        +'<span class="tvc-main">'+label+'</span>'+timePart+stat
+        +'<span class="tvc-caret">▸</span>'
+      +'</button>'
+      +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
+    +'</div>';
+  }
 
   var typeSel='<select class="tv-type" data-tv="'+it.id+'" data-f="type">'
     +Object.keys(TRAVEL_TYPES).map(function(k){
@@ -3953,11 +3986,13 @@ function travelCard(it,wk,tl){
   var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
   /* travel cards move exactly like visit cards: drag to a day (or a position
      within one) and every arrival downstream recalculates */
+  var collapseBtn=(isFlight||isHotel)?('<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>'):'';
   return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
       +typeSel
       +badge
+      +collapseBtn
       +lockBtn
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
@@ -4152,7 +4187,10 @@ function dvCard(v,tl){
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
-    +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)+'</div>'
+    +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)
+      +(function(){ var d=v.dealer; if(!d) return ''; var t=prospectTypeLabel(d);
+        if(!t||t==='Current Dealer') return ''; return ' <span class="ptbadge pt-'+(d._prospect?d.ptype2:'current')+'">'+esc(t)+'</span>'; })()
+    +'</div>'
     +ctl+frame
     +'</div>';
 }
@@ -7545,6 +7583,7 @@ function wireDnD(){
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id.slice(0,3)==='xv:'?(XVISITS.filter(function(x){return 'xv:'+x.id===id;})[0]||{}).dealer:id);}));
   /* travel items: one delegated handler for every typed field */
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
+  document.querySelectorAll('#weeks [data-tvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;tvToggleExpand(b.dataset.tvexpand);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
