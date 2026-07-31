@@ -553,6 +553,11 @@ body.wkfull-on{overflow:hidden;}
 .tv-place i{color:var(--muted-2);}
 /* compact collapsed flight / hotel row */
 .tvcard.tvcompact{display:flex;align-items:center;}
+.kcard.kcompact{display:flex;align-items:center;padding:0;cursor:grab;}
+.kcard.kcompact .tvc-row{flex:1 1 auto;}
+.kcard.kcompact .vbadge{flex:0 0 auto;padding:2px 6px;}
+.kcard.kcompact .vokdot.on{flex:0 0 auto;color:#15803d;font-weight:800;font-size:11px;}
+.kcard.kcompact .ptbadge{flex:0 0 auto;}
 .tvc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:8px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
 .tvc-row:hover{background:#fafbfc;}
 .tvc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
@@ -1344,7 +1349,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div class="planwrap" id="planwrap">
       <div class="sidebar">
         <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
-          <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
+          <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"></div>
         <div class="sbbody" id="poolBody" data-drop="pool"></div>
       </div>
       <div class="boardcol"><div class="boardscroll"><div class="weeks" id="weeks"></div></div><div class="hint">Drag a dealer into a week, set day &amp; time, confirm each appointment, then Confirm week. Saves automatically.</div></div>
@@ -1709,6 +1714,12 @@ function wkMapOn(wk){ return WKMAPON[terr+'|'+wk]!==false; }
 let TVEXP={};
 function tvExpanded(id){ return !!TVEXP[id]; }
 function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; refreshPlanner(); }
+/* Dealer / prospect visit cards collapse the same way (default collapsed). */
+let VEXP={};
+function vExpanded(ref){ return !!VEXP[ref]; }
+function vToggleExpand(ref){ VEXP[ref]=!VEXP[ref]; refreshPlanner(); }
+/* Place a duplicated event immediately below the original in the manual order. */
+function ordPlaceBelow(afterKey,newKey){ var base=ORD[afterKey]; if(base==null){ var tm=ordKeyTime(afterKey); base=(tm!=null?tm:100000); } ORD[newKey]=base+0.5; }
 let SETTINGS={};
 let LOGI=[];
 /* Per-dealer trip-stop extras (cost/notes/confirmation). Dealer stops are derived
@@ -2164,7 +2175,7 @@ function confLocOf(id){ var c=CONFLOC[id]; return (c&&c.confirmed&&c.lat!=null&&
    planner (never the Master Sheet or company KPIs). Persisted in the plan.
    (PROSPECTS is declared earlier, before reindex() first runs.) */
 const PROSPECT_TYPES={potential:'Potential Dealer',prospect:'New Prospect',competitor:'Competitor'};
-function prospectTypeLabel(d){ return d&&d._prospect?(PROSPECT_TYPES[d.ptype2]||'Prospect'):(d&&d._sf===false?'':'Current Dealer'); }
+function prospectTypeLabel(d){ return d&&d._prospect?(PROSPECT_TYPES[d.ptype2]||'Prospect'):'Current Dealer'; }
 function makeProspect(o){
   var n=1; while(byId['P'+n]||PROSPECTS.some(function(p){return p.id==='P'+n;})) n++;
   return { id:'P'+n, name:o.name||'New account', ptype2:(PROSPECT_TYPES[o.ptype2]?o.ptype2:'potential'),
@@ -3147,16 +3158,14 @@ function dealerCard(d){
   var typeLbl=prospectTypeLabel(d);
   var badgeCls=isPro?('pt-'+d.ptype2):'pt-current';
   var badge=typeLbl?('<span class="ptbadge '+badgeCls+'">'+esc(typeLbl)+'</span>'):'';
-  /* travel-only: location (+ territory for cross-territory search). No revenue,
-     no loads, no tier — business data lives on the Dashboard/Territory pages. */
-  var meta='<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>';
+  /* Minimal travel card: name + [type badge] [Pre-book] [Visit]. No location,
+     territory, revenue, loads or tier — none of it helps plan the trip. */
   var actions=isPro
-    ? ('<span class="dmk"><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>')
-    : ('<span class="dmk"><button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>');
+    ? ('<button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button>')
+    : ('<button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button>');
   return '<div class="dcard'+(isPro?' dcard-pro':'')+'">'
-    +'<div class="dn">'+esc(d.name)+' '+badge+'</div>'
-    +'<div class="dm">'+meta+'</div>'
-    +'<div class="db">'+(isPro&&d.contactName?('<span class="dloc">'+esc(d.contactName)+'</span>'):'')+actions+'</div></div>';
+    +'<div class="dn">'+esc(d.name)+'</div>'
+    +'<div class="db">'+badge+'<span class="dmk">'+actions+'</span></div></div>';
 }
 function renderPlanner(){
   document.getElementById("planTitle").textContent=terr+" · Trips";
@@ -3169,20 +3178,14 @@ function renderPlanner(){
   var master=!!search;
   let pool=master ? planningUniverse().slice() : dealersIn(terr).slice();
   const poolAll=pool.slice();
-  var stsel=document.getElementById("poolState");
-  if(stsel){ var sts=[]; poolAll.forEach(function(d){ if(d.loc && d.loc!=='—' && sts.indexOf(d.loc)<0) sts.push(d.loc); }); sts.sort(function(a,b){return REGION_ORDER.indexOf(a)-REGION_ORDER.indexOf(b);});
-    stsel.innerHTML='<option value="">All states</option>'+sts.map(function(s){return '<option value="'+s+'"'+(poolState===s?' selected':'')+'>'+s+'</option>';}).join('');
-    var sortsel=document.getElementById("poolSort"); if(sortsel) sortsel.value=poolSort; }
+  /* Library is just a search box + an A–Z scrolling list — no state/sort dropdowns. */
   if(search) pool=pool.filter(function(d){ return (d.name||'').toLowerCase().includes(search)||(d.loc||'').toLowerCase().includes(search)||(d.territory||'').toLowerCase().includes(search); });
-  if(poolState) pool=pool.filter(function(d){return d.loc===poolState;});
-  if(poolSort==='state') pool.sort(function(a,b){var ra=REGION_ORDER.indexOf(a.loc),rb=REGION_ORDER.indexOf(b.loc);return (ra-rb)||(a.name||'').localeCompare(b.name||'');});
-  else pool.sort(function(a,b){return (a.name||'').localeCompare(b.name||'');});   /* A–Z by name — no revenue sort */
+  pool.sort(function(a,b){return (a.name||'').localeCompare(b.name||'');});
   document.getElementById("sbTitle").textContent=master?("Master Library — all territories"):("Dealer Library — "+terr);
   /* dealer-count and drag instructions removed — the library starts cleanly at its controls */
   var _sbSub=document.getElementById("sbSub"); if(_sbSub){ _sbSub.textContent=''; _sbSub.style.display='none'; }
   let body="";
   if(!pool.length){ body=`<div class="poolempty">${poolAll.length?'No matches.':'No dealers in this territory yet.'}</div>`; }
-  else if(poolSort==='state'){ let cur=null; pool.forEach(d=>{ if(d.loc!==cur){cur=d.loc; body+=`<div class="grp">${d.loc||'—'}</div>`;} body+=dealerCard(d); }); }
   else { body=pool.map(dealerCard).join(''); }
   document.getElementById("poolBody").innerHTML=body;
   const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
@@ -4447,12 +4450,28 @@ function addTravel(type,wk){
    unscheduled ("Needs a day") in the same week; drag it to the day you want. */
 function duplicateTravel(id){
   var src=LOGI.filter(function(x){return x.id===id;})[0]; if(!src) return;
-  var copy=Object.assign({},src);
-  copy.id='L'+Date.now()+Math.floor(Math.random()*1000);
-  copy.day=null; copy.time=''; copy.day2=null; copy.time2=''; copy.conf='';   /* place fresh, new confirmation */
+  var copy=Object.assign({},src);                       /* copy every field (place, duration, notes, times) */
+  copy.id='L'+Date.now()+Math.floor(Math.random()*1000);/* new id only */
   LOGI.push(copy);
+  ordPlaceBelow('m:'+id,'m:'+copy.id);                  /* immediately below the original */
   savePlan(); refreshPlanner();
-  try{ aqToast('Duplicated — drag it to a day',true); }catch(e){}
+  try{ aqToast('Duplicated',true); }catch(e){}
+}
+/* Duplicate a dealer / prospect visit — same dealer, day, time, duration, notes;
+   the copy becomes an additional visit placed right below the original. */
+function duplicateVisit(ref){
+  var kind=ref.charAt(0), id=ref.slice(2);
+  var dealer,wk,day,time,dur,notes,type,terrName;
+  if(kind==='i'){ var d=uniById(id)||byId[id]; if(!d) return; dealer=id; wk=ASSIGN[id]; day=DAY[id]; time=TIME[id]||''; dur=DUR[id]||90; notes=(STOPX[id]&&STOPX[id].notes)||''; type=vType(id); terrName=d.territory||terr; }
+  else { var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return; dealer=x.dealer; wk=x.wk; day=x.day; time=x.time||''; dur=x.dur||60; notes=x.notes||''; type=x.type; terrName=x.terr; }
+  if(!(typeof wk==='number'||wk==='remote')) return;
+  if(wk==='remote') return;                             /* remote visits aren't day-scheduled */
+  var nx={id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealer, terr:terrName||terr,
+    wk:parseInt(wk,10), day:day, time:time, dur:dur, type:(type==='visit'?'visit':'prebook'), notes:notes, done:false};
+  XVISITS.push(nx);
+  ordPlaceBelow((kind==='i'?'d:':'x:')+id, 'x:'+nx.id);
+  savePlan(); refreshPlanner();
+  try{ aqToast('Duplicated',true); }catch(e){}
 }
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
@@ -4589,22 +4608,24 @@ function travelCard(it,wk,tl){
   var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
   var located=travelHasLocation(it);
-  /* ---- compact collapsed row for flights & hotels (click to expand) ---- */
+  /* ---- compact collapsed row (ALL travel types) — click to expand & edit ----
+     Summary reads: TIME • name (• duration for stops that have one). */
   var _mainT=it.time?t12s(it.time):((tl&&tl.sug!=null)?t12s(addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440)):'');
-  if((isFlight||isHotel) && !tvExpanded(it.id)){
-    var whenWord=isHotel?'Check-in':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'Lands'));
-    var label=isFlight
-      ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
-      : (esc(it.name||'Hotel'));
-    var timePart=_mainT?('<span class="tvc-time">'+whenWord+' '+_mainT+'</span>'):'';
-    var stat=located?'':'<span class="tv-bad">Needs address</span>';
+  if(!tvExpanded(it.id)){
+    var isDwellC=travelHasDuration(ty);
+    var nameC=isFlight
+      ? ('Flight'+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
+      : (esc(it.name||'')||esc(T.label));
+    var durC=isDwellC?(' • '+fmtDur(+it.dur||60)):'';
+    var timeC=_mainT?('<b>'+esc(_mainT)+'</b> • '):'';
+    var statC=located?'':'<span class="tv-bad">Needs address</span>';
     return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
       +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
-        +'<span class="tvc-main">'+label+'</span>'+timePart+stat
+        +'<span class="tvc-main">'+timeC+nameC+durC+'</span>'+statC
         +'<span class="tvc-caret">▸</span>'
       +'</button>'
-      +'<button class="tv-dup tvc-dup" data-ldup="'+it.id+'" title="Duplicate — reuse this place for a return trip">⧉</button>'
+      +'<button class="tv-dup tvc-dup" data-ldup="'+it.id+'" title="Duplicate">⧉</button>'
       +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>';
   }
@@ -4701,7 +4722,7 @@ function travelCard(it,wk,tl){
   var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
   /* travel cards move exactly like visit cards: drag to a day (or a position
      within one) and every arrival downstream recalculates */
-  var collapseBtn=(isFlight||isHotel)?('<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>'):'';
+  var collapseBtn='<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>';
   return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
@@ -4876,6 +4897,23 @@ function dvCard(v,tl){
   var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=isFixed?v.time:(autoT||v.time);
   var frame=(showT&&!v.remote)?('<div class="kc-frame">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
+  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
+  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  var proBadge=(function(){ var d=v.dealer; if(!d) return ''; var t=prospectTypeLabel(d); if(!t||t==='Current Dealer') return ''; return '<span class="ptbadge pt-'+(d._prospect?d.ptype2:'current')+'">'+esc(t)+'</span>'; })();
+  /* ---- compact collapsed visit card — TIME • name • duration; click to edit ---- */
+  if(!v.remote && !vExpanded(v.ref)){
+    var timeV=showT?('<b>'+esc(t12s(showT))+'</b> • '):'';
+    return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+' kcompact" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
+      +'<button class="tvc-row" data-vexpand="'+v.ref+'" title="Click to edit">'
+        +'<span class="vbadge '+B.cls+'">'+B.icon+'</span>'
+        +'<span class="tvc-main">'+timeV+esc(v.name)+' • '+fmtDur(v.dur)+'</span>'+proBadge
+        +(v.done?'<span class="vokdot on" title="Confirmed">✓</span>':'')
+        +'<span class="tvc-caret">▸</span>'
+      +'</button>'
+      +'<button class="tv-dup" data-vdup="'+v.ref+'" title="Duplicate">⧉</button>'
+      +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove">✕</button>'
+    +'</div>';
+  }
   /* the lock is always on the card — lock now or after the fact */
   var lockBtn='';
   if(!v.remote){
@@ -4894,19 +4932,16 @@ function dvCard(v,tl){
       +lockBtn
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
-  /* unreachable at its set time: fade the card red instead of a banner */
-  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
-  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
   return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
+      +(v.remote?'':'<button class="tv-collapse" data-vexpand="'+v.ref+'" title="Collapse">▾</button>')
+      +'<button class="tv-dup" data-vdup="'+v.ref+'" title="Duplicate">⧉</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
-    +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)
-      +(function(){ var d=v.dealer; if(!d) return ''; var t=prospectTypeLabel(d);
-        if(!t||t==='Current Dealer') return ''; return ' <span class="ptbadge pt-'+(d._prospect?d.ptype2:'current')+'">'+esc(t)+'</span>'; })()
+    +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)+(proBadge?(' '+proBadge):'')
     +'</div>'
     +ctl+frame
     +'</div>';
@@ -8304,6 +8339,8 @@ function wireDnD(){
   /* travel items: one delegated handler for every typed field */
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;tvToggleExpand(b.dataset.tvexpand);}));
+  document.querySelectorAll('#weeks [data-vexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;vToggleExpand(b.dataset.vexpand);}));
+  document.querySelectorAll('#weeks [data-vdup]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;duplicateVisit(b.dataset.vdup);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
@@ -8840,8 +8877,7 @@ function render(){
 
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";render();});
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
-document.getElementById("poolState").addEventListener("change",function(e){poolState=e.target.value;renderPlanner();wireDnD();});
-document.getElementById("poolSort").addEventListener("change",function(e){poolSort=e.target.value;renderPlanner();wireDnD();});
+/* poolState / poolSort dropdowns removed — library is just search + A–Z scroll */
 document.getElementById("mTerr").addEventListener("change",function(e){mFilterTerr=e.target.value;renderMaster();});
 document.getElementById("mAM").addEventListener("change",function(e){mFilterAM=e.target.value;renderMaster();});
 document.getElementById("mArea").addEventListener("change",function(e){mFilterArea=e.target.value;renderMaster();});
