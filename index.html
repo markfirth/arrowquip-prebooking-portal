@@ -560,6 +560,8 @@ body.wkfull-on{overflow:hidden;}
 .tvc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;}
 .tvc-caret{flex:0 0 auto;margin-left:auto;font-size:10px;color:#aab0b6;}
 .tvc-del{flex:0 0 auto;}
+.tv-dup{flex:0 0 auto;border:0;background:transparent;color:#9aa0a6;font-size:13px;line-height:1;cursor:pointer;padding:0 4px;}
+.tv-dup:hover{color:#2563eb;}
 .tv-collapse{flex:0 0 auto;border:0;background:transparent;color:#9aa0a6;font-size:12px;cursor:pointer;padding:0 3px;}
 .tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
 .tv-geo:hover{border-color:#2563eb;color:#2563eb;}
@@ -4440,6 +4442,18 @@ function addTravel(type,wk){
     conf:'', notes:''});
   savePlan(); refreshPlanner();
 }
+/* Duplicate a hotel / flight / rental / trade show / other stop — reuse the same
+   place (name, address, coordinates, notes) for a return trip. The copy lands
+   unscheduled ("Needs a day") in the same week; drag it to the day you want. */
+function duplicateTravel(id){
+  var src=LOGI.filter(function(x){return x.id===id;})[0]; if(!src) return;
+  var copy=Object.assign({},src);
+  copy.id='L'+Date.now()+Math.floor(Math.random()*1000);
+  copy.day=null; copy.time=''; copy.day2=null; copy.time2=''; copy.conf='';   /* place fresh, new confirmation */
+  LOGI.push(copy);
+  savePlan(); refreshPlanner();
+  try{ aqToast('Duplicated — drag it to a day',true); }catch(e){}
+}
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
@@ -4590,6 +4604,7 @@ function travelCard(it,wk,tl){
         +'<span class="tvc-main">'+label+'</span>'+timePart+stat
         +'<span class="tvc-caret">▸</span>'
       +'</button>'
+      +'<button class="tv-dup tvc-dup" data-ldup="'+it.id+'" title="Duplicate — reuse this place for a return trip">⧉</button>'
       +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>';
   }
@@ -4694,6 +4709,7 @@ function travelCard(it,wk,tl){
       +badge
       +collapseBtn
       +lockBtn
+      +'<button class="tv-dup" data-ldup="'+it.id+'" title="Duplicate — reuse this place for a return trip">⧉</button>'
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
     +'<div class="tv-body">'+place+when+durRow+when2+flight+conf+tlRow+'</div>'
@@ -8292,6 +8308,7 @@ function wireDnD(){
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
   document.querySelectorAll('#weeks [data-tlock]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlToggleLock(b.dataset.tlock);}));
+  document.querySelectorAll('[data-ldup]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;duplicateTravel(b.dataset.ldup);}));
   document.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();undoSnap('Travel item deleted');LOGI=LOGI.filter(function(x){return x.id!==b.dataset.ldel;});delete ORD['m:'+b.dataset.ldel];savePlan();refreshPlanner();aqToast('Travel item deleted',true);}));
   document.querySelectorAll('.ldadd').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var c=b.closest('.kcard')||b.closest('.tstop'); if(c)c.classList.toggle('pickopen');}));
   document.querySelectorAll('[data-jappt]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var pr=b.dataset.jappt.split('|'); toggleJappt(pr[0],pr[1]);}));
