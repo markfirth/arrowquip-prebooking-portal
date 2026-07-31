@@ -1377,7 +1377,7 @@ const TIERS=["Tier 2","Tier 3","Tier 4","Tier 5","Tier 6","New"];
 let DEALERS = FLAT.dealers.map(d=>Object.assign({},d));
 let PROSPECTS=[];   /* planner-created accounts — declared before reindex() uses it */
 /* event-level merge state — declared before loadPlan() uses EVMETA (avoid TDZ) */
-let EVENT_LEVEL_MERGE=true, EVMETA={}, EVSNAP={}, EVBASE={}, EVDIRTY={}, EVCONFLICT={};
+let EVENT_LEVEL_MERGE=false, EVMETA={}, EVSNAP={}, EVBASE={}, EVDIRTY={}, EVCONFLICT={};
 /* ===== Collaboration Test Mode (?collabTest=1) =====
    HARD ISOLATION: every cloud read/write/realtime/history op uses PLAN_KEY, which
    becomes 'plan_collaboration_test' in test mode. It is IMPOSSIBLE for a collabTest
@@ -1387,6 +1387,11 @@ const COLLAB_TEST = (function(){ try{ return new URLSearchParams(location.search
 const PLAN_KEY = COLLAB_TEST ? 'plan_collaboration_test' : 'plan';
 const LS_PLAN_KEY = COLLAB_TEST ? 'aq2027planv2_collabtest' : 'aq2027planv2';
 function collabLog(op){ if(COLLAB_TEST){ try{ console.log('[collabTest] '+op+' → plan key = '+PLAN_KEY); }catch(e){} } }
+/* Event-level merge ships ENABLED on preview/localhost and in Collaboration Test
+   Mode, but stays DISABLED on the live production host until the two-browser
+   collaboration pass is signed off — production keeps the proven whole-plan sync.
+   Flip by promoting the branch or removing this host guard. */
+EVENT_LEVEL_MERGE = COLLAB_TEST || (function(){ try{ return !/(^|\.)pre-bookings\.com$/i.test(location.hostname||''); }catch(e){ return false; } })();
 const ORIG = FLAT.dealers.map(d=>Object.assign({},d));
 let byId={}; function reindex(){byId={};DEALERS.forEach(d=>byId[d.id]=d); (PROSPECTS||[]).forEach(function(p){byId[p.id]=p;}); invalidateUniverse();} reindex();
 (function(){try{const s=localStorage.getItem('aq2027dealersv1');if(s){const arr=JSON.parse(s);if(Array.isArray(arr)&&arr.length){DEALERS=arr.map(d=>Object.assign({},d));reindex();}}}catch(e){}})();
