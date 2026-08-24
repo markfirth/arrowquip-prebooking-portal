@@ -6903,6 +6903,7 @@ function roadRoute(a,b){ /* [lat,lon],[lat,lon] -> Promise<{pts,km,min}|null> */
   _rtPending[k].then(function(){ delete _rtPending[k]; },function(){ delete _rtPending[k]; });
   return _rtPending[k];
 }
+var _RT_ORS_KEY='';  /* paste a free openrouteservice.org API key here for road-accurate, reliable routing (see deploy note) */
 var _RT_OSRM=['https://router.project-osrm.org','https://routing.openstreetmap.de/routed-car'];
 function decodePoly6(str){ /* Valhalla encoded polyline, 1e-6 precision */
   var pts=[],i=0,lat=0,lon=0;
@@ -6952,7 +6953,17 @@ function _rtPump(){
       else done(null);
     }).catch(function(){ done(null); });
   }
-  tryOSRM(0);
+  function tryORS(){
+    if(!_RT_ORS_KEY || (_rtDead.ors||0)>=2){ tryOSRM(0); return; }
+    var url='https://api.openrouteservice.org/v2/directions/driving-car?api_key='+encodeURIComponent(_RT_ORS_KEY)
+      +'&start='+j.a[1]+','+j.a[0]+'&end='+j.b[1]+','+j.b[0];
+    _rtFetch(url).then(function(r){ return r.ok?r.json():null; }).then(function(x){
+      var ft=x&&x.features&&x.features[0], co=ft&&ft.geometry&&ft.geometry.coordinates, sm=ft&&ft.properties&&ft.properties.summary;
+      if(co&&co.length>1&&sm){ _rtDead.ors=0; done({pts:co.map(function(c){return [c[1],c[0]];}), km:sm.distance/1000, min:sm.duration/60}); }
+      else tryOSRM(0);
+    }).catch(function(){ _rtDead.ors=(_rtDead.ors||0)+1; tryOSRM(0); });
+  }
+  tryORS();
 }
 function flightArc(a,b){ /* gently curved flight path between two points */
   var mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
@@ -6993,7 +7004,14 @@ function drawLeg(map,gen,a,b,style,meta){
   }
   var estMi=roadMi([a.lat,a.lon],[b.lat,b.lon])||0;
   return roadRoute([a.lat,a.lon],[b.lat,b.lon]).then(function(rt){
-    if(!rt) return {km:estMi*1.60934,min:estMi/55*60,est:true};
+    if(!rt){
+      if(map._aqGen===gen){ try{
+        var _sc=(style&&style.color)||'#2563eb';
+        L.polyline([[a.lat,a.lon],[b.lat,b.lon]],{color:_sc,weight:2,opacity:.55,dashArray:'4 7',interactive:false}).addTo(map);
+        legHover(map,[[a.lat,a.lon],[b.lat,b.lon]],legTip(meta,estMi*1.60934,estMi/55*60)+'<br><i>straight-line estimate \u2014 road route unavailable</i>');
+      }catch(e){} }
+      return {km:estMi*1.60934,min:estMi/55*60,est:true};
+    }
     if(map._aqGen===gen){
       try{
         var st={color:style&&style.color||'#2563eb',weight:2,opacity:(style&&style.opacity)||.9,interactive:false};
@@ -7012,7 +7030,7 @@ function routeStatusCtl(map,gen,rs,redraw){
   var n=0; (rs||[]).forEach(function(r){ if(r&&r.est) n++; });
   if(!n) return;
   var div=L.DomUtil.create('div','aq-rtfail');
-  div.innerHTML=n+' route'+(n>1?'s':'')+' unavailable <button>Retry</button>';
+  div.innerHTML=n+' route'+(n>1?'s':'')+' estimated (straight-line) <button>Retry</button>';
   var ctl=L.control({position:'bottomleft'});
   ctl.onAdd=function(){ return div; };
   ctl.addTo(map);
