@@ -552,15 +552,40 @@ body.wkfull-on{overflow:hidden;}
 .tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tv-place i{color:var(--muted-2);}
 /* compact collapsed flight / hotel row */
-.tvcard.tvcompact{display:flex;align-items:center;}
-.tvc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:8px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
-.tvc-row:hover{background:#fafbfc;}
-.tvc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
-.tvc-main{flex:0 1 auto;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tvc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;}
-.tvc-caret{flex:0 0 auto;margin-left:auto;font-size:10px;color:#aab0b6;}
-.tvc-del{flex:0 0 auto;}
+.tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:36px;padding:0;margin-bottom:4px;}
+.tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:7px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
+.tvc-row:hover,.kcc-row:hover{background:#fafbfc;}
+.tvc-ic,.kcc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
+.tvc-main,.kcc-main{flex:0 1 auto;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tvc-time,.kcc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:46px;}
+.tvc-caret,.kcc-caret{flex:0 0 auto;margin-left:auto;font-size:10px;color:#aab0b6;}
+.tvc-del,.kcc-del{flex:0 0 auto;}
+.tvc-lock,.kcc-lock{flex:0 0 auto;font-size:11px;opacity:.85;}
+.tvc-stat,.kcc-stat{flex:0 0 auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#16a34a;}
+.tvc-stat.pend,.kcc-stat.pend{color:#9a6a12;}
 .tv-collapse{flex:0 0 auto;border:0;background:transparent;color:#9aa0a6;font-size:12px;cursor:pointer;padding:0 3px;}
+.wk-nav{display:inline-flex;align-items:center;gap:4px;margin-left:8px;}
+.wk-nav .tbtn{min-width:auto;padding:4px 8px;}
+.wk-nav .wk-now{font-weight:700;color:var(--aq-red);}
+.kday.today .kdayhd,.daycol.today .dch,.kdaybody.today{box-shadow:inset 3px 0 0 var(--aq-red);}
+.tm-upnext{background:#111;color:#fff;border-radius:12px;padding:14px 14px 12px;margin:8px 0 12px;}
+.tm-upnext .un-k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fca5a5;margin-bottom:4px;}
+.tm-upnext .un-name{font-size:17px;font-weight:700;line-height:1.2;margin:0 0 4px;}
+.tm-upnext .un-meta{font-size:12px;color:#d1d5db;line-height:1.45;}
+.tm-upnext .un-late{margin-top:6px;font-size:12px;font-weight:700;color:#fbbf24;}
+.tm-upnext .un-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.tm-upnext .tmbtn{min-height:38px;font-size:13px;}
+.tm-daynav,.tm-weeknav{display:flex;gap:6px;align-items:center;margin:6px 0 8px;}
+.tm-daynav .tmbtn,.tm-weeknav .tmbtn{flex:1 1 auto;min-height:36px;font-size:13px;}
+.tm-weeknav .tmbtn.on{background:#111;color:#fff;border-color:#111;}
+.tl-item.compact .tl-body{padding:6px 8px;}
+.tl-item.compact .tl-sub,.tl-item.compact .tl-chips,.tl-item.compact .tl-actions{display:none;}
+.tl-item.compact .tl-name{font-size:13px;}
+.tl-item .tl-tog{border:0;background:transparent;color:#9aa0a6;font-size:12px;padding:0 2px;cursor:pointer;}
+.tl-item.done .tl-name{opacity:.55;text-decoration:line-through;}
+.tm-phclass{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
+.tm-phclass button{font-size:11px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;}
+.tm-phclass button.on{border-color:#111;background:#111;color:#fff;}
 .tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
 .tv-geo:hover{border-color:#2563eb;color:#2563eb;}
 /* itinerary + legs */
@@ -1834,6 +1859,25 @@ function wkEnsureState(){ if(!_wkAnyStateForTerr()){ WKOPEN[terr+'|'+_wkDefaultO
 function wkIsOpen(wk){ wkEnsureState(); return !!WKOPEN[terr+'|'+wk]; }
 function wkToggle(wk){ wkEnsureState(); var k=terr+'|'+wk; WKOPEN[k]=!WKOPEN[k]; if(WKOPEN[k]) _mapWk=wk; _wkRerender(); }
 function wkSetAll(open){ wkNumsFor().forEach(function(w){ WKOPEN[terr+'|'+w]=open; }); _wkRerender(); }
+function wkFocusOnly(wk){
+  wkNumsFor().forEach(function(w){ WKOPEN[terr+'|'+w]=(w===wk); });
+  _mapWk=wk; try{ sessionStorage.setItem('aqFocusWk',String(wk)); }catch(e){}
+  _wkRerender();
+  setTimeout(function(){
+    var el=document.querySelector('#weeks [data-wk="'+wk+'"]')||document.getElementById('wk-'+wk);
+    if(el&&el.scrollIntoView) el.scrollIntoView({block:'start',behavior:'smooth'});
+  },40);
+}
+function wkGo(delta){
+  var cur=_wkDefaultOpen(), nums=wkNumsFor().filter(function(w){return typeof w==='number';});
+  try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!=='') cur=parseInt(s,10); }catch(e){}
+  var openKeys=Object.keys(WKOPEN).filter(function(k){return k.indexOf(terr+'|')===0&&WKOPEN[k];});
+  if(openKeys.length===1){ var w=openKeys[0].slice((terr+'|').length); if(w!=='remote') cur=parseInt(w,10); }
+  if(delta===0){ wkFocusOnly(wkCurrent()); return; }
+  var i=nums.indexOf(cur); if(i<0) i=nums.indexOf(wkCurrent());
+  var n=nums[Math.max(0,Math.min(nums.length-1,(i<0?0:i)+delta))];
+  if(n!=null) wkFocusOnly(n);
+}
 function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderCards&&renderCards(); wireDnD(); }); }
 /* ---- per-week map: ONE lazy Leaflet instance, moved into whichever expanded
    week currently hosts the map. Only that week shows the live map; others offer
@@ -1844,11 +1888,29 @@ let _mapWk=null;                /* which wk currently hosts the map (per current
 let _activeMapHost=null;        /* resolved host wk for this render */
 let _wkFull=null;               /* 'terr|wk' shown full-screen, or null */
 function wkMapOn(wk){ return WKMAPON[terr+'|'+wk]!==false; }
-/* Flights & hotels render as COMPACT one-line rows by default; click to expand
-   the full editing form. Device-local view state (not persisted). */
-let TVEXP={};
+/* Every itinerary item is COMPACT by default; click to expand details.
+   Device-local view state only — never written to the shared plan. */
+let TVEXP={}; try{ TVEXP=JSON.parse(localStorage.getItem('aqTVEXP')||'{}')||{}; }catch(e){ TVEXP={}; }
+let DVEXP={}; try{ DVEXP=JSON.parse(localStorage.getItem('aqDVEXP')||'{}')||{}; }catch(e){ DVEXP={}; }
 function tvExpanded(id){ return !!TVEXP[id]; }
-function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; refreshPlanner(); }
+function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; try{ localStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){} refreshPlanner(); }
+function dvExpanded(ref){ return !!DVEXP[ref]; }
+function dvToggleExpand(ref){ DVEXP[ref]=!DVEXP[ref]; try{ localStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} refreshPlanner(); }
+function cardsExpandAll(open){
+  /* open=true expands every visible card this render; false collapses all */
+  try{
+    if(!open){ TVEXP={}; DVEXP={}; }
+    else {
+      document.querySelectorAll('#weeks [data-lid]').forEach(function(el){ TVEXP[el.dataset.lid]=true; });
+      document.querySelectorAll('#weeks [data-vref]').forEach(function(el){ DVEXP[el.dataset.vref]=true; });
+      /* also expand from known plan items for next render */
+      (LOGI||[]).forEach(function(it){ if(it&&it.id) TVEXP[it.id]=true; });
+    }
+    localStorage.setItem('aqTVEXP',JSON.stringify(TVEXP));
+    localStorage.setItem('aqDVEXP',JSON.stringify(DVEXP));
+  }catch(e){}
+  refreshPlanner();
+}
 let SETTINGS={};
 let LOGI=[];
 /* Per-dealer trip-stop extras (cost/notes/confirmation). Dealer stops are derived
@@ -3331,8 +3393,15 @@ function renderPlanner(){
   var _psum=document.getElementById("planSummary");
   var _showReset=(terr!=='All'&&terr!=='Master');
   _psum.className='plansum bare';
-  _psum.innerHTML='<div class="tctl"><button class="tbtn" data-wkall="1">Expand all weeks</button><button class="tbtn" data-wkall="0">Collapse all weeks</button></div>'
-    +''   /* Reset visits / Clear planner removed: too easy to wipe planned appointments */;
+  _psum.innerHTML='<div class="tctl">'
+    +'<button class="tbtn" data-wkall="1">Expand all weeks</button><button class="tbtn" data-wkall="0">Collapse all weeks</button>'
+    +'<button class="tbtn" data-cardall="1" title="Expand every appointment card">Expand cards</button>'
+    +'<button class="tbtn" data-cardall="0" title="Collapse every appointment card">Collapse cards</button>'
+    +'<span class="wk-nav">'
+      +'<button class="tbtn" data-wkgo="-1" title="Previous week">‹ Prev</button>'
+      +'<button class="tbtn wk-now" data-wkgo="0" title="Jump to this week">This Week</button>'
+      +'<button class="tbtn" data-wkgo="1" title="Next week">Next ›</button>'
+    +'</span></div>';
   /* resolve which open week hosts the single map (one instance, not 15) */
   var openMap=nums.filter(function(w){ return wkIsOpen(w)&&wkMapOn(w); });
   _activeMapHost=(openMap.indexOf(_mapWk)>=0)?_mapWk:(openMap.length?openMap[0]:null);
@@ -4901,9 +4970,10 @@ function weekCard(wk){
         if(ia!=null) return -1; if(ib!=null) return 1;
         return a.t.localeCompare(b.t);
       });
-      cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
+      var isToday=(wk===wkCurrent()&&i===mobToday(wk));
+      cards+='<div class="kday'+(isToday?' today':'')+'"><b>'+l[0]+'</b> '+l[1]+(isToday?' · Today':'')+'</div>';
       /* each day is its own drop zone — the card's day comes from where it sits */
-      cards+='<div class="kdaybody" data-drop="'+wk+'|'+i+'">';
+      cards+='<div class="kdaybody'+(isToday?' today':'')+'" data-drop="'+wk+'|'+i+'">';
       entries.forEach(function(e){
         cards+=legBefore(e);
         cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk),tlOf(e)):(e.k==='x'?dvCard(dvViewX(e.x),tlOf(e)):travelCard(e.x,wk,tlOf(e))));
@@ -4998,6 +5068,21 @@ function dvCard(v,tl){
   var isFixed=!v.remote&&((tl&&(tl.locked||tl.conf))||(!tl&&(TLE.lock[tkey]||v.done)));
   var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=isFixed?v.time:(autoT||v.time);
+  /* ---- compact one-line row (click anywhere to expand) ---- */
+  if(!dvExpanded(v.ref)){
+    var lateClsC=(tl&&tl.lateMin)?' tl-late':'';
+    return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
+      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="Click to edit details">'
+        +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
+        +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
+        +'<span class="kcc-main">'+esc(v.name)+'</span>'
+        +(v.done?'<span class="kcc-stat">Conf</span>':'')
+        +(isFixed?'<span class="kcc-lock">🔒</span>':'')
+        +'<span class="kcc-caret">▸</span>'
+      +'</button>'
+      +'<button class="cx kcc-del" data-vdel="'+v.ref+'" title="Remove">✕</button>'
+    +'</div>';
+  }
   var frame=(showT&&!v.remote)?('<div class="kc-frame">'+t12s(showT)+'–'+t12s(addMin(showT,v.dur))+(days?(' +'+days+'d'):'')+' · '+fmtDur(v.dur)+'</div>'):'';
   /* the lock is always on the card — lock now or after the fact */
   var lockBtn='';
@@ -5024,6 +5109,7 @@ function dvCard(v,tl){
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
+      +'<button class="tv-collapse" data-dvexpand="'+v.ref+'" title="Collapse">▾</button>'
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
@@ -8556,6 +8642,9 @@ function wireDnD(){
   }));
   document.querySelectorAll('[data-wktoggle]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var v=b.dataset.wktoggle;wkToggle(v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('[data-wkall]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();wkSetAll(b.dataset.wkall==='1');}));
+  document.querySelectorAll('[data-cardall]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();cardsExpandAll(b.dataset.cardall==='1');}));
+  document.querySelectorAll('[data-wkgo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();wkGo(+b.dataset.wkgo);}));
+  document.querySelectorAll('#weeks [data-dvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;dvToggleExpand(b.dataset.dvexpand);}));
   var _wknum=function(v){return v==='remote'?'remote':parseInt(v,10);};
   document.querySelectorAll('[data-wkmapoff]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();WKMAPON[terr+'|'+b.dataset.wkmapoff]=false;_wkRerender();}));
   document.querySelectorAll('[data-wkmapon]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();delete WKMAPON[terr+'|'+b.dataset.wkmapon];_mapWk=_wknum(b.dataset.wkmapon);_wkRerender();}));
@@ -9093,7 +9182,7 @@ function render(){
     document.getElementById('planwrap').style.display=isPlan?'':'none';
     document.getElementById('terrSched').style.display='none';
     document.getElementById('terrMap').style.display=isMap?'':'none';
-    if(isPlan){ renderPlanner(); wireDnD(); }
+    if(isPlan){ renderPlanner(); wireDnD(); focusCurrentWeekOnce(); }
     else { renderTerrMap(); }
     document.getElementById('planTitle').textContent=terr+' · Trips';
   }
@@ -9377,6 +9466,19 @@ function withPreservedScroll(fn){
   sels.forEach(function(s){ try{ document.querySelectorAll(s).forEach(function(el){ if(el.scrollTop||el.scrollLeft) saved.push([el,el.scrollTop,el.scrollLeft]); }); }catch(e){} });
   function restore(){ try{ window.scrollTo(wx,wy); }catch(e){} saved.forEach(function(a){ try{ a[0].scrollTop=a[1]; a[0].scrollLeft=a[2]; }catch(e){} }); }
   try{ fn(); } finally { restore(); if(window.requestAnimationFrame) requestAnimationFrame(restore); }
+}
+var _didFocusWeek=false;
+function focusCurrentWeekOnce(){
+  if(_didFocusWeek) return;
+  try{ if(sessionStorage.getItem('aqSessionFocus')==='1'){ _didFocusWeek=true; return; } }catch(e){}
+  var wk=wkCurrent();
+  try{
+    var kept=sessionStorage.getItem('aqFocusWk');
+    if(kept!=null&&kept!==''){ wk=parseInt(kept,10); }
+    else { sessionStorage.setItem('aqSessionFocus','1'); }
+  }catch(e){}
+  _didFocusWeek=true;
+  try{ wkFocusOnly(wk); }catch(e){}
 }
 function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
 /* ============ TRIP-ORDER INVARIANT TESTS ============================
@@ -9889,7 +9991,8 @@ function mobTLItem(i,wk,isNext){
   var dealer=(i.kind==='dealer');
   var done=dealer?!!APPT[i.id]:(i.raw&&i.raw.done);
   var dest=mobHasDest(i);
-  var cls='tl-item'+(dealer?'':' travel')+(done?' done':'')+(isNext?' next':'');
+  var open=mobIsExpanded(i);
+  var cls='tl-item'+(dealer?'':' travel')+(done?' done':'')+(isNext?' next':'')+(open?'':' compact');
   var sub=[i.address,(i.kind==='travel'&&i.raw&&i.raw.conf)?('Conf# '+i.raw.conf):''].filter(Boolean).join(' · ');
   if(i.kind==='travel'&&(i.type==='flight_in'||i.type==='flight_out')&&i.raw&&(i.raw.airline||i.raw.flightNo))
     sub=[sub,[i.raw.airline,i.raw.flightNo].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
@@ -9898,38 +10001,73 @@ function mobTLItem(i,wk,isNext){
 
   var pill = done?'<span class="tm-pill ok">Done</span>'
            : (i.located?'<span class="tm-pill pend">Planned</span>':'<span class="tm-pill bad">No address</span>');
+  var lock=(dealer&&(TLE.lock['d:'+i.id]||TLE.lock['x:'+i.id]))?'🔒':'';
 
   var chips='';
-  if(dealer){
+  if(dealer&&open){
     var v=VISIT[i.id]||null, dur=DUR[i.id]||90, cc=[];
     cc.push('<span class="tl-chip">🕒 '+(Math.round(dur/60*10)/10)+'h</span>');
     if(v&&v.actions&&v.actions.length){ var dn=v.actions.filter(function(a){return a.done;}).length;
       cc.push('<span class="tl-chip'+(dn===v.actions.length?' ok':'')+'">✓ '+dn+'/'+v.actions.length+' tasks</span>'); }
     if(v&&(v.notes||v.attendees||v.followUp||v.nextVisit)) cc.push('<span class="tl-chip">📝 Notes</span>');
-    /* photo count is cloud-backed → hydrated after render */
     cc.push('<span class="tl-chip" data-phcount="'+i.id+'" style="display:none">📷</span>');
     chips='<div class="tl-chips">'+cc.join('')+'</div>';
   }
 
-  var actions='<div class="tl-actions">'
-    +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">'+tmIcon('nav',15)+' Navigate</a>')
-          :('<button class="tmbtn" disabled>'+tmIcon('nav',15)+' Navigate</button>'))
-    +(dealer?('<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">'+tmIcon('clipboard',17)+'</button>')
-            :('<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>'))
-    +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="Mark complete">✓</button>'
-    +'</div>';
+  var actions='';
+  if(open){
+    actions='<div class="tl-actions">'
+      +(dest?('<a class="tmbtn nav" href="'+navUrl(i)+'" target="_blank" rel="noopener">'+tmIcon('nav',15)+' Navigate</a>')
+            :('<button class="tmbtn" disabled>'+tmIcon('nav',15)+' Navigate</button>'))
+      +(dealer?('<button class="tmbtn icon" data-mobvisit="'+i.id+'" title="Visit report">'+tmIcon('clipboard',17)+'</button>')
+              :('<button class="tmbtn icon" data-mobedit="'+i.kind+':'+i.id+'" title="Edit">✎</button>'))
+      +'<button class="tmbtn icon '+(done?'done':'')+'" data-mobdone="'+i.kind+':'+i.id+'" title="'+(done?'Reopen':'Mark complete')+'">✓</button>'
+      +'</div>';
+  }
 
-  return '<div class="'+cls+'">'
+  return '<div class="'+cls+'" data-mobexp="'+mobItemKey(i)+'">'
     +'<div class="tl-rail"><span class="tl-time">'+(i.time?t12s(i.time):'—')+'</span>'
       +'<span class="tl-node" style="background:'+ic.c+'">'+ic.g+'</span></div>'
     +'<div class="tl-body">'
       +'<div class="tl-kind">'+esc(mobKind(i))+(isNext?'<span class="tl-next">NEXT</span>':'')
-        +'<span style="margin-left:auto">'+pill+'</span></div>'
+        +'<span style="margin-left:auto">'+pill+(lock?(' '+lock):'')+' <button class="tl-tog" data-mobexp="'+mobItemKey(i)+'" title="Expand or collapse">'+(open?'▾':'▸')+'</button></span></div>'
       +'<div class="tl-name">'+esc(i.name||mobKind(i))+'</div>'
-      +(sub?'<div class="tl-sub">'+esc(sub)+'</div>':'')
+      +(open&&sub?'<div class="tl-sub">'+esc(sub)+'</div>':'')
       +chips+actions
     +'</div>'
   +'</div>';
+}
+function mobTasks_render(){
+  /* Phase 1 personal task list from visit action items — no new pages. */
+  var rows=[];
+  Object.keys(VISIT||{}).forEach(function(id){
+    var v=VISIT[id]||{}, d=uniById(id);
+    (v.actions||[]).forEach(function(a,i){
+      rows.push({id:id, i:i, t:a.t, due:a.due||'', done:!!a.done, name:(d&&d.name)||id, dealer:true});
+    });
+  });
+  var open=rows.filter(function(r){return !r.done;});
+  var done=rows.filter(function(r){return r.done;});
+  var h='<div class="tm-screen"><div class="tm-h" style="margin-top:4px"><span>My tasks</span></div>';
+  if(!rows.length) h+='<div class="tm-empty">No follow-up tasks yet. They appear here after visits.</div>';
+  else {
+    h+='<div class="tm-h">Outstanding · '+open.length+'</div>';
+    open.forEach(function(r){
+      h+='<div class="tmrow"><button class="tmbtn icon" data-tasktog="'+r.id+':'+r.i+'" title="Complete">✓</button>'
+        +'<div class="t"><b>'+esc(r.t)+'</b><span>'+esc(r.name)+(r.due?(' · due '+esc(r.due)):'')+'</span></div>'
+        +'<button class="tmbtn" data-mobvisit="'+r.id+'">Open</button></div>';
+    });
+    if(done.length){
+      h+='<div class="tm-h">Completed · '+done.length+'</div>';
+      done.slice(0,20).forEach(function(r){
+        h+='<div class="tmrow" style="opacity:.55"><button class="tmbtn icon done" data-tasktog="'+r.id+':'+r.i+'">✓</button>'
+          +'<div class="t"><b>'+esc(r.t)+'</b><span>'+esc(r.name)+'</span></div></div>';
+      });
+    }
+  }
+  h+='<button class="tmbtn" id="mobOpenBudget" style="margin-top:12px;width:100%">Trip budget & expenses</button>';
+  h+='</div>';
+  return h;
 }
 function mobToday_render(){
   var wk=MOB.wk, t=MOB.terr;
@@ -9942,18 +10080,30 @@ function mobToday_render(){
   var doneN=dealersToday.filter(function(d){return APPT[d.id];}).length;
   var nextStop=dealersToday.filter(function(i){return !APPT[i.id];})[0];
   var R=legsFor(todays);
+  var labs=dayLabels(wk);
 
   var h='<div class="tm-screen">';
-  h+='<div class="tm-h" style="font-size:13px;color:#111;margin-top:4px"><span>Today · '
-     +esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span>'
-     +'<button class="tmbtn" style="min-height:32px;flex:0 0 auto;padding:0 12px;font-size:13px" id="mobChangeDay">Change day</button></div>';
+  h+='<div class="tm-weeknav">'
+    +'<button class="tmbtn" data-mobwk="-1">‹ Week</button>'
+    +'<button class="tmbtn on" data-mobwk="0">This Week</button>'
+    +'<button class="tmbtn" data-mobwk="1">Week ›</button>'
+    +'</div>';
+  h+='<div class="tm-daynav">'
+    +'<button class="tmbtn" data-mobday="-1">‹ Day</button>'
+    +'<button class="tmbtn" id="mobChangeDay" style="flex:2 1 auto">'+(today==null?'Pick day':esc(mobDayLabel(wk,today)))+'</button>'
+    +'<button class="tmbtn" data-mobday="1">Day ›</button>'
+    +'</div>';
+  h+='<div class="tm-h" style="font-size:13px;color:#111;margin-top:2px"><span>Today · '
+     +esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span></div>';
 
   if(today!=null){
     h+='<div class="tl-summary">'
       +'<div><b>'+dealersToday.length+'</b><span>Visits</span></div>'
       +'<div><b>'+doneN+'</b><span>Done</span></div>'
+      +'<div><b>'+(dealersToday.length-doneN)+'</b><span>Left</span></div>'
       +'<div><b>'+hrsLabel(R.totalHours)+'</b><span>Drive</span></div>'
       +'</div>';
+    h+=mobUpNextHTML(nextStop, todays, wk);
   }
 
   if(today==null){
@@ -9964,13 +10114,14 @@ function mobToday_render(){
         : '<br>Pick a day with “Change day”.')
       +'</div>';
   } else if(!todays.length){
-    h+='<div class="tm-empty">Nothing scheduled for this day yet.<br>Use + Add Quick Item.</div>';
+    h+='<div class="tm-empty">Nothing scheduled for this day yet.<br>Use + Add.</div>';
   } else {
     h+='<div class="tm-tl">'+todays.map(function(i){
         return mobTLItem(i,wk,!!(nextStop&&i.kind==='dealer'&&i.id===nextStop.id));
       }).join('')+'</div>';
   }
 
+  h+='<div class="dq tm-dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(today==null?'':today)+'" data-qterr="'+esc(MOB.terr)+'" placeholder="+ Add — dealer, place, stop or meeting…" autocomplete="off" spellcheck="false"></div>';
   h+='<button class="tm-primary" id="mobAdd">+ Add Quick Item</button>';
   h+='</div>';
   return h;
@@ -10453,8 +10604,13 @@ function mobPhotos_page(id){
       +'<input id="vd_cam_'+section+'" type="file" accept="image/*" capture="environment" multiple style="display:none"></label>'
       +'<div style="font-size:11px;color:#9ca3af;text-align:center;margin:6px 0 14px">'+hint+'</div>';
   };
+  var classes=[['dealership','Dealership exterior'],['showroom','Showroom'],['inventory','Arrowquip inventory'],['aged','Aged stock'],['competitor','Competitor equipment'],['merch','Merchandising'],['quality','Product quality'],['opportunity','Sales opportunity'],['general','General']];
+  var clsHtml='<div class="tm-h">Photo classification</div><div class="tm-phclass" id="mobPhClass">'
+    +classes.map(function(c){ return '<button type="button" data-phclass="'+c[0]+'" class="'+(MOB_PHCLASS===c[0]?'on':'')+'">'+c[1]+'</button>'; }).join('')
+    +'</div>';
   return '<div class="tm-screen">'
-    +photoGrid('store','Storefront & store photos','Photos of the dealership, yard and inventory.','#0f766e')
+    +clsHtml
+    +photoGrid('store','Visit photos','Photos of the dealership, yard and inventory. Classification is saved with each new photo.','#0f766e')
     +photoGrid('agreement','Pre-Booking agreement photos','Signed agreement pages — stored separately from store photos.','#b45309')
     +'<div style="font-size:11px;color:#9ca3af;text-align:center">'+(pbAuthed()?'Uploaded to private storage and cached on-device for offline viewing. Never stored inside the plan.':'Saved on this device. Sign in to store privately in the cloud.')+'</div>'
     +'</div>';
@@ -10667,6 +10823,10 @@ function wireMobPage(p){
   }
   if(p.type==='dealer'){
     q('[data-dphotos]').forEach(function(b){ b.onclick=function(){ mobPush({type:'dphotos',id:b.dataset.dphotos}); }; });
+    q('[data-phclass]').forEach(function(b){ b.onclick=function(){
+      MOB_PHCLASS=b.dataset.phclass||'general';
+      q('[data-phclass]').forEach(function(x){ x.classList.toggle('on', x.dataset.phclass===MOB_PHCLASS); });
+    };});
     q('[data-dreport]').forEach(function(b){ b.onclick=function(){ MOB._visitTab='report'; mobPush({type:'dreport',id:b.dataset.dreport}); }; });
     q('[data-attachrec]').forEach(function(b){ b.onclick=function(){ mobAttachRecording(b.dataset.attachrec); }; });
     q('[data-mobcall]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); mobCallDealer(a.dataset.mobcall, p.id, p.id); }; });
@@ -10675,13 +10835,23 @@ function wireMobPage(p){
     if(comp) comp.onclick=function(){
       var d=uniById(p.id); var was=!!APPT[p.id];
       if(!was && !confirm('Mark this visit complete for '+(d?d.name:'this dealer')+'?')) return;
-      APPT[p.id]=!APPT[p.id]; if(!APPT[p.id]) delete APPT[p.id];
+      if(was){
+        delete APPT[p.id];
+        var v0=visitOf(p.id); delete v0.completedAt; delete v0.outcomeStatus; visitSave();
+      } else {
+        APPT[p.id]=true;
+        var v1=visitOf(p.id); v1.completedAt=new Date().toISOString(); v1.outcomeStatus='completed'; visitSave();
+      }
       savePlan(); renderMobile();
     };
     q('[data-dphcount]').forEach(function(el){ try{ pbPhotoCount(el.dataset.dphcount).then(function(n){ el.textContent=(n>0?n:'0'); }); }catch(e){ el.textContent='0'; } });
   }
   if(p.type==='dphotos'){
     var id=p.id;
+    q('[data-phclass]').forEach(function(b){ b.onclick=function(){
+      MOB_PHCLASS=b.dataset.phclass||'general';
+      q('[data-phclass]').forEach(function(x){ x.classList.toggle('on', x.dataset.phclass===MOB_PHCLASS); });
+    };});
     [['store',''],['agreement',':agreement']].forEach(function(sec){
       var key=id+sec[1], grid=document.getElementById('vd_photos_'+sec[0]);
       if(grid) pbPhotoList(key).then(function(ps){
@@ -10737,7 +10907,7 @@ function renderMobile(){
     var tabP=function(idd,icon,label){ return '<button data-mobtab="'+idd+'" class="'+(navSelP===idd?'on':'')+'"><span class="ni">'+icon+'</span>'+label+'</button>'; };
     host.innerHTML=mobPageHead(meta.title,meta.menu)+meta.body
       +'<div class="tm-nav">'
-      +tabP('today',tmIcon('home'),'Today')+tabP('route',tmIcon('map'),'Route')+tabP('trip',tmIcon('wallet'),'Trip')
+      +tabP('today',tmIcon('home'),'Today')+tabP('route',tmIcon('map'),'Week')+tabP('trip',tmIcon('wallet'),'Tasks')
       +tabP('files',tmIcon('camera'),'Photos')+tabP('more',tmIcon('more'),'More')
       +'</div>';
     document.querySelectorAll('#tripmode [data-mobtab]').forEach(function(b){ b.onclick=function(){ MOB.stack=[]; MOB.tab=b.dataset.mobtab; renderMobile(); }; });
@@ -10753,7 +10923,7 @@ function renderMobile(){
 
   var body = MOB.tab==='today'  ? mobToday_render()
            : MOB.tab==='route'  ? mobRoute_render()
-           : MOB.tab==='trip'   ? mobTrip_render()
+           : MOB.tab==='trip'   ? mobTasks_render()
            : MOB.tab==='budget' ? mobBudget_render()
            : MOB.tab==='files'  ? mobFiles_render()
            : mobMore_render();
@@ -10776,7 +10946,7 @@ function renderMobile(){
      +'</div>'
      +body
      +'<div class="tm-nav">'
-       +tab('today',tmIcon('home'),'Today')+tab('route',tmIcon('map'),'Route')+tab('trip',tmIcon('wallet'),'Trip')
+       +tab('today',tmIcon('home'),'Today')+tab('route',tmIcon('map'),'Week')+tab('trip',tmIcon('wallet'),'Tasks')
        +tab('files',tmIcon('camera'),'Photos')+tab('more',tmIcon('more'),'More')
      +'</div>';
 
@@ -10813,10 +10983,37 @@ function wireMobile(){
     MOB.terr=ma.value; MOB.day=null; renderMobile(); cloudBadge('My Area saved');
   };
 
+  q('[data-mobwk]').forEach(function(b){ b.onclick=function(){
+    var d=+b.dataset.mobwk, cur=mobCurrentWeek(), nums=mobWeeks(MOB.terr);
+    if(d===0){ MOB.wk=(cur!=null?cur:MOB.wk); MOB.day=mobToday(MOB.wk); renderMobile(); return; }
+    var list=(nums&&nums.length)?nums:FIELD_NUMS;
+    var i=list.indexOf(MOB.wk); if(i<0) i=0;
+    MOB.wk=list[Math.max(0,Math.min(list.length-1,i+d))]; MOB.day=null; renderMobile();
+  };});
+  q('[data-mobday]').forEach(function(b){ b.onclick=function(){
+    var labs=dayLabels(MOB.wk); if(!labs.length) return;
+    var cur=(MOB.day!=null)?MOB.day:(mobToday(MOB.wk)||0);
+    MOB.day=Math.max(0,Math.min(labs.length-1,cur+(+b.dataset.mobday))); renderMobile();
+  };});
+  q('[data-mobexp]').forEach(function(b){ b.onclick=function(e){
+    e.preventDefault(); e.stopPropagation();
+    var k=b.dataset.mobexp; MOBEXP[k]=!MOBEXP[k];
+    try{ localStorage.setItem('aqMOBEXP',JSON.stringify(MOBEXP)); }catch(err){}
+    renderMobile();
+  };});
+  q('[data-mobcall]').forEach(function(b){ b.onclick=function(){ mobCallDealer(b.dataset.mobcall); };});
   q('[data-mobdone]').forEach(function(b){ b.onclick=function(){
     var p=b.dataset.mobdone.split(':'), kind=p[0], id=p[1];
-    if(kind==='dealer'){ APPT[id]=!APPT[id]; if(!APPT[id]) delete APPT[id]; }
-    else { var it=LOGI.filter(function(x){return x.id===id;})[0]; if(it) it.done=!it.done; }
+    if(kind==='dealer'){
+      if(APPT[id]){
+        /* reopen */
+        delete APPT[id];
+        if(VISIT[id]){ delete VISIT[id].completedAt; delete VISIT[id].outcomeStatus; }
+      } else {
+        APPT[id]=true;
+        var v=visitOf(id); v.completedAt=new Date().toISOString(); v.outcomeStatus='completed'; visitSave();
+      }
+    } else { var it=LOGI.filter(function(x){return x.id===id;})[0]; if(it) it.done=!it.done; }
     savePlan(); renderMobile();
   };});
   q('[data-mobedit]').forEach(function(b){ b.onclick=function(){
@@ -10824,6 +11021,11 @@ function wireMobile(){
     if(p[0]==='travel') mobPush({type:'stop',id:p[1]}); else mobDealerSheet(p[1]);
   };});
   q('[data-mobvisit]').forEach(function(b){ b.onclick=function(){ mobPush({type:'dealer',id:b.dataset.mobvisit}); };});
+  q('[data-tasktog]').forEach(function(b){ b.onclick=function(){
+    var p=b.dataset.tasktog.split(':'), id=p[0], i=+p[1];
+    var v=visitOf(id); if(!v.actions||!v.actions[i]) return;
+    v.actions[i].done=!v.actions[i].done; visitSave(); renderMobile();
+  };});
   /* async: fill cloud-backed photo counts on the Today timeline chips */
   q('[data-phcount]').forEach(function(el){ try{ pbPhotoCount(el.dataset.phcount).then(function(n){ if(n>0){ el.textContent='📷 '+n; el.style.display=''; } }); }catch(e){} });
 }
@@ -10989,7 +11191,7 @@ function pbPhotoAdd(dealer, blob){
   /* write the local cache/queue row first (works offline & signed-out), then upload */
   return pbPhotoDB().then(function(db){ return new Promise(function(res,rej){
     var tx=db.transaction('photos','readwrite');
-    var req=tx.objectStore('photos').add({dealer:dealer, blob:blob, at:Date.now(), remotePath:null});
+    var req=tx.objectStore('photos').add({dealer:dealer, blob:blob, at:Date.now(), remotePath:null, classification:(typeof MOB_PHCLASS!=='undefined'?MOB_PHCLASS:'general')});
     var newId=null; req.onsuccess=function(){ newId=req.result; };
     tx.oncomplete=function(){ res(newId); }; tx.onerror=function(){ rej('add-failed'); };
   });}).then(function(localId){
@@ -11323,11 +11525,61 @@ function mobExpenseSheet(prefill){
 }
 
 /* boot: only on phone widths, and only after the passcode gate unlocks */
+var MOBEXP={}; try{ MOBEXP=JSON.parse(localStorage.getItem('aqMOBEXP')||'{}')||{}; }catch(e){ MOBEXP={}; }
+var MOB_PHCLASS='dealership';
+function mobItemKey(i){ return (i.kind||'x')+':'+(i.id||''); }
+function mobIsExpanded(i){ return !!MOBEXP[mobItemKey(i)]; }
+function mobToggleItem(i){ var k=mobItemKey(i); MOBEXP[k]=!MOBEXP[k]; try{ localStorage.setItem('aqMOBEXP',JSON.stringify(MOBEXP)); }catch(e){} renderMobile(); }
+function mobUpNextHTML(next, todays, wk){
+  if(!next) return '';
+  var d=uniById(next.id)||next, sf=(typeof sfLookup==='function'?sfLookup(d):null)||{};
+  var call=sf.contactMobile||sf.contactPhone||d.phone||'';
+  var cName=sf.contactName||'';
+  var obj=(VISIT[next.id]&&(VISIT[next.id].objective||VISIT[next.id].followUp||VISIT[next.id].notes))||'';
+  if(obj&&obj.length>120) obj=obj.slice(0,119)+'…';
+  var leave='', drive='', late='';
+  try{
+    var TL=tlCompute(MOB.terr,wk), by=TL.by||{};
+    var key='d:'+next.id; if(!by[key]) key='x:'+next.id;
+    var node=by[key];
+    if(node){
+      if(node.estArr!=null&&next.time){
+        /* reverse: leave ≈ appointment start - travel from previous */
+        var idx=TL.seq.indexOf(node);
+        if(idx>0&&TL.seq[idx-1].tnext) leave=tlT(node.estArr-(TL.seq[idx-1].tnext.min||0));
+        drive=fmtDur(TL.seq[idx-1]&&TL.seq[idx-1].tnext?TL.seq[idx-1].tnext.min:0)+' · ~'+Math.round((TL.seq[idx-1]&&TL.seq[idx-1].tnext?TL.seq[idx-1].tnext.km:0))+' km (estimate)';
+      }
+      if(node.lateMin) late='Running late risk — arrive ~'+fmtDur(node.lateMin)+' after the set time';
+    }
+  }catch(e){}
+  var h='<div class="tm-upnext">'
+    +'<div class="un-k">Up Next</div>'
+    +'<div class="un-name">'+esc(next.name||d.name||'Appointment')+'</div>'
+    +'<div class="un-meta">'+(next.time?t12s(next.time):'Time TBD')
+      +(d.address?(' · '+esc(d.address)): '')
+      +(cName?(' · '+esc(cName)):'')
+      +(call?(' · '+esc(call)):'')
+      +'</div>'
+    +(leave||drive?('<div class="un-meta" style="margin-top:6px">'+(leave?('Leave by <b style="color:#fff">'+leave+'</b> · '):'')+esc(drive||'')+'</div>'):'')
+    +(obj?('<div class="un-meta" style="margin-top:4px">'+esc(obj)+'</div>'):'')
+    +(late?('<div class="un-late">'+esc(late)+'</div>'):'')
+    +'<div class="un-acts">'
+      +(mobHasDest(next)?('<a class="tmbtn nav" href="'+navUrl(next)+'" target="_blank" rel="noopener">Navigate</a>'):'')
+      +(call?('<button class="tmbtn" data-mobcall="'+esc(call)+'">Call</button>'):'')
+      +'<button class="tmbtn" data-mobvisit="'+next.id+'">Open</button>'
+      +'<button class="tmbtn" data-mobdone="dealer:'+next.id+'" style="background:#16a34a;border-color:#16a34a;color:#fff">Complete</button>'
+    +'</div></div>';
+  return h;
+}
 function mobBoot(){
   if(!mobIsPhone()) return;
   var cur=mobCurrentWeek();
   if(cur!=null) MOB.wk=cur;                    /* always open on the week containing today */
   else { var weeks=mobWeeks(MOB.terr); if(weeks.length && weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0]; }
+  /* restore last territory preference */
+  try{ var a=localStorage.getItem('aqMyArea'); if(a) MOB.terr=a; }catch(e){}
+  MOB.day=mobToday(MOB.wk);
+  MOB.tab='today';
   renderMobile();
 }
 window.addEventListener('resize',function(){

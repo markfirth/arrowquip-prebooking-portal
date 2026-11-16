@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arrowquip — Dealer Visit Report (Sample)</title>
+<style>
+  @page { size: letter portrait; margin: 0.55in; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1c1c1e;
+    font-family: "Frutiger LT Std", "Frutiger", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.35;
+    background: #e8e8e8;
+  }
+  .page {
+    width: 8.5in; min-height: 11in; margin: 16px auto; background: #fff;
+    padding: 0.55in; box-shadow: 0 8px 30px rgba(0,0,0,.12);
+  }
+  .brandbar { height: 4px; background: #CC162E; margin: -0.55in -0.55in 14px; }
+  .hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 12px; }
+  .hdr img { height: 28px; }
+  .doc-title { font-size: 11pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #111; margin: 0 0 2px; }
+  .conf { font-size: 8pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #CC162E; }
+  .meta { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .meta div { background: #f7f7f8; border-radius: 4px; padding: 7px 8px; }
+  .meta .k { display:block; font-size: 7.5pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #6b7280; margin-bottom: 2px; }
+  .meta .v { font-size: 10pt; font-weight: 600; color: #111; }
+  .cols { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; }
+  h2 { font-size: 8.5pt; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #CC162E; margin: 0 0 6px; border-bottom: 1px solid #f0c9ce; padding-bottom: 3px; }
+  p, li { margin: 0 0 6px; }
+  ul { margin: 0 0 8px; padding-left: 16px; }
+  .photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .ph { background: #f3f4f6; border: 1px solid #e5e7eb; height: 92px; border-radius: 3px; display:flex; align-items:flex-end; padding: 5px 6px; font-size: 7.5pt; color: #6b7280; }
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  th { text-align: left; font-size: 7.5pt; letter-spacing: .05em; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e5e7eb; padding: 3px 4px; }
+  td { border-bottom: 1px solid #f3f4f6; padding: 4px; vertical-align: top; }
+  .attn { background: #fff5f6; border-left: 3px solid #CC162E; padding: 7px 9px; margin: 8px 0; font-size: 9.5pt; }
+  .foot { margin-top: 14px; padding-top: 8px; border-top: 1px solid #e5e7eb; display:flex; justify-content: space-between; font-size: 7.5pt; color: #6b7280; }
+  .note { max-width: 8.5in; margin: 0 auto 20px; padding: 0 8px; font-size: 12px; color: #555; }
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; width: auto; min-height: auto; }
+    .note { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="note"><strong>Sample only — not production data.</strong> Print or Save as PDF for a US Letter one-page preview. Uses Arrowquip red #CC162E and official logo asset path.</div>
+<div class="page">
+  <div class="brandbar"></div>
+  <div class="hdr">
+    <div>
+      <div class="doc-title">Arrowquip — Dealer Visit Report</div>
+      <div class="conf">Internal &amp; Confidential</div>
+    </div>
+    <img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip" onerror="this.style.display='none'">
+  </div>
+  <div class="meta">
+    <div><span class="k">Dealer</span><span class="v">Sample Livestock Supply Co.</span></div>
+    <div><span class="k">Location</span><span class="v">Guelph, ON</span></div>
+    <div><span class="k">Visit date</span><span class="v">16 Nov 2026</span></div>
+    <div><span class="k">Account manager</span><span class="v">Mark Firth · East</span></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h2>Executive summary</h2>
+      <p>Visited to review Q4 inventory positioning and confirm the dealer’s 13-week race commitments. Discussion covered aged stock on the yard, upcoming spring demand, and a potential Q-Catch order. Overall relationship remains strong; follow-up required on pricing and delivery timing.</p>
+      <h2>Commercial intelligence</h2>
+      <ul>
+        <li><strong>Opportunity:</strong> Interest in 2× Q-Catch systems for spring — not a confirmed order.</li>
+        <li><strong>Inventory:</strong> Two aged units noted; dealer requested merchandising support.</li>
+        <li><strong>Competitor:</strong> Mentioned alternate brand quoting aggressively on crowders.</li>
+      </ul>
+      <h2>Management attention</h2>
+      <div class="attn">Dealer asked whether Arrowquip can match a competitor’s lead time on crowders for February. Needs a clear product/ops response — no commitment was made in the meeting.</div>
+      <h2>Next steps</h2>
+      <p>Send updated crowder lead-time note and spring inventory proposal by Friday. Next contact planned for the following week.</p>
+    </div>
+    <div>
+      <h2>Photographs</h2>
+      <div class="photos">
+        <div class="ph">Yard / aged stock<br><em>Caption: sample placeholder</em></div>
+        <div class="ph">Showroom<br><em>Caption: sample placeholder</em></div>
+      </div>
+      <h2>Key commitments</h2>
+      <table>
+        <thead><tr><th>Action</th><th>Owner</th><th>Due</th></tr></thead>
+        <tbody>
+          <tr><td>Send crowder lead-time clarification</td><td>Mark Firth</td><td>Fri</td></tr>
+          <tr><td>Share spring Q-Catch proposal (draft)</td><td>Mark Firth</td><td>Next week</td></tr>
+          <tr><td>Confirm which aged units to feature</td><td>Dealer</td><td>Suggested</td></tr>
+        </tbody>
+      </table>
+      <h2>Meeting purpose</h2>
+      <p>Inventory review · race commitments · spring demand</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Arrowquip TRAVEL — Internal Field Intelligence</span>
+    <span>Sample template · full record linked in production</span>
+  </div>
+</div>
+</body>
+</html>
