@@ -1258,9 +1258,35 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .proginfo th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);padding:2px 18px 4px 0;}
 .proginfo td{padding:2px 18px 2px 0;color:var(--ink);border-top:1px solid var(--line-soft);}
 .proginfo .pgnotes{font-size:11px;color:var(--muted);max-width:280px;line-height:1.7;padding-top:4px;}
-.wkper{display:flex;align-items:center;gap:10px;margin:18px 2px 8px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.75;}
-.wkper::after{content:'';flex:1;height:1px;background:var(--line);opacity:.7;}
-.wkper:first-child{margin-top:4px;}
+.wkg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:600;opacity:.8;}
+.wkg>summary::-webkit-details-marker{display:none;}
+.wkg>summary::before{content:'';flex:none;width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s ease;margin:0 2px 0 1px;}
+.wkg[open]>summary::before{transform:rotate(45deg);}
+.wkg>summary .wkgl{order:1;}
+.wkg>summary::after{content:'';order:2;flex:1;height:1px;background:var(--line);opacity:.6;}
+.wkg>summary .wkgn{order:3;font-weight:500;letter-spacing:.03em;text-transform:none;}
+.wkg>summary:hover{opacity:1;}
+.wkg-y>summary{font-size:11px;margin:20px 2px 8px;}
+.wkg-y:first-child>summary{margin-top:4px;}
+.wkg-q>summary{font-size:10px;margin:12px 2px 6px 12px;}
+.wkg-m>summary{font-size:10px;font-weight:500;letter-spacing:.08em;margin:8px 2px 6px 24px;opacity:.7;}
+#planwrap{grid-template-columns:1fr;}
+#planwrap>.sidebar{display:none;}
+.dq{margin:2px 0 6px;}
+.dq input{width:100%;box-sizing:border-box;border:1px solid transparent;background:transparent;font-size:12px;font-family:inherit;color:#333;padding:6px 8px;border-radius:6px;outline:none;transition:background .12s,border-color .12s;}
+.dq input::placeholder{color:#b8bcc0;}
+.dq input:hover{background:#f6f7f8;}
+.dq input:focus{background:#fff;border-color:var(--line);}
+#dqPop{position:fixed;z-index:9000;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.10);max-height:300px;overflow:auto;padding:3px;}
+.dq-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:12px;}
+.dq-row.on,.dq-row:hover{background:#f2f4f7;}
+.dq-txt{display:flex;flex-direction:column;min-width:0;}
+.dq-nm{font-weight:600;color:#1f2328;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dq-sub{color:#8b9096;font-size:11px;}
+.dq-act{margin-left:auto;display:flex;gap:4px;flex:none;}
+.dq-act button{border:1px solid var(--line);background:#fff;border-radius:5px;font-size:10px;font-family:inherit;padding:2px 7px;cursor:pointer;color:#555;}
+.dq-act button:hover{border-color:#9aa0a6;color:#111;}
+.dq-none{padding:9px 10px;color:#8b9096;font-size:12px;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1348,7 +1374,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
           <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
         <div class="sbbody" id="poolBody" data-drop="pool"></div>
       </div>
-      <div class="boardcol"><div class="boardscroll"><div class="weeks" id="weeks"></div></div><div class="hint">Drag a dealer into a week, set day &amp; time, confirm each appointment, then Confirm week. Saves automatically.</div></div>
+      <div class="boardcol"><div class="boardscroll"><div class="weeks" id="weeks"></div></div><div class="hint">Type a dealer into any day, set the time, check off Confirm on the appointment, then Confirm week. Saves automatically.</div></div>
     </div>
     <div id="terrSched" class="subview" style="display:none"></div>
     <div id="terrMap" class="subview" style="display:none"></div>
@@ -1717,11 +1743,50 @@ function wkShown(list){
     return wkHas(w);
   });
 }
-/* subtle year · quarter divider between week blocks */
-function wkPeriodDivider(w){ return '<div class="wkper"><span>'+wkPeriod(w)+'</span></div>'; }
-function wkWithDividers(list,render){ var last=null, out='';
-  list.forEach(function(w){ if(typeof w==='number'){ var p=wkPeriod(w); if(p!==last){ out+=wkPeriodDivider(w); last=p; } } out+=render(w); });
-  return out; }
+/* Collapsible year › quarter › month groups around the week blocks.
+   A week belongs to the month/quarter/year of its Saturday (same rule as its label),
+   so months always nest inside their quarter. Open/closed is remembered on this
+   device; until someone toggles a group, periods before this month start collapsed. */
+var WKG_STATE=(function(){ try{ return JSON.parse(localStorage.getItem('aqWkGroups')||'{}')||{}; }catch(e){ return {}; } })();
+function wkRefDay(w){ return (+w===31)?new Date(2026,6,29,12):new Date(wkStart(+w).getTime()+6*WK_DAY); }
+function wkVisitCount(w){ try{ var n=0;
+  dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===w) n++; });
+  if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===w&&x.terr===terr) n++; });
+  return n; }catch(e){ return 0; } }
+function wkWithDividers(list,render){
+  var c=wkRefDay(wkCurrent()), cy=c.getFullYear(), cm=c.getMonth(), cq=Math.floor(cm/3)+1;
+  var years=[], tail='';
+  list.forEach(function(w){
+    if(typeof w!=='number'){ tail+=render(w); return; }
+    var d=wkRefDay(w), y=d.getFullYear(), m=d.getMonth(), q=Math.floor(m/3)+1, n=wkVisitCount(w);
+    var Y=years[years.length-1]; if(!Y||Y.y!==y){ Y={y:y,n:0,qs:[]}; years.push(Y); }
+    var Q=Y.qs[Y.qs.length-1]; if(!Q||Q.q!==q){ Q={q:q,n:0,ms:[]}; Y.qs.push(Q); }
+    var M=Q.ms[Q.ms.length-1]; if(!M||M.m!==m){ M={m:m,n:0,label:d.toLocaleString('en-US',{month:'long'}),html:''}; Q.ms.push(M); }
+    M.html+=render(w); M.n+=n; Q.n+=n; Y.n+=n;
+  });
+  function grp(level,key,label,n,past,inner){
+    var open=(WKG_STATE.hasOwnProperty(key))?!!WKG_STATE[key]:!past;
+    return '<details class="wkg wkg-'+level+'" data-wkg="'+key+'"'+(open?' open':'')+'><summary><span class="wkgl">'+label+'</span>'
+      +(n?'<span class="wkgn">'+n+' visit'+(n>1?'s':'')+'</span>':'')+'</summary>'+inner+'</details>';
+  }
+  return years.map(function(Y){
+    return grp('y','y'+Y.y,String(Y.y),Y.n,Y.y<cy,Y.qs.map(function(Q){
+      return grp('q','q'+Y.y+'-'+Q.q,'Q'+Q.q,Q.n,(Y.y<cy||(Y.y===cy&&Q.q<cq)),Q.ms.map(function(M){
+        return grp('m','m'+Y.y+'-'+(M.m+1),M.label,M.n,(Y.y<cy||(Y.y===cy&&M.m<cm)),M.html);
+      }).join(''));
+    }).join(''));
+  }).join('')+tail;
+}
+/* remember only the user's own clicks (not the browser's initial open state) */
+document.addEventListener('click',function(e){
+  var sm=e.target&&e.target.closest&&e.target.closest('details.wkg>summary'); if(!sm) return;
+  var dt=sm.parentNode;
+  setTimeout(function(){
+    WKG_STATE[dt.dataset.wkg]=dt.open;
+    try{ localStorage.setItem('aqWkGroups',JSON.stringify(WKG_STATE)); }catch(_){}
+    if(dt.open){ try{ window.dispatchEvent(new Event('resize')); }catch(_){} }   /* let an embedded map re-measure */
+  },0);
+},true);
 /* <option>s grouped by year · quarter */
 function wkOptions(list,sel,opts){ opts=opts||{}; var last=null, out='';
   list.forEach(function(w){ if(typeof w!=='number') return; var p=wkPeriod(w);
@@ -4796,10 +4861,9 @@ function weekCard(wk){
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
   var cards;
-  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):'<div class="dcempty">drag + Pre-book here from the library</div>'; }
+  if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):''; cards+=dqInputHTML('remote',''); }
   else {
     var labs=dayLabels(wk); cards='';
-    if(!ds.length && !wlogi.length && !xw.length) cards+='<div class="dcempty">drag + Pre-book or + Visit here from the library</div>';
     /* one ordered, located stop sequence for the whole week: the single
        source of truth for the travel rows woven between the cards below */
     var TL=tlCompute(terr,wk);
@@ -4832,12 +4896,11 @@ function weekCard(wk){
       cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]+'</div>';
       /* each day is its own drop zone — the card's day comes from where it sits */
       cards+='<div class="kdaybody" data-drop="'+wk+'|'+i+'">';
-      if(!entries.length){ cards+='<div class="dcempty">—</div>'; }
-      else entries.forEach(function(e){
+      entries.forEach(function(e){
         cards+=legBefore(e);
         cards+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk),tlOf(e)):(e.k==='x'?dvCard(dvViewX(e.x),tlOf(e)):travelCard(e.x,wk,tlOf(e))));
       });
-      cards+='</div>';
+      cards+=dqInputHTML(wk,i)+'</div>';
     });
   }
   var confBtn='<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>';
@@ -7205,6 +7268,73 @@ function addDealerToWeek(dealerId,wk,day){
     terr:terr, wk:parseInt(wk,10), day:(day==null?0:day), time:'', dur:60, type:'visit', notes:'', done:false});
   savePlan(); refreshPlanner();
 }
+/* ---- Type-to-add -----------------------------------------------------------
+   Type a dealer's name straight into a day; pick the match to create the
+   appointment there (Pre-book by default, or a Visit), then check off Confirm on
+   the card. Replaces dragging from the dealer library. Uses createVisit(), the
+   same path the old drag-and-drop used, so saving and history are unchanged. */
+function dqInputHTML(wk,day){
+  return '<div class="dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(day==null?'':day)+'" placeholder="+ Type a dealer…" autocomplete="off" spellcheck="false"></div>';
+}
+function dqMatches(q){
+  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  var rows=planningUniverse().filter(function(d){
+    var h=[d.name,d.loc,d.city,d.address].join(' ').toLowerCase();
+    return toks.every(function(t){ return h.indexOf(t)>=0; });
+  });
+  var q0=toks[0];
+  var score=function(d){ var n=(d.name||'').toLowerCase();
+    return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
+  rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
+  return rows.slice(0,8);
+}
+var DQ={inp:null,rows:[],on:0};
+function dqClose(){ var p=document.getElementById('dqPop'); if(p) p.remove(); DQ.rows=[]; }
+function dqPick(id,type){
+  var inp=DQ.inp; if(!inp) return;
+  var wk=inp.dataset.qwk, day=inp.dataset.qday;
+  dqClose();
+  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day));
+  setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+}
+function dqRender(){
+  var inp=DQ.inp; if(!inp) return;
+  var q=inp.value.trim(); if(!q){ dqClose(); return; }
+  DQ.rows=dqMatches(q); if(DQ.on>=DQ.rows.length) DQ.on=0;
+  var p=document.getElementById('dqPop'); if(!p){ p=document.createElement('div'); p.id='dqPop'; document.body.appendChild(p); }
+  var r=inp.getBoundingClientRect(), w=Math.max(r.width,340);
+  p.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px'; p.style.width=w+'px';
+  var below=window.innerHeight-r.bottom;
+  if(below<220&&r.top>below){ p.style.top=''; p.style.bottom=(window.innerHeight-r.top+3)+'px'; } else { p.style.bottom=''; p.style.top=(r.bottom+3)+'px'; }
+  if(!DQ.rows.length){ p.innerHTML='<div class="dq-none">No dealer matches “'+esc(q)+'” — use + Add to create a new account.</div>'; return; }
+  p.innerHTML=DQ.rows.map(function(d,i){
+    var sub=[prospectTypeLabel(d),[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
+    return '<div class="dq-row'+(i===DQ.on?' on':'')+'" data-dqi="'+i+'"><div class="dq-txt"><span class="dq-nm">'+esc(d.name)+'</span><span class="dq-sub">'+esc(sub)+'</span></div>'
+      +'<div class="dq-act"><button data-dqt="prebook" data-dqi="'+i+'">Pre-book</button><button data-dqt="visit" data-dqi="'+i+'">Visit</button></div></div>';
+  }).join('');
+}
+document.addEventListener('input',function(e){ var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return; DQ.inp=t; DQ.on=0; dqRender(); });
+document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; if(t.value.trim()) dqRender(); } });
+document.addEventListener('keydown',function(e){
+  var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
+  if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
+  if(!DQ.rows.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); DQ.on=(DQ.on+1)%DQ.rows.length; dqRender(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); DQ.on=(DQ.on-1+DQ.rows.length)%DQ.rows.length; dqRender(); }
+  else if(e.key==='Enter'){ e.preventDefault(); var d=DQ.rows[DQ.on]; if(d) dqPick(d.id,'prebook'); }
+});
+document.addEventListener('mousedown',function(e){
+  var p=document.getElementById('dqPop'); if(!p) return;
+  if(p.contains(e.target)){
+    e.preventDefault();                                   /* keep focus in the field */
+    var b=e.target.closest('[data-dqi]'); if(!b) return;
+    var d=DQ.rows[+b.dataset.dqi]; if(d) dqPick(d.id,b.dataset.dqt||'prebook');
+    return;
+  }
+  if(!(e.target.classList&&e.target.classList.contains('dqin'))) dqClose();
+},true);
+window.addEventListener('resize',function(){ if(document.getElementById('dqPop')) dqRender(); });
+document.addEventListener('scroll',function(e){ if(document.getElementById('dqPop')&&DQ.inp){ dqRender(); } },true);
 /* Dealer / Prospect picker: search the master library or quick-create a
    potential/prospect/competitor, then drop it straight into the week. */
 function openDealerAdd(wk){
