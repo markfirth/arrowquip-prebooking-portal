@@ -93,104 +93,126 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .planwrap{display:grid;grid-template-columns:252px 1fr;gap:14px;align-items:start;}
 
 /* ===== Desktop Trips Kanban (layout only — branding unchanged) ===== */
+/* ===== Desktop Trips — compact Kanban / List ===== */
 .planwrap.trips-kanban{
   display:grid;
-  grid-template-columns:232px minmax(0,1fr);
+  grid-template-columns:220px minmax(0,1fr);
   gap:0;
   align-items:stretch;
-  min-height:calc(100vh - 160px);
-  background:var(--panel);
+  min-height:calc(100vh - 148px);
+  background:#fff;
   border:1px solid var(--line);
   border-radius:var(--radius);
   overflow:hidden;
 }
+.planwrap.trips-kanban.nav-collapsed{grid-template-columns:minmax(0,1fr);}
+.planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
 .planwrap.trips-kanban.map-split{
-  grid-template-columns:232px minmax(0,1fr) 6px var(--trips-map-w,380px);
+  grid-template-columns:220px minmax(0,1fr) 5px var(--trips-map-w,340px);
+}
+.planwrap.trips-kanban.nav-collapsed.map-split{
+  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,340px);
 }
 .planwrap.trips-kanban.map-full{
-  grid-template-columns:232px 6px minmax(0,1fr);
+  grid-template-columns:220px 5px minmax(0,1fr);
+}
+.planwrap.trips-kanban.nav-collapsed.map-full{
+  grid-template-columns:5px minmax(0,1fr);
 }
 .planwrap.trips-kanban.map-full .boardcol{display:none;}
+.planwrap.trips-kanban.map-collapsed .trips-split,
+.planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
 .trips-nav{
-  background:#fff;
-  border-right:1px solid var(--line);
-  display:flex;flex-direction:column;
-  min-height:0;max-height:calc(100vh - 160px);
-  overflow:hidden;
+  background:#fff;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;
 }
-.trips-nav .tn-head{padding:12px 12px 8px;border-bottom:1px solid var(--line-soft);flex:0 0 auto;}
-.trips-nav .tn-this{
-  width:100%;appearance:none;font-family:inherit;font-size:12.5px;font-weight:700;
-  padding:10px 12px;border-radius:8px;border:1px solid var(--aq-red,#cf202f);
-  background:var(--aq-red,#cf202f);color:#fff;cursor:pointer;text-align:left;
-  display:flex;flex-direction:column;gap:2px;
-}
-.trips-nav .tn-this span{font-size:11px;font-weight:500;opacity:.92;}
-.trips-nav .tn-this:hover{filter:brightness(.96);}
-.trips-nav .tn-hint{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.35;}
-.trips-nav .tn-body{flex:1 1 auto;overflow:auto;padding:8px 8px 16px;}
+.trips-nav .tn-body{flex:1 1 auto;overflow:auto;padding:4px 6px 12px;}
 .tn-y,.tn-q,.tn-m{margin:0;}
 .tn-y>summary,.tn-q>summary,.tn-m>summary{
   list-style:none;cursor:pointer;font-family:inherit;user-select:none;
-  display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;
-  font-size:11.5px;font-weight:700;color:var(--aq-black);letter-spacing:.02em;
+  display:flex;align-items:center;gap:6px;height:26px;padding:0 6px;border-radius:4px;
+  font-size:11px;font-weight:700;color:#374151;
 }
 .tn-y>summary::-webkit-details-marker,.tn-q>summary::-webkit-details-marker,.tn-m>summary::-webkit-details-marker{display:none;}
 .tn-y>summary::before,.tn-q>summary::before,.tn-m>summary::before{
-  content:'';width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
-  transform:rotate(-45deg);flex:0 0 auto;opacity:.55;
+  content:'';width:4px;height:4px;border-right:1.4px solid currentColor;border-bottom:1.4px solid currentColor;
+  transform:rotate(-45deg);flex:0 0 auto;opacity:.5;
 }
 .tn-y[open]>summary::before,.tn-q[open]>summary::before,.tn-m[open]>summary::before{transform:rotate(45deg);}
-.tn-y>summary{font-size:12.5px;margin-top:6px;}
-.tn-q>summary{padding-left:14px;font-size:11px;color:#5c6169;}
-.tn-m>summary{padding-left:22px;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;}
-.tn-y>summary:hover,.tn-q>summary:hover,.tn-m>summary:hover{background:#f7f8fa;}
+.tn-y>summary{font-size:12px;color:var(--aq-black);margin-top:4px;}
+.tn-q>summary{padding-left:14px;font-weight:600;color:#6b7280;}
+.tn-m>summary{padding-left:24px;font-weight:600;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#8b9096;}
+.tn-y>summary:hover,.tn-q>summary:hover,.tn-m>summary:hover{background:#f5f6f7;}
 .tn-wk{
-  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
-  appearance:none;font-family:inherit;background:transparent;border:0;border-radius:7px;
-  padding:7px 8px 7px 28px;cursor:pointer;color:var(--aq-black);
+  display:flex;align-items:center;gap:6px;width:100%;height:26px;box-sizing:border-box;
+  appearance:none;font-family:inherit;background:transparent;border:0;border-radius:4px;
+  padding:0 6px 0 34px;cursor:pointer;color:#1f2328;font-size:11.5px;text-align:left;white-space:nowrap;
 }
-.tn-wk:hover{background:#f2f4f7;}
-.tn-wk.on{background:#111;color:#fff;}
-.tn-wk.now:not(.on){box-shadow:inset 3px 0 0 var(--aq-red,#cf202f);}
-.tn-wk.now.on{background:var(--aq-red,#cf202f);color:#fff;}
-.tn-wk .tw{flex:1;min-width:0;}
-.tn-wk .tw b{display:block;font-size:12px;font-weight:700;}
-.tn-wk .tw i{display:block;font-style:normal;font-size:10.5px;opacity:.75;margin-top:1px;}
-.tn-wk .tn{flex:0 0 auto;font-size:10.5px;font-weight:700;background:rgba(0,0,0,.06);border-radius:10px;padding:2px 7px;}
-.tn-wk.on .tn,.tn-wk.now.on .tn{background:rgba(255,255,255,.2);}
-.boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;max-height:calc(100vh - 160px);overflow:hidden;}
-.kb-toolbar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line-soft);flex:0 0 auto;flex-wrap:wrap;}
-.kb-toolbar .kb-title{font-size:13px;font-weight:700;color:var(--aq-black);}
-.kb-toolbar .kb-sub{font-size:11.5px;color:var(--muted);}
-.kb-toolbar .kb-space{flex:1 1 auto;}
-.kb-board-wrap{flex:1 1 auto;overflow:auto;padding:10px;min-height:0;}
-.kb-board{display:grid;grid-template-columns:repeat(7,minmax(148px,1fr));gap:8px;align-items:start;min-width:1040px;}
-.kb-col{background:#fff;border:1px solid var(--line-soft);border-radius:10px;min-height:420px;display:flex;flex-direction:column;overflow:hidden;}
-.kb-col.today{border-color:var(--aq-red,#cf202f);box-shadow:0 0 0 1px var(--aq-red,#cf202f);}
-.kb-colh{padding:10px 10px 8px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
-.kb-col.today .kb-colh{background:#fff5f5;}
-.kb-colh b{display:block;font-size:12px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;}
-.kb-colh span{display:block;font-size:11px;color:var(--muted);margin-top:2px;}
-.kb-colb{padding:8px;flex:1 1 auto;min-height:120px;}
-.kb-colb.over{background:#fdf4f5;outline:2px dashed var(--aq-red);outline-offset:-3px;}
-.trips-split{
-  width:6px;cursor:col-resize;background:var(--line-soft);position:relative;flex:0 0 6px;
+.tn-wk:hover{background:#f5f6f7;}
+.tn-wk.on{background:#fdecee;color:var(--aq-red,#cf202f);font-weight:700;}
+.tn-wk.now:not(.on){box-shadow:inset 2px 0 0 var(--aq-red,#cf202f);}
+.tn-wk .tl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.tn-wk .tc{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#8b9096;}
+.tn-wk.on .tc{color:var(--aq-red,#cf202f);}
+.boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;}
+.kb-toolbar{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  padding:6px 8px;background:#fff;border-bottom:1px solid var(--line-soft);flex:0 0 auto;
 }
+.kb-toolbar .kbb{
+  appearance:none;font-family:inherit;font-size:11px;font-weight:600;height:28px;padding:0 8px;
+  border:1px solid var(--line,#d7dbdf);border-radius:5px;background:#fff;color:#374151;cursor:pointer;white-space:nowrap;
+}
+.kb-toolbar .kbb:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.kb-toolbar .kbb.on{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);background:#fff7f8;}
+.kb-toolbar .kbb.primary{background:var(--aq-red,#cf202f);border-color:var(--aq-red,#cf202f);color:#fff;}
+.kb-toolbar .kbb.primary:hover{filter:brightness(.96);color:#fff;}
+.kb-toolbar .kb-title{font-size:12px;font-weight:700;color:var(--aq-black);margin:0 4px;white-space:nowrap;}
+.kb-toolbar .kb-space{flex:1 1 auto;min-width:4px;}
+.kb-toolbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;}
+.kb-toolbar .seg .kbb{border:0;border-radius:0;border-right:1px solid var(--line);}
+.kb-toolbar .seg .kbb:last-child{border-right:0;}
+.kb-board-wrap{flex:1 1 auto;overflow:auto;padding:6px 8px 10px;min-height:0;}
+.kb-board{display:grid;grid-template-columns:repeat(7,minmax(132px,1fr));gap:6px;align-items:start;min-width:960px;}
+.kb-list{display:flex;flex-direction:column;gap:4px;max-width:920px;}
+.kb-col,.kb-day{
+  background:#fff;border:1px solid var(--line-soft);border-radius:6px;
+  display:flex;flex-direction:column;overflow:hidden;
+  min-height:0;height:auto;align-self:start;
+}
+.kb-col{/* board: content-sized, never stretch empty days */
+  min-height:0;
+}
+.kb-col .kb-colb,.kb-day .kb-colb{
+  padding:3px 4px 4px;flex:0 0 auto;min-height:0;
+}
+.kb-colh,.kb-dayh{
+  display:flex;align-items:baseline;gap:6px;padding:5px 8px 4px;
+  border-bottom:1px solid var(--line-soft);background:#fafbfc;min-height:0;
+}
+.kb-colh b,.kb-dayh b{font-size:11px;font-weight:700;color:var(--aq-black);}
+.kb-colh span,.kb-dayh span{font-size:10.5px;color:#8b9096;}
+.kb-col.today,.kb-day.today{border-color:#e5e7eb;box-shadow:inset 2px 0 0 var(--aq-red,#cf202f);}
+.kb-col.today .kb-colh,.kb-day.today .kb-dayh{background:#fff;}
+.kb-colb.over{background:#fdf4f5;outline:2px dashed var(--aq-red);outline-offset:-2px;}
+.trips-kanban .kcard.kccompact,.trips-kanban .tvcard.tvcompact{
+  min-height:32px;margin-bottom:3px;border-radius:5px;
+}
+.trips-kanban .kcc-row,.trips-kanban .tvc-row{padding:5px 7px;gap:6px;}
+.trips-kanban .dq{margin:1px 0 0;}
+.trips-kanban .dq input{padding:4px 6px;font-size:11px;}
+.trips-kanban .ktravel{margin:1px 0 3px;font-size:8px;}
+.trips-split{width:5px;cursor:col-resize;background:var(--line-soft);}
 .trips-split:hover,.trips-split.drag{background:var(--aq-red,#cf202f);}
-.trips-map{
-  background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0;
-  max-height:calc(100vh - 160px);overflow:hidden;
-}
-.trips-map .tmh{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex:0 0 auto;}
-.trips-map .tmh b{font-size:12px;font-weight:700;}
-.trips-map .tmh .kb-space{flex:1;}
-#tripsMapSlot{flex:1 1 auto;min-height:280px;position:relative;}
-#tripsMapSlot .wkmap-inner{width:100%;height:100%;min-height:280px;}
-.planwrap.trips-kanban.map-collapsed .trips-split,
-.planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
+.trips-map{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;}
+#tripsMapSlot{flex:1 1 auto;min-height:200px;position:relative;}
+#tripsMapSlot .wkmap-inner{width:100%;height:100%;min-height:200px;}
+#plannerView.trips-on .progbar .pa{display:none;}
+#plannerView.trips-on .progbar .plansum{display:none;}
+#plannerView.trips-on .hint{display:none;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban,.planwrap.trips-kanban.map-split{grid-template-columns:200px minmax(0,1fr);}
+  .planwrap.trips-kanban.map-split{grid-template-columns:200px minmax(0,1fr);}
+  .planwrap.trips-kanban.nav-collapsed.map-split{grid-template-columns:minmax(0,1fr);}
   .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
 
@@ -1601,7 +1623,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <div class="plansum" id="planSummary"></div>
       <div class="pa" id="planActions"><div class="seg" id="terrSeg" style="display:none"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
     </div>
-    <div class="planwrap trips-kanban map-split" id="planwrap" style="--trips-map-w:380px">
+    <div class="planwrap trips-kanban map-split" id="planwrap" style="--trips-map-w:340px">
       <div class="sidebar" style="display:none" aria-hidden="true">
         <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
           <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
@@ -1610,15 +1632,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <aside class="trips-nav" id="tripsNav" aria-label="Trip week planner"></aside>
       <div class="boardcol">
         <div class="kb-toolbar" id="kbToolbar"></div>
-        <div class="kb-board-wrap"><div class="weeks kb-board" id="weeks"></div></div>
-        <div class="hint" style="padding:6px 12px 10px">Type into + Add on any day. Locked and confirmed appointments stay fixed. Saves automatically.</div>
+        <div class="kb-board-wrap"><div class="weeks kb-list" id="weeks"></div></div>
       </div>
       <div class="trips-split" id="tripsSplit" title="Drag to resize map"></div>
       <aside class="trips-map" id="tripsMapPane">
-        <div class="tmh"><b>Map</b><span class="kb-space"></span>
-          <button type="button" class="wbtn" data-mapmode="collapsed">Hide</button>
-          <button type="button" class="wbtn" data-mapmode="full">Full</button>
-        </div>
         <div id="tripsMapSlot" data-wkmapslot></div>
       </aside>
     </div>
@@ -2096,34 +2113,45 @@ function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderC
 /* ---- Trips Kanban focus / map chrome (device-local only — never in plan) ---- */
 var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!==''){ var n=parseInt(s,10); if(isFinite(n)) return n; } }catch(e){} return null; })();
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
-var MAP_SPLIT_PX=(function(){ try{ var n=parseInt(localStorage.getItem('aqMapSplit')||'380',10); return (isFinite(n)&&n>=240&&n<=720)?n:380; }catch(e){ return 380; } })();
+var MAP_SPLIT_PX=(function(){ try{ var n=parseInt(localStorage.getItem('aqMapSplit')||'340',10); return (isFinite(n)&&n>=220&&n<=720)?n:340; }catch(e){ return 340; } })();
+var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
+var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
 function focusWkGet(){ if(FOCUS_WK!=null && (WEEKDATES[FOCUS_WK]||FOCUS_WK==='remote')) return FOCUS_WK; return wkCurrent(); }
+function tripsExpandPath(wk){
+  /* device-local only — expands Year/Quarter/Month for a week in the nav tree */
+  try{
+    if(typeof wk!=='number') return;
+    var d=wkRefDay(wk), y=d.getFullYear(), m=d.getMonth(), q=Math.floor(m/3)+1;
+    WKG_STATE['y'+y]=true; WKG_STATE['q'+y+'-'+q]=true; WKG_STATE['m'+y+'-'+(m+1)]=true;
+    localStorage.setItem('aqWkGroups',JSON.stringify(WKG_STATE));
+  }catch(e){}
+}
 function focusWkSet(wk, opts){
   opts=opts||{};
   FOCUS_WK=wk;
   try{ sessionStorage.setItem('aqFocusWk',String(wk)); }catch(e){}
   _mapWk=wk;
-  /* expand matching year/quarter/month in the Trips nav (local chrome only) */
-  try{
-    if(typeof wk==='number'){
-      var d=wkRefDay(wk), y=d.getFullYear(), m=d.getMonth(), q=Math.floor(m/3)+1;
-      WKG_STATE['y'+y]=true; WKG_STATE['q'+y+'-'+q]=true; WKG_STATE['m'+y+'-'+(m+1)]=true;
-      localStorage.setItem('aqWkGroups',JSON.stringify(WKG_STATE));
-    }
-  }catch(e){}
+  if(opts.expand) tripsExpandPath(wk);
   if(!opts.silent) _wkRerender();
 }
+function tripsViewSet(v){ TRIPS_VIEW=(v==='board'?'board':'list'); try{ localStorage.setItem('aqTripsView',TRIPS_VIEW); }catch(e){} _wkRerender(); }
+function navOpenSet(open){ NAV_OPEN=!!open; try{ localStorage.setItem('aqNavOpen',NAV_OPEN?'1':'0'); }catch(e){} _wkRerender(); }
 function mapModeSet(mode){
   if(mode!=='collapsed'&&mode!=='split'&&mode!=='full') mode='split';
   MAP_UI_MODE=mode;
   try{ localStorage.setItem('aqMapMode',mode); }catch(e){}
   _wkRerender();
 }
+function mapModeCycle(){
+  mapModeSet(MAP_UI_MODE==='collapsed'?'split':(MAP_UI_MODE==='split'?'full':'collapsed'));
+}
 function mapModeApplyDom(){
   var wrap=document.getElementById('planwrap'); if(!wrap) return;
-  wrap.classList.remove('map-collapsed','map-split','map-full');
+  wrap.classList.remove('map-collapsed','map-split','map-full','nav-collapsed');
   wrap.classList.add('map-'+(MAP_UI_MODE||'split'));
-  wrap.style.setProperty('--trips-map-w', (MAP_SPLIT_PX||380)+'px');
+  if(!NAV_OPEN) wrap.classList.add('nav-collapsed');
+  wrap.style.setProperty('--trips-map-w', (MAP_SPLIT_PX||340)+'px');
+  var pv=document.getElementById('plannerView'); if(pv) pv.classList.add('trips-on');
 }
 
 /* ---- per-week map: ONE lazy Leaflet instance hosted in the Trips map pane ---- */
@@ -3653,7 +3681,7 @@ function renderPlanner(){
   if(tb) tb.innerHTML=kbToolbarHTML(focus);
   var weeksEl=document.getElementById('weeks');
   if(weeksEl){
-    weeksEl.className='weeks kb-board';
+    weeksEl.className='weeks '+(TRIPS_VIEW==='board'?'kb-board':'kb-list');
     weeksEl.innerHTML=kanbanWeekHTML(focus);
   }
   /* keep legacy pool hidden but populated for any code that reads it */
@@ -4586,6 +4614,26 @@ function runHealth(){
     var m=_sfSync||{}; var st=(m.connected===false)?'warn':(noCoord>0?'warn':'ok');
     _hcSet('Dealer sync',st,(m.matched!=null?(m.matched+' matched · '+(m.fallback||0)+' fallback'):(uni.length+' dealers'))+(noCoord?(' · '+noCoord+' need coords'):'')); }
   catch(e){ _hcSet('Dealer sync','warn','n/a'); }
+  try{ syncTripPlanHealth(); }catch(e){}
+}
+/* Trip Plan cloud sync — separate from "services are reachable". A green
+   System Health chip must not contradict a red "not saved to the cloud" bar. */
+function syncTripPlanHealth(){
+  var v=(typeof PB_VER!=='undefined')?PB_VER[PLAN_KEY]:undefined;
+  var pending=(typeof _pbPending!=='undefined')&&(_pbPending[PLAN_KEY]!==undefined);
+  var err=document.getElementById('pbSaveErr');
+  var errOn=!!(err&&err.style.display!=='none'&&err.style.display!=='');
+  if(v===undefined){
+    _hcSet('Trip Plan','fail','not loaded from cloud — reload before editing');
+  } else if(v===null){
+    _hcSet('Trip Plan','fail','cloud row unavailable — editing blocked');
+  } else if(errOn){
+    _hcSet('Trip Plan','fail','save failed — changes not in cloud');
+  } else if(pending){
+    _hcSet('Trip Plan','warn','saving…');
+  } else {
+    _hcSet('Trip Plan','ok','synced · v'+v);
+  }
 }
 /* Deep coordinate audit — re-geocode every dealer (throttled, with retry) and flag
    drift vs Salesforce. Verified street-level resolves use a 5-mi threshold; loose
@@ -4639,7 +4687,7 @@ function renderHealth(){
   var ov=_hcOverall(), dot={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626',pending:'#9ca3af'}[ov];
   var chip=el.querySelector('#shChip'); chip.style.setProperty('--shc',dot);
   chip.querySelector('.shlbl').textContent='System '+({ok:'Healthy',warn:'Check',fail:'Issues',pending:'…'}[ov]);
-  var order=['Salesforce','Supabase','Geocoding','Routing','Dealer sync'];
+  var order=['Trip Plan','Salesforce','Supabase','Geocoding','Routing','Dealer sync'];
   var rows=order.filter(function(n){return HEALTH.checks[n];}).map(function(n){ var c=HEALTH.checks[n];
     var col={ok:'#16a34a',warn:'#f59e0b',fail:'#dc2626'}[c.status]||'#9ca3af', ic={ok:'✓',warn:'!',fail:'✕'}[c.status]||'…';
     return '<div class="shrow"><span class="shi" style="background:'+col+'">'+ic+'</span><span class="shn">'+n+'</span><span class="shd" title="'+esc(c.detail||'')+'">'+esc(c.detail||'')+'</span></div>'; }).join('');
@@ -5189,7 +5237,7 @@ function tripsEventCount(wk){
 }
 function tripsNavHTML(){
   var focus=focusWkGet(), now=wkCurrent();
-  var list=[31].concat(FIELD_NUMS); /* every week through end of next year — empty weeks stay available */
+  var list=[31].concat(FIELD_NUMS);
   var years=[], cy=wkRefDay(now).getFullYear(), cm=wkRefDay(now).getMonth(), cq=Math.floor(cm/3)+1;
   list.forEach(function(w){
     var d=wkRefDay(w), y=d.getFullYear(), m=d.getMonth(), q=Math.floor(m/3)+1, n=tripsEventCount(w);
@@ -5198,21 +5246,24 @@ function tripsNavHTML(){
     var M=Q.ms[Q.ms.length-1]; if(!M||M.m!==m){ M={m:m,label:d.toLocaleString('en-US',{month:'long'}),wks:[]}; Q.ms.push(M); }
     M.wks.push({w:w,n:n});
   });
-  function openKey(key, past){ return WKG_STATE.hasOwnProperty(key)?!!WKG_STATE[key]:!past; }
+  /* Default: only the current year / quarter / month start open. Everything else
+     stays collapsed until the user opens it (remembered locally). */
+  function openKey(key, isCurrent){ return WKG_STATE.hasOwnProperty(key)?!!WKG_STATE[key]:!!isCurrent; }
   var tree=years.map(function(Y){
-    var yOpen=openKey('y'+Y.y, Y.y<cy);
-    return '<details class="tn-y" data-wkg="y'+Y.y+'"'+(yOpen?' open':'')+'><summary>'+Y.y+'</summary>'
+    var yCur=(Y.y===cy);
+    return '<details class="tn-y" data-wkg="y'+Y.y+'"'+(openKey('y'+Y.y,yCur)?' open':'')+'><summary>'+Y.y+'</summary>'
       +Y.qs.map(function(Q){
-        var qOpen=openKey('q'+Y.y+'-'+Q.q, Y.y<cy||(Y.y===cy&&Q.q<cq));
-        return '<details class="tn-q" data-wkg="q'+Y.y+'-'+Q.q+'"'+(qOpen?' open':'')+'><summary>Q'+Q.q+'</summary>'
+        var qCur=yCur&&(Q.q===cq);
+        return '<details class="tn-q" data-wkg="q'+Y.y+'-'+Q.q+'"'+(openKey('q'+Y.y+'-'+Q.q,qCur)?' open':'')+'><summary>Q'+Q.q+'</summary>'
           +Q.ms.map(function(M){
-            var mOpen=openKey('m'+Y.y+'-'+(M.m+1), Y.y<cy||(Y.y===cy&&M.m<cm));
-            return '<details class="tn-m" data-wkg="m'+Y.y+'-'+(M.m+1)+'"'+(mOpen?' open':'')+'><summary>'+esc(M.label)+'</summary>'
+            var mCur=qCur&&(M.m===cm);
+            return '<details class="tn-m" data-wkg="m'+Y.y+'-'+(M.m+1)+'"'+(openKey('m'+Y.y+'-'+(M.m+1),mCur)?' open':'')+'><summary>'+esc(M.label)+'</summary>'
               +M.wks.map(function(row){
                 var cls='tn-wk'+(row.w===focus?' on':'')+(row.w===now?' now':'');
-                return '<button type="button" class="'+cls+'" data-focuswk="'+row.w+'">'
-                  +'<span class="tw"><b>Week '+wkNo(row.w)+(row.w===31?' · Kickoff':'')+'</b><i>'+esc(WEEKDATES[row.w]||'')+'</i></span>'
-                  +'<span class="tn">'+row.n+'</span></button>';
+                var dates=(WEEKDATES[row.w]||'').replace(/,\s*\d{4}$/,'');
+                return '<button type="button" class="'+cls+'" data-focuswk="'+row.w+'" title="'+esc(WEEKDATES[row.w]||'')+'">'
+                  +'<span class="tl">WK '+wkNo(row.w)+(row.w===31?' · Kickoff':'')+' · '+esc(dates)+'</span>'
+                  +'<span class="tc">'+row.n+'</span></button>';
               }).join('')
             +'</details>';
           }).join('')
@@ -5220,30 +5271,11 @@ function tripsNavHTML(){
       }).join('')
     +'</details>';
   }).join('');
-  var nowLab=WEEKDATES[now]||wkDY(now);
-  return '<div class="tn-head">'
-    +'<button type="button" class="tn-this" data-wkgo="0" title="Jump to the actual current calendar week">'
-      +'This Week<span>Week '+wkNo(now)+' · '+esc(nowLab)+'</span></button>'
-    +'<div class="tn-hint">Current week is marked in red. Viewing '
-      +(focus===now?'this week':'Week '+wkNo(focus))+'.</div>'
-  +'</div><div class="tn-body">'+tree+'</div>';
+  return '<div class="tn-body">'+tree+'</div>';
 }
 
-/* ---- Single-week Kanban board (Sun–Sat columns) ---- */
-function kanbanWeekHTML(wk){
-  var isk=wk===31, isRemote=wk==='remote';
-  if(isRemote){
-    var dsR=dealersIn(terr).filter(function(d){return ASSIGN[d.id]==='remote';});
-    var wlogiR=LOGI.filter(function(x){return x.terr===terr && x.wk==='remote';});
-    var cardsR=(dsR.length||wlogiR.length)?(dsR.map(function(d){return dvCard(dvViewInitial(d,'remote'));}).join('')+wlogiR.map(function(x){return travelCard(x,'remote');}).join('')):'';
-    cardsR+=dqInputHTML('remote','');
-    return '<div class="kb-col" data-wk="remote"><div class="kb-colh"><b>Remote / Direct</b><span>Book remotely</span></div><div class="kb-colb" data-drop="remote|">'+cardsR+'</div></div>';
-  }
-  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
-  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
-  var xw=XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;});
-  var labs=dayLabels(wk);
-  var TL=tlCompute(terr,wk);
+/* Shared day body builder for Board and List */
+function _dayEntriesHTML(wk, labs, ds, wlogi, xw, TL){
   var seq=TL.seq;
   var seqIdx={}; seq.forEach(function(s,i){ seqIdx[s.key]=i; });
   var entryKey=function(e){ return e.k==='v'?('d:'+e.d.id):(e.k==='x'?('x:'+e.x.id):('m:'+e.x.id)); };
@@ -5253,18 +5285,14 @@ function kanbanWeekHTML(wk){
     if(i==null||i===0) return '';
     return legRowHTML(seq[i-1],seq[i],wk);
   };
-  var h='';
-  /* Needs a day — span full width above board via separate strip if any */
   var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
   var nodl=wlogi.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'l',x:x};});
   var nodx=xw.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'x',x:x};});
   var nod=nodv.concat(nodl).concat(nodx);
-  var pre='';
+  var days=[];
   if(nod.length){
-    pre='<div class="kb-col" style="grid-column:1/-1;min-height:0"><div class="kb-colh"><b>Needs a day</b><span>Assign a day to schedule</span></div>'
-      +'<div class="kb-colb" data-drop="'+wk+'|none">'
-      +nod.map(function(e){return e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk));}).join('')
-      +'</div></div>';
+    days.push({i:'none', today:false, label:'Needs a day', date:'',
+      html:nod.map(function(e){return e.k==='v'?dvCard(dvViewInitial(e.d,wk)):(e.k==='x'?dvCard(dvViewX(e.x)):travelCard(e.x,wk));}).join('')});
   }
   labs.forEach(function(l,i){
     var ev=ds.filter(function(d){return DAY[d.id]===i;}).map(function(d){return {k:'v',d:d,t:TIME[d.id]||'99'};});
@@ -5276,37 +5304,68 @@ function kanbanWeekHTML(wk){
       if(ia!=null) return -1; if(ib!=null) return 1;
       return a.t.localeCompare(b.t);
     });
-    var isToday=(wk===wkCurrent()&&i===mobToday(wk));
-    h+='<div class="kb-col'+(isToday?' today':'')+'" data-wk="'+wk+'" data-day="'+i+'">'
-      +'<div class="kb-colh"><b>'+esc(l[0])+(isToday?' · Today':'')+'</b><span>'+esc(l[1])+'</span></div>'
-      +'<div class="kb-colb" data-drop="'+wk+'|'+i+'">';
+    var html='';
     entries.forEach(function(e){
-      h+=legBefore(e);
-      h+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk),tlOf(e)):(e.k==='x'?dvCard(dvViewX(e.x),tlOf(e)):travelCard(e.x,wk,tlOf(e))));
+      html+=legBefore(e);
+      html+=(e.k==='v'?dvCard(dvViewInitial(e.d,wk),tlOf(e)):(e.k==='x'?dvCard(dvViewX(e.x),tlOf(e)):travelCard(e.x,wk,tlOf(e))));
     });
-    h+=dqInputHTML(wk,i)+'</div></div>';
+    html+=dqInputHTML(wk,i);
+    days.push({i:i, today:(wk===wkCurrent()&&i===mobToday(wk)), label:l[0], date:l[1], html:html});
   });
-  return pre+h;
+  return days;
+}
+
+function kanbanWeekHTML(wk){
+  if(wk==='remote'){
+    var dsR=dealersIn(terr).filter(function(d){return ASSIGN[d.id]==='remote';});
+    var wlogiR=LOGI.filter(function(x){return x.terr===terr && x.wk==='remote';});
+    var cardsR=(dsR.length||wlogiR.length)?(dsR.map(function(d){return dvCard(dvViewInitial(d,'remote'));}).join('')+wlogiR.map(function(x){return travelCard(x,'remote');}).join('')):'';
+    cardsR+=dqInputHTML('remote','');
+    return '<div class="kb-day" data-wk="remote"><div class="kb-dayh"><b>Remote / Direct</b><span>book remotely</span></div><div class="kb-colb" data-drop="remote|">'+cardsR+'</div></div>';
+  }
+  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
+  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
+  var xw=XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;});
+  var labs=dayLabels(wk);
+  var TL=tlCompute(terr,wk);
+  var days=_dayEntriesHTML(wk,labs,ds,wlogi,xw,TL);
+  var board=(TRIPS_VIEW==='board');
+  return days.map(function(d){
+    if(d.i==='none'){
+      return board
+        ? '<div class="kb-col" style="grid-column:1/-1"><div class="kb-colh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>'
+        : '<div class="kb-day"><div class="kb-dayh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>';
+    }
+    var todayCls=d.today?' today':'';
+    var head='<b>'+esc(d.label)+(d.today?' · Today':'')+'</b><span>'+esc(d.date)+'</span>';
+    if(board){
+      return '<div class="kb-col'+todayCls+'" data-wk="'+wk+'" data-day="'+d.i+'"><div class="kb-colh">'+head+'</div><div class="kb-colb" data-drop="'+wk+'|'+d.i+'">'+d.html+'</div></div>';
+    }
+    return '<div class="kb-day'+todayCls+'" data-wk="'+wk+'" data-day="'+d.i+'"><div class="kb-dayh">'+head+'</div><div class="kb-colb" data-drop="'+wk+'|'+d.i+'">'+d.html+'</div></div>';
+  }).join('');
 }
 
 function kbToolbarHTML(wk){
-  var now=wkCurrent(), focus=wk;
+  var now=wkCurrent();
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
-  var viewingNow=(focus===now);
+  var mapLbl=MAP_UI_MODE==='collapsed'?'Map · Off':(MAP_UI_MODE==='full'?'Map · Full':'Map · Split');
   return ''
-    +'<button class="tbtn" data-wkgo="-1" title="Previous week">‹ Prev</button>'
-    +'<button class="tbtn wk-now" data-wkgo="0" title="Actual current week">This Week</button>'
-    +'<button class="tbtn" data-wkgo="1" title="Next week">Next ›</button>'
-    +'<div class="kb-title">Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(terr)+'</div>'
-    +'<div class="kb-sub">'+esc(wkDY(wk))+(viewingNow?' · <b style="color:var(--aq-red,#cf202f)">Current week</b>':' · viewing')+'</div>'
+    +'<button type="button" class="kbb" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">'+(NAV_OPEN?'‹ Sidebar':'› Sidebar')+'</button>'
+    +'<button type="button" class="kbb" data-wkgo="-1" title="Previous week">‹</button>'
+    +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-wkgo="0" title="Actual current calendar week">This Week</button>'
+    +'<button type="button" class="kbb" data-wkgo="1" title="Next week">›</button>'
+    +'<span class="kb-title">WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk))+'</span>'
     +'<span class="kb-space"></span>'
-    +'<button class="tbtn" data-cardall="0">Collapse cards</button>'
-    +'<button class="tbtn" data-cardall="1">Expand cards</button>'
-    +'<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>'
-    +'<button class="wkdl" data-dl="'+wk+'">⤓ Trip plan</button>'
-    +'<button class="wbtn" data-mapmode="collapsed"'+(MAP_UI_MODE==='collapsed'?' style="font-weight:800"':'')+'>Map off</button>'
-    +'<button class="wbtn" data-mapmode="split"'+(MAP_UI_MODE==='split'?' style="font-weight:800"':'')+'>Map</button>'
-    +'<button class="wbtn" data-mapmode="full"'+(MAP_UI_MODE==='full'?' style="font-weight:800"':'')+'>Map full</button>';
+    +'<button type="button" class="kbb" data-cardall="0" title="Collapse cards">Collapse</button>'
+    +'<button type="button" class="kbb" data-cardall="1" title="Expand cards">Expand</button>'
+    +'<span class="seg">'
+      +'<button type="button" class="kbb'+(TRIPS_VIEW==='board'?' on':'')+'" data-tripsview="board">Board</button>'
+      +'<button type="button" class="kbb'+(TRIPS_VIEW==='list'?' on':'')+'" data-tripsview="list">List</button>'
+    +'</span>'
+    +'<button type="button" class="kbb'+(MAP_UI_MODE!=='collapsed'?' on':'')+'" data-mapcycle="1" title="Cycle map: off → split → full">'+mapLbl+'</button>'
+    +'<button type="button" class="kbb confbtn'+(confirmed?' on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>'
+    +'<button type="button" class="kbb" data-dl="'+wk+'">⤓ Trip plan</button>'
+    +'<button type="button" class="kbb" data-hist="1">History</button>';
 }
 
 function weekCard(wk){
@@ -7696,7 +7755,11 @@ function drawWeekRoute(t,wk){
     var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
     legs.push(drawLeg(_wkMap,gen,a,b,{color:'#2563eb',weight:2,opacity:.85},{from:a.name,to:b.name,area:t,fly:fly,time:b.time}));
   }
-  if(bounds.length) _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.25)); else _wkMap.setView([43.5,-95],4);
+  if(bounds.length){
+    /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
+    var maxZ=(bounds.length<=1)?10:11;
+    _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
+  } else _wkMap.setView([43.5,-95],4);
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
 }
 /* Move the single map element into the week that currently hosts it and redraw.
@@ -9031,6 +9094,10 @@ function wireDnD(){
   document.querySelectorAll('[data-wkgo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();wkGo(+b.dataset.wkgo);}));
   document.querySelectorAll('[data-focuswk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();focusWkSet(b.dataset.focuswk==='remote'?'remote':parseInt(b.dataset.focuswk,10));}));
   document.querySelectorAll('[data-mapmode]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapModeSet(b.dataset.mapmode);}));
+  document.querySelectorAll('[data-mapcycle]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapModeCycle();}));
+  document.querySelectorAll('[data-tripsview]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tripsViewSet(b.dataset.tripsview);}));
+  document.querySelectorAll('[data-navtog]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();navOpenSet(!NAV_OPEN);}));
+  document.querySelectorAll('[data-hist]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(typeof openHistory==='function')openHistory();}));
   (function wireMapSplit(){
     var handle=document.getElementById('tripsSplit'); if(!handle||handle._wired) return;
     handle._wired=true;
@@ -9738,15 +9805,20 @@ function pbSaveErr(msg){
   }
   var m=document.getElementById('pbSaveErrMsg'); if(m) m.textContent=msg||'Save failed — your latest change is NOT saved to the cloud.';
   d.style.display='flex';
+  try{ syncTripPlanHealth(); }catch(e){}
 }
-function pbSaveErrClear(){ var d=document.getElementById('pbSaveErr'); if(d) d.style.display='none'; }
+function pbSaveErrClear(){ var d=document.getElementById('pbSaveErr'); if(d) d.style.display='none'; try{ syncTripPlanHealth(); }catch(e){} }
 function cloudSave(key,obj){
   if(!SB)return;
   if(PB_READONLY) return;                                      /* verification never writes */
-  if(PB_VER[key]===undefined){                                 /* never loaded this row: don't guess */
+  /* Never invent a version. undefined = not loaded. null = row missing after
+     a partial load — refuse on production so we cannot overwrite live data. */
+  if(PB_VER[key]===undefined || (PB_VER[key]===null && !COLLAB_TEST)){
     cloudBadge('Not synced — reload');
-    pbSaveErr('Not synced with the cloud — reload this page before editing. Your latest change is NOT saved.');
-    pbLog('sync_failure',key,{reason:'no_version_loaded'}); return;
+    pbSaveErr(PB_VER[key]===null
+      ? 'Trip Plan cloud row is unavailable — editing is blocked. Reload or sign in again. Nothing was written.'
+      : 'Not synced with the cloud — reload this page before editing. Your latest change is NOT saved.');
+    pbLog('sync_failure',key,{reason:PB_VER[key]===null?'null_version_blocked':'no_version_loaded'}); return;
   }
   _pbPending[key]=obj;
   _lastSelfSave=Date.now();
@@ -9810,7 +9882,7 @@ function cloudLoad(cb){
     if(res&&res.error){
       cloudBadge('Cloud load failed');
       pbSaveErr('Could not load the shared Trip Plan from the cloud — check your connection and reload. Editing is disabled.');
-      pbLog('sync_failure',null,{stage:'load',error:String(res.error.message||res.error)}); cb&&cb(); return;
+      pbLog('sync_failure',null,{stage:'load',error:String(res.error.message||res.error)}); try{syncTripPlanHealth();}catch(e){} cb&&cb(); return;
     }
     var rows=(res&&res.data)||[];
     /* RLS silently filters rows it won't show: an empty result here means THIS
@@ -9819,7 +9891,7 @@ function cloudLoad(cb){
     if(rows.length===0){
       cloudBadge('Cloud load failed');
       pbSaveErr('The shared Trip Plan could not be read (no cloud access). Sign out and back in — editing is disabled until then.');
-      pbLog('sync_failure',null,{stage:'load',reason:'no_rows_visible'}); cb&&cb(); return;
+      pbLog('sync_failure',null,{stage:'load',reason:'no_rows_visible'}); try{syncTripPlanHealth();}catch(e){} cb&&cb(); return;
     }
     var hadDealers=false;
     rows.forEach(function(row){
@@ -9833,18 +9905,26 @@ function cloudLoad(cb){
     /* A known row that is genuinely absent (others loaded fine) may be created:
        null expected version => the RPC inserts if absent, rejects if it exists. */
     ['dealers',PLAN_KEY,'overlay_v1'].forEach(function(id){ if(PB_VER[id]===undefined) PB_VER[id]=null; });
-    if(PB_VER[PLAN_KEY]===null){ if(COLLAB_TEST){ try{ seedCollabTest(); }catch(e){} } collabLog('seed save'); cloudSave(PLAN_KEY,planPayload()); }
+    if(PB_VER[PLAN_KEY]===null){
+      if(COLLAB_TEST){ try{ seedCollabTest(); }catch(e){} collabLog('seed save'); cloudSave(PLAN_KEY,planPayload()); }
+      else {
+        /* Production: never seed/overwrite when the plan row was not readable. */
+        pbSaveErr('Trip Plan cloud row is unavailable — editing is blocked until the shared plan loads. Nothing was written.');
+        pbLog('sync_failure',PLAN_KEY,{reason:'plan_row_missing_no_autoseed'});
+      }
+    }
     if(!hadDealers){
       cloudBadge('Loaded from cloud');
       pbLog('sync_failure','dealers',{reason:'dealers_row_empty_no_autoseed'});
     } else {
       cloudBadge('Loaded from cloud');
     }
+    try{ syncTripPlanHealth(); }catch(e){}
     cb&&cb();
   },function(e){
     cloudBadge('Cloud load failed');
     pbSaveErr('Could not load the shared Trip Plan from the cloud — check your connection and reload. Editing is disabled.');
-    pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); cb&&cb();
+    pbLog('sync_failure',null,{stage:'load',error:String((e&&e.message)||e)}); try{syncTripPlanHealth();}catch(e2){} cb&&cb();
   });
 }
 function initRealtime(){ if(!SB)return; try{ SB.channel('pb-room').on('postgres_changes',{event:'*',schema:'public',table:'prebooking_state'},function(payload){ if(Date.now()-_lastSelfSave<2800)return; var a=document.activeElement; var editing=(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); var row=payload&&payload.new; if(!row||!row.id) return;
@@ -9882,11 +9962,11 @@ var _didFocusWeek=false;
 function focusCurrentWeekOnce(){
   if(_didFocusWeek) return;
   try{ if(sessionStorage.getItem('aqSessionFocus')==='1'){ _didFocusWeek=true; return; } }catch(e){}
-  /* Fresh login / new browser session: always the actual current calendar week */
+  /* Fresh login: actual current week + expand only that year/quarter/month */
   var wk=wkCurrent();
   try{ sessionStorage.setItem('aqSessionFocus','1'); sessionStorage.setItem('aqFocusWk',String(wk)); }catch(e){}
   _didFocusWeek=true;
-  try{ focusWkSet(wk); }catch(e){}
+  try{ focusWkSet(wk,{expand:true}); }catch(e){}
 }
 function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
 /* ============ TRIP-ORDER INVARIANT TESTS ============================
