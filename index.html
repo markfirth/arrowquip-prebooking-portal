@@ -96,10 +96,11 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* ===== Desktop Trips — compact Kanban / List ===== */
 .planwrap.trips-kanban{
   display:grid;
-  grid-template-columns:220px minmax(0,1fr);
+  grid-template-columns:190px minmax(0,1fr);
   gap:0;
   align-items:stretch;
-  min-height:calc(100vh - 148px);
+  height:calc(100vh - 148px);
+  max-height:calc(100vh - 148px);
   background:#fff;
   border:1px solid var(--line);
   border-radius:var(--radius);
@@ -107,24 +108,27 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 }
 .planwrap.trips-kanban.nav-collapsed{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
+/* Default split ≈ 70% itinerary / 30% map of remaining space via fr units;
+   --trips-map-w overrides with a remembered pixel width after the user drags. */
 .planwrap.trips-kanban.map-split{
-  grid-template-columns:220px minmax(0,1fr) 5px var(--trips-map-w,340px);
+  grid-template-columns:190px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
 .planwrap.trips-kanban.nav-collapsed.map-split{
-  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,340px);
+  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
 .planwrap.trips-kanban.map-full{
-  grid-template-columns:220px 5px minmax(0,1fr);
+  grid-template-columns:190px minmax(0,1fr);
 }
 .planwrap.trips-kanban.nav-collapsed.map-full{
-  grid-template-columns:5px minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr);
 }
-.planwrap.trips-kanban.map-full .boardcol{display:none;}
+.planwrap.trips-kanban.map-full .boardcol,
+.planwrap.trips-kanban.map-full .trips-split{display:none;}
 .planwrap.trips-kanban.map-collapsed .trips-split,
 .planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
 .trips-nav{
   background:#fff;border-right:1px solid var(--line);
-  display:flex;flex-direction:column;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;
+  display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;
 }
 .trips-nav .tn-body{flex:1 1 auto;overflow:auto;padding:4px 6px 12px;}
 .tn-y,.tn-q,.tn-m{margin:0;}
@@ -154,7 +158,7 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .tn-wk .tl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .tn-wk .tc{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#8b9096;}
 .tn-wk.on .tc{color:var(--aq-red,#cf202f);}
-.boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;}
+.boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;height:100%;overflow:hidden;}
 .kb-toolbar{
   display:flex;align-items:center;gap:4px;flex-wrap:wrap;
   padding:6px 8px;background:#fff;border-bottom:1px solid var(--line-soft);flex:0 0 auto;
@@ -172,19 +176,18 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .kb-toolbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;}
 .kb-toolbar .seg .kbb{border:0;border-radius:0;border-right:1px solid var(--line);}
 .kb-toolbar .seg .kbb:last-child{border-right:0;}
-.kb-board-wrap{flex:1 1 auto;overflow:auto;padding:6px 8px 10px;min-height:0;}
-.kb-board{display:grid;grid-template-columns:repeat(7,minmax(132px,1fr));gap:6px;align-items:start;min-width:960px;}
-.kb-list{display:flex;flex-direction:column;gap:4px;max-width:920px;}
+.kb-board-wrap{flex:1 1 auto;overflow:auto;padding:6px 8px 10px;min-height:0;width:100%;}
+.kb-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:start;width:100%;min-width:0;}
+.kb-list{display:flex;flex-direction:column;gap:4px;width:100%;max-width:none;min-width:0;}
 .kb-col,.kb-day{
   background:#fff;border:1px solid var(--line-soft);border-radius:6px;
   display:flex;flex-direction:column;overflow:hidden;
-  min-height:0;height:auto;align-self:start;
+  min-height:0;height:auto;width:100%;box-sizing:border-box;
 }
-.kb-col{/* board: content-sized, never stretch empty days */
-  min-height:0;
-}
+.kb-col{align-self:stretch;min-width:0;}
+.kb-day{align-self:stretch;flex:0 0 auto;}
 .kb-col .kb-colb,.kb-day .kb-colb{
-  padding:3px 4px 4px;flex:0 0 auto;min-height:0;
+  padding:3px 6px 4px;flex:0 0 auto;min-height:0;width:100%;box-sizing:border-box;
 }
 .kb-colh,.kb-dayh{
   display:flex;align-items:baseline;gap:6px;padding:5px 8px 4px;
@@ -204,14 +207,47 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .trips-kanban .ktravel{margin:1px 0 3px;font-size:8px;}
 .trips-split{width:5px;cursor:col-resize;background:var(--line-soft);}
 .trips-split:hover,.trips-split.drag{background:var(--aq-red,#cf202f);}
-.trips-map{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0;max-height:calc(100vh - 148px);overflow:hidden;}
-#tripsMapSlot{flex:1 1 auto;min-height:200px;position:relative;}
-#tripsMapSlot .wkmap-inner{width:100%;height:100%;min-height:200px;}
+.trips-map{background:#fff;display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;position:relative;}
+#tripsMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
+#tripsMapSlot .wkmap-inner{position:absolute;inset:0;width:100%;height:100%;min-height:0;}
+.trips-kanban .kcc-dur{flex:0 0 auto;font-size:10.5px;color:#8b9096;font-weight:600;margin-left:auto;}
+.trips-kanban .kcc-main{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Map chrome: split fabs + full-screen Back to Trip */
+.map-fabs{position:absolute;top:10px;right:10px;z-index:650;display:none;gap:6px;align-items:center;}
+.planwrap.trips-kanban.map-split .map-fabs{display:flex;}
+.map-fab{
+  appearance:none;width:32px;height:32px;border-radius:6px;border:1px solid var(--line,#d7dbdf);
+  background:rgba(255,255,255,.96);color:#1f2328;cursor:pointer;font-size:14px;line-height:1;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;
+}
+.map-fab:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.map-back{
+  display:none;position:absolute;top:12px;left:12px;z-index:700;
+  appearance:none;font-family:inherit;font-size:13px;font-weight:700;
+  padding:10px 14px;border-radius:8px;border:0;cursor:pointer;
+  background:var(--aq-red,#cf202f);color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.25);
+}
+.map-back:hover{filter:brightness(.96);}
+.planwrap.trips-kanban.map-full .map-back{display:inline-flex;align-items:center;gap:6px;}
+.planwrap.trips-kanban.map-full .map-fabs{display:none;}
+.planwrap.trips-kanban.map-full .trips-split{display:none;}
+.kb-more{position:relative;flex:0 0 auto;}
+.kb-more-menu{
+  display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:800;min-width:200px;
+  background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.16);padding:4px;
+}
+.kb-more.open .kb-more-menu{display:block;}
+.kb-more-menu button{
+  display:block;width:100%;text-align:left;appearance:none;font-family:inherit;font-size:12px;font-weight:600;
+  background:none;border:0;border-radius:5px;padding:8px 10px;cursor:pointer;color:#1f2328;
+}
+.kb-more-menu button:hover{background:#f5f6f7;}
+.kb-toolbar .kbb.icon{width:28px;padding:0;font-size:14px;}
 #plannerView.trips-on .progbar .pa{display:none;}
 #plannerView.trips-on .progbar .plansum{display:none;}
 #plannerView.trips-on .hint{display:none;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban.map-split{grid-template-columns:200px minmax(0,1fr);}
+  .planwrap.trips-kanban.map-split{grid-template-columns:190px minmax(0,1fr);}
   .planwrap.trips-kanban.nav-collapsed.map-split{grid-template-columns:minmax(0,1fr);}
   .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
@@ -1623,7 +1659,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <div class="plansum" id="planSummary"></div>
       <div class="pa" id="planActions"><div class="seg" id="terrSeg" style="display:none"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
     </div>
-    <div class="planwrap trips-kanban map-split" id="planwrap" style="--trips-map-w:340px">
+    <div class="planwrap trips-kanban map-split" id="planwrap">
       <div class="sidebar" style="display:none" aria-hidden="true">
         <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
           <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
@@ -1636,6 +1672,11 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       </div>
       <div class="trips-split" id="tripsSplit" title="Drag to resize map"></div>
       <aside class="trips-map" id="tripsMapPane">
+        <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
+        <div class="map-fabs">
+          <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
+          <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
+        </div>
         <div id="tripsMapSlot" data-wkmapslot></div>
       </aside>
     </div>
@@ -2113,7 +2154,7 @@ function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderC
 /* ---- Trips Kanban focus / map chrome (device-local only — never in plan) ---- */
 var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!==''){ var n=parseInt(s,10); if(isFinite(n)) return n; } }catch(e){} return null; })();
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
-var MAP_SPLIT_PX=(function(){ try{ var n=parseInt(localStorage.getItem('aqMapSplit')||'340',10); return (isFinite(n)&&n>=220&&n<=720)?n:340; }catch(e){ return 340; } })();
+var MAP_SPLIT_PX=(function(){ try{ var s=localStorage.getItem('aqMapSplit'); if(s==null||s==='') return null; var n=parseInt(s,10); return (isFinite(n)&&n>=200&&n<=900)?n:null; }catch(e){ return null; } })();
 var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
 var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
 function focusWkGet(){ if(FOCUS_WK!=null && (WEEKDATES[FOCUS_WK]||FOCUS_WK==='remote')) return FOCUS_WK; return wkCurrent(); }
@@ -2136,22 +2177,66 @@ function focusWkSet(wk, opts){
 }
 function tripsViewSet(v){ TRIPS_VIEW=(v==='board'?'board':'list'); try{ localStorage.setItem('aqTripsView',TRIPS_VIEW); }catch(e){} _wkRerender(); }
 function navOpenSet(open){ NAV_OPEN=!!open; try{ localStorage.setItem('aqNavOpen',NAV_OPEN?'1':'0'); }catch(e){} _wkRerender(); }
+var _mapBeforeFull='split';
+var _itineraryScroll=0;
+function mapCaptureItineraryScroll(){
+  var wrap=document.querySelector('#plannerView .kb-board-wrap');
+  if(wrap) _itineraryScroll=wrap.scrollTop;
+}
+function mapRestoreItineraryScroll(){
+  setTimeout(function(){
+    var wrap=document.querySelector('#plannerView .kb-board-wrap');
+    if(wrap) wrap.scrollTop=_itineraryScroll;
+  },0);
+  setTimeout(function(){
+    var wrap=document.querySelector('#plannerView .kb-board-wrap');
+    if(wrap) wrap.scrollTop=_itineraryScroll;
+  },80);
+}
 function mapModeSet(mode){
   if(mode!=='collapsed'&&mode!=='split'&&mode!=='full') mode='split';
+  var prev=MAP_UI_MODE;
+  if(mode==='full' && prev!=='full'){
+    _mapBeforeFull=(prev==='collapsed'?'split':prev);
+    mapCaptureItineraryScroll();
+  }
   MAP_UI_MODE=mode;
   try{ localStorage.setItem('aqMapMode',mode); }catch(e){}
   _wkRerender();
+  if(prev==='full' && mode!=='full') mapRestoreItineraryScroll();
+  mapInvalidateSoon();
 }
-function mapModeCycle(){
-  mapModeSet(MAP_UI_MODE==='collapsed'?'split':(MAP_UI_MODE==='split'?'full':'collapsed'));
+function mapExitFull(){
+  mapModeSet(_mapBeforeFull==='collapsed'?'split':(_mapBeforeFull||'split'));
+}
+function mapToggleVisibility(){
+  if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+  else if(MAP_UI_MODE==='full') mapExitFull();
+  else mapModeSet('collapsed');
+}
+function mapDefaultPx(){
+  var wrap=document.getElementById('planwrap');
+  var w=wrap?wrap.clientWidth:(window.innerWidth||1400);
+  var nav=(NAV_OPEN?190:0);
+  var rem=Math.max(400, w-nav-5);
+  return Math.round(Math.max(200, Math.min(900, rem*0.30)));
 }
 function mapModeApplyDom(){
   var wrap=document.getElementById('planwrap'); if(!wrap) return;
   wrap.classList.remove('map-collapsed','map-split','map-full','nav-collapsed');
   wrap.classList.add('map-'+(MAP_UI_MODE||'split'));
   if(!NAV_OPEN) wrap.classList.add('nav-collapsed');
-  wrap.style.setProperty('--trips-map-w', (MAP_SPLIT_PX||340)+'px');
+  if(MAP_SPLIT_PX!=null){
+    wrap.style.setProperty('--trips-map-w', MAP_SPLIT_PX+'px');
+  } else {
+    /* 30% of remaining workspace until the user drags the divider */
+    wrap.style.setProperty('--trips-map-w', 'minmax(200px,30%)');
+  }
   var pv=document.getElementById('plannerView'); if(pv) pv.classList.add('trips-on');
+}
+function mapInvalidateSoon(){
+  setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },40);
+  setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },200);
 }
 
 /* ---- per-week map: ONE lazy Leaflet instance hosted in the Trips map pane ---- */
@@ -2162,12 +2247,12 @@ let _wkFull=null;
 function wkMapOn(wk){ return MAP_UI_MODE!=='collapsed'; }
 /* Every itinerary item is COMPACT by default; click to expand details.
    Device-local view state only — never written to the shared plan. */
-let TVEXP={}; try{ TVEXP=JSON.parse(localStorage.getItem('aqTVEXP')||'{}')||{}; }catch(e){ TVEXP={}; }
-let DVEXP={}; try{ DVEXP=JSON.parse(localStorage.getItem('aqDVEXP')||'{}')||{}; }catch(e){ DVEXP={}; }
+let TVEXP={}; try{ TVEXP=JSON.parse(sessionStorage.getItem('aqTVEXP')||'{}')||{}; }catch(e){ TVEXP={}; }
+let DVEXP={}; try{ DVEXP=JSON.parse(sessionStorage.getItem('aqDVEXP')||'{}')||{}; }catch(e){ DVEXP={}; }
 function tvExpanded(id){ return !!TVEXP[id]; }
-function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; try{ localStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){} refreshPlanner(); }
+function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; try{ sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
 function dvExpanded(ref){ return !!DVEXP[ref]; }
-function dvToggleExpand(ref){ DVEXP[ref]=!DVEXP[ref]; try{ localStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} refreshPlanner(); }
+function dvToggleExpand(ref){ DVEXP[ref]=!DVEXP[ref]; try{ sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
 function cardsExpandAll(open){
   /* open=true expands every visible card this render; false collapses all */
   try{
@@ -2178,10 +2263,10 @@ function cardsExpandAll(open){
       /* also expand from known plan items for next render */
       (LOGI||[]).forEach(function(it){ if(it&&it.id) TVEXP[it.id]=true; });
     }
-    localStorage.setItem('aqTVEXP',JSON.stringify(TVEXP));
-    localStorage.setItem('aqDVEXP',JSON.stringify(DVEXP));
+    sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP));
+    sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP));
   }catch(e){}
-  refreshPlanner();
+  refreshPlanner({skipMap:true});
 }
 let SETTINGS={};
 let LOGI=[];
@@ -3632,7 +3717,8 @@ function dealerCard(d){
     +'<div class="dm">'+meta+'</div>'
     +'<div class="db">'+(isPro&&d.contactName?('<span class="dloc">'+esc(d.contactName)+'</span>'):'')+actions+'</div></div>';
 }
-function renderPlanner(){
+function renderPlanner(opts){
+  renderPlanner._opts=opts||{};
   document.getElementById("planTitle").textContent=terr+" · Trips";
   const isExp=terr==='Exports';
   /* the Dealer Pool is a permanent library: it ALWAYS contains every dealer in
@@ -3681,11 +3767,13 @@ function renderPlanner(){
   if(tb) tb.innerHTML=kbToolbarHTML(focus);
   var weeksEl=document.getElementById('weeks');
   if(weeksEl){
-    weeksEl.className='weeks '+(TRIPS_VIEW==='board'?'kb-board':'kb-list');
+    weeksEl.className='weeks kb-list';
     weeksEl.innerHTML=kanbanWeekHTML(focus);
   }
   /* keep legacy pool hidden but populated for any code that reads it */
-  try{ syncWeekMap(); }catch(e){}
+  try{ syncWeekMap(renderPlanner._opts||{}); }catch(e){}
+  renderPlanner._opts=null;
+  mapInvalidateSoon();
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
    Every travel item is a real place, not a note. Items without coordinates are flagged
@@ -5329,18 +5417,13 @@ function kanbanWeekHTML(wk){
   var labs=dayLabels(wk);
   var TL=tlCompute(terr,wk);
   var days=_dayEntriesHTML(wk,labs,ds,wlogi,xw,TL);
-  var board=(TRIPS_VIEW==='board');
+  /* Standard planning experience: compact full-width vertical days only */
   return days.map(function(d){
     if(d.i==='none'){
-      return board
-        ? '<div class="kb-col" style="grid-column:1/-1"><div class="kb-colh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>'
-        : '<div class="kb-day"><div class="kb-dayh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>';
+      return '<div class="kb-day"><div class="kb-dayh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>';
     }
     var todayCls=d.today?' today':'';
     var head='<b>'+esc(d.label)+(d.today?' · Today':'')+'</b><span>'+esc(d.date)+'</span>';
-    if(board){
-      return '<div class="kb-col'+todayCls+'" data-wk="'+wk+'" data-day="'+d.i+'"><div class="kb-colh">'+head+'</div><div class="kb-colb" data-drop="'+wk+'|'+d.i+'">'+d.html+'</div></div>';
-    }
     return '<div class="kb-day'+todayCls+'" data-wk="'+wk+'" data-day="'+d.i+'"><div class="kb-dayh">'+head+'</div><div class="kb-colb" data-drop="'+wk+'|'+d.i+'">'+d.html+'</div></div>';
   }).join('');
 }
@@ -5348,24 +5431,25 @@ function kanbanWeekHTML(wk){
 function kbToolbarHTML(wk){
   var now=wkCurrent();
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
-  var mapLbl=MAP_UI_MODE==='collapsed'?'Map · Off':(MAP_UI_MODE==='full'?'Map · Full':'Map · Split');
+  var mapOn=(MAP_UI_MODE!=='collapsed');
   return ''
-    +'<button type="button" class="kbb" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">'+(NAV_OPEN?'‹ Sidebar':'› Sidebar')+'</button>'
-    +'<button type="button" class="kbb" data-wkgo="-1" title="Previous week">‹</button>'
+    +'<button type="button" class="kbb icon" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">'+(NAV_OPEN?'☰':'☰')+'</button>'
+    +'<button type="button" class="kbb icon" data-wkgo="-1" title="Previous week">‹</button>'
     +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-wkgo="0" title="Actual current calendar week">This Week</button>'
-    +'<button type="button" class="kbb" data-wkgo="1" title="Next week">›</button>'
+    +'<button type="button" class="kbb icon" data-wkgo="1" title="Next week">›</button>'
     +'<span class="kb-title">WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk))+'</span>'
     +'<span class="kb-space"></span>'
-    +'<button type="button" class="kbb" data-cardall="0" title="Collapse cards">Collapse</button>'
-    +'<button type="button" class="kbb" data-cardall="1" title="Expand cards">Expand</button>'
-    +'<span class="seg">'
-      +'<button type="button" class="kbb'+(TRIPS_VIEW==='board'?' on':'')+'" data-tripsview="board">Board</button>'
-      +'<button type="button" class="kbb'+(TRIPS_VIEW==='list'?' on':'')+'" data-tripsview="list">List</button>'
-    +'</span>'
-    +'<button type="button" class="kbb'+(MAP_UI_MODE!=='collapsed'?' on':'')+'" data-mapcycle="1" title="Cycle map: off → split → full">'+mapLbl+'</button>'
+    +'<button type="button" class="kbb'+(mapOn?' on':'')+'" data-maptog="1" title="'+(mapOn?'Hide map':'Show map')+'">'+(mapOn?'Map ✓':'Map')+'</button>'
     +'<button type="button" class="kbb confbtn'+(confirmed?' on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>'
-    +'<button type="button" class="kbb" data-dl="'+wk+'">⤓ Trip plan</button>'
-    +'<button type="button" class="kbb" data-hist="1">History</button>';
+    +'<div class="kb-more">'
+      +'<button type="button" class="kbb icon" data-more="1" title="More">⋯</button>'
+      +'<div class="kb-more-menu" role="menu">'
+        +'<button type="button" data-cardall="1">Expand all appointments</button>'
+        +'<button type="button" data-cardall="0">Collapse all appointments</button>'
+        +'<button type="button" data-dl="'+wk+'">Download trip plan</button>'
+        +'<button type="button" data-hist="1">History</button>'
+      +'</div>'
+    +'</div>';
 }
 
 function weekCard(wk){
@@ -5518,6 +5602,7 @@ function dvCard(v,tl){
         +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
+        +'<span class="kcc-dur">'+esc(fmtDur(v.dur||90))+'</span>'
         +(v.done?'<span class="kcc-stat">Conf</span>':'')
         +(isFixed?'<span class="kcc-lock">🔒</span>':'')
         +'<span class="kcc-caret">▸</span>'
@@ -7764,16 +7849,22 @@ function drawWeekRoute(t,wk){
 }
 /* Move the single map element into the week that currently hosts it and redraw.
    Called after every planner render so the map stays in sync with the cards. */
-function syncWeekMap(){
+var _mapDrawnKey=null;
+function syncWeekMap(opts){
+  opts=opts||{};
   var host=_activeMapHost;
   if(host==null || typeof L==='undefined'){ return; }
-  if(MAP_UI_MODE==='collapsed'){ return; }
+  if(MAP_UI_MODE==='collapsed'){ _mapDrawnKey=null; return; }
   var slot=document.getElementById('tripsMapSlot') || document.querySelector('[data-wkmapslot]');
   if(!slot) return;
   _wkMapEnsure(); if(!_wkMap) return;
   if(_wkMapEl.parentNode!==slot) slot.appendChild(_wkMapEl);
+  var key=String(terr)+'|'+String(host)+'|'+MAP_UI_MODE;
+  /* Expanding/collapsing an appointment must not recreate the map. */
+  if(opts.skipRedraw && _mapDrawnKey===key){ mapInvalidateSoon(); return; }
   drawWeekRoute(terr,host);
-  setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize(); }catch(e){} },60);
+  _mapDrawnKey=key;
+  mapInvalidateSoon();
 }
 /* ---- Simple Add menu: one entry point for every kind of stop ---- */
 function _closeAddMenu(){ var m=document.getElementById('addMenuPop'); if(m) m.remove(); document.removeEventListener('click',_closeAddMenu,true); }
@@ -9094,33 +9185,55 @@ function wireDnD(){
   document.querySelectorAll('[data-wkgo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();wkGo(+b.dataset.wkgo);}));
   document.querySelectorAll('[data-focuswk]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();focusWkSet(b.dataset.focuswk==='remote'?'remote':parseInt(b.dataset.focuswk,10));}));
   document.querySelectorAll('[data-mapmode]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapModeSet(b.dataset.mapmode);}));
-  document.querySelectorAll('[data-mapcycle]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapModeCycle();}));
-  document.querySelectorAll('[data-tripsview]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tripsViewSet(b.dataset.tripsview);}));
+  document.querySelectorAll('[data-maptog]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapToggleVisibility();}));
+  document.querySelectorAll('[data-mapback]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();mapExitFull();}));
   document.querySelectorAll('[data-navtog]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();navOpenSet(!NAV_OPEN);}));
   document.querySelectorAll('[data-hist]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(typeof openHistory==='function')openHistory();}));
+  (function wireMoreMenu(){
+    document.querySelectorAll('[data-more]').forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var box=b.closest('.kb-more'); if(!box) return;
+        var open=!box.classList.contains('open');
+        document.querySelectorAll('.kb-more.open').forEach(function(x){ x.classList.remove('open'); });
+        if(open) box.classList.add('open');
+      });
+    });
+    if(!document._aqMoreClose){
+      document._aqMoreClose=true;
+      document.addEventListener('click',function(){ document.querySelectorAll('.kb-more.open').forEach(function(x){ x.classList.remove('open'); }); });
+    }
+  })();
+  if(!document._aqMapEsc){
+    document._aqMapEsc=true;
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape' && MAP_UI_MODE==='full'){ e.preventDefault(); mapExitFull(); }
+    });
+  }
   (function wireMapSplit(){
     var handle=document.getElementById('tripsSplit'); if(!handle||handle._wired) return;
     handle._wired=true;
     var drag=false, startX=0, startW=0;
     handle.addEventListener('mousedown',function(e){
-      if(MAP_UI_MODE==='collapsed') return;
-      drag=true; startX=e.clientX; startW=MAP_SPLIT_PX||380;
+      if(MAP_UI_MODE==='collapsed'||MAP_UI_MODE==='full') return;
+      drag=true; startX=e.clientX; startW=(MAP_SPLIT_PX!=null?MAP_SPLIT_PX:mapDefaultPx());
       handle.classList.add('drag'); e.preventDefault();
     });
     window.addEventListener('mousemove',function(e){
       if(!drag) return;
       var dx=startX-e.clientX; /* drag left grows map */
-      var nw=Math.max(240, Math.min(720, startW+dx));
+      var nw=Math.max(200, Math.min(900, startW+dx));
       MAP_SPLIT_PX=nw;
       var wrap=document.getElementById('planwrap');
       if(wrap) wrap.style.setProperty('--trips-map-w', nw+'px');
-      try{ if(_wkMap) _wkMap.invalidateSize(); }catch(err){}
+      mapInvalidateSoon();
     });
     window.addEventListener('mouseup',function(){
       if(!drag) return; drag=false; handle.classList.remove('drag');
       try{ localStorage.setItem('aqMapSplit',String(MAP_SPLIT_PX)); }catch(err){}
-      try{ if(_wkMap) _wkMap.invalidateSize(); }catch(err){}
+      mapInvalidateSoon();
     });
+    window.addEventListener('resize',function(){ mapInvalidateSoon(); });
   })();
   document.querySelectorAll('#weeks [data-dvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;dvToggleExpand(b.dataset.dvexpand);}));
   var _wknum=function(v){return v==='remote'?'remote':parseInt(v,10);};
@@ -9968,7 +10081,7 @@ function focusCurrentWeekOnce(){
   _didFocusWeek=true;
   try{ focusWkSet(wk,{expand:true}); }catch(e){}
 }
-function refreshPlanner(){ withPreservedScroll(function(){ tlInvalidate(); renderPlanner(); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
+function refreshPlanner(opts){ opts=opts||{}; withPreservedScroll(function(){ tlInvalidate(); renderPlanner(opts); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
 /* ============ TRIP-ORDER INVARIANT TESTS ============================
    Non-destructive: snapshots ASSIGN/DAY/TIME/ORD/LOGI/APPT/TLE, builds
    synthetic scenarios, asserts every surface (schedule tlSeq == desktop map
