@@ -1293,6 +1293,14 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .dq-moreline{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 8px;}
 .dq-moreline button{border:1px solid var(--line);background:#fff;border-radius:5px;font-size:10px;font-family:inherit;padding:2px 7px;cursor:pointer;color:#555;}
 .dq-new{border-top:1px solid #eef0f2;margin-top:4px;color:#555;}
+.lmeet{color:#7c3aed;font-weight:500;}
+.lgap{margin-left:6px;border:1px dashed #b7d7c2;background:#f3faf5;color:#1f7a46;border-radius:10px;font-size:10.5px;font-family:inherit;padding:1px 8px;cursor:pointer;}
+.lgap:hover{background:#e6f4ea;}
+.dq-det{font-size:10.5px;color:#6b7280;align-self:center;margin-right:2px;white-space:nowrap;}
+.dq-spin{font-weight:400;letter-spacing:0;text-transform:none;color:#b0b5ba;margin-left:6px;}
+.tm-dq{margin:10px 0 6px;}
+.tm-dq input{font-size:15px;padding:12px 12px;border:1px solid var(--line,#e5e7eb);background:#fff;border-radius:10px;}
+@media (max-width:820px){ #dqPop .dq-row{padding:10px 8px;} #dqPop .dq-act button{padding:6px 9px;font-size:12px;} }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2158,10 +2166,29 @@ function bySeq(pos, keyOf, dayOf, timeOf){
 }
 var _tlCache={};
 function tlInvalidate(){ _tlCache={}; _tlStoreC=null; _tripPosCache={}; }
+/* Busy blocks: timed virtual meetings (and Outlook events, once connected) reserve
+   time without being a map stop. Minutes from the start of the week. The chain never
+   plans driving or a visit inside a block; a fixed stop that overlaps one is flagged. */
+function tlBusy(t,wk){
+  var out=[];
+  LOGI.forEach(function(it){
+    if(it.virtual&&it.terr===t&&it.wk===wk&&it.day!=null&&it.time){
+      var s0=it.day*1440+minOf(it.time); out.push({s:s0,e:s0+(+it.dur||60),name:it.name||'Meeting',key:'m:'+it.id});
+    }
+  });
+  try{ if(typeof calBusy==='function') calBusy(t,wk).forEach(function(b){ out.push(b); }); }catch(e){}
+  return out.sort(function(a,b){ return a.s-b.s; });
+}
+function tlClear(dep,need,busy){ var moved=true, guard=0;
+  while(moved&&guard++<50){ moved=false; for(var i=0;i<busy.length;i++){ var b=busy[i]; if(dep<b.e&&dep+need>b.s){ dep=b.e; moved=true; } } }
+  return dep; }
+function tlOverlap(a,b,busy){ for(var i=0;i<busy.length;i++){ var x=busy[i]; if(a<x.e&&b>x.s) return x; } return null; }
+function tlBusyBetween(a,b,busy){ var r=busy.filter(function(x){ return x.s<b&&x.e>a; }); return r.length?r[r.length-1].name:''; }
 function tlCompute(t,wk){
   var ck=t+'|'+wk;
   if(_tlCache[ck]) return _tlCache[ck];
   var seq=(typeof wk==='number')?tlSeq(t,wk):[], by={}, conflicts=[];
+  var busy=(typeof wk==='number')?tlBusy(t,wk):[];
   for(var i=0;i<seq.length-1;i++) seq[i].tnext=tlTravel(seq[i],seq[i+1]);
   /* forward pass. Only a FIXED time (manual lock, confirmed appointment,
      flight) holds its ground; every other time — typed or not — follows the
@@ -2169,8 +2196,19 @@ function tlCompute(t,wk){
   var cursor=null;
   seq.forEach(function(s,idx){
     var trav=idx>0?seq[idx-1].tnext:null;
-    s.estArr=(cursor!=null&&trav)?cursor+trav.min:null;   /* when the chain physically gets here */
-    s.fixed=(s.anchored&&(s.locked||s.conf));   /* flights included: only the 🔒 (or a confirmation) fixes a time */
+    var willFix=(s.anchored&&(s.locked||s.conf));
+    s.estArr=null;                                         /* when the chain physically gets here */
+    if(cursor!=null&&trav){
+      /* wait out any meeting: no driving (and, for a movable stop, no visit) inside a busy block */
+      var dep=busy.length?tlClear(cursor,trav.min+(willFix?0:(s.dur||0)),busy):cursor;
+      if(dep>cursor&&idx>0){ seq[idx-1].depShow=dep; seq[idx-1].busyWait=tlBusyBetween(cursor,dep,busy); }
+      s.estArr=dep+trav.min;
+    }
+    s.fixed=willFix;   /* flights included: only the 🔒 (or a confirmation) fixes a time */
+    if(busy.length&&s.startMin!=null&&(s.fixed||s.estArr==null)){
+      var ov=tlOverlap(s.startMin,s.startMin+(s.dur||0),busy);
+      if(ov){ s.overlap=ov.name; if(conflicts.indexOf(s)<0) conflicts.push(s); }
+    }
     if(s.fixed){
       /* hotels never conflict; wk31 is the kickoff at the plant — no warnings */
       if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
@@ -2256,9 +2294,14 @@ function legRowHTML(a,b,wk){
   }
   /* drive: depart → drive time + distance → arrive. An unreachable stop is
      shown by fading its own card red — no warning text here. */
-  var seg=(dep!=null?('Leave <b>'+tlT(dep)+'</b> · '):'')
+  var seg=(dep!=null?('Leave <b>'+tlT(dep)+'</b>'+(a.busyWait?(' <span class="lmeet">after '+esc(a.busyWait)+'</span>'):'')+' · '):'')
     +'🚗 '+(t.est?'~':'')+fmtDur(t.min)+' · '+Math.round(t.km)+' km'
     +(arr!=null?(' · Arrive <b>'+tlT(arr)+'</b>'):'');
+  /* free time before a fixed appointment = room for another dealer or prospect */
+  if(arr!=null&&b.fixed&&b.startMin!=null&&Math.floor(arr/1440)===Math.floor(b.startMin/1440)){
+    var gap=b.startMin-arr;
+    if(gap>=45) seg+=' <button class="lgap" data-gapwk="'+wk+'" data-gapday="'+Math.floor(b.startMin/1440)+'" title="Find a dealer or stop that fits">'+fmtDur(gap)+' free</button>';
+  }
   var sug='';
   var thr=((settingsFor(terr).maxDrive||3))*60;
   var hot=(a.ty0==='hotel'||b.ty0==='hotel');
@@ -4826,8 +4869,8 @@ function travelCard(it,wk,tl){
       :'Click to lock the time this card is showing so it can\'t change')
     +'">'+(tvFixed?'🔒':'🔓')+'</button>';
   /* unreachable at its set time: fade the card red instead of a banner */
-  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
-  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  var lateCls=(tl&&(tl.lateMin||tl.overlap))?' tl-late':'';
+  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):((tl&&tl.overlap)?(' title="Overlaps '+esc(tl.overlap)+'"'):'');
   /* travel cards move exactly like visit cards: drag to a day (or a position
      within one) and every arrival downstream recalculates */
   var collapseBtn=(isFlight||isHotel)?('<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>'):'';
@@ -5018,8 +5061,8 @@ function dvCard(v,tl){
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
   /* unreachable at its set time: fade the card red instead of a banner */
-  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
-  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  var lateCls=(tl&&(tl.lateMin||tl.overlap))?' tl-late':'';
+  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):((tl&&tl.overlap)?(' title="Overlaps '+esc(tl.overlap)+'"'):'');
   return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
@@ -7299,7 +7342,7 @@ function dqPick(id,type){
   var inp=DQ.inp; if(!inp) return;
   var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
-  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day));
+  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day)); dqAfter();
   setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
 }
 /* Everything the day-level + Add can create besides a dealer visit. k = stop type
@@ -7340,34 +7383,150 @@ function dqAddStop(c){
   var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
   var namedByCard={hotel:1,flight_in:1,flight_out:1,rental_pickup:1,rental_return:1};
-  var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr,
+  var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:dqTerr(),
     wk:(wk==='remote'?'remote':parseInt(wk,10)), type:c.k,
     name:(namedByCard[c.k]?'':c.n), address:'', lat:null, lon:null,
     airportCode:'', airportName:'', airline:'', flightNo:'',
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
-  LOGI.push(it); savePlan(); refreshPlanner();
+  LOGI.push(it); savePlan(); refreshPlanner(); dqAfter();
 }
 function dqAddActivity(id,act){
   var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
   if(wk==='remote'){ return dqPick(id,'visit'); }
   dqClose();
   var d=uniById(id)||byId[id]; if(!d) return;
-  XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id, terr:terr,
-    wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:60, type:'visit', act:act, notes:'', done:false});
-  savePlan(); refreshPlanner();
+  XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id, terr:dqTerr(),
+    wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:(act==='coldcall'||act==='dropin')?30:60, type:'visit', act:act, notes:'', done:false});
+  savePlan(); refreshPlanner(); dqAfter();
   setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+}
+/* ---- Places: one provider interface, OpenStreetMap (Photon) today, Google later.
+   Debounced, cached per query+area, daily request ceiling, nearest-to-route first. */
+var PLACES={provider:'osm', cache:{}, cap:400};
+function placesUsage(){ try{ var k='aqPlaces_'+new Date().toISOString().slice(0,10); return {k:k,n:+(localStorage.getItem(k)||0)}; }catch(e){ return {k:null,n:0}; } }
+function placesSearch(q,bias){
+  var key=q.toLowerCase()+'|'+(bias?(bias.lat.toFixed(1)+','+bias.lon.toFixed(1)):'');
+  if(PLACES.cache[key]) return Promise.resolve(PLACES.cache[key]);
+  var u=placesUsage(); if(u.n>=PLACES.cap) return Promise.resolve({limit:true,rows:[]});
+  return placesOSM(q,bias).then(function(rows){ PLACES.cache[key]={rows:rows}; return PLACES.cache[key]; });
+}
+function placesOSM(q,bias){
+  var lq=q.toLowerCase(), qs=[q];
+  if(/tractor|farm equipment|ag equipment|agricultural|implement dealer|equipment dealer/.test(lq)) qs=[q,'tractor','farm equipment','agricultural machinery'];
+  if(/farm supply|feed store|feed and seed|co-?op/.test(lq)) qs=[q,'farm supply','feed'];
+  var bq=bias?('&lat='+bias.lat.toFixed(4)+'&lon='+bias.lon.toFixed(4)):'';
+  var u=placesUsage(); try{ if(u.k) localStorage.setItem(u.k,String(u.n+qs.length)); }catch(e){}
+  return Promise.all(qs.map(function(x){
+    return fetch('https://photon.komoot.io/api/?limit=10&lang=en&q='+encodeURIComponent(x)+bq).then(function(r){ return r.ok?r.json():{features:[]}; }).catch(function(){ return {features:[]}; });
+  })).then(function(all){
+    var seen={}, out=[];
+    all.forEach(function(j){ (j.features||[]).forEach(function(f){
+      var pr=f.properties||{}, c=(f.geometry||{}).coordinates||[];
+      if(c.length<2||!pr.name) return;
+      var id=(pr.osm_type||'')+(pr.osm_id||''); if(seen[id]) return; seen[id]=1;
+      if(/^(highway|place|boundary|landuse|natural|waterway|railway|building)$/.test(pr.osm_key||'')) return;
+      var street=[pr.housenumber,pr.street].filter(Boolean).join(' ');
+      out.push({id:id,name:pr.name,key:pr.osm_key||'',val:pr.osm_value||'',lat:+c[1],lon:+c[0],
+        city:pr.city||pr.town||pr.village||pr.county||'',state:pr.state||'',
+        address:[street,pr.city||pr.town||pr.village,pr.state,pr.postcode].filter(Boolean).join(', ')});
+    }); });
+    if(bias){ out.forEach(function(p){ p.km=(hav([bias.lat,bias.lon],[p.lat,p.lon])||0)*1.60934; }); out=out.filter(function(p){ return p.km<=200; }); out.sort(function(a,b){ return a.km-b.km; }); }
+    return out.slice(0,6);
+  });
+}
+function placeType(p){ var k=p.key+'='+p.val;
+  if(/tourism=(hotel|motel|guest_house|hostel|apartment)/.test(k)) return 'hotel';
+  if(/amenity=car_rental/.test(k)) return 'rental_pickup';
+  if(/amenity=(fuel|charging_station)/.test(k)) return 'fuel';
+  if(/amenity=(cafe|restaurant|fast_food|food_court|pub|bar|ice_cream)/.test(k)) return 'food';
+  if(/amenity=parking/.test(k)) return 'parking';
+  return 'other'; }
+function placeDealerish(p){ return /shop=(agrarian|tractor|farm|country_store|trade|car|motorcycle)|craft=agricultural_engines/.test(p.key+'='+p.val); }
+/* the day's located stops in schedule order, plus a fallback point near the work */
+function dqDayCtx(wk,day,t){
+  var pts=[], seq=[];
+  if(typeof wk==='number'){ try{ seq=tlCompute(t,wk).seq; }catch(e){ seq=[]; } }
+  var d=(day===''||day==null)?null:+day;
+  seq.forEach(function(s){ if(s.day===d&&s.lat!=null&&s.lon!=null) pts.push(s); });
+  var bias=null;
+  if(pts.length){ var la=0,lo=0; pts.forEach(function(s){ la+=+s.lat; lo+=+s.lon; }); bias={lat:la/pts.length,lon:lo/pts.length}; }
+  else { var prev=seq.filter(function(s){ return s.day!=null&&d!=null&&s.day<d&&s.lat!=null; }); var any=prev.length?prev[prev.length-1]:seq.filter(function(s){return s.lat!=null;})[0];
+    if(any) bias={lat:+any.lat,lon:+any.lon};
+    else { var ds=(dealersIn(t)||[]).map(sfMasterMerge).filter(function(m){ return m.lat!=null; }); if(ds.length){ var a=0,b=0; ds.forEach(function(m){ a+=+m.lat; b+=+m.lon; }); bias={lat:a/ds.length,lon:b/ds.length}; } } }
+  return {pts:pts,bias:bias};
+}
+/* extra driving to fit a point into the day: best slot, km and minutes (estimate; the router refines after adding) */
+function dqDetour(p,pts,bias){
+  var mi=function(a,b){ return hav([+a.lat,+a.lon],[+b.lat,+b.lon])||0; };
+  var best={mi:Infinity,pos:pts.length};
+  if(!pts.length){ var base=bias?mi(bias,p):0; best={mi:base,pos:0}; }
+  else if(pts.length===1){ best={mi:mi(pts[0],p)*2,pos:1}; }
+  else {
+    for(var i=0;i<pts.length-1;i++){ var d=mi(pts[i],p)+mi(p,pts[i+1])-mi(pts[i],pts[i+1]); if(d<best.mi) best={mi:d,pos:i+1}; }
+    var e=mi(pts[pts.length-1],p); if(e<best.mi) best={mi:e,pos:pts.length};
+  }
+  var km=best.mi*1.60934*1.25;
+  return {km:km,min:Math.round(km/80*60),pos:best.pos};
+}
+function dqTerr(){ return (DQ.inp&&DQ.inp.dataset.qterr)||terr; }
+function dqAfter(){ try{ if(typeof mobIsPhone==='function'&&mobIsPhone()&&typeof renderMobile==='function'&&document.querySelector('.tm-screen')) renderMobile(); }catch(e){} }
+function dqPlaceOrd(key,wk,day,pos){
+  try{ var seq=tlCompute(dqTerr(),wk).seq.filter(function(s){ return s.day===day; });
+    if(!seq.length) return;
+    var o=function(s){ return ORD[s.key]!=null?ORD[s.key]:null; };
+    if(pos<=0&&o(seq[0])!=null) ORD[key]=o(seq[0])-5;
+    else if(pos>=seq.length&&o(seq[seq.length-1])!=null) ORD[key]=o(seq[seq.length-1])+10;
+    else if(o(seq[pos-1])!=null&&o(seq[pos])!=null) ORD[key]=(o(seq[pos-1])+o(seq[pos]))/2;
+  }catch(e){}
+}
+function dqAddPlace(p){
+  var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday, t=dqTerr();
+  var ctx=dqDayCtx(wk==='remote'?wk:parseInt(wk,10),day,t), det=dqDetour(p,ctx.pts,ctx.bias);
+  dqClose();
+  var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:t, wk:(wk==='remote'?'remote':parseInt(wk,10)),
+    type:placeType(p), name:p.name, address:p.address, lat:p.lat, lon:p.lon, src:'osm:'+p.id,
+    airportCode:'', airportName:'', airline:'', flightNo:'', day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
+  LOGI.push(it);
+  if(typeof it.wk==='number'&&it.day!=null) dqPlaceOrd('m:'+it.id,it.wk,it.day,det.pos);
+  savePlan(); refreshPlanner(); dqAfter();
+}
+function dqColdCallPlace(p){
+  var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday, t=dqTerr();
+  dqClose();
+  addProspect({name:p.name,address:p.address,ptype2:'potential',territory:t,lat:p.lat,lon:p.lon,loc:''},function(pr){
+    if(wk==='remote'){ createVisit(pr.id,'visit','remote',null); dqAfter(); return; }
+    XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:pr.id, terr:t, wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:30, type:'visit', act:'coldcall', notes:'', done:false});
+    savePlan(); refreshPlanner(); dqAfter();
+  });
+}
+/* unscheduled accounts this week, cheapest to fit into the day */
+function dqNearDealers(wk,day,t,ctx){
+  if(typeof wk!=='number'||!ctx.bias) return [];
+  var busyIds={}; XVISITS.forEach(function(x){ if(x.wk===wk) busyIds[x.dealer]=1; });
+  return planningUniverse().filter(function(d){ return ASSIGN[d.id]!==wk&&!busyIds[d.id]; }).map(function(d){
+    var m=sfMasterMerge(d); if(m.lat==null||m.lon==null) return null;
+    var det=dqDetour({lat:m.lat,lon:m.lon},ctx.pts,ctx.bias); return {d:d,det:det};
+  }).filter(Boolean).filter(function(r){ return r.det.min<=90; }).sort(function(a,b){ return a.det.min-b.det.min; }).slice(0,4);
 }
 function dqRender(){
   var inp=DQ.inp; if(!inp) return;
   var q=inp.value.trim();
   var p=document.getElementById('dqPop'); if(!p){ p=document.createElement('div'); p.id='dqPop'; document.body.appendChild(p); }
-  var r=inp.getBoundingClientRect(), w=Math.max(r.width,380);
+  var r=inp.getBoundingClientRect(), w=Math.min(Math.max(r.width,380),window.innerWidth-16);
   p.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px'; p.style.width=w+'px';
   var below=window.innerHeight-r.bottom;
   if(below<260&&r.top>below){ p.style.top=''; p.style.bottom=(window.innerHeight-r.top+3)+'px'; } else { p.style.bottom=''; p.style.top=(r.bottom+3)+'px'; }
   DQ.rows=q?dqMatches(q):[]; DQ.cats=q?dqCatMatches(q):ADD_CATS.slice(); if(DQ.on>=DQ.rows.length+DQ.cats.length) DQ.on=0;
   var h='';
+  var wkN=(inp.dataset.qwk==='remote')?'remote':parseInt(inp.dataset.qwk,10), dayV=inp.dataset.qday, tt=dqTerr();
+  var ctx=dqDayCtx(wkN,dayV,tt);
+  /* empty field: unscheduled dealers that fit cheaply into this day */
+  DQ.near=[];
+  if(!q){ DQ.near=dqNearDealers(wkN,dayV,tt,ctx);
+    if(DQ.near.length){ h+='<div class="dq-grp">Near your route</div>';
+      DQ.near.forEach(function(r,k){ h+='<div class="dq-row"><div class="dq-txt"><span class="dq-nm">'+esc(r.d.name)+'</span><span class="dq-sub">'+esc([prospectTypeLabel(r.d),r.d.loc].filter(Boolean).join(' · '))+'</span></div>'
+        +'<div class="dq-act"><span class="dq-det">+'+r.det.min+' min</span><button data-dqna="dropin" data-dqn="'+k+'">Drop-in</button><button data-dqna="visit" data-dqn="'+k+'">Visit</button></div></div>'; }); } }
   if(!q) h+='<div class="dq-grp">Type a dealer name — or pick a stop</div>';
   DQ.rows.forEach(function(d,i){
     var sub=[prospectTypeLabel(d),[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
@@ -7383,16 +7542,41 @@ function dqRender(){
     var ic=(TRAVEL_TYPES[c.k]||{}).icon||'•'; if(c.v) ic='💻';
     h+='<div class="dq-row dq-cat'+(idx===DQ.on?' on':'')+'" data-dqc="'+j+'"><span class="dq-ic">'+ic+'</span><span class="dq-nm">'+esc(c.n)+'</span>'+(c.v?'<span class="dq-sub" style="margin-left:auto">reserves time · no map stop</span>':'')+'</div>';
   });
-  if(q&&!DQ.rows.length&&!DQ.cats.length) h+='<div class="dq-none">No match for “'+esc(q)+'”.</div>';
+  /* places near the route (debounced live search) */
+  DQ.places=[];
+  if(q.length>=3){
+    var pk=q.toLowerCase()+'|'+(ctx.bias?(ctx.bias.lat.toFixed(1)+','+ctx.bias.lon.toFixed(1)):'');
+    var hit=PLACES.cache[pk];
+    if(hit){ DQ.places=hit.rows||[];
+      if(hit.limit) h+='<div class="dq-none">Place search limit reached for today.</div>';
+      if(DQ.places.length) h+='<div class="dq-grp">Places near your route</div>';
+      DQ.places.forEach(function(pl,k){
+        var det=dqDetour(pl,ctx.pts,ctx.bias), ic=(TRAVEL_TYPES[placeType(pl)]||{}).icon||'📍';
+        h+='<div class="dq-row" data-dqp="'+k+'"><span class="dq-ic">'+ic+'</span><div class="dq-txt"><span class="dq-nm">'+esc(pl.name)+'</span><span class="dq-sub">'+esc(pl.address||[pl.city,pl.state].filter(Boolean).join(', '))+'</span></div>'
+          +'<div class="dq-act"><span class="dq-det">+'+det.min+' min</span>'+(placeDealerish(pl)?'<button data-dqpc="'+k+'">Cold call</button>':'')+'<button data-dqp="'+k+'">Add</button></div></div>';
+      });
+    } else {
+      h+='<div class="dq-grp">Places near your route <span class="dq-spin">searching…</span></div>';
+      clearTimeout(DQ.pt);
+      DQ.pt=setTimeout(function(){ var qq=q, ii=inp; placesSearch(qq,ctx.bias).then(function(res){ PLACES.cache[pk]=res; if(DQ.inp===ii&&ii.value.trim()===qq) dqRender(); }); },350);
+    }
+  }
+  if(q&&!DQ.rows.length&&!DQ.cats.length&&!DQ.places.length&&PLACES.cache[(q.toLowerCase()+'|'+(ctx.bias?(ctx.bias.lat.toFixed(1)+','+ctx.bias.lon.toFixed(1)):''))]) h+='<div class="dq-none">No match for “'+esc(q)+'”.</div>';
   h+='<div class="dq-row dq-new" data-dqnew="1"><span class="dq-ic">＋</span><span class="dq-nm">New dealer, prospect or competitor…</span></div>';
   p.innerHTML=h;
 }
 document.addEventListener('input',function(e){ var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return; DQ.inp=t; DQ.on=0; dqRender(); });
+document.addEventListener('click',function(e){
+  var g=e.target&&e.target.closest&&e.target.closest('.lgap'); if(!g) return;
+  e.preventDefault(); e.stopPropagation();
+  var n=document.querySelector('.dqin[data-qwk="'+g.dataset.gapwk+'"][data-qday="'+g.dataset.gapday+'"]');
+  if(n){ n.scrollIntoView({block:'center'}); n.focus(); }
+},true);
 document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; DQ.on=0; DQ.more=null; dqRender(); } });
 document.addEventListener('keydown',function(e){
   var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
   if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
-  var _n=DQ.rows.length+((DQ.cats||[]).length); if(!_n) return;
+  var _n=DQ.rows.length+((DQ.cats||[]).length); if(!_n){ if(e.key==='Enter'&&DQ.places&&DQ.places.length){ e.preventDefault(); dqAddPlace(DQ.places[0]); } return; }
   if(e.key==='ArrowDown'){ e.preventDefault(); DQ.on=(DQ.on+1)%_n; dqRender(); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); DQ.on=(DQ.on-1+_n)%_n; dqRender(); }
   else if(e.key==='Enter'){ e.preventDefault(); var d=DQ.rows[DQ.on]; if(d){ dqPick(d.id,'prebook'); } else { var c=(DQ.cats||[])[DQ.on-DQ.rows.length]; if(c) dqAddStop(c); } }
@@ -7404,6 +7588,9 @@ document.addEventListener('mousedown',function(e){
     var nw=e.target.closest('[data-dqnew]'); if(nw){ var wk0=DQ.inp.dataset.qwk, dy0=DQ.inp.dataset.qday; dqClose(); openDealerAdd(wk0==='remote'?'remote':parseInt(wk0,10),(dy0===''?null:parseInt(dy0,10))); return; }
     var mo=e.target.closest('[data-dqmore]'); if(mo){ var dm=DQ.rows[+mo.dataset.dqmore]; DQ.more=(dm&&DQ.more!==dm.id)?dm.id:null; dqRender(); return; }
     var ca=e.target.closest('[data-dqc]'); if(ca){ var c=(DQ.cats||[])[+ca.dataset.dqc]; if(c) dqAddStop(c); return; }
+    var pc=e.target.closest('[data-dqpc]'); if(pc){ var plc=(DQ.places||[])[+pc.dataset.dqpc]; if(plc) dqColdCallPlace(plc); return; }
+    var pa=e.target.closest('[data-dqp]'); if(pa){ var pl=(DQ.places||[])[+pa.dataset.dqp]; if(pl) dqAddPlace(pl); return; }
+    var na=e.target.closest('[data-dqn]'); if(na){ var nr=(DQ.near||[])[+na.dataset.dqn]; if(nr){ if(na.dataset.dqna==='visit') dqPick(nr.d.id,'visit'); else dqAddActivity(nr.d.id,'dropin'); } return; }
     var b=e.target.closest('[data-dqi]'); if(!b) return;
     var d=DQ.rows[+b.dataset.dqi]; if(!d) return;
     if(b.dataset.dqa){ dqAddActivity(d.id,b.dataset.dqa); return; }
@@ -9301,7 +9488,7 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
@@ -9971,6 +10158,7 @@ function mobToday_render(){
       }).join('')+'</div>';
   }
 
+  if(today!=null) h+='<div class="dq tm-dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+today+'" data-qterr="'+esc(MOB.terr)+'" placeholder="+ Add — dealer, place, stop or meeting…" autocomplete="off" spellcheck="false"></div>';
   h+='<button class="tm-primary" id="mobAdd">+ Add Quick Item</button>';
   h+='</div>';
   return h;
