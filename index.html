@@ -1287,6 +1287,12 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .dq-act button{border:1px solid var(--line);background:#fff;border-radius:5px;font-size:10px;font-family:inherit;padding:2px 7px;cursor:pointer;color:#555;}
 .dq-act button:hover{border-color:#9aa0a6;color:#111;}
 .dq-none{padding:9px 10px;color:#8b9096;font-size:12px;}
+.dq-grp{padding:8px 8px 3px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9aa0a6;font-weight:600;}
+.dq-cat{gap:10px;padding:5px 8px;}
+.dq-ic{width:18px;text-align:center;flex:none;opacity:.85;}
+.dq-moreline{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 8px;}
+.dq-moreline button{border:1px solid var(--line);background:#fff;border-radius:5px;font-size:10px;font-family:inherit;padding:2px 7px;cursor:pointer;color:#555;}
+.dq-new{border-top:1px solid #eef0f2;margin-top:4px;color:#555;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3326,7 +3332,7 @@ function renderPlanner(){
   var _showReset=(terr!=='All'&&terr!=='Master');
   _psum.className='plansum bare';
   _psum.innerHTML='<div class="tctl"><button class="tbtn" data-wkall="1">Expand all weeks</button><button class="tbtn" data-wkall="0">Collapse all weeks</button></div>'
-    +(_showReset?'<div class="tctl"><button class="tbtn" data-treset="visits" title="Remove this territory\'s Pre-book and Visit cards — library, targets and forecasts are kept">Reset visits</button><button class="tbtn" data-treset="planner" title="Remove this territory\'s cards, flights, hotels, rentals and stops — library, targets and forecasts are kept">Clear planner</button></div>':'');
+    +''   /* Reset visits / Clear planner removed: too easy to wipe planned appointments */;
   /* resolve which open week hosts the single map (one instance, not 15) */
   var openMap=nums.filter(function(w){ return wkIsOpen(w)&&wkMapOn(w); });
   _activeMapHost=(openMap.indexOf(_mapWk)>=0)?_mapWk:(openMap.length?openMap[0]:null);
@@ -4693,7 +4699,7 @@ function legsFor(items){
                sameDay:(a.day!=null && a.day===b.day)});
   }
   return {legs:legs, totalMi:totalMi, totalKm:totalMi*1.60934, totalHours:totalMi/55,
-          unlocated:items.filter(function(i){return !i.located;}).length};
+          unlocated:items.filter(function(i){return !i.located&&!(i.raw&&i.raw.virtual);}).length};
 }
 function legLabel(l){
   if(l.fly) return 'Flight · ~'+hrsLabel(l.hours);
@@ -4719,7 +4725,7 @@ function travelCard(it,wk,tl){
       ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
       : (esc(it.name||'Hotel'));
     var timePart=_mainT?('<span class="tvc-time">'+whenWord+' '+_mainT+'</span>'):'';
-    var stat=located?'':'<span class="tv-bad">Needs address</span>';
+    var stat=(located||it.virtual)?'':'<span class="tv-bad">Needs address</span>';
     return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
       +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
@@ -4808,7 +4814,9 @@ function travelCard(it,wk,tl){
      compact: place + day + time (plus check-out for hotels). */
   var flight='', conf='';
 
-  var badge=located
+  var badge=it.virtual
+    ? '<span class="tv-ok" title="Virtual — reserves time, no map stop">Virtual</span>'
+    : located
     ? '<span class="tv-ok" title="Included in routing">Located</span>'
     : '<span class="tv-bad" title="Excluded from routing until it has a location">Needs address</span>';
 
@@ -4921,10 +4929,7 @@ function weekCard(wk){
     +'</button>';
   if(!open) return '<div class="wsec'+(isk?' kick':'')+(confirmed?' confirmed':'')+'" data-wk="'+wk+'">'+summary+'</div>';
   var mapOn=wkMapOn(wk), isHost=(wk===_activeMapHost), full=(_wkFull===ckey);
-  var addbar='<div class="addbar">'
-      +'<button class="addl addprimary" data-addmenu="'+wk+'">＋ Add</button>'
-      +'<button class="addl" data-add="other|'+wk+'" title="Fuel, food, parking or other stop">＋ Stop</button>'
-    +'</div>';
+  var addbar='';   /* adding happens under each day (+ Add…) */
   var sched='<div class="wsched">'+addbar+'<div class="kbody" data-drop="'+wk+'">'+cards+'</div></div>';
   var mapCol='';
   if(mapOn){
@@ -4979,12 +4984,12 @@ function dvViewX(x){
   var d=byId[x.dealer]||uniById(x.dealer); if(!d) return null;
   return {ref:'x:'+x.id, dragId:'xv:'+x.id, dealer:d, name:d.name,
     type:(x.type==='visit'?'visit':'prebook'), wk:x.wk, day:x.day, time:x.time||'',
-    dur:x.dur||60, notes:x.notes||'', done:!!x.done, remote:false,
+    dur:x.dur||60, notes:x.notes||'', done:!!x.done, remote:false, act:x.act||'',
     att:x.att||'', leader:x.leader||'', joined:(x.joined||[]), terrName:x.terr||''};
 }
 function dvCard(v,tl){
   if(!v) return '';
-  var B=VBADGE[v.type]||VBADGE.prebook;
+  var B=(v.act&&VBADGE_ACT[v.act])||VBADGE[v.type]||VBADGE.prebook;
   var da='data-vref="'+v.ref+'"';
   var days=v.dur>=1440?Math.floor(v.dur/1440):0;
   var tkey=(v.ref.charAt(0)==='i'?'d:':'x:')+v.ref.slice(2);
@@ -7274,7 +7279,7 @@ function addDealerToWeek(dealerId,wk,day){
    the card. Replaces dragging from the dealer library. Uses createVisit(), the
    same path the old drag-and-drop used, so saving and history are unchanged. */
 function dqInputHTML(wk,day){
-  return '<div class="dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(day==null?'':day)+'" placeholder="+ Type a dealer…" autocomplete="off" spellcheck="false"></div>';
+  return '<div class="dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(day==null?'':day)+'" placeholder="+ Add — dealer, stop, flight, hotel, meeting…" autocomplete="off" spellcheck="false"></div>';
 }
 function dqMatches(q){
   var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
@@ -7297,38 +7302,112 @@ function dqPick(id,type){
   createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day));
   setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
 }
+/* Everything the day-level + Add can create besides a dealer visit. k = stop type
+   (existing TRAVEL_TYPES, so routing/cards/mobile all understand it); v = virtual:
+   reserves time, never a map stop. */
+var ADD_CATS=[
+  {g:'Travel',k:'flight_out',n:'Flight — depart',q:'flight fly plane airport depart departure'},
+  {g:'Travel',k:'flight_in',n:'Flight — arrive',q:'flight fly plane airport arrive arrival land'},
+  {g:'Travel',k:'rental_pickup',n:'Rental car — pickup',q:'rental car hire pickup pick up'},
+  {g:'Travel',k:'rental_return',n:'Rental car — return',q:'rental car hire return drop off'},
+  {g:'Travel',k:'hotel',n:'Hotel / overnight stay',q:'hotel motel check in check out overnight stay lodging'},
+  {g:'Stops',k:'food',n:'Breakfast',q:'breakfast food eat'},
+  {g:'Stops',k:'food',n:'Lunch',q:'lunch food eat restaurant'},
+  {g:'Stops',k:'food',n:'Dinner',q:'dinner supper food eat restaurant'},
+  {g:'Stops',k:'food',n:'Coffee',q:'coffee cafe'},
+  {g:'Stops',k:'fuel',n:'Fuel',q:'fuel gas petrol diesel'},
+  {g:'Stops',k:'fuel',n:'EV charging',q:'ev charging charge electric'},
+  {g:'Stops',k:'other',n:'Rest stop',q:'rest stop break'},
+  {g:'Stops',k:'other',n:'Shopping',q:'shopping shop store'},
+  {g:'Stops',k:'other',n:'Personal appointment',q:'personal appointment doctor dentist'},
+  {g:'Stops',k:'parking',n:'Parking',q:'parking park'},
+  {g:'Stops',k:'tradeshow',n:'Trade show / event',q:'trade show event expo fair'},
+  {g:'Stops',k:'other',n:'Custom location',q:'custom location address place other'},
+  {g:'Meetings',k:'other',v:1,n:'Teams meeting',q:'teams microsoft meeting call online virtual'},
+  {g:'Meetings',k:'other',v:1,n:'Zoom meeting',q:'zoom meeting call online virtual'},
+  {g:'Meetings',k:'other',v:1,n:'Phone call',q:'phone call ring'},
+  {g:'Meetings',k:'other',v:1,n:'Internal meeting',q:'internal meeting team office'},
+  {g:'Meetings',k:'other',v:1,n:'Other virtual meeting',q:'virtual meeting online webinar'}
+];
+/* activities that can be logged against a dealer (zero-forecast visits) */
+var DQ_ACTS=[['dropin','Drop-in'],['coldcall','Cold call'],['demo','Demo'],['training','Training'],['customer','Customer visit'],['competitor','Competitor visit']];
+var VBADGE_ACT=(function(){ var o={}; DQ_ACTS.forEach(function(a){ o[a[0]]={label:a[1].toUpperCase(),cls:'vis',icon:(VBADGE.visit&&VBADGE.visit.icon)||''}; }); return o; })();
+function dqCatMatches(q){
+  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  return ADD_CATS.filter(function(c){ var h=(c.n+' '+c.q).toLowerCase(); return toks.every(function(t){ return h.indexOf(t)>=0; }); }).slice(0,6);
+}
+function dqAddStop(c){
+  var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
+  dqClose();
+  var namedByCard={hotel:1,flight_in:1,flight_out:1,rental_pickup:1,rental_return:1};
+  var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr,
+    wk:(wk==='remote'?'remote':parseInt(wk,10)), type:c.k,
+    name:(namedByCard[c.k]?'':c.n), address:'', lat:null, lon:null,
+    airportCode:'', airportName:'', airline:'', flightNo:'',
+    day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
+  if(c.v){ it.virtual=true; it.dur=60; }
+  LOGI.push(it); savePlan(); refreshPlanner();
+}
+function dqAddActivity(id,act){
+  var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
+  if(wk==='remote'){ return dqPick(id,'visit'); }
+  dqClose();
+  var d=uniById(id)||byId[id]; if(!d) return;
+  XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id, terr:terr,
+    wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:60, type:'visit', act:act, notes:'', done:false});
+  savePlan(); refreshPlanner();
+  setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+}
 function dqRender(){
   var inp=DQ.inp; if(!inp) return;
-  var q=inp.value.trim(); if(!q){ dqClose(); return; }
-  DQ.rows=dqMatches(q); if(DQ.on>=DQ.rows.length) DQ.on=0;
+  var q=inp.value.trim();
   var p=document.getElementById('dqPop'); if(!p){ p=document.createElement('div'); p.id='dqPop'; document.body.appendChild(p); }
-  var r=inp.getBoundingClientRect(), w=Math.max(r.width,340);
+  var r=inp.getBoundingClientRect(), w=Math.max(r.width,380);
   p.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px'; p.style.width=w+'px';
   var below=window.innerHeight-r.bottom;
-  if(below<220&&r.top>below){ p.style.top=''; p.style.bottom=(window.innerHeight-r.top+3)+'px'; } else { p.style.bottom=''; p.style.top=(r.bottom+3)+'px'; }
-  if(!DQ.rows.length){ p.innerHTML='<div class="dq-none">No dealer matches “'+esc(q)+'” — use + Add to create a new account.</div>'; return; }
-  p.innerHTML=DQ.rows.map(function(d,i){
+  if(below<260&&r.top>below){ p.style.top=''; p.style.bottom=(window.innerHeight-r.top+3)+'px'; } else { p.style.bottom=''; p.style.top=(r.bottom+3)+'px'; }
+  DQ.rows=q?dqMatches(q):[]; DQ.cats=q?dqCatMatches(q):ADD_CATS.slice(); if(DQ.on>=DQ.rows.length+DQ.cats.length) DQ.on=0;
+  var h='';
+  if(!q) h+='<div class="dq-grp">Type a dealer name — or pick a stop</div>';
+  DQ.rows.forEach(function(d,i){
     var sub=[prospectTypeLabel(d),[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
-    return '<div class="dq-row'+(i===DQ.on?' on':'')+'" data-dqi="'+i+'"><div class="dq-txt"><span class="dq-nm">'+esc(d.name)+'</span><span class="dq-sub">'+esc(sub)+'</span></div>'
-      +'<div class="dq-act"><button data-dqt="prebook" data-dqi="'+i+'">Pre-book</button><button data-dqt="visit" data-dqi="'+i+'">Visit</button></div></div>';
-  }).join('');
+    var more=(DQ.more===d.id);
+    h+='<div class="dq-row'+(i===DQ.on?' on':'')+'" data-dqi="'+i+'"><div class="dq-txt"><span class="dq-nm">'+esc(d.name)+'</span><span class="dq-sub">'+esc(sub)+'</span></div>'
+      +'<div class="dq-act"><button data-dqt="prebook" data-dqi="'+i+'">Pre-book</button><button data-dqt="visit" data-dqi="'+i+'">Visit</button><button data-dqa="dropin" data-dqi="'+i+'">Drop-in</button><button data-dqmore="'+i+'" title="More visit types">⋯</button></div></div>';
+    if(more) h+='<div class="dq-moreline">'+DQ_ACTS.slice(1).map(function(a){ return '<button data-dqa="'+a[0]+'" data-dqi="'+i+'">'+a[1]+'</button>'; }).join('')+'</div>';
+  });
+  var lastG=null;
+  DQ.cats.forEach(function(c,j){
+    var idx=DQ.rows.length+j;
+    if(c.g!==lastG){ h+='<div class="dq-grp">'+c.g+'</div>'; lastG=c.g; }
+    var ic=(TRAVEL_TYPES[c.k]||{}).icon||'•'; if(c.v) ic='💻';
+    h+='<div class="dq-row dq-cat'+(idx===DQ.on?' on':'')+'" data-dqc="'+j+'"><span class="dq-ic">'+ic+'</span><span class="dq-nm">'+esc(c.n)+'</span>'+(c.v?'<span class="dq-sub" style="margin-left:auto">reserves time · no map stop</span>':'')+'</div>';
+  });
+  if(q&&!DQ.rows.length&&!DQ.cats.length) h+='<div class="dq-none">No match for “'+esc(q)+'”.</div>';
+  h+='<div class="dq-row dq-new" data-dqnew="1"><span class="dq-ic">＋</span><span class="dq-nm">New dealer, prospect or competitor…</span></div>';
+  p.innerHTML=h;
 }
 document.addEventListener('input',function(e){ var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return; DQ.inp=t; DQ.on=0; dqRender(); });
-document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; if(t.value.trim()) dqRender(); } });
+document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; DQ.on=0; DQ.more=null; dqRender(); } });
 document.addEventListener('keydown',function(e){
   var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
   if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
-  if(!DQ.rows.length) return;
-  if(e.key==='ArrowDown'){ e.preventDefault(); DQ.on=(DQ.on+1)%DQ.rows.length; dqRender(); }
-  else if(e.key==='ArrowUp'){ e.preventDefault(); DQ.on=(DQ.on-1+DQ.rows.length)%DQ.rows.length; dqRender(); }
-  else if(e.key==='Enter'){ e.preventDefault(); var d=DQ.rows[DQ.on]; if(d) dqPick(d.id,'prebook'); }
+  var _n=DQ.rows.length+((DQ.cats||[]).length); if(!_n) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); DQ.on=(DQ.on+1)%_n; dqRender(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); DQ.on=(DQ.on-1+_n)%_n; dqRender(); }
+  else if(e.key==='Enter'){ e.preventDefault(); var d=DQ.rows[DQ.on]; if(d){ dqPick(d.id,'prebook'); } else { var c=(DQ.cats||[])[DQ.on-DQ.rows.length]; if(c) dqAddStop(c); } }
 });
 document.addEventListener('mousedown',function(e){
   var p=document.getElementById('dqPop'); if(!p) return;
   if(p.contains(e.target)){
     e.preventDefault();                                   /* keep focus in the field */
+    var nw=e.target.closest('[data-dqnew]'); if(nw){ var wk0=DQ.inp.dataset.qwk, dy0=DQ.inp.dataset.qday; dqClose(); openDealerAdd(wk0==='remote'?'remote':parseInt(wk0,10),(dy0===''?null:parseInt(dy0,10))); return; }
+    var mo=e.target.closest('[data-dqmore]'); if(mo){ var dm=DQ.rows[+mo.dataset.dqmore]; DQ.more=(dm&&DQ.more!==dm.id)?dm.id:null; dqRender(); return; }
+    var ca=e.target.closest('[data-dqc]'); if(ca){ var c=(DQ.cats||[])[+ca.dataset.dqc]; if(c) dqAddStop(c); return; }
     var b=e.target.closest('[data-dqi]'); if(!b) return;
-    var d=DQ.rows[+b.dataset.dqi]; if(d) dqPick(d.id,b.dataset.dqt||'prebook');
+    var d=DQ.rows[+b.dataset.dqi]; if(!d) return;
+    if(b.dataset.dqa){ dqAddActivity(d.id,b.dataset.dqa); return; }
+    dqPick(d.id,b.dataset.dqt||'prebook');
     return;
   }
   if(!(e.target.classList&&e.target.classList.contains('dqin'))) dqClose();
@@ -7337,7 +7416,7 @@ window.addEventListener('resize',function(){ if(document.getElementById('dqPop')
 document.addEventListener('scroll',function(e){ if(document.getElementById('dqPop')&&DQ.inp){ dqRender(); } },true);
 /* Dealer / Prospect picker: search the master library or quick-create a
    potential/prospect/competitor, then drop it straight into the week. */
-function openDealerAdd(wk){
+function openDealerAdd(wk,day){
   _closeAddMenu();
   var wrap=document.getElementById('dpModal'); if(wrap) wrap.remove();
   wrap=document.createElement('div'); wrap.id='dpModal'; wrap.className='aqmodal';
@@ -7376,7 +7455,7 @@ function openDealerAdd(wk){
       return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
         +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span></button>';
     }).join('');
-    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){ b.onclick=function(){ addDealerToWeek(b.dataset.pick,wk); wrap.remove(); }; });
+    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){ b.onclick=function(){ addDealerToWeek(b.dataset.pick,wk,day); wrap.remove(); }; });
   };
   $('#dpSearch').addEventListener('input',renderResults); renderResults();
   $('#dpCreate').onclick=function(){
@@ -7384,7 +7463,7 @@ function openDealerAdd(wk){
     $('#dpMsg').textContent='Locating address…';
     addProspect({ name:nm, address:$('#dpAddr').value.trim(), ptype2:$('#dpType').value,
       contact:$('#dpContact').value.trim(), phone:$('#dpPhone').value.trim(), notes:$('#dpNotes').value.trim(), territory:terr },
-      function(p){ addDealerToWeek(p.id,wk); wrap.remove(); });
+      function(p){ addDealerToWeek(p.id,wk,day); wrap.remove(); });
   };
   setTimeout(function(){ $('#dpSearch').focus(); },30);
 }
@@ -7525,7 +7604,7 @@ function itineraryCard(t,wk){
       body+='<div class="irow">'+itinIcon(i)
         +'<span class="itime">'+(i.time?t12s(i.time):'—')+'</span>'
         +'<span class="iname">'+itinName(i)+'</span>'
-        +(i.located?'':'<span class="ibad">Needs address</span>')
+        +((i.located||(i.raw&&i.raw.virtual))?'':'<span class="ibad">Needs address</span>')
         +'</div>';
     });
   });
@@ -7534,7 +7613,7 @@ function itineraryCard(t,wk){
     undated.forEach(function(i){
       body+='<div class="irow">'+itinIcon(i)+'<span class="itime">—</span>'
         +'<span class="iname">'+itinName(i)+'</span>'
-        +(i.located?'':'<span class="ibad">Needs address</span>')+'</div>';
+        +((i.located||(i.raw&&i.raw.virtual))?'':'<span class="ibad">Needs address</span>')+'</div>';
     });
   }
   if(!items.length) body='<div style="color:var(--muted-2);padding:10px 0">Nothing scheduled this week.</div>';
