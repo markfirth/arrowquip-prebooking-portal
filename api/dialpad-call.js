@@ -1,5 +1,5 @@
 /**
- * Vercel API route — POST /api/dialpad-call?k=<TOKEN>
+ * Vercel API route — POST /api/dialpad-call  (Authorization: Bearer <Supabase session>)
  * Body: { number: string, dealerId?: string, visitId?: string }
  *
  * Places an outbound call through Dialpad so the rep's "Call Dealer" button
@@ -14,7 +14,7 @@
  * Without the env the endpoint answers { ok:false, reason:'not_configured' }
  * so the frontend can show a clear error and fall back — a call is never faked.
  */
-const { ACCESS_TOKEN } = require('./_lib/dealerService')
+const { requireApprovedUser } = require('./_lib/auth')
 
 /* best-effort E.164: keep a leading +, strip non-digits, default NANP (+1) for 10-digit */
 function toE164(raw) {
@@ -32,7 +32,7 @@ function toE164(raw) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
   if (req.method !== 'POST') { res.status(405).json({ ok: false, error: 'method' }); return }
-  if (((req.query && req.query.k) || '') !== ACCESS_TOKEN) { res.status(404).json({ ok: false }); return }
+  if (!(await requireApprovedUser(req, res))) return
 
   const key = String(process.env.DIALPAD_API_KEY || '').trim()
   const userId = String(process.env.DIALPAD_USER_ID || '').trim()

@@ -1,5 +1,5 @@
 /**
- * Vercel API route — POST /api/receipt-ocr?k=<TOKEN>
+ * Vercel API route — POST /api/receipt-ocr  (Authorization: Bearer <Supabase session>)
  * Body: { image: <base64 JPEG>, mime: 'image/jpeg' }
  *
  * Reads a receipt image with the Claude API and returns structured fields:
@@ -9,15 +9,14 @@
  * endpoint answers { ok:false, reason:'not_configured' } — the app then files
  * the receipt as "Needs Review" instead of pretending to read it.
  */
-const { ACCESS_TOKEN } = require('./_lib/dealerService')
+const { requireApprovedUser } = require('./_lib/auth')
 
 const CATEGORIES = ['Flights', 'Hotels', 'Food', 'Fuel', 'Rental Cars', 'Parking / Tolls', 'Other']
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
   if (req.method !== 'POST') { res.status(405).json({ ok: false, error: 'method' }); return }
-  const k = (req.query && req.query.k) || ''
-  if (k !== ACCESS_TOKEN) { res.status(404).json({ ok: false, error: 'Not found' }); return }
+  if (!(await requireApprovedUser(req, res))) return
 
   const key = String(process.env.ANTHROPIC_API_KEY || '').trim()
   if (!key) {

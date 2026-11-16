@@ -1,15 +1,15 @@
 /**
- * Vercel API route — POST /api/salesforce-refresh?k=<TOKEN>
+ * Vercel API route — POST /api/salesforce-refresh  (Authorization: Bearer <Supabase session>)
  * Manual "Refresh Salesforce" — forces the Dealer Service to re-read Salesforce
  * and repopulate the cache, bypassing the TTL. Read-only; gated.
  */
-const { getDealers, auditSync, ACCESS_TOKEN } = require('./_lib/dealerService')
+const { getDealers, auditSync } = require('./_lib/dealerService')
+const { requireApprovedUser } = require('./_lib/auth')
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
   if (req.method !== 'POST') { res.status(405).json({ ok: false, error: 'Method not allowed' }); return }
-  const k = (req.query && req.query.k) || ''
-  if (k !== ACCESS_TOKEN) { res.status(404).json({ ok: false, error: 'Not found' }); return }
+  if (!(await requireApprovedUser(req, res))) return
   try {
     const { dealers, meta } = await getDealers({ refresh: true })
     // Post-sync validation: Record Type + coordinates + ownership, all read-only.

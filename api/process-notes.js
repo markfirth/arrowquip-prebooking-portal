@@ -1,5 +1,5 @@
 /**
- * Vercel API route — POST /api/process-notes?k=<TOKEN>
+ * Vercel API route — POST /api/process-notes  (Authorization: Bearer <Supabase session>)
  * Body: { transcript: string }
  *
  * Turns a raw visit transcript (Plaud etc.) into structured, review-ready
@@ -11,12 +11,12 @@
  * endpoint answers { ok:false, reason:'not_configured' } and the transcript
  * stays untouched in the inbox — processing is never faked.
  */
-const { ACCESS_TOKEN } = require('./_lib/dealerService')
+const { requireApprovedUser } = require('./_lib/auth')
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
   if (req.method !== 'POST') { res.status(405).json({ ok: false, error: 'method' }); return }
-  if (((req.query && req.query.k) || '') !== ACCESS_TOKEN) { res.status(404).json({ ok: false }); return }
+  if (!(await requireApprovedUser(req, res))) return
 
   const key = String(process.env.ANTHROPIC_API_KEY || '').trim()
   if (!key) {
