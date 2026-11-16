@@ -622,6 +622,70 @@ body.wkfull-on{overflow:hidden;}
 .fo-recip label.on{background:#111;color:#fff;border-color:#111;}
 .fo-banner{font-size:11px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:8px 10px;margin:0 0 10px;line-height:1.35;}
 
+/* ---- Trip Command Centre overhaul (mobile only) ---- */
+.tm-nav button.on{color:var(--aq-red,#cc152f);}
+.tc-top{background:#000;color:#fff;padding:calc(var(--safe-t) + 10px) 14px 12px;position:sticky;top:0;z-index:50;}
+.tc-top .brand{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.tc-top .brand img{height:20px;width:auto;}
+.tc-top .chip{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;}
+.tc-title{font-family:var(--font-heading);font-size:20px;font-weight:900;letter-spacing:.02em;margin:10px 0 2px;line-height:1.15;}
+.tc-sub{font-size:12px;color:#9ca3af;}
+.tc-weekctl{display:flex;gap:6px;margin-top:10px;align-items:center;}
+.tc-weekctl .tmbtn{min-height:36px;padding:0 10px;font-size:12px;background:#111;border-color:#333;color:#fff;flex:0 0 auto;}
+.tc-weekctl .tmbtn.this{background:var(--aq-red,#cc152f);border-color:var(--aq-red,#cc152f);flex:1 1 auto;}
+.tc-weekctl .meta{flex:1;text-align:center;font-size:12px;color:#d1d5db;font-weight:700;}
+.tc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0;}
+.tc-stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 6px;text-align:center;}
+.tc-stat b{display:block;font-size:16px;font-weight:800;color:#111;line-height:1.1;}
+.tc-stat span{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;}
+.tc-ctx{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:12px;color:#4b5563;line-height:1.45;}
+.tc-ctx b{color:#111;}
+.tc-ctx .row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
+.tc-mapbox{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin:0 0 12px;}
+.tc-mapbox .teaser{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;min-height:44px;cursor:pointer;font-size:13px;font-weight:600;color:#111;}
+.tc-mapbox .teaser span{color:#6b7280;font-weight:500;font-size:12px;}
+#tcMap{height:0;transition:height .2s ease;}
+#tcMap.open{height:220px;border-top:1px solid #e5e7eb;}
+.tc-dayrow{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;margin-bottom:8px;text-align:left;font-family:inherit;cursor:pointer;min-height:64px;}
+.tc-dayrow.today{border-color:#111;box-shadow:0 0 0 1px #111;}
+.tc-dayrow .dow{width:44px;flex:0 0 auto;text-align:center;}
+.tc-dayrow .dow b{display:block;font-size:15px;font-weight:800;color:#111;}
+.tc-dayrow .dow span{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.tc-dayrow .body{flex:1;min-width:0;}
+.tc-dayrow .body b{display:block;font-size:14px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tc-dayrow .body span{font-size:11px;color:#6b7280;}
+.tc-dayrow .prog{width:52px;flex:0 0 auto;text-align:right;font-size:11px;font-weight:700;color:#374151;}
+.tc-daysel{display:flex;gap:4px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;}
+.tc-daysel button{flex:0 0 auto;min-width:46px;min-height:54px;border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:6px 4px;font-family:inherit;cursor:pointer;}
+.tc-daysel button.on{background:#111;border-color:#111;color:#fff;}
+.tc-daysel button.today:not(.on){border-color:var(--aq-red,#cc152f);}
+.tc-daysel b{display:block;font-size:13px;font-weight:800;line-height:1.1;}
+.tc-daysel span{font-size:9px;text-transform:uppercase;letter-spacing:.03em;opacity:.75;}
+.tc-next{background:#111;color:#fff;border-radius:14px;padding:14px;margin:0 0 12px;}
+.tc-next .k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fca5a5;margin-bottom:6px;}
+.tc-next .nm{font-size:18px;font-weight:800;margin:0 0 6px;}
+.tc-next .meta{font-size:12px;color:#d1d5db;line-height:1.45;}
+.tc-next .leave{margin-top:8px;font-size:12px;font-weight:700;color:#fca5a5;}
+.tc-next .acts{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:12px;}
+.tc-next .acts .tmbtn{min-height:44px;justify-content:center;}
+.tc-next .acts .tmbtn.nav{background:var(--aq-red,#cc152f);border-color:var(--aq-red,#cc152f);}
+.tc-exp{background:#fff;border:1px solid #e5e7eb;border-radius:12px;margin:0 0 8px;overflow:hidden;}
+.tc-exp > summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:13px;font-weight:700;color:#111;display:flex;justify-content:space-between;align-items:center;min-height:48px;}
+.tc-exp > summary::-webkit-details-marker{display:none;}
+.tc-exp > summary::after{content:"›";color:#9ca3af;font-size:18px;transform:rotate(90deg);}
+.tc-exp[open] > summary::after{transform:rotate(-90deg);}
+.tc-exp .pad{padding:0 14px 12px;font-size:13px;color:#4b5563;line-height:1.45;}
+.tc-quick{position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;}
+.tc-quick .sheet{width:100%;background:#fff;border-radius:16px 16px 0 0;padding:14px 14px calc(14px + var(--safe-b));}
+.tc-quick h3{margin:0 0 6px;font-size:16px;font-weight:800;text-align:center;}
+.tc-quick p{margin:0 0 12px;font-size:12px;color:#6b7280;text-align:center;}
+.tc-taskg{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin:14px 4px 8px;}
+.tc-muted{opacity:.55;}
+.tm-primary{background:var(--aq-red,#cc152f);}
+.tmbtn.nav{background:var(--aq-red,#cc152f);border-color:var(--aq-red,#cc152f);}
+.tl-item.next .tl-body{border-color:var(--aq-red,#cc152f);box-shadow:0 0 0 1px var(--aq-red,#cc152f);}
+.tl-next{background:var(--aq-red,#cc152f);}
+
 .tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
 .tv-geo:hover{border-color:#2563eb;color:#2563eb;}
 /* itinerary + legs */
@@ -1397,8 +1461,8 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 <div id="tmSplash" aria-hidden="true">
   <div class="tsp-mid">
     <img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip">
-    <div class="tsp-mode">Trip Mode</div>
-    <div class="tsp-tag">Your trip. Simplified.</div>
+    <div class="tsp-mode">TRAVEL</div>
+    <div class="tsp-tag">Trip Command Centre · Your trip. Simplified.</div>
   </div>
   <div class="tsp-bar"><i></i></div>
 </div>
@@ -9939,7 +10003,7 @@ async function pbAdminUsers(){
 var MOB=(function(){
   var area='East';
   try{ var a=localStorage.getItem('aqMyArea'); if(a&&(a==='All'||TERRS.indexOf(a)>=0)) area=a; }catch(e){}
-  return {terr:area, wk:32, tab:'today', day:null, routeView:'map', map:null};
+  return {terr:area, wk:32, tab:'trip', day:null, routeView:'map', map:null, mapOpen:false, mapDay:null};
 })();
 /* the pre-booking week whose dates contain today (31..44), or null out of season */
 function mobCurrentWeek(){
@@ -9982,7 +10046,7 @@ function mobDayLabel(wk,d){ var l=dayLabels(wk); return (d!=null&&l[d])?(l[d][0]
 function mobCard(i,wk){
   var ic=mobIcon(i);
   var dest=mobHasDest(i);
-  var done=(i.kind==='dealer')?!!APPT[i.id]:(i.raw&&i.raw.done);
+  var done=(i.kind==='dealer'||i.kind==='xvisit')?tcIsDone(i):(i.raw&&i.raw.done);
   var sub=[i.address, (i.kind==='travel'&&i.raw&&i.raw.conf)?('Conf# '+i.raw.conf):''].filter(Boolean).join(' · ');
   var meta=[];
   if(i.kind==='dealer'){ var dur=DUR[i.id]||90; meta.push(Math.round(dur/60*10)/10+'h visit');
@@ -10025,7 +10089,7 @@ function mobCard(i,wk){
 function mobTLItem(i,wk,isNext){
   var ic=mobIcon(i);
   var dealer=(i.kind==='dealer');
-  var done=dealer?!!APPT[i.id]:(i.raw&&i.raw.done);
+  var done=dealer?tcIsDone(i):(i.raw&&i.raw.done);
   var dest=mobHasDest(i);
   var open=mobIsExpanded(i);
   var cls='tl-item'+(dealer?'':' travel')+(done?' done':'')+(isNext?' next':'')+(open?'':' compact');
@@ -10073,27 +10137,446 @@ function mobTLItem(i,wk,isNext){
     +'</div>'
   +'</div>';
 }
+
+/* ========== Trip Command Centre (mobile UX overhaul) ==========
+   PWA Trip Mode shell — desktop DOM untouched. Data from itineraryFor /
+   ASSIGN / LOGI / APPT / VISIT. Demo (?tripDemo=1 or fieldOpsDemo=1) uses fixture. */
+var TRIP_DEMO=(function(){
+  try{
+    var q=new URLSearchParams(location.search);
+    return q.get('tripDemo')==='1' || q.get('fieldOpsDemo')==='1' || (typeof FIELD_OPS_DEMO!=='undefined'&&FIELD_OPS_DEMO);
+  }catch(e){ return false; }
+})();
+
+function tcTripMeta(){
+  if(TRIP_DEMO){
+    return { name:'Midwest Dealer Circuit', region:'Wisconsin · Illinois', dates:wkDY(MOB.wk), weekLabel:'Week '+wkNo(MOB.wk) };
+  }
+  return {
+    name:(MOB.terr==='All'?'North America':MOB.terr)+' Trip',
+    region: MOB.terr==='All'?'All territories':MOB.terr,
+    dates: wkDY(MOB.wk),
+    weekLabel:'Week '+wkNo(MOB.wk)
+  };
+}
+
+function tcDemoItems(wk){
+  var today=mobToday(wk); if(today==null) today=0;
+  var labs=dayLabels(wk)||[];
+  function dayOf(offset){ return Math.max(0, Math.min(Math.max(labs.length-1,0), today+offset)); }
+  var d0=dayOf(0), d1=dayOf(1), dm=dayOf(-1), d2=dayOf(2);
+  return [
+    {kind:'travel', id:'demo-fly-in', key:'m:demo-fly-in', type:'flight_in', name:'YYZ → MKE', address:'Milwaukee Mitchell (MKE)',
+      lat:42.9472, lon:-87.8966, day:dm, time:'08:40', located:true, airline:'Air Canada', flightNo:'AC8891', conf:'AC-DEMO',
+      raw:{done:true, type:'flight_in', airline:'Air Canada', flightNo:'AC8891', conf:'AC-DEMO'}},
+    {kind:'travel', id:'demo-rental', key:'m:demo-rental', type:'rental', name:'Enterprise — Midsize SUV', address:'MKE Airport rental desk',
+      lat:42.9472, lon:-87.8966, day:dm, time:'10:15', located:true,
+      raw:{done:false, type:'rental', conf:'ENT-78421', notes:'Due back Friday 16:00 MKE'}},
+    {kind:'travel', id:'demo-hotel', key:'m:demo-hotel', type:'hotel', name:'Hilton Garden Inn Madison', address:'210 S Pinckney St, Madison, WI',
+      lat:43.0747, lon:-89.3842, day:dm, time:'15:00', located:true,
+      raw:{done:false, type:'hotel', conf:'HGI-55201', notes:'Tonight · late checkout Friday'}},
+    {kind:'dealer', id:'demo-riverside', key:'d:demo-riverside', type:'dealer', name:'Riverside Equipment Co.',
+      address:'1840 Industrial Pkwy, Springfield, WI', lat:43.1, lon:-89.2, day:d0, time:'10:00', located:true, status:'Pending'},
+    {kind:'dealer', id:'demo-heartland', key:'d:demo-heartland', type:'dealer', name:'Heartland Livestock Supply',
+      address:'920 Highway 14, Janesville, WI', lat:42.68, lon:-89.02, day:d0, time:'14:00', located:true, status:'Pending'},
+    {kind:'dealer', id:'demo-prairie', key:'d:demo-prairie', type:'dealer', name:'Prairie Gate Dealers',
+      address:'415 Commerce Dr, Rockford, IL', lat:42.27, lon:-89.09, day:d1, time:'09:30', located:true, status:'Pending'},
+    {kind:'dealer', id:'demo-northstar', key:'d:demo-northstar', type:'dealer', name:'Northstar Ag Systems',
+      address:'77 Farm Tech Rd, Beloit, WI', lat:42.51, lon:-89.03, day:d1, time:'13:30', located:true, status:'Pending'},
+    {kind:'travel', id:'demo-hotel-2', key:'m:demo-hotel-2', type:'hotel', name:'Courtyard Rockford', address:'7100 Walton St, Rockford, IL',
+      lat:42.27, lon:-89.0, day:d1, time:'18:00', located:true, raw:{type:'hotel', conf:'CY-99102'}},
+    {kind:'travel', id:'demo-fly-out', key:'m:demo-fly-out', type:'flight_out', name:'MKE → YYZ', address:'Milwaukee Mitchell (MKE)',
+      lat:42.9472, lon:-87.8966, day:d2, time:'17:25', located:true, airline:'Air Canada', flightNo:'AC8892', conf:'AC-DEMO-R',
+      raw:{type:'flight_out', airline:'Air Canada', flightNo:'AC8892', conf:'AC-DEMO-R'}}
+  ];
+}
+
+function tcIsDone(i){
+  if(!i) return false;
+  if(i.kind==='dealer'||i.kind==='xvisit'){
+    if(TRIP_DEMO && String(i.id).indexOf('demo-')===0){
+      try{ var s=JSON.parse(localStorage.getItem('aqTripDemoAppt')||'{}'); return !!s[i.id]; }catch(e){ return false; }
+    }
+    return !!APPT[i.id];
+  }
+  return !!(i.raw && i.raw.done);
+}
+
+function tcSetDone(id, done){
+  if(TRIP_DEMO && String(id).indexOf('demo-')===0){
+    try{ var s=JSON.parse(localStorage.getItem('aqTripDemoAppt')||'{}'); if(done) s[id]=true; else delete s[id]; localStorage.setItem('aqTripDemoAppt', JSON.stringify(s)); }catch(e){}
+    return;
+  }
+  if(done){
+    APPT[id]=true;
+    var v=visitOf(id); v.completedAt=new Date().toISOString(); v.outcomeStatus='completed'; visitSave(); savePlan();
+  } else {
+    delete APPT[id];
+    var v0=visitOf(id); delete v0.completedAt; delete v0.outcomeStatus; visitSave(); savePlan();
+  }
+}
+
+function tcItems(wk){
+  wk=wk!=null?wk:MOB.wk;
+  if(TRIP_DEMO) return tcDemoItems(wk);
+  return itineraryFor(MOB.terr, wk);
+}
+
+function tcDealers(items){ return (items||[]).filter(function(i){ return i.kind==='dealer'||i.kind==='xvisit'; }); }
+
+function tcDayCity(items, day){
+  var dayItems=(items||[]).filter(function(i){ return i.day===day; });
+  var cities=[];
+  dayItems.forEach(function(i){
+    var loc='';
+    if(i.kind==='dealer'){ var d=uniById(i.id); loc=(d&&d.loc)||''; }
+    if(!loc && i.address){ var parts=String(i.address).split(','); loc=(parts[parts.length-2]||parts[parts.length-1]||'').trim(); }
+    if(!loc && i.name) loc=i.name;
+    if(loc) cities.push(loc.replace(/\s+/g,' ').trim());
+  });
+  if(!cities.length) return 'Open day';
+  var counts={};
+  cities.forEach(function(c){ counts[c]=(counts[c]||0)+1; });
+  return Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; })[0];
+}
+
+function tcTonightHotel(items, day){
+  var hotels=(items||[]).filter(function(i){ return i.kind==='travel' && normType(i.type)==='hotel'; });
+  var onDay=hotels.filter(function(h){ return h.day===day; });
+  if(onDay.length) return onDay[onDay.length-1];
+  var prior=hotels.filter(function(i){ return i.day!=null && i.day<=day; }).sort(function(a,b){ return a.day-b.day; });
+  return prior.length?prior[prior.length-1]:null;
+}
+
+function tcNextFlight(items, day){
+  var flights=(items||[]).filter(function(i){
+    return i.kind==='travel' && (String(i.type).indexOf('flight')===0 || normType(i.type)==='airport');
+  }).filter(function(i){ return i.day!=null && i.day>=day; })
+    .sort(function(a,b){ return (a.day-b.day)||String(a.time||'').localeCompare(String(b.time||'')); });
+  return flights[0]||null;
+}
+
+function tcRental(items){
+  return (items||[]).filter(function(i){ return i.kind==='travel' && normType(i.type)==='rental'; })[0]||null;
+}
+
+function tcLeaveHint(next, items, wk){
+  if(!next) return {leave:'', drive:''};
+  if(TRIP_DEMO && next.id==='demo-riverside') return {leave:'Leave by 9:15 AM', drive:'45 min · 32 km'};
+  try{
+    var TL=tlCompute(MOB.terr,wk), by=TL.by||{};
+    var key=(next.kind==='dealer'?'d:':'m:')+next.id;
+    if(!by[key] && next.key) key=next.key;
+    var node=by[key];
+    if(node){
+      var leave='', drive='';
+      var idx=TL.seq.indexOf(node);
+      if(idx>0 && TL.seq[idx-1].tnext){
+        leave='Leave by '+tlT(node.estArr-(TL.seq[idx-1].tnext.min||0));
+        drive=fmtDur(TL.seq[idx-1].tnext.min||0)+' · ~'+Math.round(TL.seq[idx-1].tnext.km||0)+' km';
+      }
+      return {leave:leave, drive:drive};
+    }
+  }catch(e){}
+  return {leave:'', drive:''};
+}
+
+function tcTaskRows(){
+  if(TRIP_DEMO){
+    try{ var demo=JSON.parse(localStorage.getItem('aqTripDemoTasks')||'null'); if(demo&&demo.length) return demo; }catch(e){}
+    return [
+      {id:'demo-riverside', i:0, t:'Send crowder lead-time clarification', due:'Friday', done:false, name:'Riverside Equipment Co.', group:'thisweek'},
+      {id:'demo-riverside', i:1, t:'Share spring Q-Catch proposal (draft)', due:'Next week', done:false, name:'Riverside Equipment Co.', group:'upcoming'},
+      {id:'demo-heartland', i:0, t:'Confirm aged units to feature', due:'Today', done:false, name:'Heartland Livestock Supply', group:'today'}
+    ];
+  }
+  var rows=[];
+  Object.keys(VISIT||{}).forEach(function(id){
+    var v=VISIT[id]||{}, d=uniById(id);
+    (v.actions||[]).forEach(function(a,i){
+      rows.push({id:id, i:i, t:a.t, due:a.due||'', done:!!a.done, name:(d&&d.name)||id});
+    });
+  });
+  return rows;
+}
+
+function tcTaskGroup(r){
+  if(r.group) return r.group;
+  var due=String(r.due||'').toLowerCase();
+  if(r.done) return 'done';
+  if(/overdue|yesterday|ago/.test(due)) return 'overdue';
+  if(/^today$|today/.test(due)) return 'today';
+  if(/friday|this week|week/.test(due)) return 'thisweek';
+  return 'upcoming';
+}
+
+function tcTopBar(){
+  var meta=tcTripMeta();
+  return '<div class="tc-top">'
+    +'<div class="brand"><img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"><span class="chip">TRAVEL</span></div>'
+    +'<div class="tc-title">'+esc(meta.name)+'</div>'
+    +'<div class="tc-sub">'+esc(meta.region)+' · '+esc(meta.dates)+'</div>'
+    +'<div class="tc-weekctl">'
+      +'<button class="tmbtn" data-mobwk="-1" aria-label="Previous week">‹</button>'
+      +'<div class="meta">'+esc(meta.weekLabel)+'</div>'
+      +'<button class="tmbtn this" data-mobwk="0">This Week</button>'
+      +'<button class="tmbtn" data-mobwk="1" aria-label="Next week">›</button>'
+    +'</div>'
+    +(TRIP_DEMO?'<div style="margin-top:8px;font-size:11px;color:#fca5a5">Preview demo — live plan not modified</div>':'')
+  +'</div>';
+}
+
+function tcNavHtml(active){
+  var tab=function(id,icon,label){
+    return '<button data-mobtab="'+id+'" class="'+(active===id?'on':'')+'"><span class="ni">'+icon+'</span>'+label+'</button>';
+  };
+  return '<div class="tm-nav">'
+    +tab('trip',tmIcon('map'),'Trip')
+    +tab('day',tmIcon('home'),'Day')
+    +tab('tasks',tmIcon('clipboard'),'Tasks')
+  +'</div>';
+}
+
+function tcNextCard(next, wk, items){
+  if(!next) return '<div class="tm-empty" style="padding:16px">No outstanding appointments this day.</div>';
+  var hint=tcLeaveHint(next, items, wk);
+  var call='';
+  if(next.kind==='dealer'){
+    if(TRIP_DEMO && String(next.id).indexOf('demo-')===0) call='555-0142';
+    else { var d=uniById(next.id)||{}; var sf=(typeof sfLookup==='function'?sfLookup(d):null)||{}; call=sf.contactMobile||sf.contactPhone||d.phone||''; }
+  }
+  var obj='';
+  if(TRIP_DEMO && next.id==='demo-riverside') obj='Review spring order opportunities and inventory.';
+  else if(next.kind==='dealer' && VISIT[next.id]) obj=VISIT[next.id].objective||VISIT[next.id].notes||'';
+  if(obj && obj.length>110) obj=obj.slice(0,109)+'…';
+  return '<div class="tc-next">'
+    +'<div class="k">Next</div>'
+    +'<div class="nm">'+esc(next.name||'Appointment')+'</div>'
+    +'<div class="meta">'+(next.time?t12s(next.time):'Time TBD')+(next.address?('<br>'+esc(next.address)):'')+'</div>'
+    +(obj?('<div class="meta" style="margin-top:6px">'+esc(obj)+'</div>'):'')
+    +((hint.leave||hint.drive)?('<div class="leave">'+esc([hint.drive,hint.leave].filter(Boolean).join(' · '))+'</div>'):'')
+    +'<div class="acts">'
+      +(mobHasDest(next)?('<a class="tmbtn nav" href="'+navUrl(next)+'" target="_blank" rel="noopener">Navigate</a>'):'<button class="tmbtn" disabled>Navigate</button>')
+      +(call?('<a class="tmbtn" href="tel:'+esc(call)+'">Call</a>'):'<button class="tmbtn" disabled>Call</button>')
+      +'<button class="tmbtn" data-mobvisit="'+next.id+'">Open</button>'
+    +'</div></div>';
+}
+
+function mobTrip_render(){
+  var wk=MOB.wk, items=tcItems(wk), dealers=tcDealers(items);
+  var doneN=dealers.filter(tcIsDone).length;
+  var openTasks=tcTaskRows().filter(function(r){return !r.done;}).length;
+  var today=mobToday(wk);
+  var dayFocus=(today!=null)?today:0;
+  var todays=items.filter(function(i){return i.day===dayFocus;}).sort(function(a,b){return String(a.time||'99').localeCompare(String(b.time||'99'));});
+  var next=tcDealers(todays).filter(function(i){return !tcIsDone(i);})[0];
+  var hotel=tcTonightHotel(items, dayFocus);
+  var flight=tcNextFlight(items, dayFocus);
+  var rental=tcRental(items);
+  var labs=dayLabels(wk)||[];
+  var pct=dealers.length?Math.round(doneN/dealers.length*100):0;
+  var h='<div class="tm-screen">';
+  h+='<div class="tc-stats">'
+    +'<div class="tc-stat"><b>'+dealers.length+'</b><span>Scheduled</span></div>'
+    +'<div class="tc-stat"><b>'+doneN+'</b><span>Completed</span></div>'
+    +'<div class="tc-stat"><b>'+openTasks+'</b><span>Tasks</span></div>'
+    +'<div class="tc-stat"><b>'+pct+'%</b><span>Progress</span></div></div>';
+  h+='<div class="tc-ctx">';
+  if(hotel) h+='<div class="row"><span>Tonight</span><b>'+esc(hotel.name)+'</b></div>';
+  if(flight) h+='<div class="row"><span>Next flight</span><b>'+esc(flight.name)+(flight.time?(' · '+t12s(flight.time)):'')+'</b></div>';
+  if(rental) h+='<div class="row"><span>Rental</span><b>'+esc(rental.name)+'</b></div>';
+  if(!hotel && !flight && !rental) h+='<div class="row"><span>Travel</span><b>No flights, hotel or rental on file</b></div>';
+  h+='</div>';
+  h+=tcNextCard(next, wk, items);
+  h+='<div class="tc-mapbox"><div class="teaser" id="tcMapToggle"><b>Trip route</b><span>'+(MOB.mapOpen?'Collapse':'Expand map')+'</span></div>'
+    +'<div id="tcMap" class="'+(MOB.mapOpen?'open':'')+'"></div></div>';
+  h+='<div class="tm-h"><span>Week itinerary</span></div>';
+  for(var d=0;d<labs.length;d++){
+    var dayItems=items.filter(function(i){return i.day===d;});
+    var dDeal=tcDealers(dayItems);
+    var dDone=dDeal.filter(tcIsDone).length;
+    var overnight=tcTonightHotel(items,d);
+    var travelBits=[];
+    dayItems.filter(function(i){return i.kind==='travel';}).slice(0,2).forEach(function(t){ travelBits.push(mobKind(t)); });
+    h+='<button type="button" class="tc-dayrow'+(today===d?' today':'')+'" data-tcday="'+d+'">'
+      +'<div class="dow"><b>'+esc(labs[d][0])+'</b><span>'+esc(labs[d][1])+'</span></div>'
+      +'<div class="body"><b>'+esc(tcDayCity(items,d))+'</b><span>'
+        +(dDeal.length?(dDeal.length+' appointment'+(dDeal.length===1?'':'s')):'No appointments')
+        +(travelBits.length?(' · '+esc(travelBits.join(' · '))):'')
+        +(overnight?(' · Stay: '+esc(overnight.name)):'')
+      +'</span></div>'
+      +'<div class="prog">'+(dDeal.length?(dDone+'/'+dDeal.length):'—')+'</div></button>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function mobToday_render(){
+  var wk=MOB.wk, items=tcItems(wk), labs=dayLabels(wk)||[];
+  var today=mobToday(wk);
+  if(MOB.day==null) MOB.day=(today!=null?today:0);
+  var day=MOB.day;
+  var dayItems=items.filter(function(i){return i.day===day;}).sort(function(a,b){return String(a.time||'99').localeCompare(String(b.time||'99'));});
+  var dealers=tcDealers(dayItems);
+  var doneN=dealers.filter(tcIsDone).length;
+  var next=dealers.filter(function(i){return !tcIsDone(i);})[0];
+  var h='<div class="tm-screen"><div class="tc-daysel">';
+  for(var d=0;d<labs.length;d++){
+    var ds=(labs[d][1]||''); var short=ds.replace(/^[A-Za-z]+\s*/,'');
+    h+='<button type="button" data-tcday="'+d+'" class="'+(day===d?'on':'')+(today===d?' today':'')+'"><b>'+esc(labs[d][0])+'</b><span>'+esc(short)+'</span></button>';
+  }
+  h+='</div>';
+  h+='<div class="fo-progress"><div><div class="fo-n">'+dealers.length+'</div><div class="fo-l">today</div></div>'
+    +'<div class="fo-bar"><i class="done" style="width:'+(dealers.length?doneN/dealers.length*100:0)+'%"></i><i class="left" style="width:'+(dealers.length?(100-doneN/dealers.length*100):100)+'%"></i></div>'
+    +'<div style="font-size:11px;color:#6b7280;text-align:right"><b style="color:#16a34a">'+doneN+' done</b><br><b style="color:#cc152f">'+(dealers.length-doneN)+' left</b></div></div>';
+  h+=tcNextCard(next, wk, items);
+  if(!dayItems.length){
+    h+='<div class="tm-empty">Nothing scheduled for this day.<br>Use + Add.</div>';
+  } else {
+    h+='<div class="tm-tl">';
+    var locatedPrev=null;
+    dayItems.forEach(function(i){
+      var isNext=next && i.id===next.id && (i.kind==='dealer'||i.kind==='xvisit');
+      if(locatedPrev && i.located && !sameSpot(locatedPrev,i)){
+        var fly=(String(locatedPrev.type).indexOf('flight')===0 && String(i.type).indexOf('flight')===0);
+        var mi=roadMi([locatedPrev.lat,locatedPrev.lon],[i.lat,i.lon])||0;
+        h+='<div class="legrow">'+(fly?'✈ Flight':'→ Drive')+' · ~'+Math.round(mi*1.60934)+' km · ~'+fmtDur(mi/55*60)+'</div>';
+      }
+      if(i.located) locatedPrev=i;
+      h+=mobTLItem(i, wk, isNext);
+    });
+    h+='</div>';
+  }
+  h+='<button class="tm-primary" id="mobAdd">+ Add</button></div>';
+  return h;
+}
+
+function mobTasks_render(){
+  var rows=tcTaskRows();
+  var groups=[['overdue','Overdue'],['today','Today'],['thisweek','This week'],['upcoming','Upcoming']];
+  var h='<div class="tm-screen"><div class="tm-h" style="margin-top:4px"><span>My tasks</span></div>';
+  if(TRIP_DEMO) h+='<div class="fo-banner">Demo tasks for preview. Completing them stays on this device.</div>';
+  var any=false;
+  groups.forEach(function(g){
+    var list=rows.filter(function(r){return !r.done && tcTaskGroup(r)===g[0];});
+    if(!list.length) return;
+    any=true;
+    h+='<div class="tc-taskg">'+g[1]+' · '+list.length+'</div>';
+    list.forEach(function(r){
+      h+='<div class="tmrow"><button class="tmbtn icon" data-tasktog="'+r.id+':'+r.i+'" title="Complete">✓</button>'
+        +'<div class="t"><b>'+esc(r.t)+'</b><span>'+esc(r.name)+(r.due?(' · '+esc(r.due)):'')+'</span></div>'
+        +'<button class="tmbtn" data-mobvisit="'+r.id+'">Open</button></div>';
+    });
+  });
+  var done=rows.filter(function(r){return r.done;});
+  if(done.length){
+    h+='<div class="tc-taskg">Completed · '+done.length+'</div>';
+    done.slice(0,12).forEach(function(r){
+      h+='<div class="tmrow tc-muted"><button class="tmbtn icon done" data-tasktog="'+r.id+':'+r.i+'">✓</button>'
+        +'<div class="t"><b>'+esc(r.t)+'</b><span>'+esc(r.name)+'</span></div></div>';
+    });
+  }
+  if(!any && !done.length) h+='<div class="tm-empty">No follow-up tasks yet. They appear after you approve a visit report.</div>';
+  h+='</div>';
+  return h;
+}
+
+function tcQuickCompleteSheet(id){
+  var name=(TRIP_DEMO && String(id).indexOf('demo-')===0)?((tcItems().filter(function(i){return i.id===id;})[0]||{}).name):((uniById(id)||{}).name||'Appointment');
+  var w=document.createElement('div'); w.className='tc-quick'; w.id='tcQuick';
+  w.innerHTML='<div class="sheet"><h3>Appointment complete</h3><p>'+esc(name)+' · recorded just now. Optional next steps — or keep travelling.</p>'
+    +'<button class="tm-opt" data-tcq="photos"><span class="oi" style="background:#0f766e">'+tmIcon('camera',16)+'</span>Photos</button>'
+    +'<button class="tm-opt" data-tcq="plaud"><span class="oi" style="background:#0ea5e9">'+tmIcon('msg',16)+'</span>PLAUD / meeting intelligence</button>'
+    +'<button class="tm-opt" data-tcq="note"><span class="oi" style="background:#4338ca">'+tmIcon('clipboard',16)+'</span>Quick note</button>'
+    +'<button class="tm-primary fo-red" data-tcq="continue" style="margin-top:8px">Continue travelling</button>'
+    +'<button class="tmbtn" data-tcq="undo" style="width:100%;margin-top:8px">Undo completion</button></div>';
+  document.body.appendChild(w);
+  w.addEventListener('click',function(e){ if(e.target===w) w.remove(); });
+  w.querySelectorAll('[data-tcq]').forEach(function(b){
+    b.onclick=function(){
+      var k=b.dataset.tcq;
+      if(k==='undo'){ tcSetDone(id,false); w.remove(); renderMobile(); return; }
+      if(k==='continue'){ w.remove(); MOB.stack=[]; MOB.tab='day'; renderMobile(); return; }
+      w.remove();
+      if(k==='photos'){ mobPush({type:'dphotos', id:id}); return; }
+      if(k==='plaud'){ foOpenComplete(id); return; }
+      if(k==='note'){
+        var note=prompt('Quick note for this visit:');
+        if(note && !(TRIP_DEMO && String(id).indexOf('demo-')===0)){
+          var v=visitOf(id); v.notes=((v.notes||'')+(v.notes?'\n':'')+note); visitSave(); savePlan();
+        }
+        renderMobile();
+      }
+    };
+  });
+}
+
+function tcCompleteOneTap(id){
+  if(tcIsDone({kind:'dealer',id:id})){
+    if(!confirm('Reopen this appointment?')) return;
+    tcSetDone(id,false); renderMobile(); return;
+  }
+  tcSetDone(id,true);
+  renderMobile();
+  tcQuickCompleteSheet(id);
+}
+
+function tcDrawMap(){
+  var el=document.getElementById('tcMap'); if(!el||typeof L==='undefined') return;
+  if(!MOB.mapOpen) return;
+  if(MOB.map){ try{MOB.map.remove();}catch(e){} MOB.map=null; }
+  var items=tcItems(MOB.wk);
+  var dayFilter=MOB.mapDay;
+  var pts=items.filter(function(i){ return i.located && (dayFilter==null || i.day===dayFilter); });
+  MOB.map=L.map(el,{zoomControl:true,scrollWheelZoom:false,attributionControl:false}).setView([43.5,-89],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(MOB.map);
+  pts.forEach(function(i,n){
+    var ic=mobIcon(i);
+    var mk=L.marker([i.lat,i.lon],{icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+ic.c+';width:18px;height:18px;font-size:9px">'+(n+1)+'</div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(MOB.map);
+    mk.on('click',function(){
+      if(i.kind==='dealer'||i.kind==='xvisit') mobPush({type:'dealer',id:i.id});
+      else if(String(i.id).indexOf('demo-')===0){ /* demo stop detail via dealer-like open */ mobPush({type:'dealer',id:i.id}); }
+      else mobPush({type:'stop',id:i.id});
+    });
+  });
+  if(pts.length) MOB.map.fitBounds(L.latLngBounds(pts.map(function(i){return [i.lat,i.lon];})).pad(0.3));
+  setTimeout(function(){ if(MOB.map) MOB.map.invalidateSize(); },60);
+}
+
 /* ===== Field Ops visit completion workflow (Phase 2/3) ===== */
 function foSafeSave(){
-  if(FIELD_OPS_DEMO){ try{ localStorage.setItem('aqFieldOpsDemo', JSON.stringify({FO:FO, at:Date.now()})); }catch(e){} return; }
+  if(FIELD_OPS_DEMO||TRIP_DEMO){ try{ localStorage.setItem('aqFieldOpsDemo', JSON.stringify({FO:FO, at:Date.now()})); }catch(e){} return; }
   try{ visitSave(); savePlan(); }catch(e){}
 }
 function foOpenComplete(dealerId){
   FO.dealerId=dealerId||(FO_FIXTURE&&FO_FIXTURE.id);
   FO.step=1; FO.approved=false;
-  if(FIELD_OPS_DEMO){
+  if(FIELD_OPS_DEMO||TRIP_DEMO){
     FO.photos=FO.photos&&FO.photos.length?FO.photos:[{id:1,cap:'Dealership exterior'},{id:2,cap:'Arrowquip inventory'},{id:3,cap:'Product discussion'}];
     FO.transcriptText=FO.transcriptText||'Sample PLAUD transcript for Riverside Equipment Co. Discussed spring order interest in Q-Catch systems, aged inventory on the yard, and competitor crowder pricing. Mark to send lead-time clarification by Friday. Dealer to confirm which aged units to feature.';
   }
-  if(!APPT[FO.dealerId] && !FIELD_OPS_DEMO){
+  if(!APPT[FO.dealerId] && !FIELD_OPS_DEMO && !TRIP_DEMO && String(FO.dealerId).indexOf('demo-')!==0){
     APPT[FO.dealerId]=true;
     var v=visitOf(FO.dealerId); v.completedAt=new Date().toISOString(); v.outcomeStatus='completed';
   }
+  if(TRIP_DEMO||FIELD_OPS_DEMO) tcSetDone(FO.dealerId, true);
   foSafeSave();
   mobPush({type:'focomplete', id:FO.dealerId});
 }
 function foDealer(){
-  if(FIELD_OPS_DEMO||FO.dealerId===FO_FIXTURE.id) return FO_FIXTURE;
+  if(TRIP_DEMO||FIELD_OPS_DEMO){
+    var it=(tcItems().filter(function(i){return i.id===FO.dealerId;})[0]);
+    if(it){
+      return {
+        id:it.id, name:it.name, address:it.address||'', loc:'WI', territory:MOB.terr||'East',
+        contactName:'John Peterson', phone:'555-0142', time:it.time||'', end:'', dayLabel:mobDayLabel(MOB.wk,it.day),
+        objective:(it.id==='demo-riverside'?'Review spring order opportunities and inventory.':'Dealer visit'),
+        driveMin:45, driveKm:32, leaveBy:'9:15 AM', attendees:'Dealer contact, Mark Firth'
+      };
+    }
+    return FO_FIXTURE;
+  }
+  if(FO.dealerId===FO_FIXTURE.id) return FO_FIXTURE;
   var d=uniById(FO.dealerId)||{};
   var sf=(typeof sfLookup==='function'?sfLookup(d):null)||{};
   return {
@@ -10366,7 +10849,7 @@ function foWireComplete(){
       text:'Executive report approved. PDF attached in production transport.', recipients:to };
     var finish=function(msg){
       alert(msg||'Approved. Emails were dry-run only. Returning to Today.');
-      MOB.stack=[]; MOB.tab='today'; FO.step=1; renderMobile();
+      MOB.stack=[]; MOB.tab='day'; FO.step=1; renderMobile();
     };
     if(typeof pbApiFetch!=='function'){ finish('Approved locally (demo). No email sent.'); return; }
     Promise.all([
@@ -10377,7 +10860,7 @@ function foWireComplete(){
     }).catch(function(){ finish('Approved. Email dry-run could not reach API — nothing sent.'); });
   };
 }
-function mobTasks_render(){
+function mobTasks_render_legacy(){
   /* Phase 1 personal task list from visit action items — no new pages. */
   var rows=[];
   Object.keys(VISIT||{}).forEach(function(id){
@@ -10409,7 +10892,7 @@ function mobTasks_render(){
   h+='</div>';
   return h;
 }
-function mobToday_render(){
+function mobToday_render_legacy(){
   var wk=MOB.wk, t=MOB.terr;
   var items=itineraryFor(t,wk);
   var today=(MOB.day!=null)?MOB.day:mobToday(wk);
@@ -10806,7 +11289,7 @@ function tmIcon(n,sz){
 /* ---------- TRIP OVERVIEW (§13) ----------
    A quick read of the whole week: territory, dates, transport summary, dealer visit
    count, total drive time/distance and completion %. Compact summary cards only. */
-function mobTrip_render(){
+function mobTrip_render_legacy(){
   var t=MOB.terr, wk=MOB.wk;
   var items=itineraryFor(t,wk);
   var dealers=items.filter(function(i){return i.kind==='dealer';});
@@ -10910,48 +11393,46 @@ function mobStop_page(id){
 }
 /* ---------- DEALER VISIT (§7): stripped to what a rep needs mid-visit ---------- */
 function mobDealer_page(id){
-  var d=uniById(id);
+  var demoItem=null;
+  if(TRIP_DEMO && String(id).indexOf('demo-')===0){
+    demoItem=(tcItems().filter(function(i){return i.id===id;})[0])||null;
+  }
+  var d=demoItem?{id:id,name:demoItem.name,address:demoItem.address,loc:'WI',phone:'555-0142',lat:demoItem.lat,lon:demoItem.lon}:uniById(id);
   if(!d) return '<div class="tm-screen"><div class="tm-empty">Dealer not found.</div></div>';
-  var v=visitOf(id), wk=MOB.wk;
-  var when=(DAY[id]!=null?mobDayLabel(wk,DAY[id]):'No day set')+(TIME[id]?(' · '+t12s(TIME[id])):'');
-  var dur=DUR[id]||90;
-  var done=!!APPT[id];
-  var sf=sfLookup(d)||{};
+  var v=(TRIP_DEMO && String(id).indexOf('demo-')===0)?{objective:'Review spring order opportunities and inventory.',notes:'',actions:[]}:visitOf(id);
+  var wk=MOB.wk;
+  var when=demoItem?(mobDayLabel(wk,demoItem.day)+(demoItem.time?(' · '+t12s(demoItem.time)):'')):((DAY[id]!=null?mobDayLabel(wk,DAY[id]):'No day set')+(TIME[id]?(' · '+t12s(TIME[id])):''));
+  var done=tcIsDone({kind:'dealer',id:id});
+  var sf=demoItem?{contactName:'John Peterson',contactMobile:'555-0142'}:(sfLookup(d)||{});
   var callNum=sf.contactMobile||sf.contactPhone||d.phone||'';
   var cName=sf.contactName||'';
-  var reportReady=visitHasContent(id);
+  var meetUrl=(v&&v.meetingUrl)||'';
   var h='<div class="tm-screen">';
-  h+='<div class="vd-head">'
-    +'<div class="vd-name">'+esc(d.name)+'</div>'
-    +'<div class="vd-num">Dealer '+esc(d.id)+(dealerTier(d).label?(' · '+esc(dealerTier(d).label)):'')+'</div>'
-    +'<div class="vd-badges">'
-      +'<span class="vd-badge">'+esc(when)+'</span>'
-      +'<span class="vd-badge">'+(Math.round(dur/60*10)/10)+'h visit</span>'
-      +'<span class="vd-badge '+(done?'ok':'pend')+'">'+(done?'Completed':'Planned')+'</span>'
-    +'</div>'
-    +(d.address?'<div class="vd-meta" style="margin-top:9px">'+esc(d.address)+(d.loc?', '+esc(d.loc):'')+'</div>':'')
-    +'</div>';
+  h+='<div class="vd-head"><div class="vd-name">'+esc(d.name)+'</div>'
+    +'<div class="vd-meta">'+esc(when)+' · '+(done?'Completed':'Planned')+'</div>'
+    +(d.address?'<div class="vd-meta" style="margin-top:6px">'+esc(d.address)+'</div>':'')
+  +'</div>';
   h+='<div class="vd-actions">'
-    +(mobHasDest(d)?'<a class="tmbtn nav" href="'+navUrl(d)+'" target="_blank" rel="noopener">'+tmIcon('nav',16)+' Navigate</a>':'<button class="tmbtn" disabled>'+tmIcon('nav',16)+' Navigate</button>')
-    +(callNum?'<button class="tmbtn" style="background:#111;border-color:#111;color:#fff;flex:2 1 auto" data-mobcall="'+esc(callNum)+'">'+tmIcon('phone',16)+' Call Dealer</button>':'<button class="tmbtn" disabled>'+tmIcon('phone',16)+' No number</button>')
-    +'</div>';
-  if(cName||callNum) h+='<div style="font-size:12px;color:#6b7280;margin:8px 2px 2px">'+esc([cName,callNum].filter(Boolean).join(' · '))+'</div>';
-  /* Dialpad status + explicit native fallback (never automatic, §4) */
-  h+='<div id="vd_callstatus" style="font-size:12px;color:#6b7280;margin:6px 2px 0;min-height:16px"></div>';
-  if(callNum) h+='<a id="vd_callfallback" href="tel:'+encodeURIComponent(callNum)+'" style="display:none;font-size:13px;color:#2563eb;text-decoration:underline;margin:2px 2px 0">Call using phone instead</a>';
-  h+='<div class="tm-h">Status</div>';
-  h+='<button class="tm-drow" data-dphotos="'+id+'"><span class="di" style="background:#0f766e">'+tmIcon('camera',17)+'</span>'
-    +'<div class="dt"><b>Photos</b><span>Storefront &amp; store</span></div>'
-    +'<span class="dv" data-dphcount="'+id+'">—</span><span class="chev">›</span></button>';
-  var ps=mobPlaudStatus(id);
-  h+='<button class="tm-drow" data-dreport="'+id+'"><span class="di" style="background:#4338ca">'+tmIcon('clipboard',17)+'</span>'
-    +'<div class="dt"><b>Claude Visit Report</b><span>'+(ps[1]==='none'?'No recording yet':(ps[1]==='ready'?'Reviewed':(ps[1]==='review'?'Draft — needs review':'In progress')))+'</span></div>'
-    +'<span class="tm-cstat '+ps[1]+'">'+ps[0]+'</span><span class="chev">›</span></button>';
-  h+='<button class="tm-drow" data-attachrec="'+id+'"><span class="di" style="background:#0ea5e9">'+tmIcon('msg',17)+'</span>'
-    +'<div class="dt"><b>Attach Visit Recording</b><span>Plaud transcript → Claude report</span></div>'
-    +'<span class="chev">›</span></button>';
-  h+='<button class="tm-primary fo-red" data-focomplete="'+id+'">Complete Appointment</button>';
-  h+='<button class="tmbtn" id="vd_complete" style="width:100%;margin-top:8px">'+(done?'Reopen appointment':'Mark complete only')+'</button>';
+    +(mobHasDest(d)?('<a class="tmbtn nav" href="'+navUrl(d)+'" target="_blank" rel="noopener">Navigate</a>'):'<button class="tmbtn" disabled>Navigate</button>')
+    +(callNum?('<a class="tmbtn" href="tel:'+encodeURIComponent(callNum)+'">Call</a>'):'<button class="tmbtn" disabled>Call</button>')
+    +(meetUrl?('<a class="tmbtn" href="'+esc(meetUrl)+'" target="_blank" rel="noopener">Join</a>'):'')
+  +'</div>';
+  h+='<button class="tm-primary fo-red" style="margin-top:10px" data-tccomplete="'+id+'">'+(done?'Reopen appointment':'Complete appointment')+'</button>';
+  function exp(title, body){
+    if(!body) return '';
+    return '<details class="tc-exp"><summary>'+title+'</summary><div class="pad">'+body+'</div></details>';
+  }
+  h+=exp('Objective', esc(v.objective||v.followUp||'No objective recorded'));
+  h+=exp('Contact', esc([cName,callNum].filter(Boolean).join(' · ')||'No contact on file'));
+  h+=exp('Meeting preparation', esc(v.prep||v.brief||'No prep brief yet'));
+  h+=exp('Dealer information', esc([d.id?('Dealer '+d.id):'', d.loc||''].filter(Boolean).join(' · ')||'—'));
+  var commits=(v.actions||[]).map(function(a){return '• '+a.t+(a.due?(' ('+a.due+')'):'');}).join('<br>');
+  h+=exp('Previous commitments', commits||'None');
+  h+=exp('Notes', esc(v.notes||'No notes'));
+  h+='<details class="tc-exp"><summary>Photographs</summary><div class="pad"><button class="tmbtn" style="width:100%" data-dphotos="'+id+'">Open photos</button></div></details>';
+  h+='<details class="tc-exp"><summary>PLAUD &amp; meeting intelligence</summary><div class="pad">'
+    +'<button class="tmbtn" style="width:100%;margin-bottom:8px" data-focomplete="'+id+'">Open intelligence workflow</button>'
+    +'<button class="tmbtn" style="width:100%" data-attachrec="'+id+'">Attach recording</button></div></details>';
   h+='</div>';
   return h;
 }
@@ -11194,6 +11675,7 @@ function wireMobPage(p){
     q('[data-mobcall]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); mobCallDealer(a.dataset.mobcall, p.id, p.id); }; });
     var mm=document.querySelector('#tripmode [data-mobmenu]'); if(mm) mm.onclick=function(){ mobDealerMenu(p.id); };
     q('[data-focomplete]').forEach(function(b){ b.onclick=function(){ foOpenComplete(b.dataset.focomplete||p.id); };});
+    q('[data-tccomplete]').forEach(function(b){ b.onclick=function(){ tcCompleteOneTap(b.dataset.tccomplete||p.id); };});
     var comp=document.getElementById('vd_complete');
     if(comp) comp.onclick=function(){
       var d=uniById(p.id); var was=!!APPT[p.id];
@@ -11263,69 +11745,48 @@ function mobDealerMenu(id){
 }
 function renderMobile(){
   var host=document.getElementById('tripmode'); if(!host) return;
-  /* a full-screen page is on top of the stack → render it in place of the tabbed body */
+  if(MOB.tab==='today') MOB.tab='day';
+  if(MOB.tab==='route'||MOB.tab==='files'||MOB.tab==='more'||MOB.tab==='budget') MOB.tab='trip';
   if(MOB.stack && MOB.stack.length){
     var p=MOB.stack[MOB.stack.length-1], meta=mobPageMeta(p);
-    var navSelP=(MOB.tab==='budget')?'trip':MOB.tab;
-    var tabP=function(idd,icon,label){ return '<button data-mobtab="'+idd+'" class="'+(navSelP===idd?'on':'')+'"><span class="ni">'+icon+'</span>'+label+'</button>'; };
-    host.innerHTML=mobPageHead(meta.title,meta.menu)+meta.body
-      +'<div class="tm-nav">'
-      +tabP('today',tmIcon('home'),'Today')+tabP('route',tmIcon('map'),'Week')+tabP('trip',tmIcon('wallet'),'Tasks')
-      +tabP('files',tmIcon('camera'),'Photos')+tabP('more',tmIcon('more'),'More')
-      +'</div>';
+    host.innerHTML=mobPageHead(meta.title,meta.menu)+meta.body+tcNavHtml(MOB.tab==='tasks'?'tasks':(MOB.tab==='day'?'day':'trip'));
     document.querySelectorAll('#tripmode [data-mobtab]').forEach(function(b){ b.onclick=function(){ MOB.stack=[]; MOB.tab=b.dataset.mobtab; renderMobile(); }; });
     wireMobPage(p);
     return;
   }
   var _mw=mobWeeks(MOB.terr), _cw=wkCurrent(); var weeks=wkShown(FIELD_NUMS).filter(function(w){ return w>=_cw || _mw.indexOf(w)>=0; });
-  /* keep the current (today's) week selectable even when it has no visits yet */
   if(weeks.indexOf(MOB.wk)<0){
     if(WEEKDATES[MOB.wk]) weeks=[MOB.wk].concat(weeks).sort(function(a,b){return a-b;});
     else MOB.wk=weeks[0];
   }
-
-  var body = MOB.tab==='today'  ? mobToday_render()
-           : MOB.tab==='route'  ? mobRoute_render()
-           : MOB.tab==='trip'   ? mobTasks_render()
-           : MOB.tab==='budget' ? mobBudget_render()
-           : MOB.tab==='files'  ? mobFiles_render()
-           : mobMore_render();
-
-  /* Budget is a contextual page reached from Trip (§3) — keep the Trip tab lit while in it */
-  var navSel=(MOB.tab==='budget')?'trip':MOB.tab;
-  var tab=function(id,icon,label){
-    return '<button data-mobtab="'+id+'" class="'+(navSel===id?'on':'')+'"><span class="ni">'+icon+'</span>'+label+'</button>';
-  };
-
-  host.innerHTML=
-     '<div class="tm-top">'
-      +'<div class="tm-brand"><img src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>'
-      +'<div class="tm-mode">Trip Mode</div>'
-      +'<div class="tm-week">'
-        +'<select id="mobTerr">'+['All'].concat(TERRS).map(function(t){return '<option'+(t===MOB.terr?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'
-        +'<select id="mobWeek">'+wkOptions(weeks,MOB.wk,{short:true})+'</select>'
-      +'</div>'
-      +'<div class="tm-dates">'+esc(wkDY(MOB.wk))+'</div>'
-     +'</div>'
-     +body
-     +'<div class="tm-nav">'
-       +tab('today',tmIcon('home'),'Today')+tab('route',tmIcon('map'),'Week')+tab('trip',tmIcon('wallet'),'Tasks')
-       +tab('files',tmIcon('camera'),'Photos')+tab('more',tmIcon('more'),'More')
-     +'</div>';
-
-  if(MOB.tab==='route' && MOB.routeView==='map') mobDrawMap();
+  var body = MOB.tab==='day' ? mobToday_render()
+           : MOB.tab==='tasks' ? mobTasks_render()
+           : mobTrip_render();
+  host.innerHTML = tcTopBar() + body + tcNavHtml(MOB.tab==='day'?'day':(MOB.tab==='tasks'?'tasks':'trip'));
+  if(MOB.tab==='trip' && MOB.mapOpen) setTimeout(tcDrawMap, 30);
   wireMobile();
-  if(MOB.tab==='route') mobUpdateDriveTotals();
-  if(MOB.tab==='files'){ mobFillPhotosOverview();
-    document.querySelectorAll('#tripmode [data-photosec]').forEach(function(b){ b.onclick=function(){ mobPush({type:'photosec',kind:b.dataset.photosec}); }; });
-  }
-  if(MOB.tab==='more'){ mobFillSync();
-    var sn=document.getElementById('mobSyncNow'); if(sn) sn.onclick=function(){ sn.disabled=true; sn.textContent='Syncing…'; pbFlushPending(function(){ mobFillSync(); sn.disabled=false; sn.textContent='Sync now'; }); };
-  }
 }
 function wireMobile(){
+
   var q=function(s){return document.querySelectorAll('#tripmode '+s);};
-  q('[data-mobtab]').forEach(function(b){ b.onclick=function(){ MOB.tab=b.dataset.mobtab; renderMobile(); }; });
+  q('[data-mobtab]').forEach(function(b){ b.onclick=function(){ MOB.stack=[]; MOB.tab=b.dataset.mobtab; if(b.dataset.mobtab==='day' && MOB.day==null) MOB.day=mobToday(MOB.wk); renderMobile(); }; });
+  q('[data-tcday]').forEach(function(b){ b.onclick=function(){ MOB.day=+b.dataset.tcday; MOB.tab='day'; MOB.stack=[]; renderMobile(); }; });
+  q('[data-tccomplete]').forEach(function(b){ b.onclick=function(){ tcCompleteOneTap(b.dataset.tccomplete); }; });
+  var mt=document.getElementById('tcMapToggle');
+  if(mt) mt.onclick=function(){ MOB.mapOpen=!MOB.mapOpen; renderMobile(); };
+  q('[data-tasktog]').forEach(function(b){ b.onclick=function(){
+    var parts=String(b.dataset.tasktog||'').split(':'); var id=parts[0], ix=+parts[1];
+    if(TRIP_DEMO && String(id).indexOf('demo-')===0){
+      var rows=tcTaskRows(); if(rows[ix]||rows.filter(function(r){return r.id===id;})[0]){
+        var list=tcTaskRows();
+        list.forEach(function(r){ if(r.id===id && r.i===ix) r.done=!r.done; });
+        try{ localStorage.setItem('aqTripDemoTasks', JSON.stringify(list)); }catch(e){}
+      }
+      renderMobile(); return;
+    }
+    var v=visitOf(id); if(!v.actions||!v.actions[ix]) return;
+    v.actions[ix].done=!v.actions[ix].done; visitSave(); savePlan(); renderMobile();
+  };});
   q('[data-mobroute]').forEach(function(b){ b.onclick=function(){ MOB.routeView=b.dataset.mobroute; renderMobile(); }; });
   q('[data-mobscope]').forEach(function(b){ b.onclick=function(){ MOB.routeScope=b.dataset.mobscope; renderMobile(); }; });
   var te=document.getElementById('mobTerr'); if(te) te.onchange=function(){ MOB.terr=te.value; MOB.day=null; renderMobile(); };
@@ -11347,11 +11808,11 @@ function wireMobile(){
   };
 
   q('[data-mobwk]').forEach(function(b){ b.onclick=function(){
-    var d=+b.dataset.mobwk, cur=mobCurrentWeek(), nums=mobWeeks(MOB.terr);
+    var d=+b.dataset.mobwk, cur=mobCurrentWeek(), nums=TRIP_DEMO?FIELD_NUMS:mobWeeks(MOB.terr);
     if(d===0){ MOB.wk=(cur!=null?cur:MOB.wk); MOB.day=mobToday(MOB.wk); renderMobile(); return; }
     var list=(nums&&nums.length)?nums:FIELD_NUMS;
     var i=list.indexOf(MOB.wk); if(i<0) i=0;
-    MOB.wk=list[Math.max(0,Math.min(list.length-1,i+d))]; MOB.day=null; renderMobile();
+    MOB.wk=list[Math.max(0,Math.min(list.length-1,i+d))]; MOB.day=mobToday(MOB.wk); renderMobile();
   };});
   q('[data-mobday]').forEach(function(b){ b.onclick=function(){
     var labs=dayLabels(MOB.wk); if(!labs.length) return;
@@ -11367,16 +11828,8 @@ function wireMobile(){
   q('[data-mobcall]').forEach(function(b){ b.onclick=function(){ mobCallDealer(b.dataset.mobcall); };});
   q('[data-mobdone]').forEach(function(b){ b.onclick=function(){
     var p=b.dataset.mobdone.split(':'), kind=p[0], id=p[1];
-    if(kind==='dealer'){
-      if(APPT[id]){
-        /* reopen */
-        delete APPT[id];
-        if(VISIT[id]){ delete VISIT[id].completedAt; delete VISIT[id].outcomeStatus; }
-      } else {
-        APPT[id]=true;
-        var v=visitOf(id); v.completedAt=new Date().toISOString(); v.outcomeStatus='completed'; visitSave();
-      }
-    } else { var it=LOGI.filter(function(x){return x.id===id;})[0]; if(it) it.done=!it.done; }
+    if(kind==='dealer'){ tcCompleteOneTap(id); return; }
+    else { var it=LOGI.filter(function(x){return x.id===id;})[0]; if(it) it.done=!it.done; }
     savePlan(); renderMobile();
   };});
   q('[data-mobedit]').forEach(function(b){ b.onclick=function(){
@@ -11386,11 +11839,6 @@ function wireMobile(){
   q('[data-mobvisit]').forEach(function(b){ b.onclick=function(){ mobPush({type:'dealer',id:b.dataset.mobvisit}); };});
   q('[data-focomplete]').forEach(function(b){ b.onclick=function(){ foOpenComplete(b.dataset.focomplete); };});
   q('[data-foappt]').forEach(function(b){ b.onclick=function(){ foOpenComplete(FO_FIXTURE.id); };});
-  q('[data-tasktog]').forEach(function(b){ b.onclick=function(){
-    var p=b.dataset.tasktog.split(':'), id=p[0], i=+p[1];
-    var v=visitOf(id); if(!v.actions||!v.actions[i]) return;
-    v.actions[i].done=!v.actions[i].done; visitSave(); renderMobile();
-  };});
   /* async: fill cloud-backed photo counts on the Today timeline chips */
   q('[data-phcount]').forEach(function(el){ try{ pbPhotoCount(el.dataset.phcount).then(function(n){ if(n>0){ el.textContent='📷 '+n; el.style.display=''; } }); }catch(e){} });
 }
@@ -11894,7 +12342,7 @@ var MOBEXP={}; try{ MOBEXP=JSON.parse(localStorage.getItem('aqMOBEXP')||'{}')||{
 var MOB_PHCLASS='dealership';
 /* Phase 2/3 field-ops workflow. Demo mode (?fieldOpsDemo=1) uses fixture data and
    never writes the live plan row. Emails always dry-run unless server allowlist+flag. */
-var FIELD_OPS_DEMO=(function(){ try{ return new URLSearchParams(location.search).get('fieldOpsDemo')==='1'; }catch(e){ return false; } })();
+var FIELD_OPS_DEMO=(function(){ try{ var q=new URLSearchParams(location.search); return q.get('fieldOpsDemo')==='1'||q.get('tripDemo')==='1'; }catch(e){ return false; } })();
 var FO={ step:1, dealerId:null, analysis:null, tasks:[], recipients:[], pdfBlob:null, transcriptText:'', photos:[], approved:false };
 var FO_FIXTURE={
   id:'demo-riverside',
@@ -11956,13 +12404,12 @@ function mobUpNextHTML(next, todays, wk){
 function mobBoot(){
   if(!mobIsPhone()) return;
   var cur=mobCurrentWeek();
-  if(cur!=null) MOB.wk=cur;                    /* always open on the week containing today */
+  if(cur!=null) MOB.wk=cur;
   else { var weeks=mobWeeks(MOB.terr); if(weeks.length && weeks.indexOf(MOB.wk)<0) MOB.wk=weeks[0]; }
-  /* restore last territory preference */
   try{ var a=localStorage.getItem('aqMyArea'); if(a) MOB.terr=a; }catch(e){}
   MOB.day=mobToday(MOB.wk);
-  MOB.tab='today';
-  if(FIELD_OPS_DEMO){ try{ cloudBadge('Field Ops demo — live plan isolated'); }catch(e){} }
+  MOB.tab='trip';
+  if(TRIP_DEMO||FIELD_OPS_DEMO){ try{ cloudBadge('Trip Command demo — live plan isolated'); }catch(e){} }
   renderMobile();
 }
 window.addEventListener('resize',function(){

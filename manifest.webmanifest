@@ -1,7 +1,7 @@
 {
-  "name": "Arrowquip Pre-Booking Portal",
-  "short_name": "Pre-Booking",
-  "description": "Trip Mode — dealer visits, hotels, flights, rental cars, route and budget for the current week.",
+  "name": "Arrowquip TRAVEL",
+  "short_name": "TRAVEL",
+  "description": "Trip Command Centre — trip, day, appointments and tasks for field travel.",
   "start_url": "/?m=1",
   "scope": "/",
   "display": "standalone",
