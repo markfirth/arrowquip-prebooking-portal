@@ -6,7 +6,7 @@
    - Supabase, Salesforce, Nominatim and OSM tiles are NEVER cached. Plan data must
      always come from the network, or a stale tab could show a plan that no longer
      exists. */
-const CACHE = 'aq-prebooking-v1';
+const CACHE = 'aq-prebooking-v2';  /* v2: dealer seed removed from the page — drop old cached copies */
 const PRECACHE = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',

@@ -1,0 +1,11 @@
+# Old copies and prototypes contain dealer data; never publish them.
+index_3.html
+index_5.html
+Arrowquip-Prebooking-Prototype.html
+arrowquip_prebooking_portal_19.html
+# Not part of the site
+.claude
+docs
+netlify
+netlify.toml
+supabase
