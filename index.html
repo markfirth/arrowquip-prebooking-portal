@@ -586,6 +586,42 @@ body.wkfull-on{overflow:hidden;}
 .tm-phclass{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
 .tm-phclass button{font-size:11px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;}
 .tm-phclass button.on{border-color:#111;background:#111;color:#fff;}
+/* ---- Field ops Phase 2/3 (design direction: compact, Arrowquip red) ---- */
+.fo-progress{display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:10px 12px;margin:8px 0 12px;}
+.fo-progress .fo-n{font-size:18px;font-weight:800;color:#111;}
+.fo-progress .fo-l{font-size:12px;color:#6b7280;}
+.fo-bar{flex:1;height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;display:flex;}
+.fo-bar i{display:block;height:100%;}
+.fo-bar i.done{background:#16a34a;}
+.fo-bar i.left{background:var(--aq-red,#cc152f);}
+.fo-step{display:flex;gap:6px;margin:8px 0 14px;}
+.fo-step span{flex:1;text-align:center;font-size:10px;font-weight:700;color:#9ca3af;padding-bottom:6px;border-bottom:2px solid #e5e7eb;}
+.fo-step span.on{color:#111;border-color:var(--aq-red,#cc152f);}
+.fo-step span.ok{color:#16a34a;border-color:#16a34a;}
+.fo-card{background:#111;color:#fff;border-radius:14px;padding:14px;margin:8px 0 12px;}
+.fo-card .badge{display:inline-block;background:var(--aq-red,#cc152f);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;margin-bottom:6px;}
+.fo-card .nm{font-size:18px;font-weight:800;margin:0 0 6px;}
+.fo-card .meta{font-size:12px;color:#d1d5db;line-height:1.45;}
+.fo-card .obj{margin-top:8px;font-size:12px;color:#f3f4f6;}
+.fo-card .leave{margin-top:8px;font-size:12px;font-weight:700;color:#fca5a5;}
+.fo-acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;}
+.fo-acts .tmbtn{min-height:44px;justify-content:center;}
+.fo-red{background:var(--aq-red,#cc152f)!important;border-color:var(--aq-red,#cc152f)!important;color:#fff!important;}
+.fo-sec{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin:0 0 10px;}
+.fo-sec h3{margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#111;}
+.fo-sec p{margin:0;font-size:13px;color:#4b5563;line-height:1.4;}
+.fo-phrow{display:flex;gap:8px;overflow-x:auto;padding:4px 0;}
+.fo-phrow img,.fo-phrow .add{width:72px;height:72px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#f3f4f6;border:1px solid #e5e7eb;}
+.fo-phrow .add{display:flex;align-items:center;justify-content:center;font-size:22px;color:#6b7280;cursor:pointer;}
+.fo-file{display:flex;align-items:center;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;}
+.fo-file .ok{color:#16a34a;font-weight:800;}
+.fo-task{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f3f4f6;}
+.fo-task input{margin-top:3px;}
+.fo-recip{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.fo-recip label{font-size:12px;border:1px solid #e5e7eb;border-radius:99px;padding:6px 10px;background:#fff;}
+.fo-recip label.on{background:#111;color:#fff;border-color:#111;}
+.fo-banner{font-size:11px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:8px 10px;margin:0 0 10px;line-height:1.35;}
+
 .tv-geo{flex:0 0 auto;font-family:inherit;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:3px;padding:4px 7px;cursor:pointer;}
 .tv-geo:hover{border-color:#2563eb;color:#2563eb;}
 /* itinerary + legs */
@@ -10037,6 +10073,310 @@ function mobTLItem(i,wk,isNext){
     +'</div>'
   +'</div>';
 }
+/* ===== Field Ops visit completion workflow (Phase 2/3) ===== */
+function foSafeSave(){
+  if(FIELD_OPS_DEMO){ try{ localStorage.setItem('aqFieldOpsDemo', JSON.stringify({FO:FO, at:Date.now()})); }catch(e){} return; }
+  try{ visitSave(); savePlan(); }catch(e){}
+}
+function foOpenComplete(dealerId){
+  FO.dealerId=dealerId||(FO_FIXTURE&&FO_FIXTURE.id);
+  FO.step=1; FO.approved=false;
+  if(FIELD_OPS_DEMO){
+    FO.photos=FO.photos&&FO.photos.length?FO.photos:[{id:1,cap:'Dealership exterior'},{id:2,cap:'Arrowquip inventory'},{id:3,cap:'Product discussion'}];
+    FO.transcriptText=FO.transcriptText||'Sample PLAUD transcript for Riverside Equipment Co. Discussed spring order interest in Q-Catch systems, aged inventory on the yard, and competitor crowder pricing. Mark to send lead-time clarification by Friday. Dealer to confirm which aged units to feature.';
+  }
+  if(!APPT[FO.dealerId] && !FIELD_OPS_DEMO){
+    APPT[FO.dealerId]=true;
+    var v=visitOf(FO.dealerId); v.completedAt=new Date().toISOString(); v.outcomeStatus='completed';
+  }
+  foSafeSave();
+  mobPush({type:'focomplete', id:FO.dealerId});
+}
+function foDealer(){
+  if(FIELD_OPS_DEMO||FO.dealerId===FO_FIXTURE.id) return FO_FIXTURE;
+  var d=uniById(FO.dealerId)||{};
+  var sf=(typeof sfLookup==='function'?sfLookup(d):null)||{};
+  return {
+    id:d.id, name:d.name||'Dealer', address:d.address||'', loc:d.loc||'', territory:d.territory||MOB.terr,
+    contactName:sf.contactName||'', phone:sf.contactMobile||sf.contactPhone||d.phone||'',
+    time:TIME[d.id]||'', objective:(VISIT[d.id]&&(VISIT[d.id].objective||VISIT[d.id].notes))||'',
+    driveMin:null, driveKm:null, leaveBy:'', attendees:''
+  };
+}
+function foStepNav(){
+  var labels=['Meeting','Analysis','Tasks','Approve'];
+  return '<div class="fo-step">'+labels.map(function(l,i){
+    var n=i+1, cls=(FO.step===n)?'on':(FO.step>n?'ok':'');
+    return '<span class="'+cls+'">'+n+'. '+l+'</span>';
+  }).join('')+'</div>';
+}
+function foComplete_render(){
+  var d=foDealer();
+  var h='<div class="tm-screen">'+foStepNav();
+  h+='<div class="fo-banner">Preview / test mode: '+(FIELD_OPS_DEMO?'demo fixture — live plan not written. ':'')
+    +'Emails dry-run unless server allowlist is enabled. Leadership is never emailed by accident.</div>';
+
+  if(FO.step===1){
+    h+='<div class="fo-sec"><h3>Meeting information</h3>'
+      +'<p><b>'+esc(d.name)+'</b><br>'+esc(d.time?(t12s(d.time)+(d.end?(' – '+d.end):'')):d.dayLabel||'')
+      +' <span class="tm-pill ok">Completed</span></p></div>';
+    h+='<div class="fo-sec"><h3>Photos</h3><div class="fo-phrow" id="foPhotos">';
+    (FO.photos||[]).forEach(function(ph){ h+='<div class="add" style="font-size:10px;padding:4px;text-align:center;align-items:flex-end">'+esc(ph.cap||'Photo')+'</div>'; });
+    h+='<label class="add" title="Add photo">+<input id="foCam" type="file" accept="image/*" capture="environment" multiple style="display:none"></label></div></div>';
+    h+='<div class="fo-sec"><h3>PLAUD transcript</h3>';
+    if(FO.transcriptText){
+      h+='<div class="fo-file"><span class="ok">✓</span><div><b>Transcript ready</b><div style="font-size:11px;color:#6b7280">'
+        +esc(FO.transcriptText.slice(0,80))+'…</div></div></div>';
+    } else {
+      h+='<textarea id="foTranscript" rows="4" placeholder="Paste PLAUD transcript or notes…" style="width:100%;box-sizing:border-box;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font:13px inherit"></textarea>'
+        +'<label class="tmbtn" style="margin-top:8px;display:flex;justify-content:center;cursor:pointer">Upload file'
+        +'<input id="foTranscriptFile" type="file" accept=".txt,.md,.pdf,.doc,.docx,text/plain" style="display:none"></label>';
+    }
+    h+='</div>';
+    h+='<button class="tm-primary fo-red" id="foRunAnalysis">Generate analysis &amp; tasks</button>';
+  }
+
+  if(FO.step===2){
+    var a=FO.analysis||{};
+    h+='<div class="fo-sec"><h3>AI meeting analysis</h3>'
+      +'<p>'+esc(a.summary||'No summary')+'</p>'
+      +'<p style="margin-top:8px"><b>Sentiment:</b> '+esc(a.dealer_sentiment||a.sentiment||'Unknown')+'</p></div>';
+    h+='<div class="fo-sec"><h3>Commercial intelligence</h3><ul style="margin:0;padding-left:18px;font-size:13px;color:#374151">'
+      +(a.opportunities||[]).slice(0,4).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')
+      +(a.concerns||[]).slice(0,2).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')
+      +'</ul></div>';
+    h+='<button class="tm-primary fo-red" id="foToTasks">Continue to tasks</button>';
+  }
+
+  if(FO.step===3){
+    h+='<div class="fo-sec"><h3>Suggested follow-up tasks</h3><p style="margin-bottom:8px">Approve, edit or reject before creating.</p>';
+    (FO.tasks||[]).forEach(function(t,i){
+      h+='<div class="fo-task"><input type="checkbox" data-fotask="'+i+'" '+(t.keep!==false?'checked':'')+'>'
+        +'<div style="flex:1"><b contenteditable="true" data-fotitle="'+i+'">'+esc(t.t||t.title||'')+'</b>'
+        +'<div style="font-size:11px;color:#6b7280">Owner: '+esc(t.owner||'Mark Firth')+' · Due: '+esc(t.due||'Suggested')
+        +(t.priority?(' · '+esc(t.priority)):'')+'</div></div></div>';
+    });
+    h+='</div><button class="tm-primary fo-red" id="foToApprove">Review &amp; Approve</button>';
+  }
+
+  if(FO.step===4){
+    var recips=FO.recipients.length?FO.recipients:[{email:'mark.firth@arrowquip.com',label:'Me (tasks)',on:true},{email:'jw@example.invalid',label:'JW (blocked until approved)',on:false}];
+    h+='<div class="fo-sec"><h3>Executive report</h3>'
+      +'<p>Generate the one-page Arrowquip PDF, then dry-run email distribution.</p>'
+      +'<button class="tmbtn" id="foGenPdf" style="width:100%;margin-top:8px">Generate PDF</button>'
+      +'<div id="foPdfStatus" style="font-size:12px;color:#6b7280;margin-top:6px"></div></div>';
+    h+='<div class="fo-sec"><h3>Recipients</h3><div class="fo-recip" id="foRecips">';
+    recips.forEach(function(r,i){
+      h+='<label class="'+(r.on?'on':'')+'" data-forecip="'+i+'">'+esc(r.label||r.email)+'</label>';
+    });
+    FO.recipients=recips;
+    h+='</div><p style="margin-top:8px;font-size:11px;color:#9a3412">Test mode: only allowlisted addresses can ever receive mail. JW is off by default.</p></div>';
+    h+='<button class="tm-primary fo-red" id="foApproveSend">Approve · email dry-run · next appointment</button>';
+  }
+
+  h+='</div>';
+  return h;
+}
+function foBuildReport(){
+  var d=foDealer(); var a=FO.analysis||{};
+  var tasks=(FO.tasks||[]).filter(function(t){return t.keep!==false;}).map(function(t){
+    return {title:t.t||t.title, owner:t.owner||'Mark Firth', due:t.due||'', priority:t.priority||((/friday|lead-time|pricing/i.test(t.t||t.title||''))?'High':'Normal')};
+  });
+  return {
+    dealerName:d.name, location:[d.address,d.loc].filter(Boolean).join(', '),
+    visitDate:d.dayLabel||new Date().toLocaleDateString(),
+    accountManager:'Mark Firth', territory:d.territory||MOB.terr,
+    purpose:d.objective||'Dealer visit', attendees:d.attendees||'',
+    executiveSummary:a.summary||'',
+    commercialIntelligence:[].concat(a.opportunities||[], a.concerns||[], a.competitor_info||[]).slice(0,6),
+    tasks:tasks,
+    managementAttention:(a.concerns&&a.concerns[0])||'Review regional competitive pricing and potential marketing support.',
+    nextSteps:tasks[0]?('Next: '+tasks[0].title):'Follow up as needed',
+    photoCaptions:(FO.photos||[]).map(function(ph){return ph.cap||'Photo';}).slice(0,4),
+    recordUrl:'https://pre-bookings.com'
+  };
+}
+function foRunAnalysis(){
+  var txt=(document.getElementById('foTranscript')&&document.getElementById('foTranscript').value)||FO.transcriptText||'';
+  FO.transcriptText=txt;
+  if(!txt.trim()){ alert('Add a PLAUD transcript or notes first.'); return; }
+  var st=document.getElementById('foRunAnalysis'); if(st){ st.disabled=true; st.textContent='Analysing…'; }
+  function applyLocalFallback(){
+    FO.analysis={
+      summary:'Visited to review spring order opportunities and inventory positioning. Strong interest in Q-Catch systems; aged stock and competitor crowder pricing require follow-up. No order was confirmed in the meeting.',
+      dealer_sentiment:'Positive — engaged on spring planning',
+      opportunities:['Interest in spring Q-Catch order (not confirmed)','Merchandising support for aged units'],
+      concerns:['Competitor crowder lead-time / pricing pressure'],
+      commitments_arrowquip:['Send crowder lead-time clarification by Friday'],
+      commitments_dealer:['Confirm which aged units to feature'],
+      actions:[
+        {t:'Send crowder lead-time clarification', owner:'Mark Firth', due:'Friday', priority:'High'},
+        {t:'Share spring Q-Catch proposal (draft)', owner:'Mark Firth', due:'Next week', priority:'Normal'},
+        {t:'Confirm aged units to feature', owner:'Dealer', due:'Suggested', priority:'Normal'}
+      ]
+    };
+    FO.tasks=(FO.analysis.actions||[]).map(function(a){ return Object.assign({keep:true}, a); });
+    FO.step=2; foSafeSave(); renderMobile();
+  }
+  if(FIELD_OPS_DEMO || typeof pbApiFetch!=='function'){ applyLocalFallback(); return; }
+  pbApiFetch('/api/process-notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript:txt})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j||!j.ok){ applyLocalFallback(); return; }
+      FO.analysis={
+        summary:j.summary, dealer_sentiment:j.dealer_sentiment,
+        opportunities:j.opportunities||[], concerns:j.concerns||[], competitor_info:j.competitor_info||[],
+        commitments_arrowquip:j.commitments_arrowquip||[], commitments_dealer:j.commitments_dealer||[],
+        actions:j.actions||[]
+      };
+      FO.tasks=(j.actions||[]).map(function(a){ return {t:a.t, owner:a.owner||'Mark Firth', due:a.due||'', keep:true}; });
+      FO.step=2; foSafeSave(); renderMobile();
+    })
+    .catch(function(){ applyLocalFallback(); });
+}
+function foLoadPdfLib(){
+  return new Promise(function(resolve,reject){
+    if(window.PDFLib){ resolve(window.PDFLib); return; }
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    s.onload=function(){ resolve(window.PDFLib); };
+    s.onerror=function(){ reject(new Error('pdf-lib CDN load failed')); };
+    document.head.appendChild(s);
+  });
+}
+function foBuildPdfLocal(report){
+  return foLoadPdfLib().then(function(PDFLib){
+    var rgb=PDFLib.rgb, StandardFonts=PDFLib.StandardFonts;
+    return PDFLib.PDFDocument.create().then(function(pdf){
+      return Promise.all([pdf.embedFont(StandardFonts.Helvetica), pdf.embedFont(StandardFonts.HelveticaBold)]).then(function(fonts){
+        var font=fonts[0], bold=fonts[1];
+        var page=pdf.addPage([612,792]);
+        var width=612, height=792, L=36, R=width-36, y=height-28;
+        var RED=rgb(0.8,0.086,0.18), BLACK=rgb(0.11,0.11,0.12), GREY=rgb(0.42,0.45,0.48), LIGHT=rgb(0.97,0.97,0.98);
+        function S(v,max){ var t=String(v==null?'':v).replace(/\s+/g,' ').trim(); return max&&t.length>max?t.slice(0,max-1)+'…':t; }
+        function wrap(text,size,maxW){
+          var words=String(text||'').split(/\s+/).filter(Boolean), lines=[], line='';
+          words.forEach(function(w){ var trial=line?line+' '+w:w; if(font.widthOfTextAtSize(trial,size)<=maxW) line=trial; else { if(line) lines.push(line); line=w; } });
+          if(line) lines.push(line); return lines.length?lines:[''];
+        }
+        page.drawRectangle({x:0,y:height-8,width:width,height:8,color:RED});
+        page.drawText('ARROWQUIP — DEALER VISIT REPORT',{x:L,y:y,size:12,font:bold,color:BLACK});
+        var conf='INTERNAL — CONFIDENTIAL';
+        page.drawText(conf,{x:R-bold.widthOfTextAtSize(conf,8),y:y+2,size:8,font:bold,color:RED});
+        y-=14; page.drawText('Field Intelligence · North America',{x:L,y:y,size:8,font:font,color:GREY});
+        y-=10; page.drawLine({start:{x:L,y:y},end:{x:R,y:y},thickness:0.6,color:rgb(0.9,0.9,0.91)}); y-=14;
+        var meta=[['Dealer',S(report.dealerName,48)],['Location',S(report.location,40)],['Visit date',S(report.visitDate,24)],['Account manager',S(report.accountManager,32)],['Territory',S(report.territory,24)],['Purpose',S(report.purpose,48)]];
+        var colW=(R-L)/3;
+        for(var i=0;i<meta.length;i++){ var col=i%3,row=Math.floor(i/3),x=L+col*colW,yy=y-row*28;
+          page.drawRectangle({x:x,y:yy-18,width:colW-6,height:24,color:LIGHT});
+          page.drawText(meta[i][0].toUpperCase(),{x:x+5,y:yy-2,size:6.5,font:bold,color:GREY});
+          page.drawText(meta[i][1],{x:x+5,y:yy-14,size:9,font:bold,color:BLACK});
+        }
+        y-=68;
+        function heading(t){ page.drawText(t.toUpperCase(),{x:L,y:y,size:8,font:bold,color:RED}); y-=3; page.drawLine({start:{x:L,y:y},end:{x:L+120,y:y},thickness:0.7,color:rgb(0.94,0.79,0.81)}); y-=12; }
+        heading('Executive summary');
+        wrap(S(report.executiveSummary,700),9.5,R-L).slice(0,5).forEach(function(ln){ page.drawText(ln,{x:L,y:y,size:9.5,font:font,color:BLACK}); y-=12; }); y-=4;
+        heading('Commercial intelligence');
+        (report.commercialIntelligence||[]).slice(0,5).forEach(function(item){ wrap('• '+S(item,160),9,R-L).forEach(function(ln){ page.drawText(ln,{x:L,y:y,size:9,font:font,color:BLACK}); y-=11; }); });
+        y-=4;
+        heading('Key commitments & next steps');
+        page.drawText('Action',{x:L,y:y,size:7,font:bold,color:GREY});
+        page.drawText('Owner',{x:L+260,y:y,size:7,font:bold,color:GREY});
+        page.drawText('Due',{x:L+360,y:y,size:7,font:bold,color:GREY});
+        page.drawText('Priority',{x:L+430,y:y,size:7,font:bold,color:GREY}); y-=10;
+        (report.tasks||[]).slice(0,5).forEach(function(t){
+          page.drawText(S(t.title||t.t,48),{x:L,y:y,size:8.5,font:font,color:BLACK});
+          page.drawText(S(t.owner,18),{x:L+260,y:y,size:8.5,font:font,color:BLACK});
+          page.drawText(S(t.due,14),{x:L+360,y:y,size:8.5,font:font,color:BLACK});
+          var pr=S(t.priority||'Normal',10);
+          page.drawText(pr,{x:L+430,y:y,size:8.5,font:bold,color:pr.toLowerCase()==='high'?RED:BLACK}); y-=11;
+        });
+        y-=6;
+        if(report.managementAttention){
+          heading('Management attention');
+          var boxH=36; page.drawRectangle({x:L,y:y-boxH+14,width:R-L,height:boxH,color:rgb(1,0.96,0.965)});
+          page.drawRectangle({x:L,y:y-boxH+14,width:3,height:boxH,color:RED});
+          wrap(S(report.managementAttention,320),9,R-L-16).slice(0,2).forEach(function(ln,i){ page.drawText(ln,{x:L+10,y:y-2-i*11,size:9,font:font,color:BLACK}); });
+          y-=boxH+6;
+        }
+        page.drawLine({start:{x:L,y:42},end:{x:R,y:42},thickness:0.5,color:rgb(0.9,0.9,0.91)});
+        page.drawText('Arrowquip TRAVEL — Internal Field Intelligence',{x:L,y:28,size:7.5,font:font,color:GREY});
+        return pdf.save().then(function(bytes){ return new Blob([bytes],{type:'application/pdf'}); });
+      });
+    });
+  });
+}
+function foWireComplete(){
+  var run=document.getElementById('foRunAnalysis'); if(run) run.onclick=foRunAnalysis;
+  var cam=document.getElementById('foCam');
+  if(cam) cam.onchange=function(){
+    var files=[].slice.call(cam.files||[]);
+    files.forEach(function(f){ FO.photos.push({id:Date.now()+Math.random(), cap:f.name||MOB_PHCLASS||'Photo', file:f}); });
+    renderMobile();
+  };
+  var tf=document.getElementById('foTranscriptFile');
+  if(tf) tf.onchange=function(){
+    var f=tf.files&&tf.files[0]; if(!f) return;
+    var reader=new FileReader();
+    reader.onload=function(){ FO.transcriptText=String(reader.result||''); renderMobile(); };
+    if(/pdf/i.test(f.type)||/\.pdf$/i.test(f.name)){ FO.transcriptText='[PDF uploaded: '+f.name+' — paste text extraction or use TXT for analysis in demo]'; renderMobile(); }
+    else reader.readAsText(f);
+  };
+  var toTasks=document.getElementById('foToTasks'); if(toTasks) toTasks.onclick=function(){ FO.step=3; renderMobile(); };
+  var toAp=document.getElementById('foToApprove'); if(toAp) toAp.onclick=function(){
+    document.querySelectorAll('[data-fotask]').forEach(function(cb){ var i=+cb.dataset.fotask; if(FO.tasks[i]) FO.tasks[i].keep=!!cb.checked; });
+    document.querySelectorAll('[data-fotitle]').forEach(function(el){ var i=+el.dataset.fotitle; if(FO.tasks[i]) FO.tasks[i].t=el.textContent.trim(); });
+    FO.step=4; renderMobile();
+  };
+  document.querySelectorAll('[data-forecip]').forEach(function(el){ el.onclick=function(){
+    var i=+el.dataset.forecip; FO.recipients[i].on=!FO.recipients[i].on; renderMobile();
+  };});
+  var gen=document.getElementById('foGenPdf');
+  if(gen) gen.onclick=function(){
+    var st=document.getElementById('foPdfStatus'); if(st) st.textContent='Generating PDF…';
+    var report=foBuildReport();
+    function doneBlob(blob){
+      FO.pdfBlob=blob;
+      if(st){ st.innerHTML='PDF ready · <a id="foPdfDl" href="#">Download</a>';
+        var a=document.getElementById('foPdfDl'); if(a){ a.onclick=function(e){ e.preventDefault(); var u=URL.createObjectURL(blob); var x=document.createElement('a'); x.href=u; x.download='Arrowquip-Dealer-Visit-Report.pdf'; x.click(); }; }
+      }
+    }
+    function localPdf(){
+      foBuildPdfLocal(report).then(function(blob){ doneBlob(blob); if(st) st.innerHTML=(st.innerHTML||'')+' <span style="color:#9a3412">(local builder)</span>'; })
+        .catch(function(e){ if(st) st.textContent='PDF build failed: '+(e&&e.message||e); });
+    }
+    if(FIELD_OPS_DEMO || typeof pbApiFetch!=='function'){ localPdf(); return; }
+    pbApiFetch('/api/visit-report-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({report:report})})
+      .then(function(r){ if(!r.ok) throw new Error('pdf'); return r.blob(); })
+      .then(doneBlob)
+      .catch(function(){ localPdf(); });
+  };
+  var ap=document.getElementById('foApproveSend');
+  if(ap) ap.onclick=function(){
+    FO.approved=true;
+    var d=foDealer();
+    var kept=(FO.tasks||[]).filter(function(t){return t.keep!==false;});
+    if(!FIELD_OPS_DEMO && FO.dealerId && FO.dealerId.indexOf('demo')!==0){
+      var v=visitOf(FO.dealerId); v.actions=(v.actions||[]).concat(kept.map(function(t){return {t:t.t, due:t.due||'', done:false};})); v.plaud=Object.assign({}, FO.analysis, {status:'complete'}); visitSave(); savePlan();
+    }
+    var to=(FO.recipients||[]).filter(function(r){return r.on;}).map(function(r){return r.email;});
+    var personal={ kind:'personal', dryRun:true, subject:'Dealer Visit Follow-Up | '+d.name+' | '+(d.dayLabel||''),
+      text:'Tasks:\n'+kept.map(function(t){return '- '+t.t+' ('+(t.due||'no due')+')';}).join('\n'), recipients:to };
+    var exec={ kind:'executive', dryRun:true, subject:'Arrowquip Dealer Visit Report | '+d.name+' | '+(d.dayLabel||''),
+      text:'Executive report approved. PDF attached in production transport.', recipients:to };
+    var finish=function(msg){
+      alert(msg||'Approved. Emails were dry-run only. Returning to Today.');
+      MOB.stack=[]; MOB.tab='today'; FO.step=1; renderMobile();
+    };
+    if(typeof pbApiFetch!=='function'){ finish('Approved locally (demo). No email sent.'); return; }
+    Promise.all([
+      pbApiFetch('/api/visit-report-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(personal)}).then(function(r){return r.json();}),
+      pbApiFetch('/api/visit-report-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(exec)}).then(function(r){return r.json();})
+    ]).then(function(rs){
+      finish('Approved.\nPersonal email: '+(rs[0].mode||rs[0].reason)+'\nExecutive email: '+(rs[1].mode||rs[1].reason)+'\nNothing sent to leadership.');
+    }).catch(function(){ finish('Approved. Email dry-run could not reach API — nothing sent.'); });
+  };
+}
 function mobTasks_render(){
   /* Phase 1 personal task list from visit action items — no new pages. */
   var rows=[];
@@ -10079,6 +10419,9 @@ function mobToday_render(){
   var dealersToday=todays.filter(function(i){return i.kind==='dealer';});
   var doneN=dealersToday.filter(function(d){return APPT[d.id];}).length;
   var nextStop=dealersToday.filter(function(i){return !APPT[i.id];})[0];
+  if(FIELD_OPS_DEMO && !nextStop){
+    nextStop={kind:'dealer', id:FO_FIXTURE.id, name:FO_FIXTURE.name, time:'10:00', address:FO_FIXTURE.address, located:true};
+  }
   var R=legsFor(todays);
   var labs=dayLabels(wk);
 
@@ -10093,17 +10436,33 @@ function mobToday_render(){
     +'<button class="tmbtn" id="mobChangeDay" style="flex:2 1 auto">'+(today==null?'Pick day':esc(mobDayLabel(wk,today)))+'</button>'
     +'<button class="tmbtn" data-mobday="1">Day ›</button>'
     +'</div>';
+  if(FIELD_OPS_DEMO){
+    h+='<div style="font-size:15px;font-weight:700;color:#111;margin:6px 0 2px">Good morning, Mark.</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px">Here\'s your day at a glance · demo fixture</div>';
+  }
   h+='<div class="tm-h" style="font-size:13px;color:#111;margin-top:2px"><span>Today · '
      +esc(today==null?'not this week':mobDayLabel(wk,today).toUpperCase())+'</span></div>';
 
   if(today!=null){
-    h+='<div class="tl-summary">'
-      +'<div><b>'+dealersToday.length+'</b><span>Visits</span></div>'
-      +'<div><b>'+doneN+'</b><span>Done</span></div>'
-      +'<div><b>'+(dealersToday.length-doneN)+'</b><span>Left</span></div>'
-      +'<div><b>'+hrsLabel(R.totalHours)+'</b><span>Drive</span></div>'
-      +'</div>';
-    h+=mobUpNextHTML(nextStop, todays, wk);
+    var left=Math.max(0, dealersToday.length-doneN);
+    var pctDone=dealersToday.length?(doneN/dealersToday.length*100):0;
+    h+='<div class="fo-progress"><div><div class="fo-n">'+dealersToday.length+'</div><div class="fo-l">appointments</div></div>'
+      +'<div class="fo-bar" style="flex-direction:row"><i class="done" style="width:'+pctDone+'%"></i><i class="left" style="width:'+(100-pctDone)+'%"></i></div>'
+      +'<div style="font-size:11px;color:#6b7280;text-align:right"><b style="color:#16a34a">'+doneN+' done</b><br><b style="color:#cc152f">'+left+' left</b></div></div>';
+    if(FIELD_OPS_DEMO){
+      h+='<div class="fo-card"><span class="badge">Next</span><div class="nm">'+esc(FO_FIXTURE.name)+'</div>'
+        +'<div class="meta">'+esc(FO_FIXTURE.time)+' – '+esc(FO_FIXTURE.end)+'<br>'+esc(FO_FIXTURE.address)
+        +'<br>'+esc(FO_FIXTURE.contactName)+' · '+esc(FO_FIXTURE.phone)+'</div>'
+        +'<div class="obj">'+esc(FO_FIXTURE.objective)+'</div>'
+        +'<div class="leave">'+FO_FIXTURE.driveMin+' min drive · '+FO_FIXTURE.driveKm+' km · Leave by '+FO_FIXTURE.leaveBy+'</div>'
+        +'<div class="fo-acts">'
+        +'<a class="tmbtn nav" href="https://maps.google.com/?q='+encodeURIComponent(FO_FIXTURE.address)+'" target="_blank" rel="noopener">Navigate</a>'
+        +'<a class="tmbtn" href="tel:'+esc(FO_FIXTURE.phone)+'">Call</a>'
+        +'<button class="tmbtn" data-foappt="1">Details</button></div>'
+        +'<button class="tm-primary fo-red" style="margin-top:10px" data-focomplete="'+FO_FIXTURE.id+'">Complete Appointment</button></div>';
+    } else {
+      h+=mobUpNextHTML(nextStop, todays, wk);
+    }
   }
 
   if(today==null){
@@ -10591,7 +10950,8 @@ function mobDealer_page(id){
   h+='<button class="tm-drow" data-attachrec="'+id+'"><span class="di" style="background:#0ea5e9">'+tmIcon('msg',17)+'</span>'
     +'<div class="dt"><b>Attach Visit Recording</b><span>Plaud transcript → Claude report</span></div>'
     +'<span class="chev">›</span></button>';
-  h+='<button class="tm-primary" id="vd_complete" style="background:'+(done?'#16a34a':'#111')+'">'+(done?'✓ Visit complete':'Mark Visit Complete')+'</button>';
+  h+='<button class="tm-primary fo-red" data-focomplete="'+id+'">Complete Appointment</button>';
+  h+='<button class="tmbtn" id="vd_complete" style="width:100%;margin-top:8px">'+(done?'Reopen appointment':'Mark complete only')+'</button>';
   h+='</div>';
   return h;
 }
@@ -10807,6 +11167,7 @@ function mobProcessRecording(id, text, link, cb){
 /* dispatch: page descriptor -> {title, body, menu} */
 function mobPageMeta(p){
   if(p.type==='stop'){ var it=LOGI.filter(function(x){return x.id===p.id;})[0]; return {title:it?(TRAVEL_TYPES[travelType(it)].label):'Stop', body:mobStop_page(p.id), menu:false}; }
+  if(p.type==='focomplete'){ return {title:'Complete appointment', body:foComplete_render(), menu:false}; }
   if(p.type==='dealer'){ var d=uniById(p.id); return {title:d?d.name:'Dealer visit', body:mobDealer_page(p.id), menu:true}; }
   if(p.type==='dphotos'){ var d2=uniById(p.id); return {title:(d2?d2.name:'Photos'), body:mobPhotos_page(p.id), menu:false}; }
   if(p.type==='dreport'){ return {title:'Claude Visit Report', body:mobReport_page(p.id), menu:false}; }
@@ -10818,6 +11179,7 @@ function mobPageMeta(p){
 function wireMobPage(p){
   var q=function(s){return document.querySelectorAll('#tripmode '+s);};
   q('[data-mobback]').forEach(function(b){ b.onclick=mobPop; });
+  if(p.type==='focomplete'){ foWireComplete(); return; }
   if(p.type==='stop'){
     var se=document.getElementById('stopEdit'); if(se) se.onclick=function(){ mobEditSheet(p.id); };
   }
@@ -10831,6 +11193,7 @@ function wireMobPage(p){
     q('[data-attachrec]').forEach(function(b){ b.onclick=function(){ mobAttachRecording(b.dataset.attachrec); }; });
     q('[data-mobcall]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); mobCallDealer(a.dataset.mobcall, p.id, p.id); }; });
     var mm=document.querySelector('#tripmode [data-mobmenu]'); if(mm) mm.onclick=function(){ mobDealerMenu(p.id); };
+    q('[data-focomplete]').forEach(function(b){ b.onclick=function(){ foOpenComplete(b.dataset.focomplete||p.id); };});
     var comp=document.getElementById('vd_complete');
     if(comp) comp.onclick=function(){
       var d=uniById(p.id); var was=!!APPT[p.id];
@@ -11021,6 +11384,8 @@ function wireMobile(){
     if(p[0]==='travel') mobPush({type:'stop',id:p[1]}); else mobDealerSheet(p[1]);
   };});
   q('[data-mobvisit]').forEach(function(b){ b.onclick=function(){ mobPush({type:'dealer',id:b.dataset.mobvisit}); };});
+  q('[data-focomplete]').forEach(function(b){ b.onclick=function(){ foOpenComplete(b.dataset.focomplete); };});
+  q('[data-foappt]').forEach(function(b){ b.onclick=function(){ foOpenComplete(FO_FIXTURE.id); };});
   q('[data-tasktog]').forEach(function(b){ b.onclick=function(){
     var p=b.dataset.tasktog.split(':'), id=p[0], i=+p[1];
     var v=visitOf(id); if(!v.actions||!v.actions[i]) return;
@@ -11527,6 +11892,22 @@ function mobExpenseSheet(prefill){
 /* boot: only on phone widths, and only after the passcode gate unlocks */
 var MOBEXP={}; try{ MOBEXP=JSON.parse(localStorage.getItem('aqMOBEXP')||'{}')||{}; }catch(e){ MOBEXP={}; }
 var MOB_PHCLASS='dealership';
+/* Phase 2/3 field-ops workflow. Demo mode (?fieldOpsDemo=1) uses fixture data and
+   never writes the live plan row. Emails always dry-run unless server allowlist+flag. */
+var FIELD_OPS_DEMO=(function(){ try{ return new URLSearchParams(location.search).get('fieldOpsDemo')==='1'; }catch(e){ return false; } })();
+var FO={ step:1, dealerId:null, analysis:null, tasks:[], recipients:[], pdfBlob:null, transcriptText:'', photos:[], approved:false };
+var FO_FIXTURE={
+  id:'demo-riverside',
+  name:'Riverside Equipment Co.',
+  address:'1840 Industrial Pkwy, Springfield, WI',
+  loc:'WI', territory:'East',
+  contactName:'John Peterson', phone:'555-0142',
+  time:'10:00', end:'11:00', dayLabel:'Today, Nov 16',
+  objective:'Review spring order opportunities and inventory.',
+  driveMin:45, driveKm:32, leaveBy:'9:15 AM',
+  attendees:'John Peterson (Dealer), Mark Firth (Arrowquip)'
+};
+
 function mobItemKey(i){ return (i.kind||'x')+':'+(i.id||''); }
 function mobIsExpanded(i){ return !!MOBEXP[mobItemKey(i)]; }
 function mobToggleItem(i){ var k=mobItemKey(i); MOBEXP[k]=!MOBEXP[k]; try{ localStorage.setItem('aqMOBEXP',JSON.stringify(MOBEXP)); }catch(e){} renderMobile(); }
@@ -11563,12 +11944,13 @@ function mobUpNextHTML(next, todays, wk){
     +(leave||drive?('<div class="un-meta" style="margin-top:6px">'+(leave?('Leave by <b style="color:#fff">'+leave+'</b> · '):'')+esc(drive||'')+'</div>'):'')
     +(obj?('<div class="un-meta" style="margin-top:4px">'+esc(obj)+'</div>'):'')
     +(late?('<div class="un-late">'+esc(late)+'</div>'):'')
-    +'<div class="un-acts">'
-      +(mobHasDest(next)?('<a class="tmbtn nav" href="'+navUrl(next)+'" target="_blank" rel="noopener">Navigate</a>'):'')
-      +(call?('<button class="tmbtn" data-mobcall="'+esc(call)+'">Call</button>'):'')
-      +'<button class="tmbtn" data-mobvisit="'+next.id+'">Open</button>'
-      +'<button class="tmbtn" data-mobdone="dealer:'+next.id+'" style="background:#16a34a;border-color:#16a34a;color:#fff">Complete</button>'
-    +'</div></div>';
+    +'<div class="fo-acts">'
+      +(mobHasDest(next)?('<a class="tmbtn nav" href="'+navUrl(next)+'" target="_blank" rel="noopener">Navigate</a>'):'<button class="tmbtn" disabled>Navigate</button>')
+      +(call?('<button class="tmbtn" data-mobcall="'+esc(call)+'">Call</button>'):'<button class="tmbtn" disabled>Call</button>')
+      +'<button class="tmbtn" data-mobvisit="'+next.id+'">Details</button>'
+    +'</div>'
+    +'<button class="tm-primary fo-red" style="margin-top:10px" data-focomplete="'+next.id+'">Complete Appointment</button>'
+    +'</div>';
   return h;
 }
 function mobBoot(){
@@ -11580,6 +11962,7 @@ function mobBoot(){
   try{ var a=localStorage.getItem('aqMyArea'); if(a) MOB.terr=a; }catch(e){}
   MOB.day=mobToday(MOB.wk);
   MOB.tab='today';
+  if(FIELD_OPS_DEMO){ try{ cloudBadge('Field Ops demo — live plan isolated'); }catch(e){} }
   renderMobile();
 }
 window.addEventListener('resize',function(){
