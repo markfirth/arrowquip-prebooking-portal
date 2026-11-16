@@ -1258,6 +1258,9 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .proginfo th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted-2);padding:2px 18px 4px 0;}
 .proginfo td{padding:2px 18px 2px 0;color:var(--ink);border-top:1px solid var(--line-soft);}
 .proginfo .pgnotes{font-size:11px;color:var(--muted);max-width:280px;line-height:1.7;padding-top:4px;}
+.wkper{display:flex;align-items:center;gap:10px;margin:18px 2px 8px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.75;}
+.wkper::after{content:'';flex:1;height:1px;background:var(--line);opacity:.7;}
+.wkper:first-child{margin-top:4px;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1352,7 +1355,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
   </div>
   <div id="allView" style="display:none;">
     <div class="tablecard">
-      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · Week 31 (Kickoff) through Week 44</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button><button id="allTripBtn" class="segb">Build My Trip</button></div></div></div>
+      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · continuous calendar, week by week</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button><button id="allTripBtn" class="segb">Build My Trip</button></div></div></div>
       <div class="ganttwrap" id="ganttWrap"></div>
     </div>
   </div>
@@ -1662,9 +1665,69 @@ function pbApiFetch(path,opts){ opts=opts||{};
 }
 var _cloudTimers={}, _lastSelfSave=0;
 function saveDealers(){invalidateUniverse();if(!DEALERS||!DEALERS.length){return;}try{localStorage.setItem('aq2027dealersv1',JSON.stringify(DEALERS));}catch(e){}cloudSave('dealers',DEALERS);}
-const WEEKDATES={31:"Jul 28–29",32:"Aug 2–8",33:"Aug 9–15",34:"Aug 16–22",35:"Aug 23–29",36:"Aug 30–Sep 5",37:"Sep 6–12",38:"Sep 13–19",39:"Sep 20–26",40:"Sep 27–Oct 3",41:"Oct 4–10",42:"Oct 11–17",43:"Oct 18–24",44:"Oct 25–31"};
-const FIELD_NUMS=[32,33,34,35,36,37,38,39,40,41,42,43,44];
-const MON={32:[7,3],33:[7,10],34:[7,17],35:[7,24],36:[7,31],37:[8,7],38:[8,14],39:[8,21],40:[8,28],41:[9,5],42:[9,12],43:[9,19],44:[9,26]};
+/* ---- Continuous planning calendar --------------------------------------------
+   Week keys stay plain numbers, so every saved plan keeps working:
+   31 = Kickoff (Jul 28–29 2026), 32 = the week of Sun Aug 2 2026, and each later
+   week is +1 with no reset at New Year. What people SEE is the real calendar:
+   week-of-year (Sunday start, the week holding Jan 1 is Week 1), the year and the
+   quarter. The range runs to the end of next year and grows automatically. */
+const WK_BASE=new Date(2026,7,2,12);             /* Sun Aug 2 2026, noon (DST-safe) = key 32 */
+const WK_DAY=864e5, WK_MS=7*WK_DAY;
+const SEASON_NUMS=[32,33,34,35,36,37,38,39,40,41,42,43,44];   /* 2026 kickoff season */
+function wkStart(wk){ return (wk===31)?new Date(2026,6,26,12):new Date(WK_BASE.getTime()+(wk-32)*WK_MS); }
+var _WKI={};
+function wkInfo(wk){
+  wk=+wk; if(_WKI[wk]) return _WKI[wk];
+  if(wk===31) return (_WKI[31]={y:2026,n:31,q:3});
+  var s=wkStart(wk), sat=new Date(s.getTime()+6*WK_DAY), y=sat.getFullYear();
+  var j1=new Date(y,0,1,12), first=new Date(j1.getTime()-j1.getDay()*WK_DAY);
+  return (_WKI[wk]={y:y, n:Math.round((s-first)/WK_MS)+1, q:Math.floor(sat.getMonth()/3)+1});
+}
+const WK_LAST=(function(){ var end=new Date(new Date().getFullYear()+1,11,31,12);
+  return Math.max(44, 32+Math.floor((end-WK_BASE)/WK_MS)); })();
+const WEEKDATES={31:"Jul 28–29"}, FIELD_NUMS=[], MON={};
+(function(){ var mo=function(d){ return d.toLocaleString('en-US',{month:'short'}); };
+  for(var k=32;k<=WK_LAST;k++){
+    var s=wkStart(k), e=new Date(s.getTime()+6*WK_DAY), mon=new Date(s.getTime()+WK_DAY);
+    var lab=mo(s)+' '+s.getDate()+'–'+(e.getMonth()===s.getMonth()?'':mo(e)+' ')+e.getDate();
+    if(wkInfo(k).y!==2026) lab+=', '+wkInfo(k).y;
+    WEEKDATES[k]=lab; FIELD_NUMS.push(k); MON[k]=[mon.getMonth(),mon.getDate(),mon.getFullYear()];
+  } })();
+function wkNo(w){ var n=+w; return (isFinite(n)&&n>=31)?wkInfo(n).n:w; }
+function wkYear(w){ var n=+w; return (isFinite(n)&&n>=31)?wkInfo(n).y:''; }
+function wkPeriod(w){ var i=wkInfo(w); return i.y+' · Q'+i.q; }
+/* dates with the year — 2026 labels are short, later years already carry it */
+function wkDY(w){ var l=WEEKDATES[w]||''; return (l&&wkYear(w)===2026)?(l+', 2026'):l; }
+function wkCurrent(){ var t=new Date(); t.setHours(12,0,0,0);
+  return Math.max(32,Math.min(WK_LAST,32+Math.floor((t-WK_BASE)/WK_MS))); }
+/* a week "has content" when anything is planned in it */
+function wkHas(w){
+  try{ for(var id in ASSIGN){ if(ASSIGN[id]===w) return true; } }catch(e){}
+  try{ if(typeof XVISITS!=='undefined'&&XVISITS.some(function(x){return x.wk===w;})) return true; }catch(e){}
+  try{ if(typeof LOGI!=='undefined'&&LOGI.some(function(x){return x.wk===w;})) return true; }catch(e){}
+  return false;
+}
+/* Week lists on screen: anything already planned (past or future) plus a rolling
+   window from this week to the end of next quarter. Pickers list every week. */
+function wkShown(list){
+  var a=wkCurrent(), c=wkInfo(a), q=c.q+1, y=c.y; if(q>4){q=1;y++;}
+  return list.filter(function(w){
+    if(typeof w!=='number') return true;
+    if(w>=a){ var i=wkInfo(w); if(i.y<y||(i.y===y&&i.q<=q)) return true; }
+    return wkHas(w);
+  });
+}
+/* subtle year · quarter divider between week blocks */
+function wkPeriodDivider(w){ return '<div class="wkper"><span>'+wkPeriod(w)+'</span></div>'; }
+function wkWithDividers(list,render){ var last=null, out='';
+  list.forEach(function(w){ if(typeof w==='number'){ var p=wkPeriod(w); if(p!==last){ out+=wkPeriodDivider(w); last=p; } } out+=render(w); });
+  return out; }
+/* <option>s grouped by year · quarter */
+function wkOptions(list,sel,opts){ opts=opts||{}; var last=null, out='';
+  list.forEach(function(w){ if(typeof w!=='number') return; var p=wkPeriod(w);
+    if(p!==last){ if(last!==null) out+='</optgroup>'; out+='<optgroup label="'+p+'">'; last=p; }
+    out+='<option value="'+w+'"'+(w===sel?' selected':'')+'>Week '+wkNo(w)+(w===31?' · Kickoff':'')+(opts.short?'':(' · '+WEEKDATES[w]))+'</option>'; });
+  return out+(last!==null?'</optgroup>':''); }
 const REGION_ORDER=["FR","UK","ON","QC","MB","SK","AB","BC","NY","PA","VA","NC","SC","GA","FL","TN","KY","OH","MI","IN","WI","MN","IL","IA","MO","KS","NE","SD","ND","TX","OK","AR","LA","MS","AL","NM","CO","WY","MT","ID","UT","AZ","NV","WA","OR","CA"];
 const DEADLINE=new Date("2026-10-31T00:00:00");
 const fmtUSD=n=>"$"+Math.round(n).toLocaleString("en-US");
@@ -1695,7 +1758,7 @@ let terrMode='plan', terrMapWeek='all', terrMapDay='all';
 let WKOPEN={};
 function wkNumsFor(){ return (terr==='Exports')?['remote']:[31].concat(FIELD_NUMS,['remote']); }
 function _wkAnyStateForTerr(){ var pfx=terr+'|'; return Object.keys(WKOPEN).some(function(k){return k.indexOf(pfx)===0;}); }
-function _wkDefaultOpen(){ return (terr==='Exports')?'remote':(FIELD_NUMS[0]!=null?FIELD_NUMS[0]:31); }
+function _wkDefaultOpen(){ return (terr==='Exports')?'remote':wkCurrent(); }
 function wkEnsureState(){ if(!_wkAnyStateForTerr()){ WKOPEN[terr+'|'+_wkDefaultOpen()]=true; } }
 function wkIsOpen(wk){ wkEnsureState(); return !!WKOPEN[terr+'|'+wk]; }
 function wkToggle(wk){ wkEnsureState(); var k=terr+'|'+wk; WKOPEN[k]=!WKOPEN[k]; if(WKOPEN[k]) _mapWk=wk; _wkRerender(); }
@@ -1761,7 +1824,7 @@ function settingsFor(t){ if(!SETTINGS[t])SETTINGS[t]={maxDrive:3,maxDay:8}; retu
 const ttOf=t=>DEALERS.filter(d=>d.territory===t).reduce((s,x)=>s+(+x.booking||0),0);
 const grandTot=()=>DEALERS.reduce((s,x)=>s+(+x.booking||0),0);
 function dayLabels(wk){ if(wk===31) return [["Tue","Jul 28"],["Wed","Jul 29"]]; const m=MON[wk]; if(!m) return [];
-  const base=new Date(2026,m[0],m[1]); base.setDate(base.getDate()-1); const nm=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; const out=[];
+  const base=new Date(m[2],m[0],m[1],12); base.setDate(base.getDate()-1); const nm=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; const out=[];
   for(let i=0;i<7;i++){const d=new Date(base);d.setDate(base.getDate()+i);out.push([nm[i],d.toLocaleString('en-US',{month:'short'})+' '+d.getDate()]);}
   return out;
 }
@@ -2428,7 +2491,7 @@ function xvFor(id){ return XVISITS.filter(function(x){ return x.dealer===id; });
 function xvType(t){ return XV_TYPES[xvTypeKey(t)]; }
 function xvWhen(x){
   var labs=(typeof x.wk==='number')?dayLabels(x.wk):[];
-  return 'Wk '+x.wk+((x.day!=null&&labs[x.day])?(' · '+labs[x.day][0]+' '+labs[x.day][1]):' · day TBD')+(x.time?(' · '+t12s(x.time)):'');
+  return 'Wk '+wkNo(x.wk)+((x.day!=null&&labs[x.day])?(' · '+labs[x.day][0]+' '+labs[x.day][1]):' · day TBD')+(x.time?(' · '+t12s(x.time)):'');
 }
 /* every scheduled visit for a dealer (initial + additional), earliest first */
 function xvAll(id){
@@ -2455,7 +2518,7 @@ function xvNextLabel(d){
   var c=xvAll(d.id).filter(function(v){ return !v.done && v.wk!=null; })[0]||xvAll(d.id).filter(function(v){return v.wk!=null;})[0];
   if(!c) return '—';
   var labs=dayLabels(c.wk);
-  return 'Wk '+c.wk+((c.day!=null&&labs[c.day])?(' · '+labs[c.day][0]+' '+labs[c.day][1]):'');
+  return 'Wk '+wkNo(c.wk)+((c.day!=null&&labs[c.day])?(' · '+labs[c.day][0]+' '+labs[c.day][1]):'');
 }
 /* ============================================================
    PLANNING ENGINE — the single source of truth for every number.
@@ -3191,7 +3254,7 @@ function renderPlanner(){
   else if(poolSort==='state'){ let cur=null; pool.forEach(d=>{ if(d.loc!==cur){cur=d.loc; body+=`<div class="grp">${d.loc||'—'}</div>`;} body+=dealerCard(d); }); }
   else { body=pool.map(dealerCard).join(''); }
   document.getElementById("poolBody").innerHTML=body;
-  const nums=isExp?['remote']:[31,...FIELD_NUMS,'remote'];
+  const nums=isExp?['remote']:wkShown([31].concat(FIELD_NUMS)).concat(['remote']);
   /* the secondary KPI strip is gone — the primary dashboard tells the story.
      Only the quiet territory utilities live here now. */
   var _psum=document.getElementById("planSummary");
@@ -3203,7 +3266,7 @@ function renderPlanner(){
   var openMap=nums.filter(function(w){ return wkIsOpen(w)&&wkMapOn(w); });
   _activeMapHost=(openMap.indexOf(_mapWk)>=0)?_mapWk:(openMap.length?openMap[0]:null);
   _mapWk=_activeMapHost;
-  document.getElementById("weeks").innerHTML=nums.map(wk=>weekCard(wk)).join("");
+  document.getElementById("weeks").innerHTML=wkWithDividers(nums,weekCard);
   try{ syncWeekMap(); }catch(e){}
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -4727,8 +4790,8 @@ function weekCard(wk){
   var wf=wkForecast(terr,wk);
   var rev=wf.b,loads=wf.l,pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
-  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
-  var dates=isRemote?'book remotely':(WEEKDATES[wk]+', 2026');
+  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wkNo(wk)+' – '+wkYear(wk));
+  var dates=isRemote?'book remotely':wkDY(wk);
   var md=settingsFor(terr).maxDrive;
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
   var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
@@ -4779,7 +4842,7 @@ function weekCard(wk){
   }
   var confBtn='<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>';
   var open=wkIsOpen(wk);
-  var wkShort=isRemote?'Remote':(isk?'WK 31':'WK '+wk);
+  var wkShort=isRemote?'Remote':(isk?'WK 31':'WK '+wkNo(wk));
   var dateRange=isRemote?'direct / book remotely':(WEEKDATES[wk]||'');
   /* Summary row — TRAVEL only: week · dates · how many stops. No business metrics. */
   var evCount=ds.length+wlogi.length+xw.length;
@@ -4980,7 +5043,7 @@ function renderAllView(){
   }
   if(sub)sub.textContent=(ALL_EXEC&&ALL_REP?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' joining '+repOf(ALL_REP)+' · '):(ALL_EXEC?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' — Leadership Travel · '):''))
     +(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
-    +' · '+(ALL_WK==='all'?'Week 31 (Kickoff) through Week 44':('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]
+    +' · '+(ALL_WK==='all'?'Continuous calendar · week by week':('Week '+wkNo(ALL_WK)+' · '+WEEKDATES[ALL_WK]
       +(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY]?(' · '+dayLabels(ALL_WK)[ALL_DAY][0]+' '+dayLabels(ALL_WK)[ALL_DAY][1]):'')))+' · read-only';
   if(allMode==='map') renderAllMap(); else renderAllOverview();
 }
@@ -4998,7 +5061,7 @@ function renderLeaderView(){
     var nod=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;});
     if(nod.length){ rows+='<div class="tday todo">Day TBD</div>'+nod.map(srow).join(''); }
     labs.forEach(function(l,i){var dd=ds.filter(function(d){return DAY[d.id]===i;}).sort(function(a,b){return (TIME[a.id]||'99').localeCompare(TIME[b.id]||'99');}); if(!dd.length)return; rows+='<div class="tday"><b>'+l[0]+'</b> '+l[1]+'</div>'+dd.map(srow).join('');});
-    blocks+='<div class="lvblock"><div class="lvh"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+(wk===31?' · Kickoff':'')+' · '+t+' <span class="lvsub">'+WEEKDATES[wk]+' · '+(FLAT.tm[t]||'')+' · '+ds.length+' stop'+(ds.length>1?'s':'')+'</span></div>'+rows+'</div>';
+    blocks+='<div class="lvblock"><div class="lvh"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+t+' <span class="lvsub">'+WEEKDATES[wk]+' · '+(FLAT.tm[t]||'')+' · '+ds.length+' stop'+(ds.length>1?'s':'')+'</span></div>'+rows+'</div>';
   }); });
   var hdr='<div class="joinhd"><span class="ldot on" style="background:'+col+';border-color:'+col+';width:18px;height:18px;font-size:8px">'+LEADER_CODE[L]+'</span> &nbsp;'+L+' — '+trips+' trip'+(trips!==1?'s':'')+' · '+stops+' visit'+(stops!==1?'s':'')+'</div>';
   document.getElementById('ganttWrap').innerHTML=hdr+(blocks||'<div class="empty" style="padding:30px">'+L+' is not on any trips yet. Add them on the Calendar (tap + on a stop).</div>')+'<div style="height:14px"></div>';
@@ -5011,7 +5074,7 @@ function renderJoin(){
   var head='<tr><th>Trip</th><th class="num">Stops</th><th class="num">Revenue</th><th>Leaders joining</th></tr>';
   var body=rows.length?rows.map(function(r){ 
     var chips=LEADERS.map(function(n){var on=r.ds.length&&r.ds.every(function(d){return (JOINA[d.id]||[]).indexOf(n)>=0;}); return '<button class="joinchip'+(on?' on':'')+'" data-join="'+r.t+'|'+r.wk+'|'+n+'" style="'+(on?('background:'+LEADER_COLOR[n]+';border-color:'+LEADER_COLOR[n]+';color:#fff'):'')+'">'+n+'</button>';}).join('');
-    return '<tr><td><span class="wkn">'+r.t+' · Week '+r.wk+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(wkForecast(r.t,r.wk).b)+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
+    return '<tr><td><span class="wkn">'+r.t+' · Week '+wkNo(r.wk)+(r.wk===31?' (Kickoff)':'')+'<span class="wnd">'+WEEKDATES[r.wk]+' · '+(FLAT.tm[r.t]||'')+'</span></span></td><td class="num">'+r.ds.length+'</td><td class="num rev">'+fmtUSD(wkForecast(r.t,r.wk).b)+'</td><td><div class="joinrow">'+chips+'</div></td></tr>';
   }).join(''):'<tr><td colspan="4" class="empty" style="padding:30px">No trips scheduled yet — plan some weeks first.</td></tr>';
   document.getElementById('ganttWrap').innerHTML='<div class="joinhd">Tap a name to confirm they will join that trip. Saved automatically.</div><table class="cal jtab"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
@@ -5024,8 +5087,8 @@ let LV_TAB='overview';   /* overview | map */
 let LV_WEEK=null;        /* week shown on the Leader Map */
 let LV_AREAS={East:true,South:true,Central:true,West:true,Exports:true};
 let LV_REP='';
-function lvWeeks(){ return [31].concat(FIELD_NUMS); }
-function lvWeekTarget(){ return (GOAL2027>0)?(GOAL2027/lvWeeks().length):0; }
+function lvWeeks(){ return wkShown([31].concat(FIELD_NUMS)); }
+function lvWeekTarget(){ return (GOAL2027>0)?(GOAL2027/(1+SEASON_NUMS.length)):0; }
 function lvVisits(wk,t){ return dealersIn(t).filter(function(d){ return ASSIGN[d.id]===wk; }); }
 function lvWeekStats(wk){
   var per={}, rev=0, loads=0, n=0, conf=0, confRev=0;
@@ -5079,7 +5142,7 @@ function lvOverviewHTML(){
   return lvWeeks().map(function(wk){
     var s=lvWeekStats(wk);
     var hasAny=s.n>0 || LOGI.some(function(it){return it.wk===wk;});
-    var bar='<div class="lvwkbar">Week '+wk+(wk===31?' · Kickoff':'')+' <span class="sub">'+WEEKDATES[wk]+'</span>'
+    var bar='<div class="lvwkbar">Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' <span class="sub">'+WEEKDATES[wk]+'</span>'
       +'<div class="lvpills">'
       +'<span class="kpill total">'+fmtUSDk(s.rev)+'</span>'
       +'<span class="kpill target">Loads: '+s.loads+'</span>'
@@ -5109,7 +5172,7 @@ function lvMapHTML(){
     +kpi('Weekly Target',s.target>0?fmtUSDk(s.target):'—',s.target>0?'':'set the 2027 goal on the Master Sheet')
     +kpi('% of Target Confirmed',s.tpct!=null?(s.tpct.toFixed(0)+'%'):'—')
     +'</div>';
-  var wkOpts=lvWeeks().map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+  var wkOpts=wkOptions(lvWeeks(),wk);
   var repOpts='<option value="">All representatives</option>'+lvReps().map(function(r){return '<option value="'+esc(r)+'"'+(LV_REP===r?' selected':'')+'>'+esc(r)+'</option>';}).join('');
   var ctl='<div class="lvctl"><select id="lvWeekSel" class="msearch" style="max-width:230px">'+wkOpts+'</select>'
     +'<select id="lvRepSel" class="msearch" style="max-width:190px">'+repOpts+'</select>'
@@ -5385,7 +5448,7 @@ function lAddPanelToggle(){
 }
 let LV_TYPES={dealer:true,hotel:true,airport:true,rental:true,other:true,routes:true};
 function allAreas(){ return TERRS.filter(function(t){ return LV_AREAS[t]; }); }
-function allWeeksList(){ return [31].concat(FIELD_NUMS); }
+function allWeeksList(){ return wkShown([31].concat(FIELD_NUMS)); }
 function allVisits(wk){
   var out=[]; allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]===wk) out.push({t:t,d:d}); }); });
   /* additional visits appear as their own entries (0 revenue/loads: no double count) */
@@ -5401,7 +5464,7 @@ function avTime(v){ return v.xv?(v.xv.time||''):(TIME[v.d.id]||''); }
 function avConf(v){ return v.xv?!!v.xv.done:!!APPT[v.d.id]; }
 function allFiltersHTML(){
   var wkOpts='<option value="all"'+(ALL_WK==='all'?' selected':'')+'>All weeks</option>'
-    +allWeeksList().map(function(w){return '<option value="'+w+'"'+(ALL_WK===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+    +wkOptions(allWeeksList(),ALL_WK);
   /* one week selected → a day filter with ‹ › stepping, so a leader can walk
      the reps' appointments day by day and plan their own trip around them */
   var dayCtl='';
@@ -5505,8 +5568,8 @@ function allWeekCard(wk){
   allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ rev+=fbWk(d,wkKey); loads+=flWk(d,wkKey); }); });
   var apc=vs.filter(avConf).length;
   var pct=vs.length?Math.round(apc/vs.length*100):0;
-  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wk+' – 2026');
-  var dates=isRemote?'book remotely':(WEEKDATES[wk]+', 2026');
+  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wkNo(wk)+' – '+wkYear(wk));
+  var dates=isRemote?'book remotely':wkDY(wk);
   var tags=function(list){ return '<div class="atags">'+list.map(function(v){return allTagHTML(v.t,v.d,avConf(v));}).join('')+'</div>'; };
   var cards='';
   if(isRemote){
@@ -5594,7 +5657,7 @@ function allDealerModal(id){
   function pane(){
     if(TAB==='details'){
       var wk=ASSIGN[id], labs=(typeof wk==='number')?dayLabels(wk):[];
-      var when=(typeof wk==='number')?('Week '+wk+((DAY[id]!=null&&labs[DAY[id]])?(' · '+labs[DAY[id]][0]+' '+labs[DAY[id]][1]):'')+(TIME[id]?(' · '+t12(TIME[id])):'')):(ASSIGN[id]==='remote'?'Remote / direct':'—');
+      var when=(typeof wk==='number')?('Week '+wkNo(wk)+((DAY[id]!=null&&labs[DAY[id]])?(' · '+labs[DAY[id]][0]+' '+labs[DAY[id]][1]):'')+(TIME[id]?(' · '+t12(TIME[id])):'')):(ASSIGN[id]==='remote'?'Remote / direct':'—');
       return row('Territory','<span><i class="lvdot" style="display:inline-block;margin-right:6px;background:'+(AREA_COLOR[d.territory]||'#999')+'"></i>'+esc(d.territory||'—')+'</span>')
         +row('Representative',esc(d.tm||'—'))
         +row('Revenue (2027 Target)',fmtUSD(+d.booking||0))
@@ -5764,7 +5827,7 @@ function renderAllMap(){
   var rideCards='';
   if(ALL_REP&&typeof ALL_WK==='number'){
     var _e=execById(ALL_EXEC||rideFor(ALL_REP,ALL_WK,ALL_DAY));
-    var _dayLbl=(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY])?(dayLabels(ALL_WK)[ALL_DAY][0]+' · '+dayLabels(ALL_WK)[ALL_DAY][1]):('Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]);
+    var _dayLbl=(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY])?(dayLabels(ALL_WK)[ALL_DAY][0]+' · '+dayLabels(ALL_WK)[ALL_DAY][1]):('Week '+wkNo(ALL_WK)+' · '+WEEKDATES[ALL_WK]);
     rideCards='<div class="tcard" style="margin-bottom:12px"><div class="tcb" style="padding:10px 14px">'
       +'<div style="font-size:13px;font-weight:700;color:var(--aq-black)">'
         +(_e?esc(_e.name)+' <span style="font-weight:400;color:var(--muted)">joining</span> ':'')+esc(repOf(ALL_REP))+'</div>'
@@ -5775,7 +5838,7 @@ function renderAllMap(){
     var _e2=execById(ALL_EXEC);
     rideCards='<div class="tcard" style="margin-bottom:12px"><div class="tcb" style="padding:10px 14px">'
       +'<div style="font-size:13px;font-weight:700;color:var(--aq-black)">'+esc(_e2.name)+' <span style="font-weight:400;color:var(--muted)">— Leadership Travel</span></div>'
-      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">Week '+ALL_WK+' · '+WEEKDATES[ALL_WK]+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px">Week '+wkNo(ALL_WK)+' · '+WEEKDATES[ALL_WK]+'</div>'
       +'</div></div>';
   }
   host.innerHTML=allFiltersHTML()+allKpiHTML()
@@ -5817,7 +5880,7 @@ function allDrawMap(){
         var stt=STOP_TYPES[normType(s.type)];
         var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
         L.marker([s.lat,s.lon],{icon:mkPin(isDealer?col:stt.color,stt.glyph,seqOf[s.key],(s.att==='leader'?'lonly':''))}).addTo(_lvMap)
-          .bindTooltip(stopTip(s)+'<br>Week '+wk+' · '+esc([rep,t].filter(Boolean).join(' · ')))
+          .bindTooltip(stopTip(s)+'<br>Week '+wkNo(wk)+' · '+esc([rep,t].filter(Boolean).join(' · ')))
           .bindPopup(popupHTML(s)+stopActionsHTML(s),{maxWidth:280});
         bounds.push([s.lat,s.lon]);
       });
@@ -6063,7 +6126,7 @@ function tripDayPillsHTML(){
 }
 function tripTopBarHTML(){
   var wkOpts='<option value="all"'+(ALL_WK==='all'?' selected':'')+'>All weeks</option>'
-    +allWeeksList().map(function(w){return '<option value="'+w+'"'+(ALL_WK===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join('');
+    +wkOptions(allWeeksList(),ALL_WK);
   var tms=[]; TERRS.forEach(function(t){ var r=repOf(t); if(r&&r!=='—'&&tms.indexOf(r)<0) tms.push(r); });
   var tmOpts='<option value="">All managers</option>'+tms.map(function(r){return '<option value="'+esc(r)+'"'+(TRIP_TMF===r?' selected':'')+'>'+esc(r)+'</option>';}).join('');
   var legend=TERRS.map(function(t){return '<span class="lga'+(LV_AREAS[t]?'':' off')+'" data-lvarea="'+t+'"><i class="lvdot" style="background:'+AREA_COLOR[t]+'"></i>'+t+'</span>';}).join('');
@@ -6114,7 +6177,7 @@ function tripDrawMap(){
     var active=dayMatch&&conf&&tmMatch;
     var seq=sel?tripSeq(c.uid):null;
     var mk=L.marker([s.lat,s.lon],{icon:tripPin(col,sel,seq,active),zIndexOffset:(sel?1000:(active?200:0))}).addTo(_lvMap);
-    mk.bindTooltip(stopTip(s)+'<br>'+esc(c.t)+' · Week '+c.wk+(active?('<br><b>Click to '+(sel?'remove':'add')+'</b>'):(sel?'':'<br><span style="color:#9ca3af">filtered out</span>')));
+    mk.bindTooltip(stopTip(s)+'<br>'+esc(c.t)+' · Week '+wkNo(c.wk)+(active?('<br><b>Click to '+(sel?'remove':'add')+'</b>'):(sel?'':'<br><span style="color:#9ca3af">filtered out</span>')));
     if(active||sel) mk.on('click',function(){ tripToggle(c); });
     if(active||sel){ bounds.push([s.lat,s.lon]); }
   });
@@ -6338,10 +6401,10 @@ function wireTripBuilder(host){
 }
 function dayTimeLabel(d){ var wk=ASSIGN[d.id]; var di=DAY[d.id]; var labs=(typeof wk==='number')?dayLabels(wk):[]; var dn=(di!=null&&labs[di])?labs[di][0]:''; var tm=TIME[d.id]?t12s(TIME[d.id]):''; return (dn+(tm?(' '+tm):'')).trim(); }
 function calendarHTML(tl){
-  const weeks=[31].concat(FIELD_NUMS);
+  const weeks=wkShown([31].concat(FIELD_NUMS));
   var h1='<tr><th class="calc" rowspan="2">Territory</th>'; var h2='<tr>';
   weeks.forEach(function(wk){ var labs=dayLabels(wk);
-    h1+='<th class="calwk" colspan="'+labs.length+'">'+(wk===31?'Week 31 · Kickoff':'Week '+wk)+'<span>'+WEEKDATES[wk]+'</span></th>';
+    h1+='<th class="calwk" colspan="'+labs.length+'">'+(wk===31?'Week 31 · Kickoff':'Week '+wkNo(wk))+'<span>'+WEEKDATES[wk]+'</span></th>';
     labs.forEach(function(l,i){ h2+='<th class="calday'+(i===0?' ws':'')+'">'+l[0]+'<span>'+l[1]+'</span></th>'; });
   });
   h1+='<th class="calwk ws" rowspan="2">Remote</th></tr>'; h2+='</tr>';
@@ -6389,7 +6452,7 @@ function mapHTML(tl, weekSel, colorBy){
       g.sort(bySeq(tripPosMap(t,+k),
         function(d){return 'd:'+d.id;}, function(d){return DAY[d.id];}, function(d){return TIME[d.id];}));
       var col=(colorBy==='week')?weekColor(+k):(MAPTERR_COLOR[t]||'#6c7073');
-      var lk=(colorBy==='week')?('Wk '+k):t; if(!leg[lk]){leg[lk]={c:col,n:0,lab:(colorBy==='week')?('Week '+k+' · '+WEEKDATES[k]):(t+' · '+(FLAT.tm[t]||'—'))};order.push(lk);} leg[lk].n+=g.length;
+      var lk=(colorBy==='week')?('Wk '+wkNo(k)):t; if(!leg[lk]){leg[lk]={c:col,n:0,lab:(colorBy==='week')?('Week '+wkNo(k)+' · '+WEEKDATES[k]):(t+' · '+(FLAT.tm[t]||'—'))};order.push(lk);} leg[lk].n+=g.length;
       var pts=g.map(function(d){var j=jit(d.id); var xy=proj(d.lon+j[1],d.lat+j[0]); return {d:d,x:xy[0],y:xy[1]};});
       /* one element PER LEG so each segment routes and hovers individually */
       for(var pi=1;pi<pts.length;pi++){ var A=pts[pi-1], B=pts[pi];
@@ -6400,7 +6463,7 @@ function mapHTML(tl, weekSel, colorBy){
           +'<title>'+esc(A.d.name)+' → '+esc(B.d.name)+' · Drive · route loading… · '+t+'</title></polyline>';
       }
       pts.forEach(function(p){var ok=!!APPT[p.d.id]; var dt=dayTimeLabel(p.d); var wlab=(weekSel==='all'&&colorBy!=='week')?('W'+k+' '):'';
-        svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="5" fill="'+(ok?col:'#ffffff')+'" stroke="'+col+'" stroke-width="2"><title>'+esc(p.d.name)+' (Wk '+k+', '+t+') — '+esc(p.d.loc)+(dt?(' · '+dt):'')+(ok?' · CONFIRMED':'')+'</title></circle>';
+        svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="5" fill="'+(ok?col:'#ffffff')+'" stroke="'+col+'" stroke-width="2"><title>'+esc(p.d.name)+' (Wk '+wkNo(k)+', '+t+') — '+esc(p.d.loc)+(dt?(' · '+dt):'')+(ok?' · CONFIRMED':'')+'</title></circle>';
         var nm=esc(p.d.name); nm=nm.length>15?nm.slice(0,14)+'…':nm;
         svg+='<text x="'+(p.x+7).toFixed(1)+'" y="'+(p.y+1).toFixed(1)+'" font-size="8.5" font-weight="600" fill="#3a3d3f">'+nm+'</text>';
         if(dt) svg+='<text x="'+(p.x+7).toFixed(1)+'" y="'+(p.y+10).toFixed(1)+'" font-size="7.5" fill="'+col+'">'+wlab+dt+'</text>';
@@ -6435,7 +6498,7 @@ function allMapRouteLegs(){
   });
 }
 function renderMap(){ var sel=document.getElementById('mapWeekSel');
-  if(sel && !sel.dataset.init){ sel.innerHTML=FIELD_NUMS.map(function(wk){return '<option value="'+wk+'">Week '+wk+' · '+WEEKDATES[wk]+'</option>';}).join(''); sel.dataset.init='1'; }
+  if(sel && !sel.dataset.init){ sel.innerHTML=wkOptions(FIELD_NUMS,null); sel.dataset.init='1'; }
   if(sel) sel.value=mapWeek;
   document.getElementById('ganttWrap').innerHTML=mapHTML(["East","South","Central","West"], mapWeek, "terr");
   allMapRouteLegs(); }
@@ -6443,7 +6506,7 @@ function tripDetailHTML(terr,wk){
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
   var labs=dayLabels(wk); var md=settingsFor(terr).maxDrive;
   var jn=[]; ds.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});}); var jline=jn.length?('<div class="tsub" style="color:var(--green)">Joining: '+jn.join(', ')+'</div>'):'';
-  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wk+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+wkForecast(terr,wk).l+' loads · '+fmtUSD(wkForecast(terr,wk).b)+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
+  var head='<div class="trh"><button class="tripback" data-trip="all">← All trips</button><div class="tt"><span class="tw" style="background:'+weekColor(wk)+'"></span>Week '+wkNo(wk)+' · '+WEEKDATES[wk]+'</div><div class="tsub">'+ds.length+' stops · '+wkForecast(terr,wk).l+' loads · '+fmtUSD(wkForecast(terr,wk).b)+' · '+apptCount(ds)+'/'+ds.length+' confirmed</div>'+jline+'</div>';
   if(!ds.length && !LOGI.some(function(x){return x.terr===terr&&x.wk===wk;})) return head+'<div class="empty" style="padding:20px">No visits.</div>';
   function row(d){var ok=!!APPT[d.id]; return '<div class="tstop '+(ok?'ok':'')+'"><div class="tst"><span class="ttime">'+(TIME[d.id]?(t12s(TIME[d.id])+'–'+t12s(addMin(TIME[d.id],DUR[d.id]||90))):'—')+'</span><span class="tnm">'+esc(d.name)+'</span><span class="tamt">'+fmtUSD(d.booking)+'</span></div><div class="tloc">'+(d.loc||'—')+' · '+esc(d.address)+(ok?' · <b style="color:var(--green)">confirmed</b>':'')+'</div>'+'</div>';}
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
@@ -6623,7 +6686,7 @@ let _tripMap=null;
 function renderTerrMap(){
   var wk=terrMapWeek;
   var weeks=FIELD_NUMS.filter(function(w){return mapScope(terr).some(function(d){return ASSIGN[d.id]===w;});});
-  if(typeof wk!=='number'){ wk=weeks.length?weeks[0]:FIELD_NUMS[0]; terrMapWeek=wk; }
+  if(typeof wk!=='number'){ wk=weeks.length?weeks[0]:wkCurrent(); terrMapWeek=wk; }
   /* day filter: 'all' = the weekly overview, otherwise one day of this week */
   var allStops=stopsForWeek(terr,wk);
   var stops=(terrMapDay==='all')?allStops:allStops.filter(function(s){return s.dayIdx===terrMapDay;});
@@ -6684,13 +6747,13 @@ function renderTerrMap(){
 
   var center='<div><div id="tripMap"></div>'+legend
     +'<div class="tcard" style="margin-top:14px">'
-    +'<div class="tch"><div class="tct">Week '+wk+' · '+WEEKDATES[wk]+' <span style="font-weight:400;color:var(--muted);text-transform:none">('+stops.length+' stops)</span></div></div>'
+    +'<div class="tch"><div class="tct">Week '+wkNo(wk)+' · '+WEEKDATES[wk]+' <span style="font-weight:400;color:var(--muted);text-transform:none">('+stops.length+' stops)</span></div></div>'
     +'<div style="overflow-x:auto"><table class="stoptab"><thead><tr>'
     +'<th>#</th><th>Stop</th><th>Type</th><th>Date</th><th>Time</th><th>Location</th><th>Status</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'<div class="tcb"><button class="btn" id="addStopBtn">+ Add Stop</button></div></div></div>';
 
-  var wkOpts=FIELD_NUMS.map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week '+w+' · '+WEEKDATES[w]+'</option>';}).join('');
+  var wkOpts=wkOptions(FIELD_NUMS,wk);
   var lbl='font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted-2)';
 
   /* ---- mileage metrics ---- */
@@ -7151,7 +7214,7 @@ function openDealerAdd(wk){
   var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
   var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
   wrap.innerHTML='<div class="aqmodal-box">'
-    +'<div class="aqmodal-h">Add to '+esc(typeof wk==='number'?('WK '+wk):'trip')+'</div>'
+    +'<div class="aqmodal-h">Add to '+esc(typeof wk==='number'?('WK '+wkNo(wk)):'trip')+'</div>'
     +'<input id="dpSearch" '+inp+' placeholder="Search any dealer, prospect or territory…" autocomplete="off">'
     +'<div id="dpResults" class="dp-results"></div>'
     +'<div class="dp-div">or create a new account</div>'
@@ -7475,7 +7538,7 @@ function tripDownloadPDF(t,wk,stops,rm,bud,exps){
   var visits=stops.filter(function(s){return s.kind==='dealer';}).length;
   var kmForCost=actualKm||plannedKm;
 
-  var html='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(String(t))+' — Week '+wk+' ('+esc(WEEKDATES[wk])+')</div></div>'
+  var html='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(String(t))+' — Week '+wkNo(wk)+' ('+esc(WEEKDATES[wk])+')</div></div>'
     +'<p>Drive time '+hrsLabel(rm.hours)+' · Planned '+plannedKm+' km'+(actualKm?(' · Actual '+actualKm+' km'):'')
       +(kmForCost?(' · '+money(bud.total.act/kmForCost)+'/km'):'')
       +(visits?(' · '+money(bud.total.act/visits)+'/dealer visit'):'')+'</p>'
@@ -7493,7 +7556,7 @@ function tripDownloadPDF(t,wk,stops,rm,bud,exps){
     +'<h3>Budget</h3><table class="sched"><tr><th>Category</th><th>Estimated</th><th>Actual</th><th>Variance</th><th>Receipts</th></tr>'
     +budRows+'<tr><th>TOTAL</th><th>'+money(bud.total.est)+'</th><th>'+money(bud.total.act)+'</th><th>'+money(bud.total.act-bud.total.est)+'</th><th>—</th></tr></table>'
     +'<p style="color:#666">Receipts require secure login; none are stored for this trip.</p>';
-  tpOpen(String(t)+' Week '+wk+' Trip Report', html);
+  tpOpen(String(t)+' Week '+wkNo(wk)+' Trip Report', html);
 }
 
 function wireMapView(wk,stops,bud,rm,exps){
@@ -8335,7 +8398,7 @@ function exportWeek(t,wk){
   var vs=dealersIn(t).filter(function(d){return ASSIGN[d.id]===wk;});
   var ls=LOGI.filter(function(x){return x.terr===t && x.wk===wk;});
   var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
-  var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
+  var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
   var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(t)+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">'+wlabel+'</div></div>';
   var _wf=wkForecast(t,wk);
   var _ride=rideLine(t,wk);
@@ -8359,7 +8422,7 @@ function exportTripPlans(){
       var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
       var _wf2=wkForecast(t,wk);
       var _ride2=rideLine(t,wk);
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(_ride2?(' · '+esc(_ride2)):'')+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false,t);
+      wh+='<div class="wbar">Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+' <span>· '+(vs.length+xs.length)+' visits · '+_wf2.l+' loads · '+fmtUSD(_wf2.b)+(_ride2?(' · '+esc(_ride2)):'')+(jn.length?(' · Leaders: '+esc(jn.join(', '))):'')+'</span></div>'+tpWeekTable(wk,vs,ls,false,t);
       if(xs.length){ wh+='<div style="font-size:11px;margin:2px 0 10px"><b>Additional visits:</b> '+xs.map(function(x){var dd=byId[x.dealer]||uniById(x.dealer);var aTag=(x.att==='leader'?' · Leader only'+(x.leader?(' ('+((execById(x.leader)||{name:x.leader}).name)+')'):''):(x.att==='joint'?' · Joint':''));return esc((dd?dd.name:x.dealer))+' — '+xvType(x.type).label+' ('+esc(xvWhen(x))+')'+aTag;}).join(' · ')+'</div>'; }
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+t+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">2027 Pre-Booking Travel</div></div>'+wh+'</div>';
@@ -8368,7 +8431,7 @@ function exportTripPlans(){
     var wh=''; weeks.forEach(function(wk){
       var vs=DEALERS.filter(function(d){return ASSIGN[d.id]===wk && (JOINA[d.id]||[]).indexOf(L)>=0;});
       if(!vs.length) return;
-      wh+='<div class="wbar">Week '+wk+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+'</div>'+tpWeekTable(wk,vs,[],true);
+      wh+='<div class="wbar">Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]+'</div>'+tpWeekTable(wk,vs,[],true);
     });
     if(wh) body+='<div class="repsec"><div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">Leadership · '+esc(L)+'</div><div class="pwk">Trips joining</div></div>'+wh+'</div>';
   });
@@ -8417,7 +8480,7 @@ function generateTripReport(terr, wk){
       +'.tr-foot{margin-top:20px;border-top:1px solid #ddd;padding-top:6px;font-size:9px;color:#888;}'
       +'.tr-rep{border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;margin-bottom:8px;page-break-inside:avoid;}.tr-rep .rl{font-size:9px;text-transform:uppercase;color:#888;font-weight:700;margin-top:5px;}.tr-rep .rv{font-size:10.5px;white-space:pre-wrap;}'
       +'@media print{.tr-cover{page-break-after:always;}.repsec{page-break-before:always;}}</style>';
-    var wlabel='Week '+wk+' — '+(WEEKDATES[wk]||'');
+    var wlabel='Week '+wkNo(wk)+' — '+(WEEKDATES[wk]||'');
     var body=css
       +'<div class="tr-cover"><div class="b">ARROWQUIP</div><div class="t">Trip Report</div>'
       +'<div class="m">'+esc2(terr)+' &nbsp;·&nbsp; '+esc2(wlabel)+'<br>'+esc2(user||'')+'<br>Generated '+new Date().toLocaleString()+'</div>'
@@ -8494,8 +8557,8 @@ function generateTripReport(terr, wk){
     }
     if((typeof pbAuthed!=='function'||!pbAuthed())) body+='<div style="font-size:10px;color:#b45309;margin-top:10px">Sign in on this device to include photos and receipts stored in private cloud storage.</div>';
 
-    body+='<div class="tr-foot">Arrowquip 2027 Pre-Booking · Trip '+esc2(terr)+' / Week '+wk+' · generated '+new Date().toISOString()+'</div>';
-    tpOpen('Trip Report — '+terr+' Week '+wk, body);
+    body+='<div class="tr-foot">Arrowquip 2027 Pre-Booking · Trip '+esc2(terr)+' / Week '+wkNo(wk)+' · generated '+new Date().toISOString()+'</div>';
+    tpOpen('Trip Report — '+terr+' Week '+wkNo(wk), body);
   });
 }
 function downloadCSV(fn,txt){var blob=new Blob([txt],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
@@ -8536,7 +8599,7 @@ function importDealers(text){
    via the existing trip-plan window (Print → Save as PDF) plus CSV export.
    Budget is ONE section of a report. Raw transcripts NEVER enter reports —
    only reviewed, report-ready notes do. */
-let RPT={type:'weekly', dealer:'', wk:32, from:31, to:44, terr:'All'};
+let RPT={type:'weekly', dealer:'', wk:wkCurrent(), from:31, to:WK_LAST, terr:'All'};
 function rptAllDealers(){ var out=[]; TERRS.forEach(function(t){ dealersIn(t).forEach(function(d){ out.push(d); }); }); return out; }
 function rptVisits(o){
   var out=[]; var scope=(o.terr&&o.terr!=='All')?[o.terr]:TERRS;
@@ -8559,7 +8622,7 @@ function rptVisits(o){
   }); });
   return out;
 }
-function rptRange(){ var o=RPT; return o.type==='weekly'?[o.wk,o.wk]:(o.type==='dealer'?[31,44]:[Math.min(o.from,o.to),Math.max(o.from,o.to)]); }
+function rptRange(){ var o=RPT; return o.type==='weekly'?[o.wk,o.wk]:(o.type==='dealer'?[31,WK_LAST]:[Math.min(o.from,o.to),Math.max(o.from,o.to)]); }
 function rptGenerate(){
   var o=RPT, r=rptRange(), from=r[0], to=r[1];
   var vs=rptVisits({terr:o.terr,dealer:(o.type==='dealer'?o.dealer:''),from:from,to:to});
@@ -8569,7 +8632,7 @@ function rptGenerate(){
   var exps=EXPENSES.filter(function(e){ return (o.terr==='All'||e.terr===o.terr)&&e.wk>=from&&e.wk<=to; });
   var bud=budgetFor(exps);
   var title={dealer:'Dealer Report',weekly:'Weekly Report',range:'Custom Range Report',campaign:'Full Campaign Report'}[o.type];
-  var rangeLbl=(o.type==='weekly')?('Week '+o.wk+' · '+WEEKDATES[o.wk]):('Weeks '+from+'–'+to);
+  var rangeLbl=(o.type==='weekly')?('Week '+wkNo(o.wk)+' · '+WEEKDATES[o.wk]):('Weeks '+wkNo(from)+'–'+wkNo(to));
   var card=function(k,v2){ return '<div style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;min-width:104px;display:inline-block;margin:0 8px 8px 0"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#777">'+k+'</div><div style="font-size:17px;font-weight:800">'+v2+'</div></div>'; };
   var html='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+title
     +((o.type==='dealer'&&o.dealer&&uniById(o.dealer))?(' — '+esc(uniById(o.dealer).name)):'')+'</div>'
@@ -8611,7 +8674,7 @@ function rptCSV(){
 }
 function renderReports(){
   var host=document.getElementById('reportsView'); if(!host) return;
-  var wkOpts=function(sel){ return allWeeksList().map(function(w){return '<option value="'+w+'"'+(sel===w?' selected':'')+'>Week '+w+(w===31?' · Kickoff':'')+' · '+WEEKDATES[w]+'</option>';}).join(''); };
+  var wkOpts=function(sel){ return wkOptions([31].concat(FIELD_NUMS),sel); };
   var dOpts='<option value="">— choose dealer —</option>'+rptAllDealers().map(function(d){return '<option value="'+d.id+'"'+(RPT.dealer===d.id?' selected':'')+'>'+esc(d.name)+' ('+esc(d.territory)+')</option>';}).join('');
   var tOpts=['All'].concat(TERRS).map(function(t){return '<option'+(RPT.terr===t?' selected':'')+'>'+t+'</option>';}).join('');
   host.innerHTML=
@@ -8695,7 +8758,7 @@ function nbLoad(){
         var hasVisit=r.metadata&&r.metadata.visit_id;
         var match=d?('Matched dealer: <b>'+esc(d.name)+'</b>'+(hasVisit?' · visit bound':(r.metadata&&r.metadata.suggestVisit)?' · one open visit — suggested':' · choose the visit when attaching')):'No dealer match — attach manually';
         var stat=(r.metadata&&r.metadata.status)||r.ocr_status||'received';
-        var meta2=[new Date(r.created_at).toLocaleString(),(r.territory?esc(r.territory):'')+(r.week!=null?(' · Wk '+r.week):''),(r.created_by?esc(r.created_by):''),'status: '+esc(stat)].filter(Boolean).join(' · ');
+        var meta2=[new Date(r.created_at).toLocaleString(),(r.territory?esc(r.territory):'')+(r.week!=null?(' · Wk '+wkNo(r.week)):''),(r.created_by?esc(r.created_by):''),'status: '+esc(stat)].filter(Boolean).join(' · ');
         return '<div class="tmrow" style="align-items:center"><div class="t" style="min-width:0"><b>'+esc(r.title||'Transcript')+'</b>'
           +'<span>'+meta2+' · '+match+(r.notes?(' · <a href="'+esc(r.notes)+'" target="_blank" rel="noopener">source</a>'):'')+'</span></div>'
           +'<button class="btn" data-nbproc="'+r.id+'" style="flex:0 0 auto">Process Notes</button>'
@@ -9543,10 +9606,10 @@ function mobWeeks(t){ return FIELD_NUMS.filter(function(w){ return mapScope(t).s
 /* which day of the selected week is "today" (0..6); null when the week isn't current */
 function mobToday(wk){
   var labs=dayLabels(wk); if(!labs.length) return null;
-  var now=new Date(), y=2026;
+  var now=new Date(), s=(wk===31)?new Date(2026,6,28,12):wkStart(wk);
   for(var i=0;i<labs.length;i++){
-    var d=new Date(labs[i][1]+' '+y);
-    if(d.getMonth()===now.getMonth() && d.getDate()===now.getDate()) return i;
+    var d=new Date(s.getTime()+i*WK_DAY);
+    if(d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate()) return i;
   }
   return null;
 }
@@ -9688,7 +9751,7 @@ function mobToday_render(){
     var curWk=mobCurrentWeek();
     h+='<div class="tm-empty">No items scheduled for today in this week.'
       +(curWk!=null&&curWk!==wk
-        ? ('<br><button class="tmbtn" id="mobJumpCur" style="margin-top:12px;min-height:40px;padding:0 16px">Jump to current week (Week '+curWk+')</button>')
+        ? ('<br><button class="tmbtn" id="mobJumpCur" style="margin-top:12px;min-height:40px;padding:0 16px">Jump to current week (Week '+wkNo(curWk)+')</button>')
         : '<br>Pick a day with “Change day”.')
       +'</div>';
   } else if(!todays.length){
@@ -9852,7 +9915,7 @@ function mobFiles_render(){
   };
   return '<div class="tm-screen">'
     +'<div class="tm-h" style="margin-top:4px"><span>Photos &amp; documents</span></div>'
-    +'<div style="font-size:12px;color:#6b7280;margin:2px 4px 10px">'+esc(MOB.terr)+' · Week '+MOB.wk+' · stored privately, never inside the plan.</div>'
+    +'<div style="font-size:12px;color:#6b7280;margin:2px 4px 10px">'+esc(MOB.terr)+' · Week '+wkNo(MOB.wk)+' · stored privately, never inside the plan.</div>'
     +sec('visit_photo','#0f766e',tmIcon('camera',17),'Dealer Visits','Storefront & store photos, by visit')
     +sec('receipt','#16a34a','🧾','Receipts','Captured receipts by expense & week')
     +sec('document','#4338ca',tmIcon('folder',17),'Documents','Agreements, flight, hotel & rental confirmations')
@@ -9936,7 +9999,7 @@ function pbDocRowHTML(r,url,opts){
     : ('<span style="width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;flex:0 0 auto;color:#9ca3af">'+tmIcon('folder',18)+'</span>');
   var dealer=(r.stop_key&&byId[r.stop_key])?byId[r.stop_key].name:'';
   var f=r.ocr_fields||{};
-  var meta=[esc(r.territory||'')+' · Week '+r.week, d.toLocaleDateString()];
+  var meta=[esc(r.territory||'')+' · Week '+wkNo(r.week), d.toLocaleDateString()];
   if(dealer) meta.push(esc(dealer));
   var sub2='';
   if(opts.receipt){
@@ -9988,7 +10051,7 @@ function mobMore_render(){
       +'<div class="t" style="flex:1 1 auto;min-width:0"><b id="mobSyncTitle">All changes synced</b><span id="mobSyncSub" style="font-size:12px;color:#6b7280">Checking…</span></div>'
       +'<button class="tmbtn" style="flex:0 0 96px;min-height:38px;font-size:13px" id="mobSyncNow">Sync now</button></div>'
     +'<div class="tm-h"><span>Trip</span></div>'
-    +'<div class="tmrow"><div class="t"><b>'+esc(MOB.terr)+' · Week '+MOB.wk+'</b><span>'+esc(WEEKDATES[MOB.wk]||'')+', 2026</span></div></div>'
+    +'<div class="tmrow"><div class="t"><b>'+esc(MOB.terr)+' · Week '+wkNo(MOB.wk)+'</b><span>'+esc(wkDY(MOB.wk))+'</span></div></div>'
     +'<div class="tm-h"><span>Desktop</span></div>'
     +'<div class="tm-lock"><div class="ls">The full planner — Schedule board, Master Sheet and trip reports — '
       +'is available on a larger screen. Trip Mode shows the current week only.</div></div>'
@@ -10047,7 +10110,7 @@ function mobTrip_render(){
 
   var h='<div class="tm-screen">';
   h+='<div class="tm-h" style="margin-top:4px"><span>Trip overview</span></div>';
-  h+='<div class="tmrow"><div class="t"><b>'+esc(t)+' · Week '+wk+'</b><span>'+esc(WEEKDATES[wk]||'')+', 2026</span></div></div>';
+  h+='<div class="tmrow"><div class="t"><b>'+esc(t)+' · Week '+wkNo(wk)+'</b><span>'+esc(wkDY(wk))+'</span></div></div>';
   h+='<div class="tl-summary" style="margin-top:10px">'
     +'<div><b>'+dealers.length+'</b><span>Visits</span></div>'
     +'<div><b>'+hrsLabel(R.totalHours)+'</b><span>Drive</span></div>'
@@ -10249,7 +10312,7 @@ function mobTripReport_page(){
       +'<div class="t"><b>'+esc(label)+'</b></div><span class="tmc-time">'+val+'</span></div>';
   };
   var h='<div class="tm-screen">';
-  h+='<div class="tm-h" style="margin-top:4px"><span>'+esc(t)+' · Week '+wk+' · '+esc(WEEKDATES[wk]||'')+'</span></div>';
+  h+='<div class="tm-h" style="margin-top:4px"><span>'+esc(t)+' · Week '+wkNo(wk)+' · '+esc(WEEKDATES[wk]||'')+'</span></div>';
   h+=row(tmIcon('map',15),'#2563eb','Itinerary & drive time',hrsLabel(R.totalHours));
   h+=row('●','#dc2626','Dealer visits',doneN+' / '+dealers.length);
   h+=row(tmIcon('camera',15),'#0f766e','Visit & agreement photos','›');
@@ -10472,7 +10535,7 @@ function renderMobile(){
     wireMobPage(p);
     return;
   }
-  var weeks=mobWeeks(MOB.terr); if(!weeks.length) weeks=FIELD_NUMS.slice();
+  var _mw=mobWeeks(MOB.terr), _cw=wkCurrent(); var weeks=wkShown(FIELD_NUMS).filter(function(w){ return w>=_cw || _mw.indexOf(w)>=0; });
   /* keep the current (today's) week selectable even when it has no visits yet */
   if(weeks.indexOf(MOB.wk)<0){
     if(WEEKDATES[MOB.wk]) weeks=[MOB.wk].concat(weeks).sort(function(a,b){return a-b;});
@@ -10498,9 +10561,9 @@ function renderMobile(){
       +'<div class="tm-mode">Trip Mode</div>'
       +'<div class="tm-week">'
         +'<select id="mobTerr">'+['All'].concat(TERRS).map(function(t){return '<option'+(t===MOB.terr?' selected':'')+'>'+t+'</option>';}).join('')+'</select>'
-        +'<select id="mobWeek">'+weeks.map(function(w){return '<option value="'+w+'"'+(w===MOB.wk?' selected':'')+'>Week '+w+'</option>';}).join('')+'</select>'
+        +'<select id="mobWeek">'+wkOptions(weeks,MOB.wk,{short:true})+'</select>'
       +'</div>'
-      +'<div class="tm-dates">'+esc(WEEKDATES[MOB.wk]||'')+', 2026</div>'
+      +'<div class="tm-dates">'+esc(wkDY(MOB.wk))+'</div>'
      +'</div>'
      +body
      +'<div class="tm-nav">'
