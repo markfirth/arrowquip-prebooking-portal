@@ -15,7 +15,6 @@
  */
 
 // Access gate for the data endpoints (embedded in the frontend — NOT a credential).
-const ACCESS_TOKEN = 'aq-d3-4e8a1f60d9b2'
 const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 // Planning years are configuration, not code: override via env for 2028+.
 const TARGET_YEAR = process.env.PLANNING_TARGET_YEAR || '2027'
@@ -422,4 +421,4 @@ async function getDealerById(id) {
   return dealers.find((d) => d.sfAccountId === id || d.id === id) || null
 }
 
-module.exports = { getDealers, getDealerById, auditRecordTypes, auditSync, ACCESS_TOKEN, CACHE_TTL_MS }
+module.exports = { getDealers, getDealerById, auditRecordTypes, auditSync, CACHE_TTL_MS }
