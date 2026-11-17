@@ -1,6 +1,7 @@
 /* Arrowquip TRAVEL — Year at a Glance
-   Compact annual calendar populated from live trip/appointment records.
-   Depends on globals from index.html (ASSIGN, DAY, LOGI, teamList, etc.). */
+   Compact annual calendar matrix (months × days 1–31). Always renders every
+   month and every date for the selected year — empty years are valid planning
+   surfaces. Depends on globals from index.html (ASSIGN, DAY, LOGI, teamList…). */
 (function(global){
 'use strict';
 
@@ -33,8 +34,8 @@ var YG = {
 };
 YG_CATS.forEach(function(c){ YG.cats[c.id]=true; });
 
-var YG_EVENTS = global.YG_EVENTS || []; /* company/team events */
-var YG_NOTES = global.YG_NOTES || {};   /* 'YYYY-M' or scoped keys -> text */
+var YG_EVENTS = global.YG_EVENTS || [];
+var YG_NOTES = global.YG_NOTES || {};
 
 function esc(s){ return (global.esc?global.esc(s):String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];})); }
 function catOf(id){ for(var i=0;i<YG_CATS.length;i++) if(YG_CATS[i].id===id) return YG_CATS[i]; return YG_CATS[YG_CATS.length-1]; }
@@ -44,6 +45,13 @@ function ygDaysInMonth(y,m){ return [31, ygIsLeap(y)?29:28,31,30,31,30,31,31,30,
 function ygDate(y,m,d){ return new Date(y,m,d,12,0,0,0); }
 function ygISO(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function ygParseISO(s){ var p=String(s||'').split('-'); return new Date(+p[0],(+p[1]||1)-1,+p[2]||1,12); }
+function ygISOWeek(dt){
+  var t=new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+  var dayNum=t.getUTCDay()||7;
+  t.setUTCDate(t.getUTCDate()+4-dayNum);
+  var yearStart=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+  return Math.ceil((((t-yearStart)/86400000)+1)/7);
+}
 
 function ygMemberSelected(m){
   if(!m) return YG.membersAll;
@@ -72,7 +80,6 @@ function ygTravellerForLogi(it){
   return null;
 }
 
-/** Map planner date (wk+day) → Date using existing wkStart */
 function ygFromWkDay(wk, day){
   if(typeof wk!=='number' || day==null || day==='' || !global.wkStart) return null;
   var s=global.wkStart(wk);
@@ -87,7 +94,6 @@ function ygPush(bucket, iso, ev){
   (bucket[iso]=bucket[iso]||[]).push(ev);
 }
 
-/** Build day → events from live trip data + YG_EVENTS */
 function ygBuildIndex(){
   var byDay={};
   var y=YG.year;
@@ -104,94 +110,96 @@ function ygBuildIndex(){
     return ygMemberSelected(m);
   }
 
-  TERRS.forEach(function(t){
-    if(YG.terr!=='All' && YG.terr!==t) return;
-    if(!dealersIn) return;
-    dealersIn(t).forEach(function(d){
-      var wk=ASSIGN[d.id]; if(typeof wk!=='number') return;
-      var dt=ygFromWkDay(wk, DAY[d.id]==null?0:DAY[d.id]);
+  try{
+    TERRS.forEach(function(t){
+      if(YG.terr!=='All' && YG.terr!==t) return;
+      if(!dealersIn) return;
+      dealersIn(t).forEach(function(d){
+        var wk=ASSIGN[d.id]; if(typeof wk!=='number') return;
+        var dt=ygFromWkDay(wk, DAY[d.id]==null?0:DAY[d.id]);
+        if(!inYear(dt)) return;
+        var m=ygTravellerForDealer(t,d);
+        if(!memberOk(m)) return;
+        ygPush(byDay, ygISO(dt), {
+          cat:'DV', kind:'dealer', title:d.name, terr:t, member:m,
+          conf:!!APPT[d.id], time:TIME[d.id]||'', place:d.address||d.loc||'',
+          dealerId:d.id, wk:wk
+        });
+      });
+    });
+
+    XVISITS.forEach(function(x){
+      if(YG.terr!=='All' && x.terr!==YG.terr) return;
+      if(typeof x.wk!=='number') return;
+      var dt=ygFromWkDay(x.wk, x.day==null?0:x.day);
       if(!inYear(dt)) return;
-      var m=ygTravellerForDealer(t,d);
+      var m=ygTravellerForX(x);
       if(!memberOk(m)) return;
+      var ty=(xvType&&xvType(x.type))||{label:'Visit'};
+      var cat='DV';
+      var lab=String(ty.label||'').toLowerCase();
+      if(lab.indexOf('trade')>=0) cat='TS';
+      else if(lab.indexOf('supplier')>=0) cat='SV';
       ygPush(byDay, ygISO(dt), {
-        cat:'DV', kind:'dealer', title:d.name, terr:t, member:m,
-        conf:!!APPT[d.id], time:TIME[d.id]||'', place:d.address||d.loc||'',
-        dealerId:d.id, wk:wk
+        cat:cat, kind:'xvisit', title:(function(){
+          var d=(byId&&byId[x.dealer])||(uniById&&uniById(x.dealer));
+          return (d&&d.name?d.name+' — ':'')+ty.label;
+        })(), terr:x.terr, member:m, conf:!!x.done, time:x.time||'', place:'', wk:x.wk, xv:x
       });
     });
-  });
 
-  XVISITS.forEach(function(x){
-    if(YG.terr!=='All' && x.terr!==YG.terr) return;
-    if(typeof x.wk!=='number') return;
-    var dt=ygFromWkDay(x.wk, x.day==null?0:x.day);
-    if(!inYear(dt)) return;
-    var m=ygTravellerForX(x);
-    if(!memberOk(m)) return;
-    var ty=(xvType&&xvType(x.type))||{label:'Visit'};
-    var cat='DV';
-    var lab=String(ty.label||'').toLowerCase();
-    if(lab.indexOf('trade')>=0) cat='TS';
-    else if(lab.indexOf('supplier')>=0) cat='SV';
-    ygPush(byDay, ygISO(dt), {
-      cat:cat, kind:'xvisit', title:(function(){
-        var d=(byId&&byId[x.dealer])||(uniById&&uniById(x.dealer));
-        return (d&&d.name?d.name+' — ':'')+ty.label;
-      })(), terr:x.terr, member:m, conf:!!x.done, time:x.time||'', place:'', wk:x.wk, xv:x
+    LOGI.forEach(function(it){
+      if(YG.terr!=='All' && it.terr!==YG.terr) return;
+      if(typeof it.wk!=='number') return;
+      var m=ygTravellerForLogi(it);
+      if(!memberOk(m)) return;
+      var ty=travelType?travelType(it):it.type;
+      var cat='TR';
+      if(String(it.type||'').indexOf('tradeshow')>=0 || String(it.name||'').toLowerCase().indexOf('trade')>=0) cat='TS';
+      var startDay=it.day==null?0:it.day;
+      var endDay=(it.day2!=null?it.day2:startDay);
+      if(endDay<startDay) endDay=startDay;
+      for(var di=startDay; di<=endDay; di++){
+        var dt=ygFromWkDay(it.wk, di);
+        if(!inYear(dt)) continue;
+        ygPush(byDay, ygISO(dt), {
+          cat:cat, kind:'travel', title:it.name||ty, terr:it.terr, member:m,
+          conf:!!String(it.conf||'').trim(), time:it.time||'', place:it.address||it.airportCode||'',
+          wk:it.wk, logi:it, type:ty
+        });
+      }
     });
-  });
 
-  LOGI.forEach(function(it){
-    if(YG.terr!=='All' && it.terr!==YG.terr) return;
-    if(typeof it.wk!=='number') return;
-    var m=ygTravellerForLogi(it);
-    if(!memberOk(m)) return;
-    var ty=travelType?travelType(it):it.type;
-    var cat='TR';
-    if(ty==='hotel') cat='TR';
-    else if(String(it.name||'').toLowerCase().indexOf('trade')>=0) cat='TS';
-    var startDay=it.day==null?0:it.day;
-    var endDay=(it.day2!=null?it.day2:startDay);
-    if(endDay<startDay) endDay=startDay;
-    for(var di=startDay; di<=endDay; di++){
-      var dt=ygFromWkDay(it.wk, di);
-      if(!inYear(dt)) continue;
-      ygPush(byDay, ygISO(dt), {
-        cat:cat, kind:'travel', title:it.name||ty, terr:it.terr, member:m,
-        conf:!!String(it.conf||'').trim(), time:it.time||'', place:it.address||it.airportCode||'',
-        wk:it.wk, logi:it, type:ty
-      });
-    }
-  });
-
-  /* Company / team annual events */
-  (YG_EVENTS||[]).forEach(function(ev){
-    if(!ev||!ev.start) return;
-    if(YG.cats[ev.cat]===false) return;
-    if(ev.terr && YG.terr!=='All' && ev.terr!==YG.terr) return;
-    if(ev.role && YG.role && ev.role!==YG.role) return;
-    if(ev.memberIds && ev.memberIds.length && !YG.membersAll){
-      var hit=ev.memberIds.some(function(id){ return YG.memberIds[id]; });
-      if(!hit) return;
-    }
-    var a=ygParseISO(ev.start), b=ygParseISO(ev.end||ev.start);
-    if(b<a) b=a;
-    for(var t=new Date(a); t<=b; t.setDate(t.getDate()+1)){
-      if(t.getFullYear()!==y) continue;
-      ygPush(byDay, ygISO(t), {
-        cat:ev.cat||'OT', kind:'event', title:ev.title||'Event', terr:ev.terr||'All',
-        member:null, conf:true, time:'', place:ev.place||'', event:ev,
-        reserves:!!ev.reserves
-      });
-    }
-  });
+    (YG_EVENTS||[]).forEach(function(ev){
+      if(!ev||!ev.start) return;
+      if(YG.cats[ev.cat]===false) return;
+      if(ev.terr && YG.terr!=='All' && ev.terr!==YG.terr) return;
+      if(ev.role && YG.role && ev.role!==YG.role) return;
+      if(ev.memberIds && ev.memberIds.length && !YG.membersAll){
+        var hit=ev.memberIds.some(function(id){ return YG.memberIds[id]; });
+        if(!hit) return;
+      }
+      var a=ygParseISO(ev.start), b=ygParseISO(ev.end||ev.start);
+      if(b<a) b=a;
+      for(var t=new Date(a); t<=b; t.setDate(t.getDate()+1)){
+        if(t.getFullYear()!==y) continue;
+        ygPush(byDay, ygISO(t), {
+          cat:ev.cat||'OT', kind:'event', title:ev.title||'Event', terr:ev.terr||'All',
+          member:null, conf:true, time:'', place:ev.place||'', event:ev,
+          reserves:!!ev.reserves
+        });
+      }
+    });
+  }catch(err){
+    try{ console.warn('[YG] build index', err); }catch(e){}
+  }
 
   return byDay;
 }
 
 function ygAggregate(list){
   var byCat={}, out=[];
-  list.forEach(function(e){
+  (list||[]).forEach(function(e){
     var c=e.cat||'OT';
     if(!byCat[c]) byCat[c]={cat:c, count:0, items:[]};
     byCat[c].count++; byCat[c].items.push(e);
@@ -201,8 +209,17 @@ function ygAggregate(list){
   return out;
 }
 
+function ygYearOptions(){
+  var now=new Date().getFullYear();
+  var years=[], y;
+  for(y=now-2; y<=now+5; y++) years.push(y);
+  if(years.indexOf(YG.year)<0) years.push(YG.year);
+  years.sort(function(a,b){ return a-b; });
+  return years;
+}
+
 function ygToolbarHTML(){
-  var years=[]; for(var y=2025;y<=new Date().getFullYear()+2;y++) years.push(y);
+  var years=ygYearOptions();
   var terrOpts=['All'].concat(global.TERRS||[]).map(function(t){
     return '<option value="'+esc(t)+'"'+(YG.terr===t?' selected':'')+'>'+esc(t==='All'?'All territories':t)+'</option>';
   }).join('');
@@ -218,10 +235,12 @@ function ygToolbarHTML(){
     return '<button type="button" class="yg-chip'+(YG.cats[c.id]!==false?' on':'')+'" data-ygcat="'+c.id+'" title="'+esc(c.label)+'" style="--yg:'+c.color+'">'+c.id+'</button>';
   }).join('');
   return '<div class="yg-toolbar">'
+    +'<button type="button" class="kbb icon" id="ygPrevYear" title="Previous year">‹</button>'
     +'<select id="ygYear" class="msearch">'+years.map(function(y){return '<option value="'+y+'"'+(y===YG.year?' selected':'')+'>'+y+'</option>';}).join('')+'</select>'
+    +'<button type="button" class="kbb icon" id="ygNextYear" title="Next year">›</button>'
     +'<select id="ygTerr" class="msearch">'+terrOpts+'</select>'
     +'<select id="ygRole" class="msearch">'+roleOpts+'</select>'
-    +'<select id="ygMember" class="msearch" title="Team member">'+memOpts+'</select>'
+    +'<select id="ygMember" class="msearch yg-mem" multiple size="3" title="Ctrl/Cmd-click to select multiple">'+memOpts+'</select>'
     +'<button type="button" class="kbb'+(YG.year===new Date().getFullYear()?' primary':'')+'" id="ygThisYear">This Year</button>'
     +'<span class="kb-space"></span>'
     +'<button type="button" class="kbb" id="ygAddEvent">+ Event</button>'
@@ -237,16 +256,25 @@ function ygLegendHTML(){
   }).join('')+'</div>';
 }
 
+function ygDayHeadHTML(){
+  /* Day-number columns 1–31. Weekend shading is applied per cell from the
+     real weekday of that month/day — the header stays neutral. */
+  var cells='<div class="yg-corner">Month</div>';
+  for(var d=1;d<=31;d++) cells+='<div class="yg-hd">'+d+'</div>';
+  return '<div class="yg-head">'+cells+'</div>';
+}
+
 function ygMonthRowHTML(month, byDay){
   var y=YG.year;
   var dim=ygDaysInMonth(y, month);
-  var first=ygDate(y, month, 1);
-  var lead=first.getDay(); /* 0=Sun */
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var today=new Date(); today.setHours(12,0,0,0);
   var cells='';
-  for(var i=0;i<lead;i++) cells+='<div class="yg-cell empty"></div>';
-  for(var d=1;d<=dim;d++){
+  for(var d=1;d<=31;d++){
+    if(d>dim){
+      cells+='<div class="yg-cell na" aria-hidden="true"></div>';
+      continue;
+    }
     var dt=ygDate(y,month,d);
     var iso=ygISO(dt);
     var wd=dt.getDay();
@@ -264,27 +292,16 @@ function ygMonthRowHTML(month, byDay){
       }).join('');
       if(agg.length>3) bars+='<span class="yg-more">+'+ (agg.length-3) +'</span>';
     }
-    cells+='<button type="button" class="yg-cell'+(isWe?' we':'')+(isToday?' today':'')+(list.length?' has':'')+'" data-ygday="'+iso+'" title="'+esc(iso)+'">'
-      +'<span class="yg-d">'+d+'</span>'
+    var wkN=(wd===1)?('<span class="yg-wk" title="ISO week">W'+ygISOWeek(dt)+'</span>'):'';
+    cells+='<button type="button" class="yg-cell'+(isWe?' we':'')+(isToday?' today':'')+(list.length?' has':'')+'" data-ygday="'+iso+'" title="'+esc(iso)+(list.length?(' · '+list.length+' item'+(list.length===1?'':'s')):' · click to plan')+'">'
+      +'<span class="yg-d">'+d+'</span>'+wkN
       +'<span class="yg-bars">'+bars+'</span>'
       +'</button>';
   }
-  /* pad to full weeks */
-  var total=lead+dim; var trail=(7-(total%7))%7;
-  for(var t=0;t<trail;t++) cells+='<div class="yg-cell empty"></div>';
-
-  var wdHead='';
-  var labels=['S','M','T','W','T','F','S'];
-  for(var w=0;w<Math.ceil((lead+dim)/7);w++){
-    for(var j=0;j<7;j++) wdHead+='<div class="yg-wd'+(j===0||j===6?' we':'')+'">'+labels[j]+'</div>';
-  }
-
   return '<div class="yg-month" data-ygmonth="'+month+'">'
     +'<div class="yg-mlbl">'+months[month]+'</div>'
-    +'<div class="yg-grid" style="--ygcols:'+Math.ceil((lead+dim)/7)*7+'">'
-    +'<div class="yg-wdrow">'+wdHead+'</div>'
-    +'<div class="yg-drow">'+cells+'</div>'
-    +'</div></div>';
+    +cells
+    +'</div>';
 }
 
 function ygPanelHTML(iso, byDay){
@@ -309,6 +326,7 @@ function ygPanelHTML(iso, byDay){
     +'<button type="button" class="kbb" id="ygPanelClose">×</button></div>'
     +'<div class="yg-pb">'+body+'</div>'
     +'<div class="yg-pf">'
+    +'<button type="button" class="kbb" id="ygPlanDay" data-day="'+esc(iso)+'">+ Plan event</button>'
     +(wk!=null?('<button type="button" class="kbb primary" id="ygOpenWeek" data-wk="'+wk+'">Open Week</button>'):'')
     +'<button type="button" class="kbb" id="ygPanelClose2">Close</button>'
     +'</div></div>';
@@ -330,28 +348,37 @@ function ygFocusHTML(){
 
 function ygRender(){
   var host=document.getElementById('yearView'); if(!host) return;
-  var byDay=ygBuildIndex();
+  var byDay={};
+  try{ byDay=ygBuildIndex()||{}; }catch(e){ byDay={}; }
   var months='';
   for(var m=0;m<12;m++) months+=ygMonthRowHTML(m, byDay);
   host.innerHTML='<div class="yg-wrap">'
     +ygToolbarHTML()
     +ygLegendHTML()
-    +'<div class="yg-board">'+months+'</div>'
+    +'<div class="yg-board">'+ygDayHeadHTML()+months+'</div>'
     +ygFocusHTML()
     +(YG.panelDate?ygPanelHTML(YG.panelDate, byDay):'')
     +'</div>';
+  host.classList.add('is-on');
+  host.style.display='block';
   ygWire(host, byDay);
 }
 
 function ygWire(host, byDay){
-  var ysel=host.querySelector('#ygYear'); if(ysel) ysel.onchange=function(){ YG.year=parseInt(ysel.value,10); ygRender(); };
+  var ysel=host.querySelector('#ygYear'); if(ysel) ysel.onchange=function(){ YG.year=parseInt(ysel.value,10)||YG.year; ygRender(); };
+  var prev=host.querySelector('#ygPrevYear'); if(prev) prev.onclick=function(){ YG.year=YG.year-1; ygRender(); };
+  var next=host.querySelector('#ygNextYear'); if(next) next.onclick=function(){ YG.year=YG.year+1; ygRender(); };
   var tsel=host.querySelector('#ygTerr'); if(tsel) tsel.onchange=function(){ YG.terr=tsel.value; ygRender(); };
   var rsel=host.querySelector('#ygRole'); if(rsel) rsel.onchange=function(){ YG.role=rsel.value; ygRender(); };
   var msel=host.querySelector('#ygMember');
   if(msel) msel.onchange=function(){
-    var v=msel.value;
-    if(!v || v==='__all__'){ YG.membersAll=true; YG.memberIds={}; }
-    else { YG.membersAll=false; YG.memberIds={}; YG.memberIds[v]=true; }
+    var opts=Array.prototype.slice.call(msel.selectedOptions||[]);
+    var ids=opts.map(function(o){ return o.value; }).filter(Boolean);
+    if(!ids.length || ids.indexOf('__all__')>=0){ YG.membersAll=true; YG.memberIds={}; }
+    else {
+      YG.membersAll=false; YG.memberIds={};
+      ids.forEach(function(id){ if(id!=='__all__') YG.memberIds[id]=true; });
+    }
     ygRender();
   };
   var ty=host.querySelector('#ygThisYear'); if(ty) ty.onclick=function(){ YG.year=new Date().getFullYear(); ygRender(); };
@@ -359,10 +386,22 @@ function ygWire(host, byDay){
     b.onclick=function(){ var id=b.dataset.ygcat; YG.cats[id]=!(YG.cats[id]!==false); ygRender(); };
   });
   host.querySelectorAll('[data-ygday]').forEach(function(b){
-    b.onclick=function(){ YG.panelDate=b.dataset.ygday; ygRender(); };
+    b.onclick=function(){
+      var iso=b.dataset.ygday;
+      YG.panelDate=iso;
+      var list=byDay[iso]||[];
+      if(!list.length){
+        /* Empty cell → begin planning immediately; calendar stays visible. */
+        ygRender();
+        ygOpenEventModal(iso);
+        return;
+      }
+      ygRender();
+    };
   });
   var pc=host.querySelector('#ygPanelClose'); if(pc) pc.onclick=function(){ YG.panelDate=null; ygRender(); };
   var pc2=host.querySelector('#ygPanelClose2'); if(pc2) pc2.onclick=function(){ YG.panelDate=null; ygRender(); };
+  var planDay=host.querySelector('#ygPlanDay'); if(planDay) planDay.onclick=function(){ ygOpenEventModal(planDay.dataset.day||YG.panelDate); };
   var ow=host.querySelector('#ygOpenWeek');
   if(ow) ow.onclick=function(){
     var wk=parseInt(ow.dataset.wk,10);
@@ -388,19 +427,20 @@ function ygWire(host, byDay){
   });
   var foc=host.querySelector('#ygFocus');
   if(foc) foc.addEventListener('toggle', function(){ YG.focusOpen=foc.open; });
-  var add=host.querySelector('#ygAddEvent'); if(add) add.onclick=function(){ ygOpenEventModal(); };
+  var add=host.querySelector('#ygAddEvent'); if(add) add.onclick=function(){ ygOpenEventModal(YG.panelDate); };
   var ep=host.querySelector('#ygExportPdf'); if(ep) ep.onclick=function(){ ygExport('pdf'); };
   var ex=host.querySelector('#ygExportXlsx'); if(ex) ex.onclick=function(){ ygExport('xlsx'); };
 }
 
-function ygOpenEventModal(){
+function ygOpenEventModal(prefillIso){
   var wrap=document.createElement('div'); wrap.className='modalbg';
   var catOpts=YG_CATS.map(function(c){ return '<option value="'+c.id+'">'+c.id+' — '+esc(c.label)+'</option>'; }).join('');
-  var terrOpts='<option value="">Entire company</option>'+(global.TERRS||[]).map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  var terrOpts='<option value="">Entire company</option>'+(global.TERRS||[]).map(function(t){return '<option value="'+t+'"'+(YG.terr===t?' selected':'')+'>'+t+'</option>';}).join('');
+  var startVal=prefillIso||'';
   wrap.innerHTML='<div class="modalbox" style="width:min(480px,94vw)"><div class="mh"><div class="mt">Add annual event</div><button class="mclose" id="ygex">×</button></div>'
     +'<div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;font-size:13px">'
-    +'<input id="yge_title" class="msearch" placeholder="Event name">'
-    +'<div style="display:flex;gap:8px"><input id="yge_start" type="date" class="msearch" style="flex:1"><input id="yge_end" type="date" class="msearch" style="flex:1"></div>'
+    +'<input id="yge_title" class="msearch" placeholder="Event name" autofocus>'
+    +'<div style="display:flex;gap:8px"><input id="yge_start" type="date" class="msearch" style="flex:1" value="'+esc(startVal)+'"><input id="yge_end" type="date" class="msearch" style="flex:1" value="'+esc(startVal)+'"></div>'
     +'<select id="yge_cat" class="msearch">'+catOpts+'</select>'
     +'<select id="yge_terr" class="msearch">'+terrOpts+'</select>'
     +'<label style="font-size:12px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="yge_res"> Reserves availability</label>'
@@ -423,14 +463,15 @@ function ygOpenEventModal(){
     });
     global.YG_EVENTS=YG_EVENTS;
     try{ if(global.savePlan) global.savePlan(); }catch(e){}
+    YG.panelDate=start;
     close(); ygRender();
   };
+  setTimeout(function(){ var t=wrap.querySelector('#yge_title'); if(t) t.focus(); }, 30);
 }
 
 function ygExport(kind){
   var byDay=ygBuildIndex();
   if(kind==='xlsx'){
-    /* CSV fallback that opens in Excel — genuine xlsx API can replace later */
     var lines=['Date,Category,Count,Titles,People'];
     Object.keys(byDay).sort().forEach(function(iso){
       var agg=ygAggregate(byDay[iso]);
@@ -447,18 +488,16 @@ function ygExport(kind){
     if(global.aqToast) global.aqToast('Excel-friendly CSV downloaded (preview). Branded .xlsx export pending IT review.');
     return;
   }
-  /* Print-friendly PDF via browser print of a clean window */
   var w=window.open('','_blank');
   if(!w){ alert('Allow pop-ups to export PDF'); return; }
-  var monthsHtml='';
+  var monthsHtml=ygDayHeadHTML();
   for(var m=0;m<12;m++) monthsHtml+=ygMonthRowHTML(m, byDay);
   w.document.write('<html><head><title>Arrowquip Year '+YG.year+'</title>'
-    +'<style>body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:12px}'
-    +'h1{font-size:16px;margin:0 0 8px}.yg-month{display:flex;gap:6px;margin:0 0 6px;page-break-inside:avoid}'
-    +'.yg-mlbl{width:54px;font-weight:700}.yg-grid{flex:1}.yg-drow{display:grid;grid-template-columns:repeat(auto-fill,minmax(18px,1fr));gap:1px}'
-    +'.yg-cell{border:1px solid #e5e7eb;min-height:22px;padding:1px;text-align:center}.yg-cell.we{background:#f9fafb}'
-    +'.yg-bar{display:block;font-size:6px;color:#fff;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap}'
-    +'@page{size:landscape;margin:8mm}</style></head><body>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:8px;color:#111;margin:10px}'
+    +'h1{font-size:14px;margin:0 0 8px}.yg-month,.yg-head{display:grid;grid-template-columns:54px repeat(31,minmax(12px,1fr));gap:1px;margin:0 0 2px;page-break-inside:avoid}'
+    +'.yg-mlbl{font-weight:700}.yg-cell{border:1px solid #e5e7eb;min-height:18px;padding:1px}.yg-cell.we,.yg-hd.we{background:#f9fafb}'
+    +'.yg-cell.na{border:0;background:transparent}.yg-bar{display:block;font-size:5px;color:#fff;overflow:hidden;white-space:nowrap}'
+    +'@page{size:landscape;margin:6mm}</style></head><body>'
     +'<h1>ARROWQUIP TRAVEL — Year at a Glance '+YG.year+(YG.terr!=='All'?' · '+YG.terr:'')+'</h1>'
     +ygLegendHTML()+monthsHtml
     +'<script>setTimeout(function(){window.print();},300)<\\/script></body></html>');
@@ -467,17 +506,20 @@ function ygExport(kind){
 
 function ygShow(show){
   var yv=document.getElementById('yearView');
-  var wrap=document.querySelector('.wrap');
   document.querySelectorAll('[data-planmode]').forEach(function(b){
     b.classList.toggle('on', b.dataset.planmode===(show?'year':'weekly'));
   });
-  if(yv) yv.style.display=show?'':'none';
+  if(!yv) return;
   if(show){
-    /* hide weekly/territory surfaces */
+    yv.classList.add('is-on');
+    yv.style.display='block';
     var pv=document.getElementById('plannerView'); if(pv) pv.style.display='none';
     var av=document.getElementById('allView'); if(av) av.style.display='none';
     var cards=document.getElementById('cards'); if(cards) cards.style.display='none';
     ygRender();
+  } else {
+    yv.classList.remove('is-on');
+    yv.style.display='none';
   }
 }
 
