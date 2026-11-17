@@ -74,25 +74,7 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* Sales nav has no active marker; this red underline is the one addition (see notes) */
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
 /* Team member strip — under territory nav, ~34px */
-.aqTeamNav{display:none;background:#fff;border-bottom:1px solid var(--line);height:34px;min-height:34px;}
-.aqTeamNav.on{display:block;}
-.aqTeamInner{display:flex;align-items:center;gap:2px;height:34px;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
-.aqTeamInner::-webkit-scrollbar{display:none;}
-.aqTeamInner .tmb{
-  appearance:none;background:none;border:0;cursor:pointer;font-family:inherit;
-  height:34px;padding:0 10px;font-size:11.5px;font-weight:600;color:#6b7280;
-  white-space:nowrap;box-shadow:inset 0 -2px 0 0 transparent;transition:color .15s,box-shadow .15s;
-}
-.aqTeamInner .tmb:hover{color:var(--aq-black);}
-.aqTeamInner .tmb.on{color:var(--aq-black);box-shadow:inset 0 -2px 0 0 var(--aq-red);}
-.aqTeamInner .tmb .tr{font-weight:500;color:#9ca3af;margin-left:4px;font-size:10.5px;}
-.aqTeamInner .tmb.on .tr{color:var(--aq-red);}
-.aqTeamInner .tmb-add{
-  appearance:none;background:none;border:0;cursor:pointer;height:28px;width:28px;
-  border-radius:4px;color:#9ca3af;font-size:16px;line-height:1;margin-left:4px;flex:0 0 auto;
-}
-.aqTeamInner .tmb-add:hover{color:var(--aq-red);background:#fef2f2;}
-.aqTeamInner .tmb-spacer{flex:1 1 auto;}
+.aqTeamNav{display:none!important;} /* team selection moved into Trips sidebar */
 /* ---- Page heading ---- */
 .wrap{max-width:100%;margin:0 auto;padding:1rem 20px 40px;}
 /* ---- KPI cards: discrete tiles per approved mockup, Sales card chrome
@@ -116,7 +98,7 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* ===== Desktop Trips — compact Kanban / List ===== */
 .planwrap.trips-kanban{
   display:grid;
-  grid-template-columns:190px minmax(0,1fr);
+  grid-template-columns:260px minmax(0,1fr);
   gap:0;
   align-items:stretch;
   height:calc(100vh - 148px);
@@ -126,22 +108,18 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
   border-radius:var(--radius);
   overflow:hidden;
 }
-body.team-nav-on .planwrap.trips-kanban{
-  height:calc(100vh - 182px);
-  max-height:calc(100vh - 182px);
-}
 .planwrap.trips-kanban.nav-collapsed{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
 /* Default split ≈ 70% itinerary / 30% map of remaining space via fr units;
    --trips-map-w overrides with a remembered pixel width after the user drags. */
 .planwrap.trips-kanban.map-split{
-  grid-template-columns:190px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
+  grid-template-columns:260px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
 .planwrap.trips-kanban.nav-collapsed.map-split{
   grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
 .planwrap.trips-kanban.map-full{
-  grid-template-columns:190px minmax(0,1fr);
+  grid-template-columns:260px minmax(0,1fr);
 }
 .planwrap.trips-kanban.nav-collapsed.map-full{
   grid-template-columns:minmax(0,1fr);
@@ -152,36 +130,64 @@ body.team-nav-on .planwrap.trips-kanban{
 .planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
 .trips-nav{
   background:#fff;border-right:1px solid var(--line);
-  display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;
+  display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;width:100%;
 }
-.trips-nav .tn-body{flex:1 1 auto;overflow:auto;padding:4px 6px 12px;}
-.tn-y,.tn-q,.tn-m{margin:0;}
-.tn-y>summary,.tn-q>summary,.tn-m>summary{
-  list-style:none;cursor:pointer;font-family:inherit;user-select:none;
-  display:flex;align-items:center;gap:6px;height:26px;padding:0 6px;border-radius:4px;
-  font-size:11px;font-weight:700;color:#374151;
-}
-.tn-y>summary::-webkit-details-marker,.tn-q>summary::-webkit-details-marker,.tn-m>summary::-webkit-details-marker{display:none;}
-.tn-y>summary::before,.tn-q>summary::before,.tn-m>summary::before{
-  content:'';width:4px;height:4px;border-right:1.4px solid currentColor;border-bottom:1.4px solid currentColor;
-  transform:rotate(-45deg);flex:0 0 auto;opacity:.5;
-}
-.tn-y[open]>summary::before,.tn-q[open]>summary::before,.tn-m[open]>summary::before{transform:rotate(45deg);}
-.tn-y>summary{font-size:12px;color:var(--aq-black);margin-top:4px;}
-.tn-q>summary{padding-left:14px;font-weight:600;color:#6b7280;}
-.tn-m>summary{padding-left:24px;font-weight:600;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#8b9096;}
-.tn-y>summary:hover,.tn-q>summary:hover,.tn-m>summary:hover{background:#f5f6f7;}
-.tn-wk{
-  display:flex;align-items:center;gap:6px;width:100%;height:26px;box-sizing:border-box;
-  appearance:none;font-family:inherit;background:transparent;border:0;border-radius:4px;
-  padding:0 6px 0 34px;cursor:pointer;color:#1f2328;font-size:11.5px;text-align:left;white-space:nowrap;
-}
-.tn-wk:hover{background:#f5f6f7;}
-.tn-wk.on{background:#fdecee;color:var(--aq-red,#cf202f);font-weight:700;}
-.tn-wk.now:not(.on){box-shadow:inset 2px 0 0 var(--aq-red,#cf202f);}
-.tn-wk .tl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.tn-wk .tc{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#8b9096;}
-.tn-wk.on .tc{color:var(--aq-red,#cf202f);}
+.trips-nav .tn-scroll{flex:1 1 auto;overflow:auto;min-height:0;}
+.sb-cal{padding:8px 10px 6px;border-bottom:1px solid var(--line);position:relative;}
+.sb-cal-head{display:flex;align-items:center;gap:2px;margin-bottom:6px;}
+.sb-cal-title{appearance:none;background:none;border:0;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--aq-black);padding:2px 4px;border-radius:4px;flex:1 1 auto;text-align:left;}
+.sb-cal-title:hover{background:#f5f6f7;}
+.sb-cal-nav{appearance:none;background:none;border:0;cursor:pointer;width:24px;height:24px;border-radius:4px;color:#6b7280;font-size:14px;line-height:1;}
+.sb-cal-nav:hover{background:#f5f6f7;color:var(--aq-black);}
+.sb-cal-grid{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;}
+.sb-cal-grid th{font-weight:600;color:#9ca3af;font-size:10px;padding:2px 0;text-align:center;}
+.sb-cal-grid th.wk{width:22px;text-align:left;padding-left:2px;}
+.sb-cal-grid td{padding:1px;text-align:center;vertical-align:middle;}
+.sb-cal-grid td.wknum{font-size:10px;font-weight:600;color:#9ca3af;cursor:pointer;text-align:left;padding-left:2px;border-radius:3px;}
+.sb-cal-grid td.wknum:hover{color:var(--aq-red);background:#fdecee;}
+.sb-cal-grid tr.selweek td{background:#fdecee;}
+.sb-cal-grid tr.selweek td.wknum{color:var(--aq-red);background:#fdecee;}
+.sb-day{appearance:none;background:none;border:0;cursor:pointer;font-family:inherit;width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:500;color:#1f2328;position:relative;padding:0;line-height:26px;}
+.sb-day.out{color:#c4c7cb;}
+.sb-day:hover{background:#f3f4f6;}
+.sb-day.today{background:var(--aq-red);color:#fff;font-weight:700;}
+.sb-day.today:hover{background:var(--aq-red);color:#fff;filter:brightness(.96);}
+.sb-day .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--aq-red);}
+.sb-day.today .dot{background:#fff;}
+.sb-jump{position:absolute;z-index:40;top:34px;left:8px;right:8px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:10px;}
+.sb-jump select{width:100%;margin-bottom:8px;font:inherit;font-size:12px;padding:5px 6px;border:1px solid var(--line);border-radius:5px;}
+.sb-jump-mos{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.sb-jump-mos button{appearance:none;border:0;background:#f5f6f7;border-radius:5px;padding:7px 4px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;color:#374151;}
+.sb-jump-mos button:hover,.sb-jump-mos button.on{background:#fdecee;color:var(--aq-red);}
+.sb-sec{border-bottom:1px solid var(--line);}
+.sb-sec>summary{list-style:none;cursor:pointer;user-select:none;font-family:inherit;display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8b9096;}
+.sb-sec>summary::-webkit-details-marker{display:none;}
+.sb-sec>summary::before{content:'';width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);opacity:.55;flex:0 0 auto;}
+.sb-sec[open]>summary::before{transform:rotate(45deg);}
+.sb-sec .sb-add{appearance:none;background:none;border:0;cursor:pointer;margin-left:auto;width:22px;height:22px;border-radius:4px;color:#9ca3af;font-size:15px;line-height:1;padding:0;}
+.sb-sec .sb-add:hover{color:var(--aq-red);background:#fef2f2;}
+.sb-sec-body{padding:0 6px 8px;}
+.sb-check{display:flex;align-items:center;gap:8px;width:100%;appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;padding:5px 6px;border-radius:5px;text-align:left;color:#1f2328;font-size:12px;}
+.sb-check:hover{background:#f5f6f7;}
+.sb-check .box{width:14px;height:14px;border-radius:50%;border:1.5px solid #c4c7cb;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;box-sizing:border-box;}
+.sb-check.on .box{background:var(--aq-red);border-color:var(--aq-red);}
+.sb-check .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+.sb-check .rl{color:#9ca3af;font-weight:500;font-size:11px;margin-left:4px;}
+.sb-attn{display:flex;align-items:center;gap:8px;width:100%;appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;padding:5px 6px;border-radius:5px;text-align:left;font-size:12px;color:#374151;}
+.sb-attn:hover{background:#f5f6f7;}
+.sb-attn .ic{width:16px;text-align:center;flex:0 0 auto;font-size:12px;color:#9ca3af;}
+.sb-attn .lb{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb-attn .ct{flex:0 0 auto;font-weight:700;font-size:11px;color:#6b7280;}
+.sb-attn.urgent .ic,.sb-attn.urgent .ct{color:var(--aq-red);}
+.sb-attn.urgent .lb{color:#7f1d1d;}
+.sb-travel{display:flex;align-items:flex-start;gap:8px;width:100%;appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;padding:6px;border-radius:5px;text-align:left;color:#1f2328;}
+.sb-travel:hover{background:#f5f6f7;}
+.sb-travel .ic{width:16px;flex:0 0 auto;color:#9ca3af;font-size:13px;line-height:1.2;padding-top:1px;}
+.sb-travel .tx{min-width:0;flex:1 1 auto;}
+.sb-travel .t1{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-travel .t2{font-size:10.5px;color:#9ca3af;margin-top:1px;}
+.sb-empty{padding:4px 8px 6px;font-size:11px;color:#9ca3af;}
+.kcc-who{flex:0 0 auto;font-size:9.5px;font-weight:700;color:#9ca3af;letter-spacing:.02em;margin-left:2px;}
 .boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;height:100%;overflow:hidden;}
 .kb-toolbar{
   display:flex;align-items:center;gap:4px;flex-wrap:wrap;
@@ -271,7 +277,7 @@ body.team-nav-on .planwrap.trips-kanban{
 #plannerView.trips-on .progbar .plansum{display:none;}
 #plannerView.trips-on .hint{display:none;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban.map-split{grid-template-columns:190px minmax(0,1fr);}
+  .planwrap.trips-kanban.map-split{grid-template-columns:260px minmax(0,1fr);}
   .planwrap.trips-kanban.nav-collapsed.map-split{grid-template-columns:minmax(0,1fr);}
   .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
@@ -1673,7 +1679,6 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div class="aqNavItem"><button class="tab" data-t="Exports">Exports</button></div>
   </div>
   </div></div>
-  <div class="aqTeamNav" id="teamNav" aria-label="Territory team"><div class="aqTeamInner" id="teamNavInner"></div></div>
 </header>
 <div class="wrap">
   <div class="cards" id="cards"></div>
@@ -2168,7 +2173,7 @@ function wkGo(delta){
   try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!=='') cur=parseInt(s,10); }catch(e){}
   var openKeys=Object.keys(WKOPEN).filter(function(k){return k.indexOf(terr+'|')===0&&WKOPEN[k];});
   if(openKeys.length===1){ var w=openKeys[0].slice((terr+'|').length); if(w!=='remote') cur=parseInt(w,10); }
-  if(delta===0){ focusWkSet(wkCurrent()); return; }
+  if(delta===0){ var curWk=wkCurrent(); calSetToWeek(curWk); focusWkSet(curWk); return; }
   cur=focusWkGet();
   var i=nums.indexOf(cur); if(i<0) i=nums.indexOf(wkCurrent());
   var n=nums[Math.max(0,Math.min(nums.length-1,(i<0?0:i)+delta))];
@@ -2197,6 +2202,7 @@ function focusWkSet(wk, opts){
   FOCUS_WK=wk;
   try{ sessionStorage.setItem('aqFocusWk',String(wk)); }catch(e){}
   _mapWk=wk;
+  if(typeof wk==='number') calSetToWeek(wk);
   if(opts.expand) tripsExpandPath(wk);
   if(!opts.silent) _wkRerender();
 }
@@ -2242,7 +2248,7 @@ function mapToggleVisibility(){
 function mapDefaultPx(){
   var wrap=document.getElementById('planwrap');
   var w=wrap?wrap.clientWidth:(window.innerWidth||1400);
-  var nav=(NAV_OPEN?190:0);
+  var nav=(NAV_OPEN?260:0);
   var rem=Math.max(400, w-nav-5);
   return Math.round(Math.max(200, Math.min(900, rem*0.30)));
 }
@@ -3090,8 +3096,13 @@ function adminInit(){
 }
 var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS'};
 var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support'};
-var TEAM_SEL='all';   /* 'all' | member id — device-local filter for the open territory */
+/* Multi-select team filter (device-local). TEAM_ALL=true shows whole territory
+   including historically unassigned items. Otherwise only OWNERS in TEAM_IDS. */
+var TEAM_ALL=true;
+var TEAM_IDS={};       /* id -> true when selected */
 var OWNERS={};         /* 'd:id'|'x:id'|'m:id' -> team member id */
+var CAL_Y=null, CAL_M=null;  /* sidebar calendar month (0-based month) */
+var SB_SEC=(function(){ try{ return JSON.parse(localStorage.getItem('aqSbSec')||'{}')||{}; }catch(e){ return {}; } })();
 function teamSeedFromKnown(){
   try{
     var have={};
@@ -3105,9 +3116,7 @@ function teamSeedFromKnown(){
     }
     ['East','South','Central','West'].forEach(function(t){
       addSeed(t, (FLAT.tm&&FLAT.tm[t])||'', 'AM');
-      try{
-        dealersIn(t).forEach(function(d){ if(d&&d.tm) addSeed(t, d.tm, 'AM'); });
-      }catch(e){}
+      try{ dealersIn(t).forEach(function(d){ if(d&&d.tm) addSeed(t, d.tm, 'AM'); }); }catch(e){}
     });
   }catch(e){}
 }
@@ -3119,19 +3128,51 @@ function teamList(terrFilter, includeInactive){
     return true;
   });
   var order={AM:0,DSR:1,ISS:2};
-  rows.sort(function(a,b){
-    return (order[a.role]||9)-(order[b.role]||9) || String(a.name).localeCompare(String(b.name));
-  });
+  rows.sort(function(a,b){ return (order[a.role]||9)-(order[b.role]||9) || String(a.name).localeCompare(String(b.name)); });
   return rows;
 }
 function teamById(id){ var L=ADMIN.team||[]; for(var i=0;i<L.length;i++) if(L[i].id===id) return L[i]; return null; }
 function teamCanManage(){ try{ return pbIsAdmin()||!PB_USER; }catch(e){ return true; } }
-function teamSelGet(){ return TEAM_SEL||'all'; }
-function teamSelSet(id){
-  TEAM_SEL=id||'all';
-  try{ sessionStorage.setItem('aqTeamSel_'+terr, TEAM_SEL); }catch(e){}
+function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'; }
+function teamLoadSel(){
+  try{
+    var raw=sessionStorage.getItem('aqTeamSel2_'+terr);
+    if(!raw){ TEAM_ALL=true; TEAM_IDS={}; return; }
+    var o=JSON.parse(raw);
+    if(o&&o.all){ TEAM_ALL=true; TEAM_IDS={}; return; }
+    TEAM_ALL=false; TEAM_IDS={};
+    (o.ids||[]).forEach(function(id){ if(teamById(id)) TEAM_IDS[id]=true; });
+    if(!Object.keys(TEAM_IDS).length){ TEAM_ALL=true; }
+  }catch(e){ TEAM_ALL=true; TEAM_IDS={}; }
+}
+function teamSaveSel(){
+  try{
+    if(TEAM_ALL) sessionStorage.setItem('aqTeamSel2_'+terr, JSON.stringify({all:true}));
+    else sessionStorage.setItem('aqTeamSel2_'+terr, JSON.stringify({all:false,ids:Object.keys(TEAM_IDS)}));
+  }catch(e){}
+}
+function teamIsAll(){ return !teamShowNav() || TEAM_ALL; }
+function teamIsSelected(id){ if(TEAM_ALL) return true; return !!TEAM_IDS[id]; }
+function teamToggleAll(){
+  TEAM_ALL=true; TEAM_IDS={}; teamSaveSel();
   try{ refreshPlanner(); }catch(e){ try{render();}catch(_){} }
-  renderTeamNav();
+}
+function teamToggleMember(id){
+  var members=teamList(terr,false);
+  if(TEAM_ALL){
+    /* From All → focus this person only */
+    TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[id]=true;
+  } else if(TEAM_IDS[id]){
+    delete TEAM_IDS[id];
+    if(!Object.keys(TEAM_IDS).length){ TEAM_ALL=true; }
+  } else {
+    TEAM_IDS[id]=true;
+    if(members.length && members.every(function(m){ return TEAM_IDS[m.id]; })){
+      TEAM_ALL=true; TEAM_IDS={};
+    }
+  }
+  teamSaveSel();
+  try{ refreshPlanner(); }catch(e){ try{render();}catch(_){} }
 }
 function teamOwnerKey(kind,id){ return kind+':'+id; }
 function teamOwnerOf(kind,id){ return OWNERS[teamOwnerKey(kind,id)]||null; }
@@ -3140,39 +3181,75 @@ function teamSetOwner(kind,id,memberId){
   if(!memberId) delete OWNERS[k]; else OWNERS[k]=memberId;
 }
 function teamFilterMatch(kind,id){
-  if(!teamShowNav()) return true;
-  var sel=teamSelGet();
-  if(!sel||sel==='all') return true;
+  if(!teamShowNav() || TEAM_ALL) return true;
   var o=teamOwnerOf(kind,id);
-  /* Unassigned historical items appear only under All — never reassigned. */
-  return o===sel;
+  if(!o) return false; /* unassigned historical only under All */
+  return !!TEAM_IDS[o];
 }
 function teamStampNew(kind,id){
-  var sel=teamSelGet();
-  if(sel&&sel!=='all') teamSetOwner(kind,id,sel);
+  if(!teamShowNav() || TEAM_ALL) return;
+  var ids=Object.keys(TEAM_IDS);
+  /* Exactly one person selected → auto-assign. Multi-select leaves unassigned. */
+  if(ids.length===1) teamSetOwner(kind,id,ids[0]);
 }
-function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'; }
-function renderTeamNav(){
-  var bar=document.getElementById('teamNav');
-  var inner=document.getElementById('teamNavInner');
-  if(!bar||!inner) return;
-  if(!teamShowNav()){ bar.classList.remove('on'); document.body.classList.remove('team-nav-on'); inner.innerHTML=''; return; }
-  bar.classList.add('on'); document.body.classList.add('team-nav-on');
-  try{ var kept=sessionStorage.getItem('aqTeamSel_'+terr); if(kept) TEAM_SEL=kept; }catch(e){}
-  if(TEAM_SEL!=='all'){ var _tm=teamById(TEAM_SEL); if(!_tm||_tm.active===false||(_tm.terr&&_tm.terr!==terr)) TEAM_SEL='all'; }
-  var members=teamList(terr,false);
-  var h='<button type="button" class="tmb'+(TEAM_SEL==='all'?' on':'')+'" data-teamsel="all">All</button>';
-  members.forEach(function(m){
-    h+='<button type="button" class="tmb'+(TEAM_SEL===m.id?' on':'')+'" data-teamsel="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-      +esc(m.name)+'<span class="tr">· '+esc(m.role)+'</span></button>';
-  });
-  if(teamCanManage()) h+='<button type="button" class="tmb-add" data-teamadd="1" title="Add team member">+</button>';
-  inner.innerHTML=h;
-  inner.querySelectorAll('[data-teamsel]').forEach(function(b){
-    b.addEventListener('click',function(e){ e.stopPropagation(); teamSelSet(b.dataset.teamsel); });
-  });
-  var add=inner.querySelector('[data-teamadd]');
-  if(add) add.addEventListener('click',function(e){ e.stopPropagation(); openTeamModal(); });
+function teamInitials(memberId){
+  var m=teamById(memberId); if(!m||!m.name) return '';
+  var parts=String(m.name).trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '';
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0].charAt(0)+parts[parts.length-1].charAt(0)).toUpperCase();
+}
+function teamWhoBadge(kind,id){
+  var o=teamOwnerOf(kind,id); if(!o) return '';
+  var ini=teamInitials(o); if(!ini) return '';
+  return '<span class="kcc-who" title="'+esc((teamById(o)||{}).name||'')+'">'+esc(ini)+'</span>';
+}
+function renderTeamNav(){ /* header row removed — selection lives in sidebar */ }
+function sbSecOpen(key, defOpen){
+  if(SB_SEC.hasOwnProperty(key)) return !!SB_SEC[key];
+  return defOpen!==false;
+}
+function sbSecToggle(key, open){
+  SB_SEC[key]=!!open;
+  try{ localStorage.setItem('aqSbSec',JSON.stringify(SB_SEC)); }catch(e){}
+}
+function calEnsure(){
+  if(CAL_Y==null||CAL_M==null){
+    var d=wkStart(wkCurrent());
+    CAL_Y=d.getFullYear(); CAL_M=d.getMonth();
+  }
+}
+function calSetToWeek(wk){
+  if(typeof wk!=='number') return;
+  var d=wkStart(wk);
+  CAL_Y=d.getFullYear(); CAL_M=d.getMonth();
+}
+function calMonthLabel(){
+  calEnsure();
+  return new Date(CAL_Y,CAL_M,1).toLocaleString('en-US',{month:'long',year:'numeric'});
+}
+function dateToWk(dt){
+  var t=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),12);
+  var n=32+Math.floor((t-WK_BASE)/WK_MS);
+  return Math.max(32,Math.min(WK_LAST,n));
+}
+function dayHasAppt(dt){
+  var wk=dateToWk(dt);
+  var di=dt.getDay(); /* 0=Sun … matches dayLabels index */
+  try{
+    var hit=false;
+    dealersIn(terr).forEach(function(d){
+      if(ASSIGN[d.id]===wk && DAY[d.id]===di && teamFilterMatch('d',d.id)) hit=true;
+    });
+    if(hit) return true;
+    if(typeof XVISITS!=='undefined') for(var i=0;i<XVISITS.length;i++){
+      var x=XVISITS[i]; if(x.wk===wk&&x.terr===terr&&x.day===di&&teamFilterMatch('x',x.id)) return true;
+    }
+    if(typeof LOGI!=='undefined') for(var j=0;j<LOGI.length;j++){
+      var it=LOGI[j]; if(it.wk===wk&&it.terr===terr&&it.day===di&&teamFilterMatch('m',it.id)) return true;
+    }
+  }catch(e){}
+  return false;
 }
 function openTeamModal(editId){
   if(!teamCanManage()){ cloudBadge('Admin only'); return; }
@@ -3219,12 +3296,12 @@ function openTeamModal(editId){
   wrap.querySelectorAll('[data-teamdeact]').forEach(function(b){ b.onclick=function(){
     var m=teamById(b.dataset.teamdeact); if(!m) return;
     m.active=false; audit('team',{action:'deactivate',id:m.id,name:m.name});
-    if(TEAM_SEL===m.id){ TEAM_SEL='all'; try{ sessionStorage.setItem('aqTeamSel_'+terr,'all'); }catch(e){} }
-    savePlan(); renderTeamNav(); try{ refreshPlanner(); }catch(e){} close(); openTeamModal();
+    if(TEAM_IDS[m.id]){ delete TEAM_IDS[m.id]; if(!Object.keys(TEAM_IDS).length) TEAM_ALL=true; teamSaveSel(); }
+    savePlan(); try{ refreshPlanner(); }catch(e){} close(); openTeamModal();
   }; });
   wrap.querySelectorAll('[data-teamreact]').forEach(function(b){ b.onclick=function(){
     var m=teamById(b.dataset.teamreact); if(!m) return;
-    m.active=true; audit('team',{action:'reactivate',id:m.id,name:m.name}); savePlan(); renderTeamNav(); close(); openTeamModal();
+    m.active=true; audit('team',{action:'reactivate',id:m.id,name:m.name}); savePlan(); try{ refreshPlanner(); }catch(e){} close(); openTeamModal();
   }; });
   wrap.querySelector('#tm_save').onclick=function(){
     var name=wrap.querySelector('#tm_name').value.trim();
@@ -3234,7 +3311,6 @@ function openTeamModal(editId){
     var err=wrap.querySelector('#tm_err');
     if(!name){ err.textContent='Enter a name'; return; }
     if(['AM','DSR','ISS'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
-    /* Reuse existing active row with same email or same name+territory */
     var reuse=null;
     (ADMIN.team||[]).forEach(function(m){
       if(existing&&m.id===existing.id) return;
@@ -3243,17 +3319,158 @@ function openTeamModal(editId){
     });
     if(reuse && !existing){
       reuse.name=name; reuse.email=email||reuse.email; reuse.role=role; reuse.terr=t; reuse.active=true;
-      audit('team',{action:'reuse',id:reuse.id,name:name}); savePlan(); renderTeamNav(); close(); cloudBadge('Updated existing team member'); return;
+      audit('team',{action:'reuse',id:reuse.id,name:name}); savePlan(); try{ refreshPlanner(); }catch(e){} close(); cloudBadge('Updated existing team member'); return;
     }
     if(existing){
       existing.name=name; existing.email=email; existing.role=role; existing.terr=t;
-      audit('team',{action:'edit',id:existing.id,name:name}); savePlan(); renderTeamNav(); close(); cloudBadge('Team member saved'); return;
+      audit('team',{action:'edit',id:existing.id,name:name}); savePlan(); try{ refreshPlanner(); }catch(e){} close(); cloudBadge('Team member saved'); return;
     }
     var id='tm_'+Date.now().toString(36)+Math.floor(Math.random()*1000);
     ADMIN.team.push({id:id,name:name,email:email,role:role,terr:t,active:true,source:'manual'});
-    audit('team',{action:'add',id:id,name:name,role:role,terr:t}); savePlan(); renderTeamNav(); close(); cloudBadge('Team member added');
+    audit('team',{action:'add',id:id,name:name,role:role,terr:t}); savePlan(); try{ refreshPlanner(); }catch(e){} close(); cloudBadge('Team member added');
   };
 }
+/* ---- Needs Attention (real data only) ---- */
+function sbAttentionItems(){
+  var items=[], focus=focusWkGet();
+  if(!teamShowNav()) return items;
+  /* Scheduling conflicts / insufficient drive time in focused week */
+  try{
+    if(typeof focus==='number'){
+      var TL=tlCompute(terr,focus);
+      var n=(TL.conflicts||[]).length;
+      if(n) items.push({id:'conflicts',urgent:true,icon:'⚠',label:'Scheduling conflicts',count:n,wk:focus});
+    }
+  }catch(e){}
+  /* Unconfirmed dealer appointments in focused week */
+  try{
+    var unc=0, firstUnc=null;
+    if(typeof focus==='number'){
+      dealersIn(terr).forEach(function(d){
+        if(ASSIGN[d.id]!==focus||!teamFilterMatch('d',d.id)) return;
+        if(!APPT[d.id]){ unc++; if(!firstUnc) firstUnc=d.id; }
+      });
+      XVISITS.forEach(function(x){
+        if(x.terr!==terr||x.wk!==focus||!teamFilterMatch('x',x.id)) return;
+        if(!x.done){ unc++; if(!firstUnc) firstUnc='x:'+x.id; }
+      });
+    }
+    if(unc) items.push({id:'unconfirmed',urgent:false,icon:'○',label:'Unconfirmed appointments',count:unc,ref:firstUnc,wk:focus});
+  }catch(e){}
+  /* Hotel required: overnight gap between located stops with no hotel that night */
+  try{
+    if(typeof focus==='number'){
+      var seq=tlSeq(terr,focus), needHotel=0, hotelDay={};
+      LOGI.forEach(function(it){ if(it.terr===terr&&it.wk===focus&&travelType(it)==='hotel'&&teamFilterMatch('m',it.id)&&it.day!=null) hotelDay[it.day]=1; });
+      for(var i=0;i<seq.length-1;i++){
+        var a=seq[i], b=seq[i+1];
+        if(a.day==null||b.day==null) continue;
+        if(b.day>a.day){
+          var o1=teamOwnerOf(a.key.charAt(0),a.key.slice(2)), o2=teamOwnerOf(b.key.charAt(0),b.key.slice(2));
+          if(o1&&o2&&o1!==o2) continue; /* separate people — no shared overnight */
+          if(!hotelDay[a.day] && a.ty0!=='hotel') needHotel++;
+        }
+      }
+      if(needHotel) items.push({id:'hotel',urgent:false,icon:'○',label:'Hotel required',count:needHotel,wk:focus});
+    }
+  }catch(e){}
+  /* Missing travel confirmations (flight / rental) */
+  try{
+    var miss=0, missId=null;
+    LOGI.forEach(function(it){
+      if(it.terr!==terr||!teamFilterMatch('m',it.id)) return;
+      var ty=travelType(it);
+      if((ty==='flight_in'||ty==='flight_out'||ty==='rental_pickup'||ty==='rental_return') && !String(it.conf||'').trim()){
+        var wk=it.wk; if(typeof wk==='number'&&wk<wkCurrent()-1) return;
+        miss++; if(!missId) missId=it.id;
+      }
+    });
+    if(miss) items.push({id:'travelconf',urgent:false,icon:'○',label:'Travel confirmations missing',count:miss,lid:missId});
+  }catch(e){}
+  /* Overdue follow-up tasks */
+  try{
+    var today=new Date(); today.setHours(0,0,0,0);
+    var od=0, odRef=null;
+    function scanActs(acts, ref){
+      (acts||[]).forEach(function(a){
+        if(!a||a.done||!a.due) return;
+        var dd=new Date(a.due); if(isNaN(dd.getTime())) return;
+        dd.setHours(0,0,0,0);
+        if(dd<today){ od++; if(!odRef) odRef=ref; }
+      });
+    }
+    Object.keys(VISIT||{}).forEach(function(id){
+      var d=byId[id]||uniById(id); if(!d||d.territory!==terr) return;
+      if(!teamFilterMatch('d',id)) return;
+      scanActs((VISIT[id]||{}).actions, id);
+    });
+    XVISITS.forEach(function(x){
+      if(x.terr!==terr||!teamFilterMatch('x',x.id)) return;
+      scanActs(x.tasks, 'x:'+x.id);
+    });
+    if(od) items.push({id:'overdue',urgent:true,icon:'✓',label:'Overdue follow-ups',count:od,ref:odRef});
+  }catch(e){}
+  /* Completed visits awaiting PLAUD transcript */
+  try{
+    var pend=0, pendRef=null;
+    dealersIn(terr).forEach(function(d){
+      if(!teamFilterMatch('d',d.id)) return;
+      if(!APPT[d.id]) return;
+      var v=VISIT[d.id]||{};
+      if(!(v.plaud&&(v.plaud.transcript||v.plaud.summary||v.plaud.reportNotes))){ pend++; if(!pendRef) pendRef=d.id; }
+    });
+    XVISITS.forEach(function(x){
+      if(x.terr!==terr||!x.done||!teamFilterMatch('x',x.id)) return;
+      if(!(x.plaud&&(x.plaud.transcript||x.plaud.summary||x.plaud.reportNotes))){ pend++; if(!pendRef) pendRef='x:'+x.id; }
+    });
+    if(pend) items.push({id:'transcripts',urgent:false,icon:'○',label:'Pending transcripts',count:pend,ref:pendRef});
+  }catch(e){}
+  /* Cloud sync issues */
+  try{
+    var err=document.getElementById('pbSaveErr');
+    if(err&&err.style.display!=='none'&&err.offsetParent!==null){
+      items.push({id:'sync',urgent:true,icon:'⚠',label:'Cloud sync issue',count:1});
+    }
+  }catch(e){}
+  return items;
+}
+function sbUpcomingTravel(){
+  var out=[], now=new Date(); now.setHours(0,0,0,0);
+  if(!teamShowNav()) return out;
+  function when(it){
+    if(typeof it.wk!=='number'||it.day==null) return null;
+    var s=wkStart(it.wk); var d=new Date(s.getTime()+it.day*WK_DAY); d.setHours(12,0,0,0);
+    return d;
+  }
+  var flights=[], hotels=[], rentals=[];
+  LOGI.forEach(function(it){
+    if(it.terr!==terr||!teamFilterMatch('m',it.id)) return;
+    var dt=when(it); if(!dt||dt<now) return;
+    var ty=travelType(it);
+    if(ty==='flight_in'||ty==='flight_out') flights.push({it:it,dt:dt,ty:ty});
+    else if(ty==='hotel') hotels.push({it:it,dt:dt,ty:ty});
+    else if(ty==='rental_pickup'||ty==='rental_return') rentals.push({it:it,dt:dt,ty:ty});
+  });
+  function soonest(arr){ arr.sort(function(a,b){return a.dt-b.dt;}); return arr[0]||null; }
+  var f=soonest(flights), h=soonest(hotels), r=soonest(rentals);
+  function fmtWhen(row){
+    var labs=dayLabels(row.it.wk)||[];
+    var lab=(labs[row.it.day]||[]);
+    return (lab[0]||'')+', '+(lab[1]||'')+(row.it.time?(' · '+t12s(row.it.time)):'');
+  }
+  if(f){
+    var from=travelPlaceLabel(f.it)||(f.it.airportCode||'Flight');
+    out.push({id:f.it.id,icon:'✈',title:from,sub:fmtWhen(f)+(f.ty==='flight_out'?' · Depart':' · Arrive'),wk:f.it.wk});
+  }
+  if(h){
+    out.push({id:h.it.id,icon:'🛏',title:(travelPlaceLabel(h.it)||h.it.name||'Hotel'),sub:fmtWhen(h)+' · Check-in',wk:h.it.wk});
+  }
+  if(r){
+    out.push({id:r.it.id,icon:'🚗',title:(travelPlaceLabel(r.it)||r.it.name||'Rental'),sub:fmtWhen(r)+(r.ty==='rental_return'?' · Return':' · Pickup'),wk:r.it.wk});
+  }
+  return out;
+}
+
 function planYear(){ return (ADMIN.defaults&&+ADMIN.defaults.targetYear)||2027; }
 function pbWho(){ try{ return (PB_USER&&PB_USER.email)||'local user'; }catch(e){ return 'local user'; } }
 /* audit ledger: who / when / what / old / new */
@@ -3951,16 +4168,17 @@ function renderPlanner(opts){
   _psum.innerHTML=''; /* week chrome moved into Kanban toolbar + Trips nav */
 
   /* Focused week Kanban — local chrome only */
-  if(FOCUS_WK==null) FOCUS_WK=wkCurrent();
+  if(FOCUS_WK==null){ FOCUS_WK=wkCurrent(); calSetToWeek(FOCUS_WK); }
   if(terr==='Exports') FOCUS_WK='remote';
   else if(FOCUS_WK==='remote') FOCUS_WK=wkCurrent();
+  if(typeof FOCUS_WK==='number' && (CAL_Y==null||CAL_M==null)) calSetToWeek(FOCUS_WK);
   var focus=focusWkGet();
   _activeMapHost=focus;
   _mapWk=focus;
   mapModeApplyDom();
 
   var nav=document.getElementById('tripsNav');
-  if(nav) nav.innerHTML=tripsNavHTML();
+  if(nav){ nav.innerHTML=tripsNavHTML(); try{ tripsNavWire(); }catch(e){} }
   var tb=document.getElementById('kbToolbar');
   if(tb) tb.innerHTML=kbToolbarHTML(focus);
   var weeksEl=document.getElementById('weeks');
@@ -5377,6 +5595,7 @@ function travelCard(it,wk,tl){
   var _mainT=it.time?t12s(it.time):((tl&&tl.sug!=null)?t12s(addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440)):'');
   if((isFlight||isHotel) && !tvExpanded(it.id)){
     var whenWord=isHotel?'Check-in':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'Lands'));
+    var whoBadge=teamWhoBadge('m',it.id);
     var label=isFlight
       ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
       : (esc(it.name||'Hotel'));
@@ -5385,7 +5604,7 @@ function travelCard(it,wk,tl){
     return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
       +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
-        +'<span class="tvc-main">'+label+'</span>'+timePart+stat
+        +'<span class="tvc-main">'+label+'</span>'+whoBadge+timePart+stat
         +'<span class="tvc-caret">▸</span>'
       +'</button>'
       +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
@@ -5514,7 +5733,7 @@ function logiRowDetail(x){
 }
 
 
-/* ---- Trips sidebar: Year → Quarter → Month → Week (all weeks through WK_LAST) ---- */
+/* ---- Trips sidebar: Outlook-style calendar + team + attention + travel ---- */
 function tripsEventCount(wk){
   try{
     var n=0;
@@ -5525,42 +5744,160 @@ function tripsEventCount(wk){
   }catch(e){ return 0; }
 }
 function tripsNavHTML(){
-  var focus=focusWkGet(), now=wkCurrent();
-  var list=[31].concat(FIELD_NUMS);
-  var years=[], cy=wkRefDay(now).getFullYear(), cm=wkRefDay(now).getMonth(), cq=Math.floor(cm/3)+1;
-  list.forEach(function(w){
-    var d=wkRefDay(w), y=d.getFullYear(), m=d.getMonth(), q=Math.floor(m/3)+1, n=tripsEventCount(w);
-    var Y=years[years.length-1]; if(!Y||Y.y!==y){ Y={y:y,qs:[]}; years.push(Y); }
-    var Q=Y.qs[Y.qs.length-1]; if(!Q||Q.q!==q){ Q={q:q,ms:[]}; Y.qs.push(Q); }
-    var M=Q.ms[Q.ms.length-1]; if(!M||M.m!==m){ M={m:m,label:d.toLocaleString('en-US',{month:'long'}),wks:[]}; Q.ms.push(M); }
-    M.wks.push({w:w,n:n});
+  calEnsure();
+  teamLoadSel();
+  var focus=focusWkGet(), nowWk=wkCurrent();
+  var today=new Date(); today.setHours(12,0,0,0);
+  var first=new Date(CAL_Y,CAL_M,1,12);
+  var start=new Date(first); start.setDate(1-first.getDay()); /* Sunday grid start */
+  /* Calendar */
+  var head='<div class="sb-cal"><div class="sb-cal-head">'
+    +'<button type="button" class="sb-cal-title" data-caljump="1" title="Jump to month / year">'+esc(calMonthLabel())+'</button>'
+    +'<button type="button" class="sb-cal-nav" data-calnav="-1" title="Previous month">▴</button>'
+    +'<button type="button" class="sb-cal-nav" data-calnav="1" title="Next month">▾</button>'
+    +'</div>';
+  var grid='<table class="sb-cal-grid"><thead><tr><th class="wk">WK</th><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr></thead><tbody>';
+  var cursor=new Date(start);
+  for(var r=0;r<6;r++){
+    var rowWk=dateToWk(cursor);
+    var isSel=(typeof focus==='number' && rowWk===focus);
+    grid+='<tr class="'+(isSel?'selweek':'')+'">';
+    grid+='<td class="wknum" data-focuswk="'+rowWk+'" title="Week '+wkNo(rowWk)+'">'+wkNo(rowWk)+'</td>';
+    for(var c=0;c<7;c++){
+      var d=new Date(cursor);
+      var out=d.getMonth()!==CAL_M;
+      var isToday=d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
+      var has=dayHasAppt(d);
+      var wk=dateToWk(d);
+      var cls='sb-day'+(out?' out':'')+(isToday?' today':'');
+      grid+='<td><button type="button" class="'+cls+'" data-focuswk="'+wk+'" data-calday="'+d.toISOString().slice(0,10)+'" title="'+esc(d.toDateString())+'">'
+        +d.getDate()+(has?'<span class="dot"></span>':'')+'</button></td>';
+      cursor.setDate(cursor.getDate()+1);
+    }
+    grid+='</tr>';
+    if(cursor.getMonth()!==CAL_M && r>=3) break;
+  }
+  grid+='</tbody></table></div>';
+
+  /* Team */
+  var teamHtml='';
+  if(teamShowNav()){
+    var members=teamList(terr,false);
+    var checks='<button type="button" class="sb-check'+(TEAM_ALL?' on':'')+'" data-teamall="1"><span class="box">'+(TEAM_ALL?'✓':'')+'</span><span class="nm">All team members</span></button>';
+    members.forEach(function(m){
+      var on=TEAM_ALL||!!TEAM_IDS[m.id];
+      checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+        +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+    });
+    teamHtml='<details class="sb-sec" data-sbsec="team"'+(sbSecOpen('team',true)?' open':'')+'>'
+      +'<summary>Team — '+esc(terr)
+      +(teamCanManage()?'<button type="button" class="sb-add" data-teamadd="1" title="Add team member">+</button>':'')
+      +'</summary><div class="sb-sec-body">'+checks+'</div></details>';
+  }
+
+  /* Needs Attention */
+  var attn=sbAttentionItems();
+  var attnBody=attn.length?attn.map(function(a){
+    return '<button type="button" class="sb-attn'+(a.urgent?' urgent':'')+'" data-sbattn="'+esc(a.id)+'"'
+      +(a.wk!=null?' data-focuswk="'+a.wk+'"':'')
+      +(a.ref?' data-attnref="'+esc(a.ref)+'"':'')
+      +(a.lid?' data-attnlid="'+esc(a.lid)+'"':'')
+      +'><span class="ic">'+a.icon+'</span><span class="lb">'+esc(a.label)+'</span><span class="ct">'+a.count+'</span></button>';
+  }).join(''):'<div class="sb-empty">Nothing needs attention</div>';
+  var attnHtml='<details class="sb-sec" data-sbsec="attn"'+(sbSecOpen('attn',true)?' open':'')+'>'
+    +'<summary>Needs Attention</summary><div class="sb-sec-body">'+attnBody+'</div></details>';
+
+  /* Upcoming Travel */
+  var travel=sbUpcomingTravel();
+  var travelHtml='';
+  if(travel.length){
+    var tb=travel.map(function(t){
+      return '<button type="button" class="sb-travel" data-attnlid="'+esc(t.id)+'"'+(t.wk!=null?' data-focuswk="'+t.wk+'"':'')+'>'
+        +'<span class="ic">'+t.icon+'</span><div class="tx"><div class="t1">'+esc(t.title)+'</div><div class="t2">'+esc(t.sub)+'</div></div></button>';
+    }).join('');
+    travelHtml='<details class="sb-sec" data-sbsec="travel"'+(sbSecOpen('travel',true)?' open':'')+'>'
+      +'<summary>Upcoming Travel</summary><div class="sb-sec-body">'+tb+'</div></details>';
+  }
+
+  return '<div class="tn-scroll">'+head+grid+teamHtml+attnHtml+travelHtml+'</div>';
+}
+function tripsNavWire(){
+  var nav=document.getElementById('tripsNav'); if(!nav||nav._aqSbWired===nav.innerHTML.length) {/* rebind always */ }
+  nav.querySelectorAll('[data-calnav]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation(); calEnsure();
+      var d=parseInt(b.dataset.calnav,10)||0;
+      CAL_M+=d; if(CAL_M>11){ CAL_M=0; CAL_Y++; } if(CAL_M<0){ CAL_M=11; CAL_Y--; }
+      _wkRerender();
+    });
   });
-  /* Default: only the current year / quarter / month start open. Everything else
-     stays collapsed until the user opens it (remembered locally). */
-  function openKey(key, isCurrent){ return WKG_STATE.hasOwnProperty(key)?!!WKG_STATE[key]:!!isCurrent; }
-  var tree=years.map(function(Y){
-    var yCur=(Y.y===cy);
-    return '<details class="tn-y" data-wkg="y'+Y.y+'"'+(openKey('y'+Y.y,yCur)?' open':'')+'><summary>'+Y.y+'</summary>'
-      +Y.qs.map(function(Q){
-        var qCur=yCur&&(Q.q===cq);
-        return '<details class="tn-q" data-wkg="q'+Y.y+'-'+Q.q+'"'+(openKey('q'+Y.y+'-'+Q.q,qCur)?' open':'')+'><summary>Q'+Q.q+'</summary>'
-          +Q.ms.map(function(M){
-            var mCur=qCur&&(M.m===cm);
-            return '<details class="tn-m" data-wkg="m'+Y.y+'-'+(M.m+1)+'"'+(openKey('m'+Y.y+'-'+(M.m+1),mCur)?' open':'')+'><summary>'+esc(M.label)+'</summary>'
-              +M.wks.map(function(row){
-                var cls='tn-wk'+(row.w===focus?' on':'')+(row.w===now?' now':'');
-                var dates=(WEEKDATES[row.w]||'').replace(/,\s*\d{4}$/,'');
-                return '<button type="button" class="'+cls+'" data-focuswk="'+row.w+'" title="'+esc(WEEKDATES[row.w]||'')+'">'
-                  +'<span class="tl">WK '+wkNo(row.w)+(row.w===31?' · Kickoff':'')+' · '+esc(dates)+'</span>'
-                  +'<span class="tc">'+row.n+'</span></button>';
-              }).join('')
-            +'</details>';
-          }).join('')
-        +'</details>';
-      }).join('')
-    +'</details>';
-  }).join('');
-  return '<div class="tn-body">'+tree+'</div>';
+  nav.querySelectorAll('[data-caljump]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var host=nav.querySelector('.sb-cal'); if(!host) return;
+      var old=host.querySelector('.sb-jump'); if(old){ old.remove(); return; }
+      calEnsure();
+      var box=document.createElement('div'); box.className='sb-jump';
+      var years=[]; for(var y=2026;y<=new Date().getFullYear()+2;y++) years.push(y);
+      var mos=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      box.innerHTML='<select id="sbJumpY">'+years.map(function(y){return '<option value="'+y+'"'+(y===CAL_Y?' selected':'')+'>'+y+'</option>';}).join('')+'</select>'
+        +'<div class="sb-jump-mos">'+mos.map(function(m,i){return '<button type="button" data-jm="'+i+'" class="'+(i===CAL_M?'on':'')+'">'+m+'</button>';}).join('')+'</div>';
+      host.appendChild(box);
+      box.querySelector('#sbJumpY').addEventListener('change',function(){ CAL_Y=parseInt(this.value,10); });
+      box.querySelectorAll('[data-jm]').forEach(function(mb){
+        mb.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          CAL_M=parseInt(mb.dataset.jm,10);
+          CAL_Y=parseInt(box.querySelector('#sbJumpY').value,10);
+          box.remove(); _wkRerender();
+        });
+      });
+    });
+  });
+  /* data-focuswk bound once in wireDnD — focusWkSet syncs the calendar month */
+  nav.querySelectorAll('[data-teamall]').forEach(function(b){
+    b.addEventListener('click',function(e){ e.stopPropagation(); teamToggleAll(); });
+  });
+  nav.querySelectorAll('[data-teammember]').forEach(function(b){
+    b.addEventListener('click',function(e){ e.stopPropagation(); teamToggleMember(b.dataset.teammember); });
+  });
+  nav.querySelectorAll('[data-teamadd]').forEach(function(b){
+    b.addEventListener('click',function(e){ e.stopPropagation(); e.preventDefault(); openTeamModal(); });
+  });
+  nav.querySelectorAll('details.sb-sec > summary').forEach(function(s){
+    s.addEventListener('click',function(e){ if(e.target.closest('[data-teamadd]')) e.preventDefault(); });
+  });
+  nav.querySelectorAll('details[data-sbsec]').forEach(function(d){
+    d.addEventListener('toggle',function(){ sbSecToggle(d.dataset.sbsec, d.open); });
+  });
+  nav.querySelectorAll('[data-attnlid]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var wk=b.dataset.focuswk?parseInt(b.dataset.focuswk,10):null;
+      if(wk){ calSetToWeek(wk); focusWkSet(wk,{silent:true}); }
+      try{ refreshPlanner(); }catch(err){}
+      setTimeout(function(){
+        var el=document.querySelector('.tvcard[data-lid="'+b.dataset.attnlid+'"]');
+        if(el){ el.scrollIntoView({block:'center',behavior:'smooth'}); el.classList.add('pulse'); }
+      },80);
+    });
+  });
+  nav.querySelectorAll('[data-sbattn]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(b.dataset.focuswk){ var wk=parseInt(b.dataset.focuswk,10); calSetToWeek(wk); focusWkSet(wk); }
+      else if(b.dataset.attnlid){ b.click(); }
+      else if(b.dataset.attnref){
+        setTimeout(function(){
+          var ref=b.dataset.attnref;
+          var el=document.querySelector('[data-id="'+ref+'"],[data-vref="i:'+ref+'"],[data-vref="x:'+ref.replace(/^x:/,'')+'"]');
+          if(el) el.scrollIntoView({block:'center',behavior:'smooth'});
+        },100);
+      } else if(b.dataset.sbattn==='sync'){
+        var err=document.getElementById('pbSaveErr'); if(err) err.scrollIntoView({block:'center'});
+      }
+    });
+  });
 }
 
 /* Shared day body builder for Board and List */
@@ -5572,7 +5909,13 @@ function _dayEntriesHTML(wk, labs, ds, wlogi, xw, TL){
   var legBefore=function(e){
     var i=seqIdx[entryKey(e)];
     if(i==null||i===0) return '';
-    return legRowHTML(seq[i-1],seq[i],wk);
+    var prev=seq[i-1], cur=seq[i];
+    try{
+      var o1=teamOwnerOf(prev.key.charAt(0),prev.key.slice(2));
+      var o2=teamOwnerOf(cur.key.charAt(0),cur.key.slice(2));
+      if(o1&&o2&&o1!==o2) return ''; /* keep routes separate per person */
+    }catch(err){}
+    return legRowHTML(prev,cur,wk);
   };
   var nodv=ds.filter(function(d){return DAY[d.id]==null||DAY[d.id]>=labs.length;}).map(function(d){return {k:'v',d:d};});
   var nodl=wlogi.filter(function(x){return x.day==null||x.day>=labs.length;}).map(function(x){return {k:'l',x:x};});
@@ -5803,6 +6146,7 @@ function dvCard(v,tl){
         +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
+        +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
         +'<span class="kcc-dur">'+esc(fmtDur(v.dur||90))+'</span>'
         +(v.done?'<span class="kcc-stat">Conf</span>':'')
         +(isFixed?'<span class="kcc-lock">🔒</span>':'')
@@ -9965,7 +10309,6 @@ function pbRestoreNav(){
 function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings';
   pbSaveNav();
-  try{ renderTeamNav(); }catch(e){}
   document.getElementById("cards").style.display=(isMaster||isSettings)?'none':'';
   if(!isMaster&&!isSettings) renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings)?'':'none';
