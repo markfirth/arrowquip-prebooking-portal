@@ -191,11 +191,28 @@
   }
 
   function openMyTeam() {
-    if (!canManage()) { toast('Administrator access required', false); return; }
-    global.PLAN_MODE = 'weekly';
-    global.terr = 'Team';
+    /* Always navigate — the gear menu already gates visibility for admins.
+       Blocking here made My Team appear broken when role checks raced. */
+    try { global.PLAN_MODE = 'weekly'; } catch (e) {}
+    try { global.terr = 'Team'; } catch (e) {}
     document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
-    try { if (global.render) global.render(); } catch (e) {}
+    var ys = document.getElementById('yearShell');
+    if (ys) { ys.classList.remove('is-on'); ys.style.display = 'none'; }
+    var yv = document.getElementById('yearView');
+    if (yv) { yv.classList.remove('is-on'); yv.style.display = 'none'; }
+    ['plannerView', 'allView', 'masterView', 'settingsView'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    var tv = document.getElementById('teamView');
+    if (tv) { tv.classList.add('is-on'); tv.style.display = 'block'; }
+    try {
+      if (global.render) global.render();
+      else if (typeof renderMyTeam === 'function') renderMyTeam();
+    } catch (e) {
+      console.error(e);
+      try { renderMyTeam(); } catch (e2) { console.error(e2); }
+    }
+    if (!canManage()) toast('View only — administrator access required to edit users', false);
   }
 
   function renderMyTeam() {

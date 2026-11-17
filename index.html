@@ -981,6 +981,10 @@ body.wkfull-on{overflow:hidden;}
 .tv-place i{color:var(--muted-2);}
 /* compact collapsed flight / hotel row */
 .tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:32px;height:auto;padding:0;margin-bottom:3px;background:#fff;border:1px solid var(--line-soft,#e8eaed);border-radius:5px;}
+.tvcard.tvcompact.sched-nested,.kcard.kccompact.sched-nested{margin-left:14px;border-left:2px solid #93c5fd;background:#f8fbff;}
+.sched-nest-tag{flex:0 0 auto;font-size:9px;font-weight:700;color:#2563eb;letter-spacing:.02em;text-transform:uppercase;}
+.sched-class-row{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:11px;color:#6b7280;}
+.sched-class-row select{font:600 11px inherit;border:1px solid var(--line);border-radius:4px;padding:3px 6px;background:#fff;color:#111;}
 .tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:7px;min-width:0;background:none;border:0;padding:5px 8px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);min-height:32px;}
 .tvc-row:hover,.kcc-row:hover{background:#fafbfc;}
 .kcc-ic,.tvc-ic{flex:0 0 auto;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;line-height:1;}
@@ -1854,6 +1858,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/scheduling.js"></script>
 <style>
 #gate{position:fixed;inset:0;z-index:99999;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Open Sans',Arial,sans-serif;}
 #gate .gbox{background:#1b1b1b;border:1px solid #2c2c2c;border-radius:10px;padding:40px 44px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
@@ -3009,9 +3014,124 @@ function tlCompute(t,wk){
     if(!s2.fixed&&s2.sug==null&&s2.need!=null){ s2.sug=s2.need; s2.sugSrc='back'; }
   }
   seq.forEach(function(s){ by[s.key]=s; });
-  var out={seq:seq,by:by,conflicts:conflicts};
+  /* Context-aware overlaps (virtual / trade show / hotel) — genuine conflicts only */
+  var sched=null;
+  try{ sched=schedEvaluateWeek(t,wk,seq); }catch(e){ sched=null; }
+  if(sched&&sched.conflicts&&sched.conflicts.length){
+    sched.conflicts.forEach(function(c){
+      conflicts.push({
+        key:c.a,
+        sched:true,
+        reason:c.reason,
+        other:c.b,
+        needsUserResolution:!!c.needsUserResolution
+      });
+    });
+  }
+  var out={seq:seq,by:by,conflicts:conflicts,sched:sched};
   _tlCache[ck]=out;
   return out;
+}
+function schedBuffersCfg(){
+  var s=(typeof SETTINGS!=='undefined'&&SETTINGS)?SETTINGS:{};
+  var a=(typeof ADMIN!=='undefined'&&ADMIN&&ADMIN.schedBuffers)?ADMIN.schedBuffers:{};
+  return Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{}, s.schedBuffers||{}, a);
+}
+/** Build normalized events for AQScheduling from the live week. */
+function schedEventsFromPlan(t,wk,seq){
+  var evs=[], dayMin=function(day,time,dur){
+    if(day==null||!time) return null;
+    var sm=day*1440+(typeof minOf==='function'?minOf(time):0);
+    return {startMin:sm, endMin:sm+(dur||60)};
+  };
+  /* Dealers */
+  try{
+    dealersIn(t).forEach(function(d){
+      if(ASSIGN[d.id]!==wk) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('d',d.id)) return;
+      var iv=dayMin(DAY[d.id], TIME[d.id], DUR[d.id]||90);
+      if(!iv) return;
+      evs.push({
+        id:'d:'+d.id, kind:'dealer', type:'visit', name:d.name,
+        startMin:iv.startMin, endMin:iv.endMin, dur:DUR[d.id]||90,
+        locked:!!(TLE.lock&&TLE.lock['d:'+d.id]), confirmed:!!APPT[d.id],
+        schedClass:(STOPX[d.id]&&STOPX[d.id].schedClass)||null,
+        lat:d.lat, lon:d.lon, address:d.address
+      });
+    });
+  }catch(e){}
+  try{
+    XVISITS.forEach(function(x){
+      if(x.wk!==wk||(x.terr&&x.terr!==t&&t!=='All')) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('x',x.id)) return;
+      var iv=dayMin(x.day, x.time, x.dur||60);
+      if(!iv) return;
+      evs.push({
+        id:'x:'+x.id, kind:'xvisit', type:x.type||'visit', name:(byId[x.dealer]||uniById(x.dealer)||{}).name||'Visit',
+        startMin:iv.startMin, endMin:iv.endMin, dur:x.dur||60, act:x.act,
+        locked:!!(TLE.lock&&TLE.lock['x:'+x.id]), confirmed:!!x.done,
+        schedClass:x.schedClass||null
+      });
+    });
+  }catch(e){}
+  try{
+    LOGI.forEach(function(it){
+      if(it.wk!==wk||(it.terr&&it.terr!==t&&t!=='All')) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('m',it.id)) return;
+      var ty=typeof travelType==='function'?travelType(it):(it.type||'other');
+      var iv=dayMin(it.day, it.time, it.dur||(it.virtual?60:30));
+      if(!iv && ty!=='hotel') return;
+      if(ty==='hotel'&&!iv){
+        /* background hotel span uses check-in → checkout when available */
+        if(it.day==null) return;
+        var s0=it.day*1440+(it.time?minOf(it.time):18*60);
+        var e0=(it.day2!=null)?(it.day2*1440+(it.time2?minOf(it.time2):10*60)):(s0+12*60);
+        iv={startMin:s0,endMin:e0};
+      }
+      evs.push({
+        id:'m:'+it.id, kind:(ty==='hotel'?'hotel':'travel'), type:ty, name:it.name||ty,
+        startMin:iv.startMin, endMin:iv.endMin, dur:it.dur,
+        virtual:!!it.virtual, locked:!!(TLE.lock&&TLE.lock['m:'+it.id]),
+        confirmed:!!it.conf, schedClass:it.schedClass||null,
+        protected:!!it.schedProtected, parentId:it.parentId||null,
+        lat:it.lat, lon:it.lon, address:it.address,
+        meetingUrl:it.meetingUrl||it.joinUrl||''
+      });
+    });
+  }catch(e){}
+  /* Optional drive segments between consecutive located stops for virtual-during-drive */
+  try{
+    if(seq&&seq.length>1){
+      for(var i=0;i<seq.length-1;i++){
+        var a=seq[i], b=seq[i+1], trav=a.tnext;
+        if(!trav||trav.kind!=='drive'||trav.min==null) continue;
+        var leave=tlEnd(a);
+        if(leave==null) continue;
+        evs.push({id:'drive:'+a.key+'>'+b.key, kind:'drive', type:'drive', startMin:leave, endMin:leave+trav.min});
+      }
+    }
+  }catch(e){}
+  return evs;
+}
+function schedEvaluateWeek(t,wk,seq){
+  if(!window.AQScheduling) return {conflicts:[],nested:[],driveStops:[],soft:[]};
+  var evs=schedEventsFromPlan(t,wk,seq||[]);
+  return AQScheduling.evaluateSchedule(evs, schedBuffersCfg());
+}
+function schedNestParentOf(eventId, sched){
+  if(!sched||!sched.nested) return null;
+  for(var i=0;i<sched.nested.length;i++) if(sched.nested[i].childId===eventId) return sched.nested[i].parentId;
+  return null;
+}
+function schedClassSelectHTML(current, dataAttr){
+  if(!window.AQScheduling) return '';
+  var labels=AQScheduling.CLASS_LABELS;
+  var cur=current||'';
+  var opts=Object.keys(labels).map(function(k){
+    return '<option value="'+k+'"'+(cur===k?' selected':'')+'>'+esc(labels[k])+'</option>';
+  }).join('');
+  return '<div class="sched-class-row"><span>Scheduling</span><select class="sched-class-sel" '+dataAttr+' data-f="schedClass">'
+    +'<option value="">Auto</option>'+opts+'</select></div>';
 }
 /* --- timeline writers --- */
 /* lock = the ONLY thing that fixes a time. Locking a card freezes whatever
@@ -3451,6 +3571,7 @@ function adminInit(){
   /* legacy spelling: normalize any stored "Graeme" to "Graheme" */
   ADMIN.leaders.forEach(function(l){ if(l.id==='Graeme'){l.id='Graheme';} if(l.name==='Graeme'){l.name='Graheme';} });
   ADMIN.audit=ADMIN.audit||[];
+  ADMIN.schedBuffers=Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{}, ADMIN.schedBuffers||{});
   /* Territory team roster (DSR / ISS / AM). Seed from known TMs without
      duplicating; historical appointments stay unassigned until explicitly owned. */
   if(!Array.isArray(ADMIN.team)) ADMIN.team=[];
@@ -3783,12 +3904,15 @@ function openTeamModal(editId){
 function sbAttentionItems(){
   var items=[], focus=focusWkGet();
   if(!teamShowNav()) return items;
-  /* Scheduling conflicts / insufficient drive time in focused week */
+  /* Genuine scheduling conflicts only (context-aware engine + late arrivals) */
   try{
     if(typeof focus==='number'){
       var TL=tlCompute(terr,focus);
       var n=(TL.conflicts||[]).length;
       if(n) items.push({id:'conflicts',urgent:true,icon:'⚠',label:'Scheduling conflicts',count:n,wk:focus});
+      /* Virtual during drive — needs a confirmed stopping place (not a hard conflict) */
+      var ds=(TL.sched&&TL.sched.driveStops)||[];
+      if(ds.length) items.push({id:'drivestop',urgent:false,icon:'○',label:'Confirm stop for virtual meeting',count:ds.length,wk:focus});
     }
   }catch(e){}
   /* Unconfirmed dealer appointments in focused week */
@@ -5827,7 +5951,9 @@ function setTravelField(id,field,val){
     it.airportCode=(val||'').toUpperCase();
     if(a){ it.airportName=a.name; it.lat=a.lat; it.lon=a.lon; it.address=a.city; }
   }
+  else if(field==='schedClass'){ if(!val) delete it.schedClass; else it.schedClass=val; }
   else it[field]=val;
+  try{ tlInvalidate(); }catch(e){}
   savePlan(); refreshPlanner();
 }
 /* geocode an address field and persist coordinates */
@@ -5962,9 +6088,15 @@ function travelCard(it,wk,tl){
     var statBits='';
     if(!(located||it.virtual)) statBits+='<span class="tv-bad">Needs address</span>';
     if(it.conf) statBits+='<span class="kcc-stat">Conf</span>';
-    return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
+    var nested=false;
+    try{
+      var _sch=tlCompute(terr, wk).sched;
+      nested=!!schedNestParentOf('m:'+it.id, _sch);
+    }catch(e){}
+    return '<div class="tvcard tvcompact t-'+ty+(nested?' sched-nested':'')+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
       +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
+        +(nested?'<span class="sched-nest-tag">In event</span>':'')
         +'<span class="tvc-main">'+esc(label)+'</span>'
         +whoBadge
         +(_mainT?('<span class="tvc-time">'+_mainT+'</span>'):'')
@@ -6069,7 +6201,8 @@ function travelCard(it,wk,tl){
   var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
   /* travel cards move exactly like visit cards: drag to a day (or a position
      within one) and every arrival downstream recalculates */
-  var collapseBtn=(isFlight||isHotel)?('<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>'):'';
+  var collapseBtn='<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>';
+  var schedRow=schedClassSelectHTML(it.schedClass||'', 'data-tv="'+it.id+'"');
   return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
@@ -6079,7 +6212,7 @@ function travelCard(it,wk,tl){
       +lockBtn
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
-    +'<div class="tv-body">'+place+when+durRow+when2+flight+conf+tlRow+'</div>'
+    +'<div class="tv-body">'+place+when+durRow+when2+flight+conf+tlRow+schedRow+'</div>'
     +'</div>';
 }
 /* printable/trip-plan row */
@@ -6597,6 +6730,10 @@ function dvCard(v,tl){
         if(!t||t==='Current Dealer') return ''; return ' <span class="ptbadge pt-'+(d._prospect?d.ptype2:'current')+'">'+esc(t)+'</span>'; })()
     +'</div>'
     +ctl+frame
+    +schedClassSelectHTML((v.ref.charAt(0)==='i'
+      ? ((STOPX[v.ref.slice(2)]&&STOPX[v.ref.slice(2)].schedClass)||'')
+      : (function(){ var xv=XVISITS.filter(function(z){return z.id===v.ref.slice(2);})[0]; return (xv&&xv.schedClass)||''; })())
+      , da)
     +'</div>';
 }
 /* one writer for every inline field on either card kind */
@@ -6608,6 +6745,7 @@ function setVisitField(ref,f,val){
     else if(f==='time'){ var pv=parseTimeLoose(val); if(pv==null) return false; TIME[id]=pv; }   /* typing never locks — only the 🔒 does */
     else if(f==='dur'){ var n=normDur(parseDur(val)); if(n==null) return false; DUR[id]=n; }
     else if(f==='notes'){ var s=STOPX[id]=STOPX[id]||{}; s.notes=val; }
+    else if(f==='schedClass'){ var sx=STOPX[id]=STOPX[id]||{}; if(!val) delete sx.schedClass; else sx.schedClass=val; }
   } else {
     var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return false;
     if(f==='wk'){ var nw=parseInt(val,10); if(!isFinite(nw)) return false; if(x.wk!==nw) x.day=null; x.wk=nw; }
@@ -6615,7 +6753,9 @@ function setVisitField(ref,f,val){
     else if(f==='time'){ var pvx=parseTimeLoose(val); if(pvx==null) return false; x.time=pvx; }  /* typing never locks — only the 🔒 does */
     else if(f==='dur'){ var n2=normDur(parseDur(val)); if(n2==null) return false; x.dur=n2; }
     else if(f==='notes') x.notes=val;
+    else if(f==='schedClass'){ if(!val) delete x.schedClass; else x.schedClass=val; }
   }
+  try{ tlInvalidate(); }catch(e){}
   savePlan(); return true;
 }
 function toggleVisitConf(ref){
@@ -10120,10 +10260,31 @@ function renderSettings(){
           +'<td style="padding:3px 0;color:var(--muted-2);white-space:nowrap">'+esc(a.by||'')+'</td></tr>';
       }).join('')+'</tbody></table></div>'
     : '<div style="font-size:12px;color:var(--muted-2);padding:6px 0">No changes recorded yet.</div>';
+  /* Scheduling buffers (context-aware travel engine) */
+  if(!ADMIN.schedBuffers) ADMIN.schedBuffers=Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{});
+  var sb=ADMIN.schedBuffers;
+  var bufFields=[
+    ['virtualPrepMin','Virtual meeting prep (min)'],
+    ['tradeShowReturnMin','Return to trade show (min)'],
+    ['dealerPrepMin','Dealer meeting prep (min)'],
+    ['dealerOverrunMin','Dealer overrun buffer (min)'],
+    ['airportDomesticMin','Domestic airport arrival (min)'],
+    ['airportIntlMin','International airport arrival (min)'],
+    ['rentalPickupMin','Rental car collection (min)'],
+    ['hotelCheckInMin','Hotel check-in (min)'],
+    ['hotelCheckOutMin','Hotel checkout (min)'],
+    ['drivePaddingPct','Driving time padding (%)']
+  ];
+  var bufBody='<div '+row.replace('border-bottom:1px solid var(--line-soft)','border-bottom:0')+' style="gap:12px">'
+    +bufFields.map(function(p){
+      return fld(p[1],'<input class="schedBufIn" data-k="'+p[0]+'" type="number" min="0" '+inp+' value="'+(sb[p[0]]!=null?sb[p[0]]:'')+'">');
+    }).join('')
+    +'</div><div style="font-size:11px;color:var(--muted-2);margin-top:6px">Defaults used by the context-aware scheduler. Override per appointment from the expanded Scheduling dropdown. Does not auto-move locked or confirmed appointments.</div>';
   host.innerHTML=
      sec('Currency','One centralized exchange rate drives every CAD conversion. Auto-refreshed daily; last successful rate is kept when the provider is unreachable.',curBody)
     +sec('Average Revenue Per Load','Dealer target revenue = Target Loads × the value for the dealer\'s market. Dealers in unknown markets become problem rows.',rplBody)
     +sec('Planning Defaults','The target year drives every label and calculation — '+(Y+1)+' and beyond are a settings change, not a rewrite.',defBody)
+    +sec('Scheduling Buffers','Preparation and transition times for virtual meetings, trade shows, dealers, airports and hotels.',bufBody)
     +sec(Y+' Dealer Program','Tier, dealer margin and co-op derive automatically from Target Loads. Edit the bands here — no code changes needed.',progBody)
     +sec('Audit Log','Who changed what, when — targets, rates, overrides, commitments and locks.',audBody);
   /* wiring */
@@ -10152,6 +10313,15 @@ function renderSettings(){
     audit('default',{field:k,old:ADMIN.defaults[k],neu:v});
     ADMIN.defaults[k]=v;
     recalcTargets(); saveAdmin(); renderSettings();
+  };});
+  host.querySelectorAll('.schedBufIn').forEach(function(el){ el.onchange=function(){
+    if(!ADMIN.schedBuffers) ADMIN.schedBuffers={};
+    var k=el.dataset.k, v=parseFloat(el.value);
+    if(!isFinite(v)||v<0){ renderSettings(); return; }
+    audit('sched-buffer',{field:k,old:ADMIN.schedBuffers[k],neu:v});
+    ADMIN.schedBuffers[k]=Math.round(v);
+    try{ tlInvalidate(); }catch(e){}
+    saveAdmin(); renderSettings();
   };});
   host.querySelectorAll('.progIn').forEach(function(el){ el.onchange=function(){
     var i=+el.dataset.i, k=el.dataset.k, p=ADMIN.program[i]; if(!p) return;
@@ -10536,6 +10706,10 @@ function wireDnD(){
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
     var ok=setVisitField(el.dataset.vref, el.dataset.f, el.value);
     if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
+    refreshPlanner();
+  }));
+  document.querySelectorAll('.sched-class-sel[data-vref]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    setVisitField(el.dataset.vref, 'schedClass', el.value);
     refreshPlanner();
   }));
   document.querySelectorAll('.vnote').forEach(el=>{
@@ -11508,7 +11682,7 @@ function pbRestoreNav(){
     var ns=JSON.parse(localStorage.getItem('aqNavState')||'null');
     _pbNavReady=true;
     if(!ns) return;
-    var tabsOk=['All','East','South','Central','West','Exports','Master'];
+    var tabsOk=['All','East','South','Central','West','Exports','Master','Settings','Team'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
     allMode=(ns.allMode==='map')?'map':(ns.allMode==='trip'?'trip':'overview');   /* legacy cal/leaders/leader → overview */
@@ -12308,7 +12482,11 @@ function pbRenderAcct(){
         e.stopPropagation();
         menu.classList.remove('open');
         var a=b.dataset.gear;
-        if(a==='team'){ if(typeof openMyTeam==='function') openMyTeam(); return; }
+        if(a==='team'){
+          if(typeof openMyTeam==='function') openMyTeam();
+          else { terr='Team'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); }
+          return;
+        }
         if(a==='master'){ terr='Master'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='settings'){ terr='Settings'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='trips'){
