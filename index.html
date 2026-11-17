@@ -77,7 +77,13 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* Team member strip — under territory nav, ~34px */
 .aqTeamNav{display:none!important;} /* team selection moved into Trips sidebar */
 /* ---- Page heading ---- */
-.wrap{max-width:100%;margin:0 auto;padding:0 0 24px;}
+.wrap{max-width:100%;width:100%;margin:0;padding:0;box-sizing:border-box;}
+#plannerView,#allView{width:100%;max-width:100%;box-sizing:border-box;}
+#plannerView.trips-on .planwrap.trips-kanban,
+#allView .planwrap.trips-kanban{margin:0;}
+/* Cloud error banner sits above the frozen trip documents footer, never over it */
+body.trips-layout-on #pbSaveErr{bottom:44px !important;}
+body.trips-layout-on #sysHealth{display:none !important;}
 /* ---- KPI cards (legacy sales metrics — cleared on travel views) ---- */
 .cards{display:none;gap:12px;margin-bottom:0;}
 .card{position:relative;display:flex;flex-direction:column;flex:1;align-items:flex-start;justify-content:center;padding:.625rem .875rem .75rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);min-width:0;line-height:1.2;overflow:hidden;}
@@ -96,33 +102,46 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 
 /* ===== Desktop Trips Kanban (layout only — branding unchanged) ===== */
 /* ===== Desktop Trips — compact Kanban / List ===== */
+/* Must beat base .planwrap {display:grid; 252px 1fr} — that grid was laying
+   trips-body and the footer as two columns, crushing the workspace to ~252px. */
+#planwrap.planwrap.trips-kanban,
+#allPlanwrap.planwrap.trips-kanban,
 .planwrap.trips-kanban{
-  display:flex;
-  flex-direction:column;
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-columns:none !important;
+  gap:0 !important;
+  width:100%;
+  max-width:100%;
   height:calc(100vh - 140px);
   max-height:calc(100vh - 140px);
   background:#fff;
   border:1px solid var(--line);
   border-radius:var(--radius);
   overflow:hidden;
+  box-sizing:border-box;
 }
+#planwrap.planwrap.trips-kanban > .trips-body,
+#allPlanwrap.planwrap.trips-kanban > .trips-body,
 .planwrap.trips-kanban > .trips-body{
   flex:1 1 auto;
   min-height:0;
+  min-width:0;
+  width:100%;
   display:grid;
-  grid-template-columns:260px minmax(0,1fr);
+  grid-template-columns:240px minmax(0,1fr);
   gap:0;
   align-items:stretch;
 }
 .planwrap.trips-kanban.nav-collapsed > .trips-body{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
-/* Default split ≈ 70% itinerary / 30% map of remaining space via fr units;
-   --trips-map-w overrides with a remembered pixel width after the user drags. */
+/* Default split ≈ itinerary flex + map ~38% of remaining space.
+   --trips-map-w is a plain length (px) after drag; otherwise use fr track. */
 .planwrap.trips-kanban.map-split > .trips-body{
-  grid-template-columns:260px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
+  grid-template-columns:240px minmax(0,1fr) 5px var(--trips-map-w, minmax(280px, 0.38fr));
 }
 .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{
-  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
+  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w, minmax(280px, 0.38fr));
 }
 .planwrap.trips-kanban.map-full > .trips-body{
   grid-template-columns:260px minmax(0,1fr);
@@ -135,9 +154,10 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .planwrap.trips-kanban.map-collapsed .trips-split,
 .planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
 .trips-docbar{
-  flex:0 0 44px;height:44px;box-sizing:border-box;
+  flex:0 0 44px;height:44px;width:100%;max-width:100%;box-sizing:border-box;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:0 12px;background:#fff;border-top:1px solid var(--line);z-index:6;
+  padding:0 12px;background:#fff;border-top:1px solid var(--line);z-index:20;
+  position:relative;
 }
 .trips-docbar .tdb-left{display:inline-flex;align-items:center;gap:8px;min-width:0;}
 .trips-docbar .tdb-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:#16a34a;}
@@ -319,9 +339,16 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 #plannerView.trips-on .hint{display:none;}
 #plannerView.trips-on .planwrap.trips-kanban{border-radius:0;border-left:0;border-right:0;border-top:0;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:260px minmax(0,1fr);}
+  /* Keep the map available down to tablet widths; only drop the splitter handle. */
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr) var(--trips-map-w, minmax(240px, 0.36fr));}
+  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr) var(--trips-map-w, minmax(240px, 0.36fr));}
+  .planwrap.trips-kanban.map-split .trips-split{display:none;}
+}
+@media(max-width:900px){
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr);}
   .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr);}
-  .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
+  .planwrap.trips-kanban.map-split .trips-split,
+  .planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
 
 .sidebar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);position:sticky;top:105px;height:calc(100vh - 121px);display:flex;flex-direction:column;overflow:hidden;z-index:30;}
@@ -943,9 +970,14 @@ body.wkfull-on{overflow:hidden;}
 .tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tv-place i{color:var(--muted-2);}
 /* compact collapsed flight / hotel row */
-.tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:36px;padding:0;margin-bottom:4px;}
-.tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:7px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
+.tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:32px;height:auto;padding:0;margin-bottom:3px;background:#fff;border:1px solid var(--line-soft,#e8eaed);border-radius:5px;}
+.tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:7px;min-width:0;background:none;border:0;padding:5px 8px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);min-height:32px;}
 .tvc-row:hover,.kcc-row:hover{background:#fafbfc;}
+.kcc-ic,.tvc-ic{flex:0 0 auto;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;line-height:1;}
+.kcc-main,.tvc-main{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600;}
+.kcc-time,.tvc-time{flex:0 0 auto;font-size:11px;font-weight:600;color:#6b7280;white-space:nowrap;}
+.kcc-caret,.tvc-caret{flex:0 0 auto;color:#9ca3af;font-size:11px;margin-left:2px;}
+.kcc-stat{flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#15803d;background:#e7f3ec;border-radius:10px;padding:1px 6px;}
 .tvc-ic,.kcc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
 .tvc-main,.kcc-main{flex:0 1 auto;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tvc-time,.kcc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:46px;}
@@ -2574,13 +2606,17 @@ function mapModeApplyDom(){
   wrap.classList.remove('map-collapsed','map-split','map-full','nav-collapsed');
   wrap.classList.add('map-'+(MAP_UI_MODE||'split'));
   if(!NAV_OPEN) wrap.classList.add('nav-collapsed');
-  if(MAP_SPLIT_PX!=null){
-    wrap.style.setProperty('--trips-map-w', MAP_SPLIT_PX+'px');
+  /* Only set a concrete px width after the user drags. Never inject minmax()
+     into the custom property — that interacted badly with the base .planwrap
+     grid and left the footer sharing a 1fr column beside a crushed trips-body. */
+  if(MAP_SPLIT_PX!=null && isFinite(MAP_SPLIT_PX) && MAP_SPLIT_PX>0){
+    wrap.style.setProperty('--trips-map-w', Math.round(MAP_SPLIT_PX)+'px');
   } else {
-    /* 30% of remaining workspace until the user drags the divider */
-    wrap.style.setProperty('--trips-map-w', 'minmax(200px,30%)');
+    wrap.style.removeProperty('--trips-map-w');
   }
   var pv=document.getElementById('plannerView'); if(pv) pv.classList.add('trips-on');
+  try{ document.body.classList.add('trips-layout-on'); }catch(e){}
+  try{ mapInvalidateSoon(); }catch(e){}
 }
 function mapInvalidateSoon(){
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },40);
@@ -5907,21 +5943,24 @@ function travelCard(it,wk,tl){
   var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
   var located=travelHasLocation(it);
-  /* ---- compact collapsed row for flights & hotels (click to expand) ---- */
+  /* ---- universal compact collapsed row (every travel type) ---- */
   var _mainT=it.time?t12s(it.time):((tl&&tl.sug!=null)?t12s(addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440)):'');
-  if((isFlight||isHotel) && !tvExpanded(it.id)){
-    var whenWord=isHotel?'Check-in':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'Lands'));
+  if(!tvExpanded(it.id)){
     var whoBadge=teamWhoBadge('m',it.id);
     var label=isFlight
-      ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
-      : (esc(it.name||'Hotel'));
-    var timePart=_mainT?('<span class="tvc-time">'+whenWord+' '+_mainT+'</span>'):'';
-    var stat=(located||it.virtual)?'':'<span class="tv-bad">Needs address</span>';
+      ? (it.name||(it.airportCode?(it.airportCode+(it.airportName?(' — '+it.airportName):'')):(T.label||'Flight')))
+      : (it.name||T.label||'Stop');
+    var statBits='';
+    if(!(located||it.virtual)) statBits+='<span class="tv-bad">Needs address</span>';
+    if(it.conf) statBits+='<span class="kcc-stat">Conf</span>';
     return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
       +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
-        +'<span class="tvc-main">'+label+'</span>'+whoBadge+timePart+stat
-        +'<span class="tvc-caret">▸</span>'
+        +'<span class="tvc-main">'+esc(label)+'</span>'
+        +whoBadge
+        +(_mainT?('<span class="tvc-time">'+_mainT+'</span>'):'')
+        +statBits
+        +'<span class="tvc-caret">▾</span>'
       +'</button>'
       +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>';
@@ -6498,19 +6537,18 @@ function dvCard(v,tl){
   var isFixed=!v.remote&&((tl&&(tl.locked||tl.conf))||(!tl&&(TLE.lock[tkey]||v.done)));
   var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=isFixed?v.time:(autoT||v.time);
-  /* ---- compact one-line row (click anywhere to expand) ---- */
+  /* ---- compact one-line row: icon | name | time | status | chevron ---- */
   if(!dvExpanded(v.ref)){
     var lateClsC=(tl&&tl.lateMin)?' tl-late':'';
     return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
       +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="Click to edit details">'
-        +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
         +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
-        +'<span class="kcc-dur">'+esc(fmtDur(v.dur||90))+'</span>'
+        +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
         +(v.done?'<span class="kcc-stat">Conf</span>':'')
         +(isFixed?'<span class="kcc-lock">🔒</span>':'')
-        +'<span class="kcc-caret">▸</span>'
+        +'<span class="kcc-caret">▾</span>'
       +'</button>'
       +'<button class="cx kcc-del" data-vdel="'+v.ref+'" title="Remove">✕</button>'
     +'</div>';
@@ -6606,11 +6644,13 @@ function createVisit(dealerId,type,wk,day){
   type=(type==='visit')?'visit':'prebook';
   day=(day==null||day===''||day==='none')?null:parseInt(day,10);
   if(day!=null&&!isFinite(day)) day=null;
+  var expandRef=null;
   if(ASSIGN[dealerId]==='pool'||ASSIGN[dealerId]==null){
     ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
     DAY[dealerId]=day; TIME[dealerId]='';
     if(type==='visit') PTYPE[dealerId]='visit'; else delete PTYPE[dealerId];
     teamStampNew('d',dealerId);
+    expandRef='i:'+dealerId;
   } else {
     if(wk==='remote') return;
     var xid='X'+Date.now()+Math.floor(Math.random()*1000);
@@ -6618,7 +6658,9 @@ function createVisit(dealerId,type,wk,day){
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
       wk:parseInt(wk,10), day:day, time:'', dur:60, type:type, notes:'', done:false});
     teamStampNew('x',xid);
+    expandRef='x:'+xid;
   }
+  if(expandRef){ try{ DVEXP[expandRef]=true; sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} }
   savePlan(); refreshPlanner();
 }
 function renderAllView(){
@@ -9187,14 +9229,14 @@ function dqInputHTML(wk,day){
 function dqMatches(q){
   var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
   var rows=planningUniverse().filter(function(d){
-    var h=[d.name,d.loc,d.city,d.address].join(' ').toLowerCase();
+    var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
     return toks.every(function(t){ return h.indexOf(t)>=0; });
   });
   var q0=toks[0];
   var score=function(d){ var n=(d.name||'').toLowerCase();
     return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
   rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
-  return rows.slice(0,8);
+  return rows.slice(0,10);
 }
 var DQ={inp:null,rows:[],on:0};
 function dqClose(){ var p=document.getElementById('dqPop'); if(p) p.remove(); DQ.rows=[]; }
@@ -9249,7 +9291,9 @@ function dqAddStop(c){
     airportCode:'', airportName:'', airline:'', flightNo:'',
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
-  LOGI.push(it); teamStampNew('m',it.id); savePlan();
+  LOGI.push(it); teamStampNew('m',it.id);
+  try{ TVEXP[it.id]=true; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  savePlan();
   function afterOwn(){ refreshPlanner(); }
   if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
     teamPickOwner('m', it.id, afterOwn);
@@ -9329,58 +9373,119 @@ document.addEventListener('mousedown',function(e){
 },true);
 window.addEventListener('resize',function(){ if(document.getElementById('dqPop')) dqRender(); });
 document.addEventListener('scroll',function(e){ if(document.getElementById('dqPop')&&DQ.inp){ dqRender(); } },true);
-/* Dealer / Prospect picker: search the master library or quick-create a
-   potential/prospect/competitor, then drop it straight into the week. */
+/* Dealer / Prospect picker: Existing dealer (portal records) | Potential new
+   (manual / Google Places when configured). Drops straight into the week. */
+function placesConfigured(){
+  try{
+    if(typeof SETTINGS!=='undefined' && SETTINGS && SETTINGS.googlePlacesKey) return true;
+    if(window.AQ_GOOGLE_PLACES_KEY) return true;
+  }catch(e){}
+  return false;
+}
 function openDealerAdd(wk,day){
   _closeAddMenu();
   var wrap=document.getElementById('dpModal'); if(wrap) wrap.remove();
   wrap=document.createElement('div'); wrap.id='dpModal'; wrap.className='aqmodal';
   var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
   var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
-  wrap.innerHTML='<div class="aqmodal-box">'
-    +'<div class="aqmodal-h">Add to '+esc(typeof wk==='number'?('WK '+wkNo(wk)):'trip')+'</div>'
-    +'<input id="dpSearch" '+inp+' placeholder="Search any dealer, prospect or territory…" autocomplete="off">'
+  var mode='existing';
+  wrap.innerHTML='<div class="aqmodal-box" style="max-width:480px">'
+    +'<div class="aqmodal-h" style="display:flex;align-items:center;gap:8px"><span style="color:var(--aq-red)">🤝</span> Add dealer visit'
+    +'<button id="dpClose" class="btn" style="margin-left:auto;padding:4px 8px">×</button></div>'
+    +'<div style="display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-bottom:10px">'
+    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 12px inherit;padding:8px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing dealer</button>'
+    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 12px inherit;padding:8px;cursor:pointer;color:#6b7280">Potential new dealer</button>'
+    +'</div>'
+    +'<div id="dpExisting">'
+    +'<input id="dpSearch" '+inp+' placeholder="Search dealer name, city, state or account…" autocomplete="off">'
     +'<div id="dpResults" class="dp-results"></div>'
-    +'<div class="dp-div">or create a new account</div>'
-    +'<label '+lbl+'>Name<input id="dpName" '+inp+'></label>'
+    +'</div>'
+    +'<div id="dpPotential" style="display:none">'
+    +'<input id="dpPlaces" '+inp+' placeholder="Search business name, town or address…" autocomplete="off">'
+    +'<div id="dpPlacesNote" style="font-size:11px;color:#6b7280;margin:6px 0 8px"></div>'
+    +'<div id="dpPlacesResults" class="dp-results"></div>'
+    +'<div class="dp-div">or enter manually</div>'
+    +'<label '+lbl+'>Business name<input id="dpName" '+inp+'></label>'
     +'<label '+lbl+'>Address<input id="dpAddr" '+inp+' placeholder="Street, City, State"></label>'
     +'<div style="display:flex;gap:8px;margin-top:8px">'
       +'<label '+lbl+' style="flex:1">Type<select id="dpType" '+inp+'><option value="potential">Potential Dealer</option><option value="prospect">New Prospect</option><option value="competitor">Competitor</option></select></label>'
-      +'<label '+lbl+' style="flex:1">Contact (optional)<input id="dpContact" '+inp+'></label>'
+      +'<label '+lbl+' style="flex:1">Phone<input id="dpPhone" '+inp+'></label>'
     +'</div>'
-    +'<div style="display:flex;gap:8px;margin-top:8px">'
-      +'<label '+lbl+' style="flex:1">Phone (optional)<input id="dpPhone" '+inp+'></label>'
-    +'</div>'
-    +'<label '+lbl+'>Notes (optional)<input id="dpNotes" '+inp+'></label>'
     +'<div id="dpMsg" style="font-size:11px;color:#666;min-height:15px;margin-top:8px"></div>'
-    +'<div style="display:flex;gap:8px;margin-top:6px"><button id="dpCreate" class="btn" style="flex:1;padding:9px;background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700">Create & add to trip</button>'
-    +'<button id="dpClose" class="btn" style="padding:9px">Close</button></div>'
-    +'</div>';
+    +'<button id="dpCreate" class="btn" style="width:100%;margin-top:8px;padding:9px;background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700">Create &amp; add to trip</button>'
+    +'</div></div>';
   document.body.appendChild(wrap);
   var $=function(s){return wrap.querySelector(s);};
   $('#dpClose').onclick=function(){ wrap.remove(); };
   wrap.onclick=function(e){ if(e.target===wrap) wrap.remove(); };
+  function setTab(tab){
+    mode=tab;
+    wrap.querySelectorAll('[data-dptab]').forEach(function(b){
+      var on=b.dataset.dptab===tab;
+      b.classList.toggle('on',on);
+      b.style.color=on?'var(--aq-red)':'#6b7280';
+      b.style.background=on?'#fff':'#f5f6f7';
+      b.style.boxShadow=on?'inset 0 -2px 0 var(--aq-red)':'none';
+    });
+    $('#dpExisting').style.display=tab==='existing'?'':'none';
+    $('#dpPotential').style.display=tab==='potential'?'':'none';
+    if(tab==='existing') setTimeout(function(){ $('#dpSearch').focus(); },20);
+    else {
+      $('#dpPlacesNote').textContent=placesConfigured()
+        ? 'Search Google Places for farm equipment and related businesses.'
+        : 'Google Places is not configured yet. Enter the business name and address manually — it will be geocoded with the existing address lookup. Add AQ_GOOGLE_PLACES_KEY (or Settings → googlePlacesKey) when ready.';
+      setTimeout(function(){ $('#dpPlaces').focus(); },20);
+    }
+  }
+  wrap.querySelectorAll('[data-dptab]').forEach(function(b){ b.onclick=function(){ setTab(b.dataset.dptab); }; });
   var renderResults=function(){
-    var q=($('#dpSearch').value||'').toLowerCase().trim();
-    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type to search every territory…</div>'; return; }
-    var rows=planningUniverse().filter(function(d){ return (d.name||'').toLowerCase().includes(q)||(d.loc||'').toLowerCase().includes(q)||(d.territory||'').toLowerCase().includes(q); }).slice(0,30);
-    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — create it below.</div>'; return; }
+    var q=($('#dpSearch').value||'').trim();
+    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, postal code or account…</div>'; return; }
+    var rows=dqMatches(q);
+    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Potential new dealer.</div>'; return; }
     $('#dpResults').innerHTML=rows.map(function(d){
       var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
+      var sub=[d.city,d.loc,d.territory].filter(Boolean).join(' · ');
       return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
-        +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span></button>';
+        +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc(sub)+'</span></button>';
     }).join('');
-    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){ b.onclick=function(){ addDealerToWeek(b.dataset.pick,wk,day); wrap.remove(); }; });
+    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){
+      b.onclick=function(){
+        createVisit(b.dataset.pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        wrap.remove();
+      };
+    });
   };
   $('#dpSearch').addEventListener('input',renderResults); renderResults();
+  var placesTimer=null;
+  $('#dpPlaces').addEventListener('input',function(){
+    clearTimeout(placesTimer);
+    placesTimer=setTimeout(function(){
+      var q=($('#dpPlaces').value||'').trim();
+      var box=$('#dpPlacesResults');
+      if(!q){ box.innerHTML=''; return; }
+      if(!placesConfigured()){
+        box.innerHTML='<div class="dp-hint">Places API awaiting credentials — use the manual fields below, or pick a close existing dealer above.</div>';
+        $('#dpName').value=q;
+        return;
+      }
+      box.innerHTML='<div class="dp-hint">Searching Google Places…</div>';
+      /* Hook point for server-backed Places Autocomplete when key is configured. */
+      box.innerHTML='<div class="dp-hint">Places search endpoint not deployed yet. Use manual entry.</div>';
+      $('#dpName').value=q;
+    },280);
+  });
   $('#dpCreate').onclick=function(){
-    var nm=$('#dpName').value.trim(); if(!nm){ $('#dpMsg').textContent='Enter a name.'; return; }
+    var nm=$('#dpName').value.trim(); if(!nm){ $('#dpMsg').textContent='Enter a business name.'; return; }
     $('#dpMsg').textContent='Locating address…';
     addProspect({ name:nm, address:$('#dpAddr').value.trim(), ptype2:$('#dpType').value,
-      contact:$('#dpContact').value.trim(), phone:$('#dpPhone').value.trim(), notes:$('#dpNotes').value.trim(), territory:terr },
-      function(p){ addDealerToWeek(p.id,wk,day); wrap.remove(); });
+      phone:$('#dpPhone').value.trim(), territory:terr },
+      function(p){
+        createVisit(p.id,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        wrap.remove();
+      });
   };
-  setTimeout(function(){ $('#dpSearch').focus(); },30);
+  setTab('existing');
 }
 /* ---------- Leader Map (company-wide) ---------- */
 let _lvMap=null;
@@ -11428,6 +11533,7 @@ function render(){
     tv.style.display=isTeam?'block':'none';
   }
   if(yearMode){
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
     document.getElementById("cards").style.display='none';
     document.getElementById("plannerView").style.display='none';
     document.getElementById("allView").style.display='none';
@@ -11453,14 +11559,19 @@ function render(){
   document.getElementById("masterView").style.display=isMaster?'':'none';
   document.getElementById("settingsView").style.display=isSettings?'':'none';
   if(isTeam){
+    try{ document.body.classList.remove('trips-layout-on'); }catch(e0){}
     try{ if(typeof mtNormalizeTeam==='function') mtNormalizeTeam(); }catch(e){}
     try{ if(typeof renderMyTeam==='function') renderMyTeam(); }catch(e){ console.error(e); }
     return;
   }
-  if(isSettings) renderSettings();
-  else if(isMaster) renderMaster();
-  else if(isAll) renderAllView();
+  if(isSettings){ try{ document.body.classList.remove('trips-layout-on'); }catch(e0){} renderSettings(); }
+  else if(isMaster){ try{ document.body.classList.remove('trips-layout-on'); }catch(e0){} renderMaster(); }
+  else if(isAll){
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
+    renderAllView();
+  }
   else {
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
     document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
     var isPlan=terrMode!=='map', isMap=terrMode==='map';
     document.getElementById('planwrap').style.display=isPlan?'':'none';
