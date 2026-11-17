@@ -4,7 +4,9 @@
   "description": "Arrowquip TRAVEL — static planner + Vercel API routes",
   "scripts": {
     "smoke:pdf": "node scripts/smoke-visit-report-pdf.js",
-    "test:scheduling": "node scripts/scheduling-selftest.js"
+    "test:scheduling": "node scripts/scheduling-selftest.js",
+    "test:time": "node scripts/time-entry-selftest.js",
+    "test": "npm run test:scheduling && npm run test:time"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"
