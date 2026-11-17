@@ -121,8 +121,7 @@ body.trips-layout-on #sysHealth{display:none !important;}
   overflow:hidden;
   box-sizing:border-box;
 }
-#planwrap.planwrap.trips-kanban > .trips-body,
-#allPlanwrap.planwrap.trips-kanban > .trips-body,
+/* Base body grid — keep specificity below #id.map-* overrides below. */
 .planwrap.trips-kanban > .trips-body{
   flex:1 1 auto;
   min-height:0;
@@ -133,19 +132,30 @@ body.trips-layout-on #sysHealth{display:none !important;}
   gap:0;
   align-items:stretch;
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.nav-collapsed > .trips-body,
 .planwrap.trips-kanban.nav-collapsed > .trips-body{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
-/* Default split ≈ itinerary flex + map ~38% of remaining space.
-   --trips-map-w is a plain length (px) after drag; otherwise use fr track. */
+/* Default split ≈ itinerary flex + map ~38% of the grid.
+   IMPORTANT: never put commas inside a var() fallback (minmax would break
+   parsing of the whole grid-template-columns declaration). --trips-map-w
+   must always be a single length token (px or %).
+   #id selectors required so these beat any #planwrap trips-body base rule. */
+#planwrap.planwrap.trips-kanban.map-split > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.map-split > .trips-body,
 .planwrap.trips-kanban.map-split > .trips-body{
-  grid-template-columns:240px minmax(0,1fr) 5px var(--trips-map-w, minmax(280px, 0.38fr));
+  grid-template-columns:240px minmax(0,1fr) 5px var(--trips-map-w, 38%);
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed.map-split > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.nav-collapsed.map-split > .trips-body,
 .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{
-  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w, minmax(280px, 0.38fr));
+  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w, 38%);
 }
+#planwrap.planwrap.trips-kanban.map-full > .trips-body,
 .planwrap.trips-kanban.map-full > .trips-body{
-  grid-template-columns:260px minmax(0,1fr);
+  grid-template-columns:240px minmax(0,1fr);
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed.map-full > .trips-body,
 .planwrap.trips-kanban.nav-collapsed.map-full > .trips-body{
   grid-template-columns:minmax(0,1fr);
 }
@@ -340,8 +350,8 @@ body.trips-layout-on #sysHealth{display:none !important;}
 #plannerView.trips-on .planwrap.trips-kanban{border-radius:0;border-left:0;border-right:0;border-top:0;}
 @media(max-width:1100px){
   /* Keep the map available down to tablet widths; only drop the splitter handle. */
-  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr) var(--trips-map-w, minmax(240px, 0.36fr));}
-  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr) var(--trips-map-w, minmax(240px, 0.36fr));}
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr) var(--trips-map-w, 36%);}
+  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr) var(--trips-map-w, 36%);}
   .planwrap.trips-kanban.map-split .trips-split{display:none;}
 }
 @media(max-width:900px){
@@ -2606,13 +2616,12 @@ function mapModeApplyDom(){
   wrap.classList.remove('map-collapsed','map-split','map-full','nav-collapsed');
   wrap.classList.add('map-'+(MAP_UI_MODE||'split'));
   if(!NAV_OPEN) wrap.classList.add('nav-collapsed');
-  /* Only set a concrete px width after the user drags. Never inject minmax()
-     into the custom property — that interacted badly with the base .planwrap
-     grid and left the footer sharing a 1fr column beside a crushed trips-body. */
+  /* Always a single length token. Commas/minmax inside --trips-map-w invalidate
+     the entire grid-template-columns rule in CSS. */
   if(MAP_SPLIT_PX!=null && isFinite(MAP_SPLIT_PX) && MAP_SPLIT_PX>0){
     wrap.style.setProperty('--trips-map-w', Math.round(MAP_SPLIT_PX)+'px');
   } else {
-    wrap.style.removeProperty('--trips-map-w');
+    wrap.style.setProperty('--trips-map-w', '38%');
   }
   var pv=document.getElementById('plannerView'); if(pv) pv.classList.add('trips-on');
   try{ document.body.classList.add('trips-layout-on'); }catch(e){}
