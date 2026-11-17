@@ -10392,8 +10392,7 @@ function tpWeekTable(wk,vs,ls,showRep,t){
   if(!rows) rows='<tr><td colspan="5" style="color:#999;text-align:center">Nothing scheduled.</td></tr>';
   return '<table class="sched"><thead><tr><th style="width:96px">Time</th><th style="width:52px">Dur</th><th style="width:64px">Type</th><th>Stop / Details</th><th>Location</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
-function tpOpen(title,body){ var html='<html><head><title>'+title+'</title><meta charset="utf-8"><style>'+TP_CSS+'</style></head><body><div class="noprint"><button onclick="window.print()">🖨  Print / Save as PDF</button></div>'+body+'<script src="/year-glance.js"></script>
-</body></html>'; var w=window.open('','_blank'); if(!w){alert('Please allow pop-ups to view the trip plan.');return;} w.document.write(html); w.document.close(); }
+function tpOpen(title,body){ var html='<html><head><title>'+title+'</title><meta charset="utf-8"><style>'+TP_CSS+'</style></head><body><div class="noprint"><button onclick="window.print()">🖨  Print / Save as PDF</button></div>'+body+'</body></html>'; var w=window.open('','_blank'); if(!w){alert('Please allow pop-ups to view the trip plan.');return;} w.document.write(html); w.document.close(); }
 function exportWeek(t,wk){
   var vs=dealersIn(t).filter(function(d){return ASSIGN[d.id]===wk;});
   var ls=LOGI.filter(function(x){return x.terr===t && x.wk===wk;});
@@ -14067,5 +14066,6 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 }
 
 </script>
+<script src="/year-glance.js"></script>
 </body>
 </html>
