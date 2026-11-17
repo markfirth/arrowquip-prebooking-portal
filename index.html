@@ -585,6 +585,113 @@ body.wkfull-on{overflow:hidden;}
 .mapsplit{display:flex;gap:14px;align-items:flex-start;}
 .mapcol{flex:1 1 auto;min-width:0;overflow:auto;}
 
+
+
+/* ===== Year at a Glance ===== */
+.aqPlanMode{display:inline-flex;align-items:center;gap:0;margin-left:14px;border:1px solid #d1d5db;border-radius:5px;overflow:hidden;vertical-align:middle;}
+.aqPlanMode button{appearance:none;border:0;background:#fff;font:600 11px 'Open Sans',Arial,sans-serif;padding:5px 10px;cursor:pointer;color:#6b7280;border-right:1px solid #e5e7eb;}
+.aqPlanMode button:last-child{border-right:0;}
+.aqPlanMode button.on{background:var(--aq-red,#cf202f);color:#fff;}
+.aqPlanMode button:hover:not(.on){color:var(--aq-red);}
+#allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
+#allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
+#yearView{display:none;padding:0 0 24px;}
+.yg-wrap{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.yg-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
+.yg-cats{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
+.yg-chip{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:700 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
+.yg-chip.on{border-color:var(--yg,#cf202f);color:#111;box-shadow:inset 0 -2px 0 var(--yg,#cf202f);}
+.yg-legend{display:flex;flex-wrap:wrap;gap:8px 12px;padding:6px 10px 8px;font-size:10px;color:#6b7280;border-bottom:1px solid var(--line-soft);}
+.yg-leg{display:inline-flex;align-items:center;gap:4px;}
+.yg-leg i{width:8px;height:8px;border-radius:2px;display:inline-block;}
+.yg-board{padding:6px 8px 10px;overflow:auto;max-height:calc(100vh - 220px);}
+.yg-month{display:grid;grid-template-columns:64px minmax(0,1fr);gap:6px;align-items:start;margin:0 0 7px;padding-bottom:6px;border-bottom:1px solid #f0f1f3;}
+.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);padding-top:14px;letter-spacing:.02em;}
+.yg-grid{min-width:0;}
+.yg-wdrow,.yg-drow{display:grid;gap:2px;grid-template-columns:repeat(var(--ygcols),minmax(0,1fr));}
+.yg-wd{font-size:8px;font-weight:700;text-align:center;color:#9ca3af;padding:0 0 2px;}
+.yg-wd.we{color:#d1d5db;}
+.yg-cell{appearance:none;border:1px solid #eef0f2;background:#fff;border-radius:3px;min-height:34px;padding:2px 2px 3px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;}
+.yg-cell.empty{border:0;background:transparent;cursor:default;min-height:34px;}
+.yg-cell.we{background:#fafbfc;}
+.yg-cell.today{border-color:var(--aq-red);box-shadow:inset 0 0 0 1px var(--aq-red);}
+.yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
+.yg-cell.has{background:#fff;}
+.yg-cell:hover:not(.empty){border-color:#c9ced4;}
+.yg-d{font-size:9px;font-weight:700;color:#374151;line-height:1;}
+.yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.yg-bar{display:block;font-size:7px;font-weight:700;color:#fff;border-radius:2px;padding:0 2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.yg-more{font-size:7px;font-weight:700;color:#6b7280;}
+.yg-panel{position:sticky;bottom:0;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:5;}
+.yg-ph{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px 6px;}
+.yg-psub{font-size:11px;color:#9ca3af;margin-top:2px;}
+.yg-pb{max-height:180px;overflow:auto;padding:0 12px 8px;}
+.yg-pline{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start;}
+.yg-pcat{flex:0 0 auto;font-size:9px;font-weight:800;color:#fff;border-radius:3px;padding:2px 5px;}
+.yg-pt{font-size:12px;font-weight:700;color:#111;}
+.yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
+.yg-pf{display:flex;gap:8px;padding:8px 12px 12px;}
+.yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
+.yg-focus{border-top:1px solid var(--line);}
+.yg-focus>summary{list-style:none;cursor:pointer;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;padding:10px 12px;}
+.yg-focus>summary::-webkit-details-marker{display:none;}
+.yg-focus-body{padding:0 12px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.yg-fn label{display:block;font-size:10px;font-weight:700;color:#6b7280;margin-bottom:3px;}
+.yg-fn textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:5px;font:12px 'Open Sans',Arial,sans-serif;padding:6px;resize:vertical;min-height:48px;}
+@media(max-width:900px){.yg-focus-body{grid-template-columns:1fr 1fr;}.yg-mlbl{width:48px;font-size:10px;}}
+@media(max-width:640px){.yg-focus-body{grid-template-columns:1fr;}.yg-cell{min-height:28px;}}
+/* ===== ALL Territories — Leadership travel overview ===== */
+#allView .planwrap.trips-kanban{height:calc(100vh - 108px);max-height:calc(100vh - 108px);}
+.all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
+.all-metric{appearance:none;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:68px;max-height:84px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;color:inherit;}
+.all-metric:hover{border-color:#c9ced4;background:#fafbfc;}
+.all-metric.on{border-color:var(--aq-red);background:#fff7f8;}
+.all-metric .am-k{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;}
+.all-metric .am-v{font-size:22px;font-weight:800;color:var(--aq-black);line-height:1.1;font-family:var(--font-heading),Impact,sans-serif;}
+.all-metric .am-s{font-size:10.5px;color:#9ca3af;font-weight:500;}
+.all-metric.warn .am-v{color:var(--aq-red);}
+.allboard-scroll{flex:1 1 auto;overflow:auto;min-height:0;padding:8px;background:#f5f6f7;}
+.allboard-weeks{display:flex;gap:10px;align-items:flex-start;min-width:min-content;padding-bottom:8px;}
+.all-wk{flex:0 0 280px;width:280px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.all-wk.current .all-wkhead{background:var(--aq-red);color:#fff;}
+.all-wkhead{background:var(--aq-charcoal);color:#fff;padding:9px 10px 8px;position:sticky;top:0;z-index:2;}
+.all-wkhead .awl{font-size:12px;font-weight:800;letter-spacing:.02em;}
+.all-wkhead .awd{font-size:10.5px;opacity:.88;margin-top:2px;}
+.all-wkhead .aws{font-size:10px;opacity:.8;margin-top:4px;}
+.all-wkbody{padding:4px 6px 8px;}
+.all-day{margin-top:4px;}
+.all-dayh{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#8b9096;padding:5px 4px 3px;border-bottom:1px solid var(--line-soft);display:flex;gap:6px;align-items:baseline;}
+.all-dayh b{color:#374151;font-size:10px;}
+.all-day.today{background:#fff8f8;border-radius:5px;box-shadow:inset 2px 0 0 var(--aq-red);}
+.all-day.today .all-dayh{color:var(--aq-red);border-bottom-color:#f0c9ce;}
+.all-day.today .all-dayh b{color:var(--aq-red);}
+.all-empty{font-size:10.5px;color:#c4c7cb;padding:4px 4px 6px;}
+.all-trow{border:1px solid var(--line-soft);border-radius:5px;margin:4px 0;background:#fff;overflow:hidden;}
+.all-trow.open{border-color:#d1d5db;}
+.all-tbtn{appearance:none;width:100%;border:0;background:none;font-family:inherit;cursor:pointer;text-align:left;padding:6px 7px;display:block;}
+.all-tbtn:hover{background:#fafbfc;}
+.all-tname{font-size:11px;font-weight:800;color:var(--aq-black);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.all-tname .role{font-weight:600;color:#9ca3af;font-size:10px;}
+.all-tname .terr{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:#6b7280;}
+.all-tname .tdot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.all-tmeta{font-size:10.5px;color:#6b7280;margin-top:2px;line-height:1.35;}
+.all-tmeta b{color:#374151;font-weight:600;}
+.all-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;border:1px solid #e5e7eb;color:#6b7280;background:#f9fafb;}
+.all-badge.ok{border-color:#bbf7d0;color:#15803d;background:#f0fdf4;}
+.all-badge.pend{border-color:#fde68a;color:#a16207;background:#fffbeb;}
+.all-badge.attn{border-color:#fecaca;color:var(--aq-red);background:#fef2f2;}
+.all-badge.plan{border-color:#e5e7eb;color:#6b7280;}
+.all-tdet{display:none;padding:0 7px 7px;font-size:11px;color:#4b5563;border-top:1px solid var(--line-soft);margin-top:0;}
+.all-trow.open .all-tdet{display:block;padding-top:6px;}
+.all-tdet .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.all-tdet .acts .btn{font-size:10.5px;padding:4px 8px;height:auto;}
+.sb-team-terr{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#9ca3af;padding:8px 6px 2px;}
+.sb-rolef{display:flex;flex-wrap:wrap;gap:4px;padding:4px 6px 6px;}
+.sb-rolef button{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:600 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
+.sb-rolef button.on{border-color:var(--aq-red);color:var(--aq-red);background:#fff7f8;}
+@media(max-width:1100px){.all-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.all-wk{flex:0 0 260px;width:260px;}}
+@media(max-width:720px){.all-metrics{grid-template-columns:1fr 1fr;}}
+
 /* ===== Trip Plans — Map view (approved mockup) ===== */
 .statbar{display:flex;align-items:stretch;gap:14px;width:100%;}
 .statbar .plansum{flex:1 1 auto;margin-bottom:0;border-radius:var(--radius);}
@@ -1670,6 +1777,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
   </div>
   <div class="aqMainNav"><div class="aqNavContainer">
   <div class="aqLogoContainer"><img class="aqLogo" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>
+  <div class="aqPlanMode" id="aqPlanMode" title="Planning view">
+    <button type="button" class="on" data-planmode="weekly">Weekly Planner</button>
+    <button type="button" data-planmode="year">Year at a Glance</button>
+  </div>
   <div class="aqNavLinks" id="tabs">
     <div class="aqNavItem"><button class="tab active" data-t="All">All</button></div>
     <div class="aqNavItem"><button class="tab" data-t="East">East</button></div>
@@ -1714,11 +1825,28 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div id="terrMap" class="subview" style="display:none"></div>
   </div>
   <div id="allView" style="display:none;">
-    <div class="tablecard">
-      <div class="tabletools"><div><div class="h">All Territories — Travel Schedule</div><div class="sub" id="allSub">Overview · continuous calendar, week by week</div></div><div class="mtools-r"><div class="seg"><button id="allOvBtn" class="segb on">Overview</button><button id="allMapBtn" class="segb">Map</button><button id="allTripBtn" class="segb">Build My Trip</button></div></div></div>
-      <div class="ganttwrap" id="ganttWrap"></div>
+    <div class="planwrap trips-kanban map-collapsed" id="allPlanwrap">
+      <aside class="trips-nav" id="allTripsNav" aria-label="Company travel calendar"></aside>
+      <div class="boardcol">
+        <div class="kb-toolbar" id="allToolbar"></div>
+        <div class="all-metrics" id="allMetrics"></div>
+        <div class="allboard-scroll" id="allBoardScroll">
+          <div class="allboard-weeks" id="allWeeks"></div>
+          <div id="ganttWrap" style="display:none" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="trips-split" id="allTripsSplit" title="Drag to resize map"></div>
+      <aside class="trips-map" id="allTripsMapPane">
+        <button type="button" class="map-back" data-allmapback="1" title="Return to overview">← Back to Overview</button>
+        <div class="map-fabs">
+          <button type="button" class="map-fab" data-allmapmode="full" title="Maximize map">⛶</button>
+          <button type="button" class="map-fab" data-allmapmode="collapsed" title="Collapse map">✕</button>
+        </div>
+        <div id="allMapSlot"><div id="leaderMap" style="height:100%;min-height:280px"></div></div>
+      </aside>
     </div>
   </div>
+  <div id="yearView" style="display:none;" aria-label="Year at a Glance"></div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
@@ -2141,6 +2269,9 @@ function weekColor(wk){ return WEEK_PAL[((wk-31)%WEEK_PAL.length+WEEK_PAL.length
 function jit(id){var x=0;for(var i=0;i<id.length;i++){x=(x*31+id.charCodeAt(i))>>>0;} var a=(x%1000)/1000-0.5; var b=((Math.floor(x/1000))%1000)/1000-0.5; return [a*0.8,b*0.8];}
 let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
+let PLAN_MODE='weekly'; /* weekly | year */
+var YG_EVENTS=[];
+var YG_NOTES={};
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
 let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="", mFilterAR="";
@@ -2202,9 +2333,18 @@ function focusWkSet(wk, opts){
   FOCUS_WK=wk;
   try{ sessionStorage.setItem('aqFocusWk',String(wk)); }catch(e){}
   _mapWk=wk;
-  if(typeof wk==='number') calSetToWeek(wk);
+  if(typeof wk==='number'){
+    calSetToWeek(wk);
+    if(terr==='All') ALL_WK=wk;
+  }
   if(opts.expand) tripsExpandPath(wk);
-  if(!opts.silent) _wkRerender();
+  if(!opts.silent){
+    if(terr==='All'){ try{ renderAllView(); }catch(e){} }
+    else _wkRerender();
+  }
+  if(terr==='All' && typeof wk==='number'){
+    setTimeout(function(){ try{ allScrollToWeek(wk); }catch(e){} }, 40);
+  }
 }
 function tripsViewSet(v){ TRIPS_VIEW=(v==='board'?'board':'list'); try{ localStorage.setItem('aqTripsView',TRIPS_VIEW); }catch(e){} _wkRerender(); }
 function navOpenSet(open){ NAV_OPEN=!!open; try{ localStorage.setItem('aqNavOpen',NAV_OPEN?'1':'0'); }catch(e){} _wkRerender(); }
@@ -3133,7 +3273,7 @@ function teamList(terrFilter, includeInactive){
 }
 function teamById(id){ var L=ADMIN.team||[]; for(var i=0;i<L.length;i++) if(L[i].id===id) return L[i]; return null; }
 function teamCanManage(){ try{ return pbIsAdmin()||!PB_USER; }catch(e){ return true; } }
-function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'; }
+function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'||terr==='All'; }
 function teamLoadSel(){
   try{
     var raw=sessionStorage.getItem('aqTeamSel2_'+terr);
@@ -3155,10 +3295,10 @@ function teamIsAll(){ return !teamShowNav() || TEAM_ALL; }
 function teamIsSelected(id){ if(TEAM_ALL) return true; return !!TEAM_IDS[id]; }
 function teamToggleAll(){
   TEAM_ALL=true; TEAM_IDS={}; teamSaveSel();
-  try{ refreshPlanner(); }catch(e){ try{render();}catch(_){} }
+  try{ if(terr==='All') renderAllView(); else refreshPlanner(); }catch(e){ try{render();}catch(_){} }
 }
 function teamToggleMember(id){
-  var members=teamList(terr,false);
+  var members=teamList(terr==='All'?null:terr,false);
   if(TEAM_ALL){
     /* From All → focus this person only */
     TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[id]=true;
@@ -3172,7 +3312,7 @@ function teamToggleMember(id){
     }
   }
   teamSaveSel();
-  try{ refreshPlanner(); }catch(e){ try{render();}catch(_){} }
+  try{ if(terr==='All') renderAllView(); else refreshPlanner(); }catch(e){ try{render();}catch(_){} }
 }
 function teamOwnerKey(kind,id){ return kind+':'+id; }
 function teamOwnerOf(kind,id){ return OWNERS[teamOwnerKey(kind,id)]||null; }
@@ -3238,15 +3378,20 @@ function dayHasAppt(dt){
   var di=dt.getDay(); /* 0=Sun … matches dayLabels index */
   try{
     var hit=false;
-    dealersIn(terr).forEach(function(d){
-      if(ASSIGN[d.id]===wk && DAY[d.id]===di && teamFilterMatch('d',d.id)) hit=true;
+    var terrs=(terr==='All')?TERRS:[terr];
+    terrs.forEach(function(t){
+      dealersIn(t).forEach(function(d){
+        if(ASSIGN[d.id]===wk && DAY[d.id]===di && teamFilterMatch('d',d.id)) hit=true;
+      });
     });
     if(hit) return true;
     if(typeof XVISITS!=='undefined') for(var i=0;i<XVISITS.length;i++){
-      var x=XVISITS[i]; if(x.wk===wk&&x.terr===terr&&x.day===di&&teamFilterMatch('x',x.id)) return true;
+      var x=XVISITS[i]; if(x.wk!==wk||x.day!==di||!teamFilterMatch('x',x.id)) continue;
+      if(terr==='All' || x.terr===terr) return true;
     }
     if(typeof LOGI!=='undefined') for(var j=0;j<LOGI.length;j++){
-      var it=LOGI[j]; if(it.wk===wk&&it.terr===terr&&it.day===di&&teamFilterMatch('m',it.id)) return true;
+      var it=LOGI[j]; if(it.wk!==wk||it.day!==di||!teamFilterMatch('m',it.id)) continue;
+      if(terr==='All' || it.terr===terr) return true;
     }
   }catch(e){}
   return false;
@@ -3346,12 +3491,16 @@ function sbAttentionItems(){
   try{
     var unc=0, firstUnc=null;
     if(typeof focus==='number'){
-      dealersIn(terr).forEach(function(d){
-        if(ASSIGN[d.id]!==focus||!teamFilterMatch('d',d.id)) return;
-        if(!APPT[d.id]){ unc++; if(!firstUnc) firstUnc=d.id; }
+      var _attnTerrs=(terr==='All')?TERRS:[terr];
+      _attnTerrs.forEach(function(t){
+        dealersIn(t).forEach(function(d){
+          if(ASSIGN[d.id]!==focus||!teamFilterMatch('d',d.id)) return;
+          if(!APPT[d.id]){ unc++; if(!firstUnc) firstUnc=d.id; }
+        });
       });
       XVISITS.forEach(function(x){
-        if(x.terr!==terr||x.wk!==focus||!teamFilterMatch('x',x.id)) return;
+        if(x.wk!==focus||!teamFilterMatch('x',x.id)) return;
+        if(terr!=='All'&&x.terr!==terr) return;
         if(!x.done){ unc++; if(!firstUnc) firstUnc='x:'+x.id; }
       });
     }
@@ -3378,7 +3527,8 @@ function sbAttentionItems(){
   try{
     var miss=0, missId=null;
     LOGI.forEach(function(it){
-      if(it.terr!==terr||!teamFilterMatch('m',it.id)) return;
+      if(terr!=='All'&&it.terr!==terr) return;
+      if(!teamFilterMatch('m',it.id)) return;
       var ty=travelType(it);
       if((ty==='flight_in'||ty==='flight_out'||ty==='rental_pickup'||ty==='rental_return') && !String(it.conf||'').trim()){
         var wk=it.wk; if(typeof wk==='number'&&wk<wkCurrent()-1) return;
@@ -3424,6 +3574,13 @@ function sbAttentionItems(){
       if(!(x.plaud&&(x.plaud.transcript||x.plaud.summary||x.plaud.reportNotes))){ pend++; if(!pendRef) pendRef='x:'+x.id; }
     });
     if(pend) items.push({id:'transcripts',urgent:false,icon:'○',label:'Pending transcripts',count:pend,ref:pendRef});
+  }catch(e){}
+  /* Annual / weekly travel needing coordinator attention */
+  try{
+    if(typeof allTripsNeedingAttention==='function'){
+      var attnN=allTripsNeedingAttention(wkCurrent());
+      if(attnN) items.push({id:'itinattn',urgent:false,icon:'○',label:'Trips needing attention',count:attnN,wk:wkCurrent()});
+    }
   }catch(e){}
   /* Cloud sync issues */
   try{
@@ -3647,12 +3804,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{})};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -5737,7 +5894,10 @@ function logiRowDetail(x){
 function tripsEventCount(wk){
   try{
     var n=0;
-    dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id)) n++; });
+    var terrs=(terr==='All')?TERRS:[terr];
+    terrs.forEach(function(t){
+      dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id)) n++; });
+    });
     if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)&&teamFilterMatch('x',x.id)) n++; });
     if(typeof LOGI!=='undefined') LOGI.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)&&teamFilterMatch('m',x.id)) n++; });
     return n;
@@ -5782,15 +5942,48 @@ function tripsNavHTML(){
   /* Team */
   var teamHtml='';
   if(teamShowNav()){
-    var members=teamList(terr,false);
+    var isAllTerr=(terr==='All');
+    var members=teamList(isAllTerr?null:terr,false);
+    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true};
+    if(isAllTerr){
+      members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
+    }
     var checks='<button type="button" class="sb-check'+(TEAM_ALL?' on':'')+'" data-teamall="1"><span class="box">'+(TEAM_ALL?'✓':'')+'</span><span class="nm">All team members</span></button>';
-    members.forEach(function(m){
-      var on=TEAM_ALL||!!TEAM_IDS[m.id];
-      checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-        +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
-    });
+    if(isAllTerr){
+      checks+='<div class="sb-rolef">'
+        +['AM','DSR','ISS'].map(function(r){
+          return '<button type="button" class="'+(ALL_ROLE_F[r]!==false?'on':'')+'" data-allrole="'+r+'">'+r+'</button>';
+        }).join('')+'</div>';
+      var byTerr={};
+      members.forEach(function(m){ (byTerr[m.terr]=byTerr[m.terr]||[]).push(m); });
+      (TERRS||[]).forEach(function(t){
+        var list=byTerr[t]||[]; if(!list.length) return;
+        checks+='<div class="sb-team-terr">'+esc(t)+'</div>';
+        list.forEach(function(m){
+          var on=TEAM_ALL||!!TEAM_IDS[m.id];
+          checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+            +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+        });
+      });
+      Object.keys(byTerr).forEach(function(t){
+        if((TERRS||[]).indexOf(t)>=0) return;
+        var list=byTerr[t]||[]; if(!list.length) return;
+        checks+='<div class="sb-team-terr">'+esc(t||'Other')+'</div>';
+        list.forEach(function(m){
+          var on=TEAM_ALL||!!TEAM_IDS[m.id];
+          checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+            +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+        });
+      });
+    } else {
+      members.forEach(function(m){
+        var on=TEAM_ALL||!!TEAM_IDS[m.id];
+        checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+          +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+      });
+    }
     teamHtml='<details class="sb-sec" data-sbsec="team"'+(sbSecOpen('team',true)?' open':'')+'>'
-      +'<summary>Team — '+esc(terr)
+      +'<summary>Team — '+esc(isAllTerr?'All territories':terr)
       +(teamCanManage()?'<button type="button" class="sb-add" data-teamadd="1" title="Add team member">+</button>':'')
       +'</summary><div class="sb-sec-body">'+checks+'</div></details>';
   }
@@ -5821,14 +6014,15 @@ function tripsNavHTML(){
 
   return '<div class="tn-scroll">'+head+grid+teamHtml+attnHtml+travelHtml+'</div>';
 }
-function tripsNavWire(){
-  var nav=document.getElementById('tripsNav'); if(!nav||nav._aqSbWired===nav.innerHTML.length) {/* rebind always */ }
+function tripsNavWire(navEl){
+  var nav=navEl||document.getElementById('tripsNav'); if(!nav) return;
+  function rer(){ try{ if(terr==='All') renderAllView(); else _wkRerender(); }catch(e){} }
   nav.querySelectorAll('[data-calnav]').forEach(function(b){
     b.addEventListener('click',function(e){
       e.stopPropagation(); calEnsure();
       var d=parseInt(b.dataset.calnav,10)||0;
       CAL_M+=d; if(CAL_M>11){ CAL_M=0; CAL_Y++; } if(CAL_M<0){ CAL_M=11; CAL_Y--; }
-      _wkRerender();
+      rer();
     });
   });
   nav.querySelectorAll('[data-caljump]').forEach(function(b){
@@ -5849,7 +6043,7 @@ function tripsNavWire(){
           ev.stopPropagation();
           CAL_M=parseInt(mb.dataset.jm,10);
           CAL_Y=parseInt(box.querySelector('#sbJumpY').value,10);
-          box.remove(); _wkRerender();
+          box.remove(); rer();
         });
       });
     });
@@ -5857,6 +6051,14 @@ function tripsNavWire(){
   /* data-focuswk bound once in wireDnD — focusWkSet syncs the calendar month */
   nav.querySelectorAll('[data-teamall]').forEach(function(b){
     b.addEventListener('click',function(e){ e.stopPropagation(); teamToggleAll(); });
+  });
+  nav.querySelectorAll('[data-allrole]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      window.ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true};
+      var r=b.dataset.allrole; ALL_ROLE_F[r]=!(ALL_ROLE_F[r]!==false);
+      try{ if(terr==='All') renderAllView(); else _wkRerender(); }catch(err){}
+    });
   });
   nav.querySelectorAll('[data-teammember]').forEach(function(b){
     b.addEventListener('click',function(e){ e.stopPropagation(); teamToggleMember(b.dataset.teammember); });
@@ -6262,19 +6464,23 @@ function createVisit(dealerId,type,wk,day){
   savePlan(); refreshPlanner();
 }
 function renderAllView(){
-  if(allMode!=='map'&&allMode!=='trip') allMode='overview';
-  var ob=document.getElementById('allOvBtn'),mb=document.getElementById('allMapBtn'),tb=document.getElementById('allTripBtn');
-  if(ob)ob.classList.toggle('on',allMode==='overview'); if(mb)mb.classList.toggle('on',allMode==='map'); if(tb)tb.classList.toggle('on',allMode==='trip');
-  var sub=document.getElementById('allSub');
+  /* Leadership overview is the default. Map is a retractable pane (hidden by default).
+     Build My Trip remains available from the overflow menu only. */
   if(allMode==='trip'){
-    if(sub)sub.textContent='Build My Trip — click appointment markers to add them to your personal itinerary · never changes a Territory Manager’s schedule';
+    var gw=document.getElementById('ganttWrap');
+    if(gw){ gw.style.display=''; gw.setAttribute('aria-hidden','false'); }
+    var sc=document.getElementById('allBoardScroll'); if(sc) sc.style.display='none';
+    var met=document.getElementById('allMetrics'); if(met) met.style.display='none';
     renderTripBuilder(); return;
   }
-  if(sub)sub.textContent=(ALL_EXEC&&ALL_REP?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' joining '+repOf(ALL_REP)+' · '):(ALL_EXEC?((execById(ALL_EXEC)||{name:ALL_EXEC}).name+' — Leadership Travel · '):''))
-    +(allMode==='map'?'Map — company-wide travel':'Overview — every area, week by week')
-    +' · '+(ALL_WK==='all'?'Continuous calendar · week by week':('Week '+wkNo(ALL_WK)+' · '+WEEKDATES[ALL_WK]
-      +(ALL_DAY!=='all'&&dayLabels(ALL_WK)[ALL_DAY]?(' · '+dayLabels(ALL_WK)[ALL_DAY][0]+' '+dayLabels(ALL_WK)[ALL_DAY][1]):'')))+' · read-only';
-  if(allMode==='map') renderAllMap(); else renderAllOverview();
+  allMode='overview';
+  var gw2=document.getElementById('ganttWrap');
+  if(gw2){ gw2.style.display='none'; gw2.setAttribute('aria-hidden','true'); }
+  var sc2=document.getElementById('allBoardScroll'); if(sc2) sc2.style.display='';
+  var met2=document.getElementById('allMetrics'); if(met2) met2.style.display='';
+  teamSeedFromKnown();
+  teamLoadSel();
+  renderAllOverview();
 }
 function renderLeaderView(){
   var sel=document.getElementById('leadSel');
@@ -6770,95 +6976,448 @@ function allForecast(wks){
   });
   return st;
 }
+/* ---- ALL leadership travel overview (no sales KPIs) ---- */
+var ALL_MAP_MODE=(function(){ try{ return localStorage.getItem('aqAllMapMode')||'collapsed'; }catch(e){ return 'collapsed'; } })();
+var ALL_METRIC_FILTER='';
+var ALL_NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqAllNavOpen'); return v==null?true:v==='1'; }catch(e){ return true; } })();
+var ITINERARIES=ITINERARIES||{}; /* memberId|wk -> {status,version,sentAt,payloadHash} */
+var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true};
+
+function allScrollToWeek(wk){
+  var el=document.querySelector('#allWeeks [data-allwk="'+wk+'"]');
+  var sc=document.getElementById('allBoardScroll');
+  if(el&&sc){
+    var left=el.offsetLeft - 12;
+    sc.scrollTo({left:Math.max(0,left), behavior:'smooth'});
+  }
+}
+function allMapModeApply(){
+  var wrap=document.getElementById('allPlanwrap'); if(!wrap) return;
+  wrap.classList.toggle('nav-collapsed', !ALL_NAV_OPEN);
+  wrap.classList.remove('map-collapsed','map-split','map-full');
+  wrap.classList.add('map-'+(ALL_MAP_MODE==='full'?'full':(ALL_MAP_MODE==='split'?'split':'collapsed')));
+}
+function allMapModeSet(mode){
+  if(mode!=='collapsed'&&mode!=='split'&&mode!=='full') mode='collapsed';
+  ALL_MAP_MODE=mode;
+  try{ localStorage.setItem('aqAllMapMode',mode); }catch(e){}
+  allMapModeApply();
+  if(mode!=='collapsed'){ try{ allDrawMapInto('leaderMap'); }catch(e){} }
+}
+function allNavOpenSet(open){
+  ALL_NAV_OPEN=!!open;
+  try{ localStorage.setItem('aqAllNavOpen',ALL_NAV_OPEN?'1':'0'); }catch(e){}
+  allMapModeApply();
+}
+
+function allMatchTravellerByName(terrName, name){
+  name=String(name||'').trim().toLowerCase(); if(!name) return null;
+  var list=teamList(null,false);
+  for(var i=0;i<list.length;i++){
+    var m=list[i];
+    if(terrName && m.terr && m.terr!==terrName) continue;
+    if(String(m.name||'').trim().toLowerCase()===name) return m;
+  }
+  return null;
+}
+function allTravellerForDealer(t,d){
+  var oid=teamOwnerOf('d', d.id);
+  if(oid){ var m=teamById(oid); if(m) return m; }
+  return allMatchTravellerByName(t, d.tm) || allMatchTravellerByName(t, (FLAT.tm&&FLAT.tm[t])||'');
+}
+function allTravellerForX(x){
+  var oid=teamOwnerOf('x', x.id);
+  if(oid){ var m=teamById(oid); if(m) return m; }
+  var d=byId[x.dealer]||uniById(x.dealer);
+  if(d) return allTravellerForDealer(x.terr, d);
+  return allMatchTravellerByName(x.terr, (FLAT.tm&&FLAT.tm[x.terr])||'');
+}
+function allTravellerForLogi(it){
+  var oid=teamOwnerOf('m', it.id);
+  if(oid){ var m=teamById(oid); if(m) return m; }
+  if(it.leader){ var byLead=allMatchTravellerByName(it.terr, it.leader); if(byLead) return byLead; }
+  return allMatchTravellerByName(it.terr, (FLAT.tm&&FLAT.tm[it.terr])||'');
+}
+function allTravellerVisible(m){
+  if(!m) return TEAM_ALL; /* unowned historical: only under All members */
+  if(!teamIsSelected(m.id)) return false;
+  if(terr==='All' && ALL_ROLE_F && ALL_ROLE_F[m.role]===false) return false;
+  return true;
+}
+function allItinKey(memberId, wk){ return String(memberId||'')+'|'+String(wk); }
+function allItinStatus(memberId, wk){
+  var rec=ITINERARIES[allItinKey(memberId,wk)];
+  if(rec&&rec.status) return rec.status;
+  /* derive from live bookings */
+  var miss=false, hasTravel=false;
+  LOGI.forEach(function(it){
+    if(it.wk!==wk) return;
+    var m=allTravellerForLogi(it); if(!m||m.id!==memberId) return;
+    hasTravel=true;
+    var ty=travelType(it);
+    if((ty==='flight_in'||ty==='flight_out'||ty==='rental_pickup'||ty==='rental_return'||ty==='hotel') && !String(it.conf||'').trim()) miss=true;
+  });
+  if(miss) return 'bookings_required';
+  if(hasTravel) return 'planning';
+  return 'planning';
+}
+function allItinBadge(st){
+  var map={
+    planning:['plan','Planning'],
+    bookings_required:['attn','Bookings needed'],
+    ready_for_review:['pend','Ready for review'],
+    under_review:['pend','Under review'],
+    approved:['ok','Approved'],
+    sent:['ok','Sent'],
+    changes_required:['attn','Changed since sent']
+  };
+  var x=map[st]||['plan',st||'Planning'];
+  return '<span class="all-badge '+x[0]+'">'+esc(x[1])+'</span>';
+}
+
+function allWeekActivities(wk){
+  var rows=[];
+  allVisits(wk).forEach(function(v){
+    var m=v.xv?allTravellerForX(v.xv):allTravellerForDealer(v.t,v.d);
+    if(!allTravellerVisible(m)) return;
+    var conf=avConf(v);
+    var name=v.xv?(v.d.name):(v.d.name||'Dealer');
+    var loc=(v.d.loc||v.d.address||'');
+    if(!v.xv && v.d.address) loc=v.d.address;
+    rows.push({
+      kind:'dealer', terr:v.t, wk:wk, day:avDay(v), time:avTime(v),
+      conf:conf, done:!!conf, title:name, place:loc,
+      member:m, dealerId:v.d.id, xv:v.xv||null,
+      statusLabel: conf?'Confirmed':'Planned'
+    });
+  });
+  LOGI.forEach(function(it){
+    if(it.wk!==wk || !LV_AREAS[it.terr]) return;
+    if(!teamFilterMatch('m', it.id) && teamOwnerOf('m',it.id)) return;
+    var m=allTravellerForLogi(it);
+    if(!allTravellerVisible(m)) return;
+    if(!TEAM_ALL && !m) return;
+    var ty=travelType(it);
+    var T=TRAVEL_TYPES[ty]||{label:ty};
+    rows.push({
+      kind:'travel', terr:it.terr, wk:wk, day:it.day, time:it.time||'',
+      conf:!!String(it.conf||'').trim(), done:!!it.done, title:(it.name||T.label),
+      place:it.address||it.airportName||it.airportCode||'',
+      member:m, logi:it, type:ty,
+      statusLabel: String(it.conf||'').trim()?'Confirmed':'Planned'
+    });
+  });
+  rows.sort(function(a,b){
+    var da=a.day==null?99:a.day, db=b.day==null?99:b.day;
+    if(da!==db) return da-db;
+    return String(a.time||'99').localeCompare(String(b.time||'99'));
+  });
+  return rows;
+}
+function allUniqueTravellers(rows){
+  var seen={}, out=[];
+  rows.forEach(function(r){
+    var id=r.member?r.member.id:('unowned:'+r.terr);
+    if(seen[id]) return; seen[id]=1; out.push(r.member||{id:id,name:(FLAT.tm&&FLAT.tm[r.terr])||r.terr,role:'',terr:r.terr,_unowned:true});
+  });
+  return out;
+}
+function allDealerVisitCount(wk){
+  /* unique dealer visit events; joint visits count once */
+  var keys={}, n=0;
+  allVisits(wk).forEach(function(v){
+    var m=v.xv?allTravellerForX(v.xv):allTravellerForDealer(v.t,v.d);
+    if(!allTravellerVisible(m)) return;
+    var k=v.xv?('x:'+v.xv.id):('d:'+v.d.id+'|'+wk+'|'+avDay(v));
+    if(keys[k]) return; keys[k]=1; n++;
+  });
+  return n;
+}
+function allTripsNeedingAttention(fromWk){
+  var n=0, seen={};
+  function bump(id,wk){ var k=id+'|'+wk; if(seen[k]) return; seen[k]=1; n++; }
+  var weeks=allWeeksList().filter(function(w){ return typeof w==='number' && w>=fromWk; });
+  weeks.forEach(function(wk){
+    var rows=allWeekActivities(wk);
+    allUniqueTravellers(rows).forEach(function(m){
+      if(!m||m._unowned) return;
+      var st=allItinStatus(m.id, wk);
+      if(st==='bookings_required'||st==='ready_for_review'||st==='under_review'||st==='changes_required') bump(m.id,wk);
+    });
+    try{
+      if(typeof tlCompute==='function'){
+        TERRS.forEach(function(t){
+          if(!LV_AREAS[t]) return;
+          var TL=tlCompute(t,wk);
+          if(TL&&TL.conflicts&&TL.conflicts.length) bump('conflict:'+t,wk);
+        });
+      }
+    }catch(e){}
+  });
+  return n;
+}
+function allTravelMetrics(){
+  var cur=wkCurrent(), next=cur+1;
+  var curRows=allWeekActivities(cur);
+  var nextRows=allWeekActivities(next);
+  return {
+    travelling: allUniqueTravellers(curRows).length,
+    visits: allDealerVisitCount(cur),
+    nextTrips: allUniqueTravellers(nextRows).length,
+    attention: allTripsNeedingAttention(cur)
+  };
+}
 function allKpiHTML(){
-  var wks=(ALL_WK==='all')?allWeeksList():[ALL_WK];
-  var n=0,conf=0;
-  wks.forEach(function(wk){ allVisits(wk).forEach(function(v){ n++; if(avConf(v))conf++; }); });
-  var af=allForecast(wks);
-  var kpi=function(k,v){ return '<div class="lvkpi"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>'; };
-  return '<div class="lvkpis">'+kpi('Visits',n)+kpi('Loads',af.loads)+kpi('Revenue',fmtUSDk(af.rev))
-    +kpi('Appointments',conf+(n?(' · '+Math.round(conf/n*100)+'%'):''))+'</div>';
+  var m=allTravelMetrics();
+  var f=ALL_METRIC_FILTER;
+  function card(id,label,val,sub,warn){
+    return '<button type="button" class="all-metric'+(f===id?' on':'')+(warn?' warn':'')+'" data-allmetric="'+id+'">'
+      +'<span class="am-k">'+label+'</span><span class="am-v">'+val+'</span>'
+      +(sub?('<span class="am-s">'+sub+'</span>'):'')+'</button>';
+  }
+  return card('travelling','Travelling this week',m.travelling,'Unique team members')
+    +card('visits','Dealer visits this week',m.visits,'Scheduled · includes completed')
+    +card('next','Trips next week',m.nextTrips,'Distinct traveller trips')
+    +card('attention','Trips needing attention',m.attention,'Bookings · review · conflicts',m.attention>0);
 }
-function allTagHTML(t,d,okOverride){
-  var ok=(okOverride!==undefined)?!!okOverride:!!APPT[d.id];
-  return '<span class="atag'+(ok?' ok':'')+'" data-adealer="'+d.id+'" title="'+esc(d.name)+' · '+t+(TIME[d.id]?(' · '+t12(TIME[d.id])):'')+(ok?' · Confirmed':'')+'">'
-    +'<i style="background:'+AREA_COLOR[t]+'">'+AREA_CODE[t]+'</i>'+esc(d.name)+(ok?' ✓':'')+'</span>';
+function allToolbarHTML(wk){
+  var now=wkCurrent();
+  var mapOn=(ALL_MAP_MODE!=='collapsed');
+  var title=(typeof wk==='number')
+    ? ('WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk)))
+    : 'All weeks';
+  return ''
+    +'<button type="button" class="kbb icon" data-allnavtog="1" title="'+(ALL_NAV_OPEN?'Hide sidebar':'Show sidebar')+'">☰</button>'
+    +'<button type="button" class="kbb icon" data-allwkgo="-1" title="Previous week">‹</button>'
+    +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-allwkgo="0" title="Actual current calendar week">This Week</button>'
+    +'<button type="button" class="kbb icon" data-allwkgo="1" title="Next week">›</button>'
+    +'<span class="kb-title">'+title+'</span>'
+    +'<span class="kb-space"></span>'
+    +'<button type="button" class="kbb'+(mapOn?' on':'')+'" data-allmaptog="1" title="'+(mapOn?'Hide map':'Show map')+'">'+(mapOn?'Map ✓':'Map')+'</button>'
+    +'<div class="kb-more">'
+      +'<button type="button" class="kbb icon" data-allmore="1" title="More">⋯</button>'
+      +'<div class="kb-more-menu" role="menu">'
+        +'<button type="button" data-alltrip="1">Build My Trip</button>'
+        +'<button type="button" data-hist="1">History</button>'
+      +'</div>'
+    +'</div>';
 }
-/* ALL Overview uses the EXACT territory-planner Kanban: the same .wkcard week
-   columns, black .wkhead, .kday day rows, pills and scroll behaviour — only the
-   contents aggregate every selected area, as compact read-only dealer tags. */
+function allOpenTerritoryForMember(member, wk){
+  if(!member) return;
+  var t=member.terr||'East';
+  if(['East','South','Central','West','Exports'].indexOf(t)<0) t='East';
+  terr=t; terrMode='plan';
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('active',x.dataset.t===t); });
+  TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[member.id]=true; teamSaveSel();
+  if(typeof wk==='number') FOCUS_WK=wk;
+  render();
+}
+function allPrepareItinerary(member, wk){
+  /* Hook for Travel Coordinator workflow — opens territory planner focused on the traveller. */
+  if(!member){ aqToast('Select a traveller first'); return; }
+  try{ sessionStorage.setItem('aqPrepareItinerary', JSON.stringify({memberId:member.id,wk:wk,at:Date.now()})); }catch(e){}
+  aqToast('Opening '+member.name+' · WK '+wkNo(wk)+' for itinerary prep');
+  allOpenTerritoryForMember(member, wk);
+}
+function allActivityRowHTML(r){
+  var m=r.member;
+  var name=m?(m.name||'Team member'):((FLAT.tm&&FLAT.tm[r.terr])||'Unassigned');
+  var role=m?(m.role||''):'';
+  var when=r.time?t12s(r.time):'';
+  var dest=[r.terr, r.place].filter(Boolean).join(' — ');
+  var badge=r.conf?'<span class="all-badge ok">Confirmed</span>':'<span class="all-badge pend">'+esc(r.statusLabel||'Planned')+'</span>';
+  var itin='';
+  if(m&&!m._unowned){
+    itin=' '+allItinBadge(allItinStatus(m.id, r.wk));
+  }
+  var det='';
+  if(r.kind==='dealer'){
+    det='<div>'+esc(r.title)+(r.place?(' · '+esc(r.place)):'')+'</div>'
+      +'<div class="acts">'
+      +'<button type="button" class="btn" data-adealer="'+esc(r.dealerId)+'">Open appointment</button>'
+      +(m&&!m._unowned?('<button type="button" class="btn" data-allopenmem="'+esc(m.id)+'" data-wk="'+r.wk+'">Open trip planner</button>'):'')
+      +(m&&!m._unowned?('<button type="button" class="btn" data-allprep="'+esc(m.id)+'" data-wk="'+r.wk+'">Prepare itinerary</button>'):'')
+      +'</div>';
+  } else {
+    var T=TRAVEL_TYPES[r.type]||{label:r.type||'Travel'};
+    det='<div>'+esc(T.label)+' — '+esc(r.title)+(r.place?('<br>'+esc(r.place)):'')
+      +(r.logi&&r.logi.conf?('<br>Reservation # '+esc(r.logi.conf)):'')+'</div>'
+      +'<div class="acts">'
+      +(m&&!m._unowned?('<button type="button" class="btn" data-allopenmem="'+esc(m.id)+'" data-wk="'+r.wk+'">Open trip planner</button>'):'')
+      +(m&&!m._unowned?('<button type="button" class="btn" data-allprep="'+esc(m.id)+'" data-wk="'+r.wk+'">Prepare itinerary</button>'):'')
+      +'</div>';
+  }
+  var id='allrow_'+Math.random().toString(36).slice(2,9);
+  return '<div class="all-trow" data-allrow="'+id+'">'
+    +'<button type="button" class="all-tbtn" data-alltoggle="'+id+'">'
+    +'<div class="all-tname"><span data-allnamemem="'+(m&&!m._unowned?esc(m.id):'')+'" data-wk="'+r.wk+'">'+esc(name)+'</span>'
+    +(role?('<span class="role">· '+esc(role)+'</span>'):'')
+    +'<span class="terr"><i class="tdot" style="background:'+(AREA_COLOR[r.terr]||'#9ca3af')+'"></i>'+esc(r.terr)+'</span>'
+    +badge+itin+'</div>'
+    +'<div class="all-tmeta">'+(when?('<b>'+when+'</b> · '):'')+esc(r.title)
+    +(dest?('<br>'+esc(dest)):'')+'</div>'
+    +'</button><div class="all-tdet">'+det+'</div></div>';
+}
 function allWeekCard(wk){
   var isk=(wk==='remote')?false:(wk===31), isRemote=(wk==='remote');
-  var vs=[];
-  if(isRemote){ allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ if(ASSIGN[d.id]==='remote') vs.push({t:t,d:d}); }); }); }
-  else vs=allVisits(wk);
-  var wkKey=isRemote?'remote':wk;
-  var rev=0,loads=0;
-  allAreas().forEach(function(t){ dealersIn(t).forEach(function(d){ rev+=fbWk(d,wkKey); loads+=flWk(d,wkKey); }); });
-  var apc=vs.filter(avConf).length;
-  var pct=vs.length?Math.round(apc/vs.length*100):0;
-  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wkNo(wk)+' – '+wkYear(wk));
+  var cur=wkCurrent();
+  var rows=isRemote?[]:allWeekActivities(wk);
+  if(ALL_METRIC_FILTER==='attention'){
+    rows=rows.filter(function(r){
+      if(!r.member||r.member._unowned) return false;
+      var st=allItinStatus(r.member.id, wk);
+      return st==='bookings_required'||st==='ready_for_review'||st==='under_review'||st==='changes_required';
+    });
+  } else if(ALL_METRIC_FILTER==='visits'){
+    rows=rows.filter(function(r){ return r.kind==='dealer'; });
+  }
+  var travellers=allUniqueTravellers(rows);
+  var visits=rows.filter(function(r){ return r.kind==='dealer'; }).length;
+  var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wkNo(wk));
   var dates=isRemote?'book remotely':wkDY(wk);
-  var tags=function(list){ return '<div class="atags">'+list.map(function(v){return allTagHTML(v.t,v.d,avConf(v));}).join('')+'</div>'; };
-  var cards='';
+  var body='';
   if(isRemote){
-    cards=vs.length?tags(vs):'<div class="dcempty">no remote dealers</div>';
-  } else if(!vs.length){
-    cards='<div class="dcempty">no visits planned</div>';
+    body='<div class="all-empty">Remote / direct bookings stay on territory tabs</div>';
   } else {
     var labs=dayLabels(wk);
-    var nod=vs.filter(function(v){return avDay(v)==null||avDay(v)>=labs.length;});
-    if(nod.length){ cards+='<div class="kday todo">Needs a day</div>'+tags(nod); }
+    var byDay={}; rows.forEach(function(r){ var d=r.day==null?'x':r.day; (byDay[d]=byDay[d]||[]).push(r); });
+    if(byDay.x&&byDay.x.length){
+      body+='<div class="all-day"><div class="all-dayh"><b>TBD</b></div>'+byDay.x.map(allActivityRowHTML).join('')+'</div>';
+    }
     labs.forEach(function(l,i){
-      var dd=vs.filter(function(v){return avDay(v)===i;}).sort(function(a,b){return (avTime(a)||'99').localeCompare(avTime(b)||'99');});
-      var areas={}; dd.forEach(function(v){areas[v.t]=1;}); var an=Object.keys(areas).length;
-      cards+='<div class="kday"><b>'+l[0]+'</b> '+l[1]
-        +(dd.length?('<span class="kdsub">'+dd.length+' appt'+(dd.length!==1?'s':'')+' • '+an+' area'+(an!==1?'s':'')+'</span>'):'')+'</div>';
-      cards+= dd.length?tags(dd):'<div class="dcempty">—</div>';
+      var list=byDay[i]||[];
+      var isToday=(wk===cur && i===mobToday(wk));
+      if(!list.length){
+        body+='<div class="all-day'+(isToday?' today':'')+'"><div class="all-dayh"><b>'+l[0]+'</b> '+l[1]+(isToday?' · Today':'')+'</div><div class="all-empty">—</div></div>';
+        return;
+      }
+      body+='<div class="all-day'+(isToday?' today':'')+'"><div class="all-dayh"><b>'+l[0]+'</b> '+l[1]+(isToday?' · Today':'')+'</div>'
+        +list.map(allActivityRowHTML).join('')+'</div>';
     });
   }
-  return '<div class="wkcard'+(isk?' kick':'')+'">'
-    +'<div class="wkhead"><div class="wl">'+title+'</div>'
-    +'<div class="kpills"><span class="kpill target">Loads: '+loads+'</span><span class="kpill total">'+fmtUSD(rev)+'</span><span class="kpill sub">'+apc+'/'+vs.length+' appts · '+pct+'%</span></div></div>'
-    +'<div class="wmeta"><div><b>Dates:</b> '+dates+'</div><div><b>Dealers:</b> '+vs.length+' &nbsp;·&nbsp; <b>Loads:</b> '+loads+'</div></div>'
-    +'<div class="kbody">'+cards+'</div></div>';
+  return '<div class="all-wk'+(wk===cur?' current':'')+(isk?' kick':'')+'" data-allwk="'+wk+'">'
+    +'<div class="all-wkhead"><div class="awl">'+title+'</div><div class="awd">'+esc(dates)+'</div>'
+    +'<div class="aws">'+travellers.length+' travelling · '+visits+' dealer visit'+(visits===1?'':'s')+'</div></div>'
+    +'<div class="all-wkbody">'+body+'</div></div>';
 }
 function renderAllOverview(){
-  var host=document.getElementById('ganttWrap');
-  var wks=(ALL_WK==='all')?allWeeksList().concat(['remote']):[ALL_WK];
-  host.innerHTML=allFiltersHTML()+allKpiHTML()
-    +'<div class="boardscroll allboard"><div class="weeks">'+wks.map(allWeekCard).join('')+'</div></div>';
-  allWireShared(host);
+  var hostWeeks=document.getElementById('allWeeks');
+  var hostMetrics=document.getElementById('allMetrics');
+  var hostToolbar=document.getElementById('allToolbar');
+  var hostNav=document.getElementById('allTripsNav');
+  if(!hostWeeks) return;
+  if(ALL_WK==null || ALL_WK==='all') ALL_WK=wkCurrent();
+  if(typeof ALL_WK!=='number') ALL_WK=wkCurrent();
+  FOCUS_WK=ALL_WK;
+  calSetToWeek(ALL_WK);
+  allMapModeApply();
+  if(hostNav){ hostNav.innerHTML=tripsNavHTML(); try{ tripsNavWire(hostNav); }catch(e){} }
+  if(hostToolbar) hostToolbar.innerHTML=allToolbarHTML(ALL_WK);
+  if(hostMetrics) hostMetrics.innerHTML=allKpiHTML();
+  var wks=allWeeksList();
+  /* Keep remote out of the main leadership board */
+  hostWeeks.innerHTML=wks.map(allWeekCard).join('');
+  allWireShared(document.getElementById('allView')||document.body);
+  setTimeout(function(){ allScrollToWeek(ALL_WK); }, 30);
+  if(ALL_MAP_MODE!=='collapsed'){ try{ allDrawMapInto('leaderMap'); }catch(e){} }
+}
+function allDrawMapInto(elId){
+  /* reuse allDrawMap after ensuring #leaderMap exists */
+  var slot=document.getElementById('allMapSlot');
+  if(slot && !document.getElementById('leaderMap')){
+    slot.innerHTML='<div id="leaderMap" style="height:100%;min-height:280px"></div>';
+  }
+  try{ allDrawMap(); }catch(e){}
 }
 function allWireShared(host){
-  var w=document.getElementById('allWkSel'); if(w) w.onchange=function(){
-    ALL_WK=(w.value==='all')?'all':parseInt(w.value,10); ALL_DAY='all';
-    if(ALL_REP&&typeof ALL_WK==='number') ALL_EXEC=rideFor(ALL_REP,ALL_WK)||ALL_EXEC;   /* adopt the stored pairing */
-    renderAllView(); pbSaveNav(); };
-  var ex=document.getElementById('allExecSel'); if(ex) ex.onchange=function(){ ALL_EXEC=ex.value; rideStore(); renderAllView(); };
-  var rp=document.getElementById('allRepSel'); if(rp) rp.onchange=function(){
-    ALL_REP=rp.value;
-    TERRS.forEach(function(t){ LV_AREAS[t]=ALL_REP?(t===ALL_REP):true; });               /* the rep's schedule only */
-    if(ALL_REP&&typeof ALL_WK==='number'&&!ALL_EXEC) ALL_EXEC=rideFor(ALL_REP,ALL_WK);
-    rideStore(); renderAllView(); };
-  var syncExecToDay=function(){ if(ALL_REP&&typeof ALL_WK==='number') ALL_EXEC=rideFor(ALL_REP,ALL_WK,ALL_DAY); };
-  var ds=document.getElementById('allDaySel'); if(ds) ds.onchange=function(){ ALL_DAY=(ds.value==='all')?'all':parseInt(ds.value,10); syncExecToDay(); renderAllView(); };
-  var stepDay=function(dir){
-    if(ALL_WK==='all') return;
-    var n=dayLabels(ALL_WK).length;
-    var cur=(ALL_DAY==='all')?(dir>0?-1:n):ALL_DAY;
-    var nx=cur+dir;
-    ALL_DAY=(nx<0||nx>=n)?'all':nx;                 /* stepping past the edges returns to All days */
-    syncExecToDay(); renderAllView();
-  };
-  host.querySelectorAll('[data-ridescope]').forEach(function(b){ b.onclick=function(){ if(b.disabled)return; ALL_RIDESCOPE=b.dataset.ridescope; renderAllView(); }; });
-  var lab=document.getElementById('lAddBtn'); if(lab) lab.onclick=lAddPanelToggle;
-  var dp=document.getElementById('allDayPrev'); if(dp) dp.onclick=function(){ stepDay(-1); };
-  var dn=document.getElementById('allDayNext'); if(dn) dn.onclick=function(){ stepDay(1); };
-  var sa=document.getElementById('allShowAll'); if(sa) sa.onclick=function(){ TERRS.forEach(function(t){LV_AREAS[t]=true;}); ALL_WK='all'; ALL_DAY='all'; ALL_EXEC=''; ALL_REP=''; renderAllView(); pbSaveNav(); };
-  host.querySelectorAll('[data-lvarea]').forEach(function(b){ b.onclick=function(){ LV_AREAS[b.dataset.lvarea]=!LV_AREAS[b.dataset.lvarea]; renderAllView(); pbSaveNav(); }; });
-  host.querySelectorAll('[data-lvtype]').forEach(function(b){ b.onclick=function(){ LV_TYPES[b.dataset.lvtype]=!LV_TYPES[b.dataset.lvtype]; renderAllView(); }; });
-  host.querySelectorAll('[data-adealer]').forEach(function(el){ el.onclick=function(){ allDealerModal(el.dataset.adealer); }; });
+  host=host||document.getElementById('allView')||document;
+  /* toolbar */
+  host.querySelectorAll('[data-allnavtog]').forEach(function(b){
+    b.onclick=function(){ allNavOpenSet(!ALL_NAV_OPEN); };
+  });
+  host.querySelectorAll('[data-allwkgo]').forEach(function(b){
+    b.onclick=function(){
+      var d=parseInt(b.dataset.allwkgo,10);
+      if(d===0){ ALL_WK=wkCurrent(); }
+      else {
+        if(typeof ALL_WK!=='number') ALL_WK=wkCurrent();
+        var list=allWeeksList();
+        var ix=list.indexOf(ALL_WK);
+        if(ix<0) ix=list.indexOf(wkCurrent());
+        ix=Math.max(0, Math.min(list.length-1, ix+d));
+        ALL_WK=list[ix];
+      }
+      FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); renderAllView(); pbSaveNav();
+      setTimeout(function(){ allScrollToWeek(ALL_WK); }, 40);
+    };
+  });
+  host.querySelectorAll('[data-allmaptog]').forEach(function(b){
+    b.onclick=function(){ allMapModeSet(ALL_MAP_MODE==='collapsed'?'split':'collapsed'); renderAllView(); };
+  });
+  host.querySelectorAll('[data-allmapmode]').forEach(function(b){
+    b.onclick=function(){ allMapModeSet(b.dataset.allmapmode); renderAllView(); };
+  });
+  host.querySelectorAll('[data-allmapback]').forEach(function(b){
+    b.onclick=function(){ allMapModeSet('split'); renderAllView(); };
+  });
+  host.querySelectorAll('[data-allmore]').forEach(function(b){
+    b.onclick=function(e){ e.stopPropagation(); var m=b.closest('.kb-more'); if(m) m.classList.toggle('open'); };
+  });
+  host.querySelectorAll('[data-alltrip]').forEach(function(b){
+    b.onclick=function(){ allMode='trip'; renderAllView(); pbSaveNav(); };
+  });
+  host.querySelectorAll('[data-hist]').forEach(function(b){
+    b.onclick=function(){ try{ openHistory(); }catch(e){} };
+  });
+  host.querySelectorAll('[data-allmetric]').forEach(function(b){
+    b.onclick=function(){
+      var id=b.dataset.allmetric;
+      ALL_METRIC_FILTER=(ALL_METRIC_FILTER===id)?'':id;
+      if(id==='next'){ ALL_WK=wkCurrent()+1; FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); }
+      else if(id==='travelling'||id==='visits'||id==='attention'){ ALL_WK=wkCurrent(); FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); }
+      renderAllView();
+      setTimeout(function(){ allScrollToWeek(ALL_WK); }, 40);
+    };
+  });
+  host.querySelectorAll('[data-alltoggle]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var row=b.closest('.all-trow'); if(!row) return;
+      row.classList.toggle('open');
+    };
+  });
+  host.querySelectorAll('[data-allnamemem]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var id=b.dataset.allnamemem; if(!id) return;
+      var m=teamById(id); var wk=parseInt(b.dataset.wk,10);
+      allOpenTerritoryForMember(m, wk);
+    };
+  });
+  host.querySelectorAll('[data-allopenmem]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var m=teamById(b.dataset.allopenmem);
+      allOpenTerritoryForMember(m, parseInt(b.dataset.wk,10));
+    };
+  });
+  host.querySelectorAll('[data-allprep]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var m=teamById(b.dataset.allprep);
+      allPrepareItinerary(m, parseInt(b.dataset.wk,10));
+    };
+  });
+  host.querySelectorAll('[data-adealer]').forEach(function(el){
+    el.onclick=function(e){ e.stopPropagation(); allDealerModal(el.dataset.adealer); };
+  });
+  /* close overflow on outside click */
+  if(!document._aqAllMoreClose){
+    document._aqAllMoreClose=true;
+    document.addEventListener('click',function(){
+      document.querySelectorAll('#allView .kb-more.open').forEach(function(m){ m.classList.remove('open'); });
+    });
+  }
 }
 /* Dealer drawer — expanded with tabs: Details · Visit History · Photos ·
    Receipts · Notes · Tasks. Same modal chrome as everywhere else. */
@@ -9833,7 +10392,8 @@ function tpWeekTable(wk,vs,ls,showRep,t){
   if(!rows) rows='<tr><td colspan="5" style="color:#999;text-align:center">Nothing scheduled.</td></tr>';
   return '<table class="sched"><thead><tr><th style="width:96px">Time</th><th style="width:52px">Dur</th><th style="width:64px">Type</th><th>Stop / Details</th><th>Location</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
-function tpOpen(title,body){ var html='<html><head><title>'+title+'</title><meta charset="utf-8"><style>'+TP_CSS+'</style></head><body><div class="noprint"><button onclick="window.print()">🖨  Print / Save as PDF</button></div>'+body+'</body></html>'; var w=window.open('','_blank'); if(!w){alert('Please allow pop-ups to view the trip plan.');return;} w.document.write(html); w.document.close(); }
+function tpOpen(title,body){ var html='<html><head><title>'+title+'</title><meta charset="utf-8"><style>'+TP_CSS+'</style></head><body><div class="noprint"><button onclick="window.print()">🖨  Print / Save as PDF</button></div>'+body+'<script src="/year-glance.js"></script>
+</body></html>'; var w=window.open('','_blank'); if(!w){alert('Please allow pop-ups to view the trip plan.');return;} w.document.write(html); w.document.close(); }
 function exportWeek(t,wk){
   var vs=dealersIn(t).filter(function(d){return ASSIGN[d.id]===wk;});
   var ls=LOGI.filter(function(x){return x.terr===t && x.wk===wk;});
@@ -10309,6 +10869,19 @@ function pbRestoreNav(){
 function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings';
   pbSaveNav();
+  var yearMode=(PLAN_MODE==='year' && !isMaster && !isSettings);
+  document.querySelectorAll('[data-planmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.planmode===(yearMode?'year':'weekly')); });
+  var yv=document.getElementById('yearView');
+  if(yv) yv.style.display=yearMode?'':'none';
+  if(yearMode){
+    document.getElementById("cards").style.display='none';
+    document.getElementById("plannerView").style.display='none';
+    document.getElementById("allView").style.display='none';
+    document.getElementById("masterView").style.display='none';
+    document.getElementById("settingsView").style.display='none';
+    try{ if(typeof ygShow==='function') ygShow(true); else if(typeof ygRender==='function') ygRender(); }catch(e){ console.error(e); }
+    return;
+  }
   document.getElementById("cards").style.display=(isMaster||isSettings)?'none':'';
   if(!isMaster&&!isSettings) renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings)?'':'none';
@@ -10332,7 +10905,18 @@ function render(){
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
 (function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
 
-document.querySelector("header.aqNavbar").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";render();});
+document.querySelector("header.aqNavbar").addEventListener("click",e=>{
+  const pm=e.target.closest("[data-planmode]");
+  if(pm){
+    PLAN_MODE=pm.dataset.planmode==='year'?'year':'weekly';
+    try{ sessionStorage.setItem('aqPlanMode',PLAN_MODE); }catch(err){}
+    render(); return;
+  }
+  const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";
+  if(PLAN_MODE==='year' && (terr==='Master'||terr==='Settings')) PLAN_MODE='weekly';
+  render();
+});
+try{ var _pm=sessionStorage.getItem('aqPlanMode'); if(_pm==='year'||_pm==='weekly') PLAN_MODE=_pm; }catch(e){}
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
 document.getElementById("poolState").addEventListener("change",function(e){poolState=e.target.value;renderPlanner();wireDnD();});
 document.getElementById("poolSort").addEventListener("change",function(e){poolSort=e.target.value;renderPlanner();wireDnD();});
@@ -10358,9 +10942,6 @@ document.getElementById("mBody").addEventListener("click",e=>{
 
 
 document.getElementById("exportBtn").addEventListener("click",exportTripPlans);
-document.getElementById("allOvBtn").addEventListener("click",function(){allMode='overview';renderAllView();});
-document.getElementById("allMapBtn").addEventListener("click",function(){allMode='map';renderAllView();pbSaveNav();});
-document.getElementById("allTripBtn").addEventListener("click",function(){allMode='trip';renderAllView();pbSaveNav();});
 document.getElementById("terrSeg").addEventListener("click",function(e){var b=e.target.closest(".segb"); if(!b)return; terrMode=b.dataset.tm; render();});
 document.getElementById("terrMap").addEventListener("click",function(e){var b=e.target.closest('[data-trip]'); if(!b)return; terrMapWeek=(b.dataset.trip==='all')?'all':parseInt(b.dataset.trip,10); render();});
 document.querySelectorAll('th.srt').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.mk;if(msort.key===k)msort.dir*=-1;else msort={key:k,dir:(k==='booking'||k==='loads'||k==='lastYear')?-1:1};renderMaster();}));
@@ -10533,11 +11114,11 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
        automatically; same-event edits become per-card conflicts. */
     var _confl=mergeEventPayload(p);
     /* non-event settings adopt the incoming value (not scheduled events) */
-    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners);
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);}
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
