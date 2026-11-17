@@ -76,10 +76,9 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* Team member strip — under territory nav, ~34px */
 .aqTeamNav{display:none!important;} /* team selection moved into Trips sidebar */
 /* ---- Page heading ---- */
-.wrap{max-width:100%;margin:0 auto;padding:1rem 20px 40px;}
-/* ---- KPI cards: discrete tiles per approved mockup, Sales card chrome
-       (1px #e5e7eb, 4px radius, no shadow) ---- */
-.cards{display:flex;gap:12px;margin-bottom:12px;}
+.wrap{max-width:100%;margin:0 auto;padding:0 0 24px;}
+/* ---- KPI cards (legacy sales metrics — cleared on travel views) ---- */
+.cards{display:none;gap:12px;margin-bottom:0;}
 .card{position:relative;display:flex;flex-direction:column;flex:1;align-items:flex-start;justify-content:center;padding:.625rem .875rem .75rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);min-width:0;line-height:1.2;overflow:hidden;}
 .card .lbl{font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted-2);margin-bottom:.1rem;}
 .card .val{font-size:1rem;font-weight:600;color:var(--aq-black);letter-spacing:-.5px;line-height:1.15;}
@@ -101,8 +100,8 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
   grid-template-columns:260px minmax(0,1fr);
   gap:0;
   align-items:stretch;
-  height:calc(100vh - 148px);
-  max-height:calc(100vh - 148px);
+  height:calc(100vh - 140px);
+  max-height:calc(100vh - 140px);
   background:#fff;
   border:1px solid var(--line);
   border-radius:var(--radius);
@@ -273,9 +272,11 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 }
 .kb-more-menu button:hover{background:#f5f6f7;}
 .kb-toolbar .kbb.icon{width:28px;padding:0;font-size:14px;}
+#plannerView.trips-on .progbar{display:none!important;margin:0;padding:0;height:0;overflow:hidden;}
 #plannerView.trips-on .progbar .pa{display:none;}
 #plannerView.trips-on .progbar .plansum{display:none;}
 #plannerView.trips-on .hint{display:none;}
+#plannerView.trips-on .planwrap.trips-kanban{border-radius:0;border-left:0;border-right:0;border-top:0;}
 @media(max-width:1100px){
   .planwrap.trips-kanban.map-split{grid-template-columns:260px minmax(0,1fr);}
   .planwrap.trips-kanban.nav-collapsed.map-split{grid-template-columns:minmax(0,1fr);}
@@ -587,16 +588,17 @@ body.wkfull-on{overflow:hidden;}
 
 
 
-/* ===== Year at a Glance ===== */
-.aqPlanMode{display:inline-flex;align-items:center;gap:0;margin-left:14px;border:1px solid #d1d5db;border-radius:5px;overflow:hidden;vertical-align:middle;}
-.aqPlanMode button{appearance:none;border:0;background:#fff;font:600 11px 'Open Sans',Arial,sans-serif;padding:5px 10px;cursor:pointer;color:#6b7280;border-right:1px solid #e5e7eb;}
-.aqPlanMode button:last-child{border-right:0;}
-.aqPlanMode button.on{background:var(--aq-red,#cf202f);color:#fff;}
-.aqPlanMode button:hover:not(.on){color:var(--aq-red);}
+/* ===== Plan mode strip (under black header) + Year at a Glance ===== */
+.aqPlanStrip{display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #eceef0;padding:0 20px;min-height:34px;}
+.aqPlanStrip button{appearance:none;border:0;background:transparent;font:600 12px 'Open Sans',Arial,sans-serif;padding:8px 2px 7px;cursor:pointer;color:#8b9096;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.aqPlanStrip button.on{color:var(--aq-black,#1c1c1e);border-bottom-color:var(--aq-red,#cf202f);}
+.aqPlanStrip button:hover:not(.on){color:var(--aq-red,#cf202f);}
+.aqPlanStrip .aqPlanSep{color:#d1d5db;font-size:12px;user-select:none;}
 #allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
 #allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
-#yearView{display:none;padding:0 0 24px;}
-.yg-wrap{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+#yearView{display:none;padding:8px 16px 24px;min-height:calc(100vh - 140px);}
+#yearView.is-on{display:block;}
+.yg-wrap{background:#fff;border:1px solid var(--line);border-radius:0;overflow:hidden;min-height:480px;}
 .yg-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
 .yg-cats{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
 .yg-chip{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:700 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
@@ -604,24 +606,27 @@ body.wkfull-on{overflow:hidden;}
 .yg-legend{display:flex;flex-wrap:wrap;gap:8px 12px;padding:6px 10px 8px;font-size:10px;color:#6b7280;border-bottom:1px solid var(--line-soft);}
 .yg-leg{display:inline-flex;align-items:center;gap:4px;}
 .yg-leg i{width:8px;height:8px;border-radius:2px;display:inline-block;}
-.yg-board{padding:6px 8px 10px;overflow:auto;max-height:calc(100vh - 220px);}
-.yg-month{display:grid;grid-template-columns:64px minmax(0,1fr);gap:6px;align-items:start;margin:0 0 7px;padding-bottom:6px;border-bottom:1px solid #f0f1f3;}
-.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);padding-top:14px;letter-spacing:.02em;}
-.yg-grid{min-width:0;}
-.yg-wdrow,.yg-drow{display:grid;gap:2px;grid-template-columns:repeat(var(--ygcols),minmax(0,1fr));}
-.yg-wd{font-size:8px;font-weight:700;text-align:center;color:#9ca3af;padding:0 0 2px;}
-.yg-wd.we{color:#d1d5db;}
-.yg-cell{appearance:none;border:1px solid #eef0f2;background:#fff;border-radius:3px;min-height:34px;padding:2px 2px 3px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;}
-.yg-cell.empty{border:0;background:transparent;cursor:default;min-height:34px;}
-.yg-cell.we{background:#fafbfc;}
+.yg-board{padding:4px 6px 8px;overflow:auto;max-height:calc(100vh - 210px);}
+.yg-head{display:grid;grid-template-columns:72px repeat(31,minmax(18px,1fr));gap:1px;position:sticky;top:0;z-index:3;background:#fff;padding:2px 0 4px;border-bottom:1px solid #e5e7eb;}
+.yg-head .yg-corner{font-size:9px;font-weight:700;color:#9ca3af;padding-top:10px;}
+.yg-head .yg-hd{text-align:center;font-size:9px;font-weight:700;color:#6b7280;line-height:1.1;padding:2px 0;}
+.yg-head .yg-hd span{display:block;font-size:8px;font-weight:600;color:#b0b5bb;}
+.yg-head .yg-hd.we{color:#c4c8cd;background:#fafbfc;}
+.yg-month{display:grid;grid-template-columns:72px repeat(31,minmax(18px,1fr));gap:1px;align-items:stretch;margin:0;padding:1px 0;border-bottom:1px solid #f0f1f3;min-height:36px;}
+.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 4px 0 2px;}
+.yg-cell{appearance:none;border:1px solid #eef0f2;background:#fff;border-radius:0;min-height:34px;padding:1px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;}
+.yg-cell.na{border:0;background:transparent;cursor:default;min-height:34px;}
+.yg-cell.we{background:#f7f8fa;}
 .yg-cell.today{border-color:var(--aq-red);box-shadow:inset 0 0 0 1px var(--aq-red);}
 .yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
 .yg-cell.has{background:#fff;}
-.yg-cell:hover:not(.empty){border-color:#c9ced4;}
-.yg-d{font-size:9px;font-weight:700;color:#374151;line-height:1;}
-.yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;}
-.yg-bar{display:block;font-size:7px;font-weight:700;color:#fff;border-radius:2px;padding:0 2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.yg-cell:hover:not(.na){border-color:#c9ced4;background:#fcfcfd;}
+.yg-d{font-size:8px;font-weight:700;color:#374151;line-height:1;padding:0 1px;}
+.yg-wk{font-size:7px;font-weight:700;color:#b0b5bb;line-height:1;padding:0 1px;}
+.yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
+.yg-bar{display:block;font-size:7px;font-weight:700;color:#fff;border-radius:1px;padding:0 1px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:8px;}
 .yg-more{font-size:7px;font-weight:700;color:#6b7280;}
+.yg-mem{min-width:160px;max-width:220px;min-height:28px;height:auto;max-height:72px;}
 .yg-panel{position:sticky;bottom:0;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:5;}
 .yg-ph{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px 6px;}
 .yg-psub{font-size:11px;color:#9ca3af;margin-top:2px;}
@@ -641,7 +646,7 @@ body.wkfull-on{overflow:hidden;}
 @media(max-width:900px){.yg-focus-body{grid-template-columns:1fr 1fr;}.yg-mlbl{width:48px;font-size:10px;}}
 @media(max-width:640px){.yg-focus-body{grid-template-columns:1fr;}.yg-cell{min-height:28px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
-#allView .planwrap.trips-kanban{height:calc(100vh - 108px);max-height:calc(100vh - 108px);}
+#allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
 .all-metric{appearance:none;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:68px;max-height:84px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;color:inherit;}
 .all-metric:hover{border-color:#c9ced4;background:#fafbfc;}
@@ -1777,10 +1782,6 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
   </div>
   <div class="aqMainNav"><div class="aqNavContainer">
   <div class="aqLogoContainer"><img class="aqLogo" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>
-  <div class="aqPlanMode" id="aqPlanMode" title="Planning view">
-    <button type="button" class="on" data-planmode="weekly">Weekly Planner</button>
-    <button type="button" data-planmode="year">Year at a Glance</button>
-  </div>
   <div class="aqNavLinks" id="tabs">
     <div class="aqNavItem"><button class="tab active" data-t="All">All</button></div>
     <div class="aqNavItem"><button class="tab" data-t="East">East</button></div>
@@ -1791,8 +1792,13 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
   </div>
   </div></div>
 </header>
+<nav class="aqPlanStrip" id="aqPlanMode" aria-label="Planning view">
+  <button type="button" class="on" data-planmode="weekly">Weekly Planner</button>
+  <span class="aqPlanSep" aria-hidden="true">|</span>
+  <button type="button" data-planmode="year">Year at a Glance</button>
+</nav>
 <div class="wrap">
-  <div class="cards" id="cards"></div>
+  <div class="cards" id="cards" style="display:none"></div>
   <div id="plannerView" style="display:none;">
     <div class="progbar" id="progBar">
       <div class="progtext" id="progText"></div>
@@ -4151,118 +4157,13 @@ function ringSVG(pct,color){
     +'</svg><div class="xringpct">'+Math.round(pct)+'%</div></div>';
 }
 function renderCards(){
-  /* TRIPS page (any territory) has NO business metrics: remove the entire KPI
-     panel set from the DOM (not CSS-hidden) and collapse the container, then
-     stop before any target/confirmation figure is built. The executive summary
-     lives only on the Dashboard (All) and reporting pages. */
-  if(terr!=='All' && terr!=='Master'){
-    var _cards=document.getElementById('cards');
-    if(_cards){ _cards.innerHTML=''; _cards.style.display='none'; }        /* panels removed from DOM */
-    var _pg=document.getElementById('progText'); if(_pg) _pg.innerHTML=''; /* no dealer-program/sales reference either */
-    return;
-  }
-  var _cardsD=document.getElementById('cards'); if(_cardsD) _cardsD.style.display='';   /* Dashboard: metrics remain */
-  /* Executive summary — every figure comes from the CALC engine.
-     Confirmed values are the commitment ledger (Mixed + CAD); percentages
-     always compare Mixed to Mixed. */
-  const Y=planYear();
-  const _md=planningUniverse().filter(function(d){return d.areaPlanning!==false;});
-  const ds=(terr==='All'||terr==='Master')?_md:_md.filter(function(d){return d.territory===terr;});
-  var target=0, targetLoads=0, targetCAD=0, confB=0, confL=0, confCAD=0;
-  ds.forEach(function(d){ var c=CALC.dealer(d); if(!c) return;
-    target+=c.revMixed; targetLoads+=c.loads; targetCAD+=c.revCAD;
-    confB+=c.confRevMixed; confL+=c.confLoads; confCAD+=c.confRevCAD;
-  });
-  const pbDs=ds.filter(function(d){return hasPB(d.id);});          /* >=1 Pre-book card */
-  const conf=pbDs.filter(function(d){return pbConfirmed(d.id);});  /* commitment-backed */
-  const plan=pbDs.filter(function(d){return !pbConfirmed(d.id);});
-  const planB=plan.reduce(function(s,d){var c=CALC.dealer(d);return s+(c?c.revMixed:0);},0);
-  const planL=plan.reduce(function(s,d){var c=CALC.dealer(d);return s+(c?c.loads:0);},0);
-  const remB=Math.max(0,target-confB-planB), remL=Math.max(0,targetLoads-confL-planL);
-  const overB=Math.max(0,confB+planB-target);
-  const base=Math.max(target,confB+planB)||1;                      /* over-target never hides */
-  const cPct=confB/base*100, pPct=planB/base*100;
-  var pc=function(b){ return target?Math.round(b/target*100):0; };
-  var tip=function(lbl,b,l){ return lbl+' — '+fmtUSD(b)+' · '+Math.round(l)+' loads · '+pc(b)+'% of target'; };
-  var cad=function(v){ return 'CA$'+Math.round(v).toLocaleString(); };
-  /* Consistent Pre-Booking status colour: applied to the ring, badge and
-     percentage everywhere. Above target = deep green, at target = green,
-     approaching = orange, behind = red. */
-  var statusCol=function(r){
-    if(r>1.001) return {c:'#15803d',b:'Above Target'};   // deep green
-    if(r>=0.98) return {c:'#16a34a',b:'At Target'};       // green
-    if(r>=0.75) return {c:'#f59e0b',b:'Approaching'};     // orange
-    return {c:'#dc2626',b:'Behind Target'};               // red
-  };
-  /* Confirmed loads = the 2027 Salesforce Actual (closed-won prebooking loads),
-     never planner confirmations or appointment counts. */
-  var actL=0, actB=0;
-  ds.forEach(function(d){ var c=CALC.dealer(d); if(!c) return; actL+=(+c.actualLoads||0); actB+=(+c.actual||0); });
-  var tgtL=Math.round(targetLoads), cL=Math.round(actL);
-  var fcL=Math.round(confL+planL); if(!fcL) fcL=tgtL;   /* planner forecast pipeline */
-  var remLd=Math.max(0,tgtL-cL);
-  var pctL=tgtL?Math.min(100,cL/tgtL*100):0;
-  var ratioL=tgtL?cL/tgtL:0;
-  var stL=statusCol(ratioL);
-  var dollarTarget=target>=1e6?('$'+(target/1e6).toFixed(1)+'M'):fmtUSDk(target);
-  /* --- KPI 1: 2027 Pre-Book Actual Target — load target primary, $ subtle --- */
-  var card1='<div class="xc">'
-    +'<div class="xch">'+Y+' Pre-Book Actual Target</div>'
-    +'<div class="xcv"><b>'+tgtL+'</b><span class="xcl">Load Target</span></div>'
-    +'<div class="xsub">'+dollarTarget+' <span>Dollar Target</span></div>'
-    +'</div>';
-  /* --- KPI 2 (PRIMARY): 2027 Confirmed Pre-Booking — loads-first ledger --- */
-  var card2='<div class="xc xc-primary">'
-    +'<div class="xch">'+Y+' Confirmed Pre-Booking</div>'
-    +'<div class="xcb">'+ringSVG(pctL,stL.c)
-      +'<div class="xstats">'
-        +'<div class="xcv" style="font-size:1.15rem"><b style="color:'+stL.c+'">'+cL+'</b><span class="xcl">/ '+tgtL+' Loads</span></div>'
-        +'<div class="xbadge" style="background:'+stL.c+'">'+stL.b+'</div>'
-      +'</div>'
-    +'</div>'
-    +'<div class="xktrio">'
-      +'<div class="xk"><b>'+cL+'</b><span>Confirmed Loads</span></div>'
-      +'<div class="xk"><b>'+fcL+'</b><span>Forecast Loads</span></div>'
-      +'<div class="xk"><b>'+remLd+'</b><span>Remaining Loads</span></div>'
-    +'</div>'
-    +'</div>';
-  /* --- KPI 3: Pre-Booking Confirmation — DEALER confirmations only. No visit or
-     appointment metrics: this dashboard tracks Pre-Bookings exclusively. --- */
-  var dConf=conf.length, dTot=ds.length, dRem=Math.max(0,dTot-dConf);
-  var dPct=dTot?dConf/dTot*100:0;
-  var stD=statusCol(dTot?dConf/dTot:0);
-  var tw={}; conf.forEach(function(d){ var w=ASSIGN[d.id]; if(w!=null&&w!=='pool') tw[w]=1; });
-  var tripsConf=Object.keys(tw).length;
-  var card3='<div class="xc">'
-    +'<div class="xch">Pre-Booking Confirmation</div>'
-    +(dTot
-      ? ('<div class="xcb">'+ringSVG(dPct,stD.c)
-        +'<div class="xstats">'
-          +'<div class="xs"><b style="color:'+stD.c+'">'+dConf+'</b><span>Dealers Confirmed</span></div>'
-          +'<div class="xs muted"><b>'+dRem+'</b><span>Dealers Remaining</span></div>'
-        +'</div></div>'
-        +'<div class="xktrio">'
-          +'<div class="xk"><b>'+tripsConf+'</b><span>Trips Confirmed</span></div>'
-          +'<div class="xk"><b>'+dTot+'</b><span>Total Dealers</span></div>'
-          +'<div class="xk"><b>'+Math.round(dPct)+'%</b><span>Confirmation</span></div>'
-        +'</div>')
-      : '<div class="xcb">'+ringSVG(0,'#c7ccd1')+'<div class="xstats"><div class="xs muted"><b>—</b><span>No dealers in scope</span></div></div></div>')
-    +'</div>';
-  /* subtle expandable program reference — never a banner */
-  var prog='<details class="proginfo"><summary>ⓘ '+Y+' Dealer Program</summary>'
-    +'<div class="pgwrap"><table><thead><tr><th>Tier</th><th>Loads</th><th>Margin</th><th>Co-op</th></tr></thead><tbody>'
-    +programList().map(function(p){ return '<tr><td>Tier '+p.tier+'</td><td>'+p.min+(p.max==null?'+':('–'+p.max))+'</td><td>'+p.margin+'%</td><td>'+p.coop+'%</td></tr>'; }).join('')
-    +'<tr><td colspan="2" style="color:var(--muted-2)">Under 3 loads</td><td colspan="2" style="color:#b45309;font-weight:600">Not Qualified — no tier, margin or co-op</td></tr>'
-    +'</tbody></table>'
-    +'<div class="pgnotes">Pre-booking opens <b>October 31</b> · co-op accrues from <b>January 1</b> · production slots are <b>first come, first served</b></div>'
-    +'</div></details>';
-  /* On the territory planner the program reference sits on one compact line with
-     the Reset/Clear and Schedule/Map/History controls (the #progBar header row);
-     on the ALL / Master dashboard there is no planner header, so it stays under
-     the KPI cards as before. */
-  var _inPlanner=(terr!=='All'&&terr!=='Master');
-  document.getElementById("cards").innerHTML=card1+card2+card3+(_inPlanner?'':prog);
-  var _pt=document.getElementById("progText"); if(_pt) _pt.innerHTML=(_inPlanner?prog:'');
+  /* Travel views never show legacy pre-booking sales KPI tiles (Actual Target,
+     Confirmed Pre-Booking, Pre-Booking Confirmation) or the Dealer Program
+     strip. Master Sheet / Settings keep their own surfaces. Underlying CALC /
+     Salesforce data is untouched. */
+  var _cards=document.getElementById('cards');
+  if(_cards){ _cards.innerHTML=''; _cards.style.display='none'; }
+  var _pg=document.getElementById('progText'); if(_pg) _pg.innerHTML='';
 }
 function dealerCard(d){
   d=sfMasterMerge(d);
@@ -6983,13 +6884,17 @@ var ALL_NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqAllNavOpen'); r
 var ITINERARIES=ITINERARIES||{}; /* memberId|wk -> {status,version,sentAt,payloadHash} */
 var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true};
 
-function allScrollToWeek(wk){
+function allScrollToWeek(wk,behavior){
   var el=document.querySelector('#allWeeks [data-allwk="'+wk+'"]');
   var sc=document.getElementById('allBoardScroll');
-  if(el&&sc){
-    var left=el.offsetLeft - 12;
-    sc.scrollTo({left:Math.max(0,left), behavior:'smooth'});
-  }
+  if(!el||!sc) return;
+  /* Position relative to the scrollport (not offsetParent), so the current week
+     lands flush at the left of the visible board — never tucked under the edge
+     when the Outlook sidebar is open or collapsed. */
+  var elRect=el.getBoundingClientRect();
+  var scRect=sc.getBoundingClientRect();
+  var left=sc.scrollLeft + (elRect.left - scRect.left) - 8;
+  sc.scrollTo({left:Math.max(0, Math.round(left)), behavior:behavior||'auto'});
 }
 function allMapModeApply(){
   var wrap=document.getElementById('allPlanwrap'); if(!wrap) return;
@@ -7008,6 +6913,8 @@ function allNavOpenSet(open){
   ALL_NAV_OPEN=!!open;
   try{ localStorage.setItem('aqAllNavOpen',ALL_NAV_OPEN?'1':'0'); }catch(e){}
   allMapModeApply();
+  /* Sidebar width changed — re-snap current week flush to the board left edge. */
+  setTimeout(function(){ try{ allScrollToWeek(ALL_WK,'auto'); }catch(e){} }, 50);
 }
 
 function allMatchTravellerByName(terrName, name){
@@ -7318,7 +7225,12 @@ function renderAllOverview(){
   /* Keep remote out of the main leadership board */
   hostWeeks.innerHTML=wks.map(allWeekCard).join('');
   allWireShared(document.getElementById('allView')||document.body);
-  setTimeout(function(){ allScrollToWeek(ALL_WK); }, 30);
+  /* Double rAF + short timeout: wait for sidebar/grid layout before snapping
+     the current week flush to the left of the board. */
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){ allScrollToWeek(ALL_WK,'auto'); });
+  });
+  setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 80);
   if(ALL_MAP_MODE!=='collapsed'){ try{ allDrawMapInto('leaderMap'); }catch(e){} }
 }
 function allDrawMapInto(elId){
@@ -7348,7 +7260,7 @@ function allWireShared(host){
         ALL_WK=list[ix];
       }
       FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); renderAllView(); pbSaveNav();
-      setTimeout(function(){ allScrollToWeek(ALL_WK); }, 40);
+      setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 60);
     };
   });
   host.querySelectorAll('[data-allmaptog]').forEach(function(b){
@@ -7376,7 +7288,7 @@ function allWireShared(host){
       if(id==='next'){ ALL_WK=wkCurrent()+1; FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); }
       else if(id==='travelling'||id==='visits'||id==='attention'){ ALL_WK=wkCurrent(); FOCUS_WK=ALL_WK; calSetToWeek(ALL_WK); }
       renderAllView();
-      setTimeout(function(){ allScrollToWeek(ALL_WK); }, 40);
+      setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 60);
     };
   });
   host.querySelectorAll('[data-alltoggle]').forEach(function(b){
@@ -10869,20 +10781,33 @@ function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings';
   pbSaveNav();
   var yearMode=(PLAN_MODE==='year' && !isMaster && !isSettings);
+  var planStrip=document.getElementById('aqPlanMode');
+  if(planStrip) planStrip.style.display=(isMaster||isSettings)?'none':'flex';
   document.querySelectorAll('[data-planmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.planmode===(yearMode?'year':'weekly')); });
   var yv=document.getElementById('yearView');
-  if(yv) yv.style.display=yearMode?'':'none';
+  if(yv){
+    yv.classList.toggle('is-on', yearMode);
+    yv.style.display=yearMode?'block':'none';
+  }
   if(yearMode){
     document.getElementById("cards").style.display='none';
     document.getElementById("plannerView").style.display='none';
     document.getElementById("allView").style.display='none';
     document.getElementById("masterView").style.display='none';
     document.getElementById("settingsView").style.display='none';
-    try{ if(typeof ygShow==='function') ygShow(true); else if(typeof ygRender==='function') ygRender(); }catch(e){ console.error(e); }
+    try{
+      if(typeof YG!=='undefined' && YG){
+        /* Keep year filters aligned with the territory tab without wiping member picks. */
+        YG.terr=(isAll||terr==='All')?'All':terr;
+      }
+      if(typeof ygShow==='function') ygShow(true);
+      else if(typeof ygRender==='function') ygRender();
+      else if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;font:600 13px Open Sans,Arial,sans-serif;color:#6b7280">Year at a Glance failed to load. Reload the page.</div>';
+    }catch(e){ console.error(e); if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;color:#b42318">Year at a Glance error — see console.</div>'; }
     return;
   }
-  document.getElementById("cards").style.display=(isMaster||isSettings)?'none':'';
-  if(!isMaster&&!isSettings) renderCards();
+  document.getElementById("cards").style.display='none';
+  renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings)?'':'none';
   document.getElementById("allView").style.display=isAll?'':'none';
   document.getElementById("masterView").style.display=isMaster?'':'none';
@@ -10905,16 +10830,20 @@ function render(){
 (function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
 
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{
-  const pm=e.target.closest("[data-planmode]");
-  if(pm){
-    PLAN_MODE=pm.dataset.planmode==='year'?'year':'weekly';
-    try{ sessionStorage.setItem('aqPlanMode',PLAN_MODE); }catch(err){}
-    render(); return;
-  }
   const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";
   if(PLAN_MODE==='year' && (terr==='Master'||terr==='Settings')) PLAN_MODE='weekly';
   render();
 });
+(function(){
+  var strip=document.getElementById('aqPlanMode');
+  if(!strip) return;
+  strip.addEventListener('click',function(e){
+    var pm=e.target.closest('[data-planmode]'); if(!pm) return;
+    PLAN_MODE=pm.dataset.planmode==='year'?'year':'weekly';
+    try{ sessionStorage.setItem('aqPlanMode',PLAN_MODE); }catch(err){}
+    render();
+  });
+})();
 try{ var _pm=sessionStorage.getItem('aqPlanMode'); if(_pm==='year'||_pm==='weekly') PLAN_MODE=_pm; }catch(e){}
 document.getElementById("sbSearch").addEventListener("input",e=>{search=e.target.value.toLowerCase();renderPlanner();wireDnD();});
 document.getElementById("poolState").addEventListener("change",function(e){poolState=e.target.value;renderPlanner();wireDnD();});
