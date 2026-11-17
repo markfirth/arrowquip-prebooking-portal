@@ -7020,7 +7020,7 @@ function createVisit(dealerId,type,wk,day){
     teamStampNew('x',xid);
     expandRef='x:'+xid;
   }
-  if(expandRef){ try{ DVEXP[expandRef]=true; sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} }
+  /* Leave cards collapsed by default (one-line). Expansion is user-driven. */
   savePlan(); refreshPlanner();
 }
 function renderAllView(){
@@ -9584,10 +9584,226 @@ function addDealerToWeek(dealerId,wk,day){
    the card. Replaces dragging from the dealer library. Uses createVisit(), the
    same path the old drag-and-drop used, so saving and history are unchanged. */
 function dqInputHTML(wk,day){
-  return '<div class="dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(day==null?'':day)+'" placeholder="+ Add — dealer, stop, flight, hotel, meeting…" autocomplete="off" spellcheck="false"></div>';
+  return '<div class="dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(day==null?'':day)+'" placeholder="+ Add anything…" autocomplete="off" spellcheck="false" title="Type naturally — Enter creates the appointment"></div>';
+}
+/* Per-traveller travel memory (hotels liked/disliked, airlines, rental prefs). */
+function travelPrefsFor(memberId){
+  try{
+    ADMIN=ADMIN||{};
+    if(!ADMIN.travelPrefs || typeof ADMIN.travelPrefs!=='object') ADMIN.travelPrefs={};
+    var id=memberId||'_shared';
+    if(!ADMIN.travelPrefs[id]) ADMIN.travelPrefs[id]={hotelsLiked:[],hotelsDisliked:[],hotelsPreferred:[],airlines:[],rentals:[],depAirports:[],seat:'',hotelBudget:null,travelHours:null};
+    return ADMIN.travelPrefs[id];
+  }catch(e){ return {hotelsLiked:[],hotelsPreferred:[],airlines:[],rentals:[]}; }
+}
+function travelPrefsActive(){
+  try{
+    var m=(typeof teamSingleMember==='function')?teamSingleMember():null;
+    return travelPrefsFor(m&&m.id);
+  }catch(e){ return travelPrefsFor(null); }
+}
+function preferHotelFromMemory(placeHint, brand){
+  var prefs=travelPrefsActive();
+  var pool=[].concat(prefs.hotelsPreferred||[], prefs.hotelsLiked||[]);
+  var hit=pool.filter(function(h){
+    if(!h) return false;
+    if(brand && h.brand && String(h.brand).toLowerCase()===String(brand).toLowerCase()) return true;
+    if(placeHint && h.city && String(h.city).toLowerCase().indexOf(String(placeHint).toLowerCase())>=0) return true;
+    if(brand && h.name && String(h.name).toLowerCase().indexOf(String(brand).toLowerCase())>=0) return true;
+    return false;
+  })[0];
+  return hit||null;
+}
+function smartStampVisit(dealerId, wk, dayN, intent){
+  createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN);
+  if(!intent) return;
+  try{
+    if(intent.time && typeof intent.time==='string'){
+      if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
+        TIME[dealerId]=intent.time;
+        if(intent.durationMin) DUR[dealerId]=intent.durationMin;
+      } else {
+        var xv=XVISITS[XVISITS.length-1];
+        if(xv && xv.dealer===dealerId){
+          xv.time=intent.time;
+          if(intent.durationMin) xv.dur=intent.durationMin;
+        }
+      }
+      savePlan(); refreshPlanner();
+    } else if(intent.durationMin){
+      if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
+        DUR[dealerId]=intent.durationMin; savePlan(); refreshPlanner();
+      }
+    }
+  }catch(e){}
+}
+function applySmartIntent(intent, wk, day){
+  if(!intent) return false;
+  undoSnap('Add: '+(intent.name||intent.raw||'item'));
+  var dayN=(day===''||day==null)?null:parseInt(day,10);
+  if(intent.day!=null && (dayN==null||dayN==='')) dayN=intent.day;
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+  function finishTravel(it){
+    LOGI.push(it); teamStampNew('m',it.id);
+    /* Collapsed by default — do not auto-expand */
+    savePlan();
+    function afterOwn(){ refreshPlanner(); aqToast('Added · '+(it.name||intent.kind), true); }
+    /* Auto-assign to the single selected traveller when possible — no modal. */
+    try{
+      if(typeof teamSingleMember==='function'){
+        var one=teamSingleMember();
+        if(one && one.id && !teamOwnerOf('m',it.id)){ OWNERS['m:'+it.id]=one.id; savePlan(); }
+      }
+    }catch(e){}
+    if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
+      teamPickOwner('m', it.id, afterOwn);
+    else afterOwn();
+  }
+  if(intent.kind==='dealer'){
+    var dealers=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
+    var ranked=(window.AQSmart&&AQSmart.rankDealers)?AQSmart.rankDealers(intent.query||intent.name, dealers):dqMatches(intent.query||intent.name);
+    var best=(window.AQSmart&&AQSmart.clearBestDealer)?AQSmart.clearBestDealer(ranked):(ranked.length===1?ranked[0]:null);
+    if(best){
+      smartStampVisit(best.id, wk, dayN, intent);
+      aqToast('Added · '+(best.name||'dealer'), true);
+      return true;
+    }
+    if(ranked.length>1){
+      /* Still create the top match — user asked for type-and-go; they can undo. */
+      smartStampVisit(ranked[0].id, wk, dayN, intent);
+      aqToast('Added · '+(ranked[0].name||'dealer')+' (best match)', true);
+      return true;
+    }
+    /* No dealer match — create a named stop with the typed text */
+    intent.kind='other'; intent.travelType='other';
+    if(!intent.name) intent.name=intent.raw||'Stop';
+  }
+  if(intent.kind==='virtual' || intent.travelType || intent.kind==='other' || intent.kind==='drive' || intent.kind==='food' || intent.kind==='fuel'){
+    var t=intent.travelType||'other';
+    if(intent.kind==='hotel' && intent.preferPrevious){
+      var mem=preferHotelFromMemory(intent.placeHint, (intent.name||'').split(/\s/)[0]);
+      if(mem){
+        intent.name=mem.name||intent.name;
+        intent.placeHint=mem.city||intent.placeHint;
+      }
+    }
+    var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terrFor,
+      wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
+      name:intent.name||intent.raw||'Stop', address:'', lat:null, lon:null,
+      airportCode:'', airportName:'', airline:intent.airline||'', flightNo:'',
+      day:dayN, time:(intent.time||''), day2:(intent.dayEnd!=null?intent.dayEnd:null), time2:'',
+      conf:'', notes:'', bookStatus:''};
+    if(intent.virtual){ it.virtual=true; it.dur=intent.durationMin||30; }
+    else if(intent.durationMin) it.dur=intent.durationMin;
+    if(intent.placeHint && (t==='hotel'||t==='food'||t==='other'||t==='tradeshow')){
+      it.address=intent.placeHint; it.notes=(it.notes?it.notes+' · ':'')+'Place: '+intent.placeHint;
+    }
+    if(intent.budget){
+      it.notes=(it.notes?it.notes+' · ':'')+'Budget under $'+intent.budget.amount+' '+(intent.budget.currency||'USD')+' (unverified)';
+    }
+    if(intent.unverified && intent.unverified.length){
+      it.notes=(it.notes?it.notes+' · ':'')+'Needs verification: '+intent.unverified.join(', ');
+    }
+    if(intent.kind==='rental' && intent.dayEnd!=null){
+      it.day2=intent.dayEnd;
+      it.notes=(it.notes?it.notes+' · ':'')+'Drop-off day set — times unverified';
+    }
+    finishTravel(it);
+    return true;
+  }
+  /* Absolute fallback — never leave Enter as a no-op */
+  finishTravel({
+    id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terrFor,
+    wk:(wk==='remote'?'remote':parseInt(wk,10)), type:'other',
+    name:intent.name||intent.raw||'Stop', address:'', lat:null, lon:null,
+    airportCode:'', airportName:'', airline:'', flightNo:'',
+    day:dayN, time:(intent.time||''), day2:null, time2:'',
+    conf:'', notes:'', bookStatus:'', dur:intent.durationMin||60
+  });
+  return true;
+}
+function smartTryEnter(inp){
+  var q=(inp&&inp.value||'').trim(); if(!inp||!q) return false;
+  /* Multi-line paste → bulk review */
+  if(/\n/.test(inp.value) || /\t/.test(inp.value)){
+    if(window.AQSmart) smartBulkReview(inp.value, inp.dataset.qwk, inp.dataset.qday);
+    else applySmartIntent({kind:'other',travelType:'other',name:q,raw:q}, inp.dataset.qwk, inp.dataset.qday);
+    inp.value=''; dqClose();
+    return true;
+  }
+  var intent=window.AQSmart?AQSmart.parse(q):{kind:'other',travelType:'other',name:q,raw:q};
+  if(!intent) intent={kind:'other',travelType:'other',name:q,raw:q};
+  if(intent.needsClarify && intent.needsClarify.indexOf('time_ampm')>=0 && intent.timeAmbiguous){
+    askAmPm(intent.timeAmbiguous, function(resolved){
+      if(!resolved) return;
+      intent.time=resolved; intent.timeAmbiguous=null;
+      intent.needsClarify=(intent.needsClarify||[]).filter(function(x){ return x!=='time_ampm'; });
+      applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
+      inp.value=''; dqClose();
+      setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
+    });
+    return true;
+  }
+  applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
+  inp.value=''; dqClose();
+  setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
+  return true;
+}
+function smartBulkReview(text, wk, day){
+  if(!window.AQSmart) return;
+  var intents=AQSmart.parseMany(text);
+  if(!intents.length){ aqToast('Nothing recognized to import', false); return; }
+  undoSnap('Paste itinerary');
+  var wrap=document.createElement('div'); wrap.className='modalbg'; wrap.id='smartBulkModal';
+  wrap.innerHTML='<div class="modalbox" style="width:min(520px,94vw)"><div class="mh"><div class="mt">Review pasted itinerary</div><button type="button" class="mclose" id="sbx">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:12.5px;max-height:50vh;overflow:auto">'
+    +'<p style="margin:0 0 10px;color:#6b7280">'+intents.length+' event'+(intents.length===1?'':'s')+' recognized. Duplicates of existing names on this day are skipped.</p>'
+    +'<ul style="margin:0;padding-left:18px">'+intents.map(function(it,i){
+      return '<li style="margin:4px 0"><label><input type="checkbox" data-sbi="'+i+'" checked> <b>'+esc(it.name||it.kind)+'</b>'
+        +(it.time?(' · '+esc(it.time)):'')+(it.kind?(' · '+esc(it.kind)):'')
+        +(it.unverified&&it.unverified.length?(' · <span style="color:#b45309">verify '+esc(it.unverified.join(', '))+'</span>'):'')
+        +'</label></li>';
+    }).join('')+'</ul></div>'
+    +'<div style="padding:10px 16px 14px;display:flex;gap:8px;justify-content:flex-end">'
+    +'<button type="button" class="kbb" id="sbc">Cancel</button>'
+    +'<button type="button" class="kbb primary" id="sba">Add selected</button></div></div>';
+  document.body.appendChild(wrap);
+  function close(){ wrap.remove(); }
+  wrap.querySelector('#sbx').onclick=close;
+  wrap.querySelector('#sbc').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#sba').onclick=function(){
+    var n=0;
+    wrap.querySelectorAll('[data-sbi]:checked').forEach(function(cb){
+      var intent=intents[+cb.dataset.sbi];
+      if(!intent) return;
+      /* Skip obvious same-name duplicates on the target day */
+      var nm=(intent.name||'').toLowerCase();
+      var dup=(LOGI||[]).some(function(x){
+        return x && String(x.name||'').toLowerCase()===nm && String(x.wk)===String(wk==='remote'?'remote':parseInt(wk,10))
+          && (day===''||day==null||String(x.day)===String(day) || (intent.day!=null && String(x.day)===String(intent.day)));
+      });
+      if(dup) return;
+      if(applySmartIntent(intent, wk, day)) n++;
+    });
+    close();
+    aqToast(n?'Added '+n+' from paste':'No new events added', n>0);
+  };
 }
 function dqMatches(q){
+  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer. */
+  try{
+    if(window.AQSmart&&AQSmart.rankDealers){
+      var intent=AQSmart.parse(q);
+      var query=(intent&&(intent.query||intent.name))||q;
+      var ranked=AQSmart.rankDealers(query, planningUniverse());
+      if(ranked.length) return ranked.slice(0,10);
+    }
+  }catch(e){}
   var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  var stop={at:1,for:1,the:1,a:1,an:1,with:1,to:1,in:1,on:1,of:1,and:1,am:1,pm:1};
+  toks=toks.filter(function(t){ return !stop[t] && !/^\d+([.:]\d+)?(am|pm)?$/.test(t) && !/^(hours?|hrs?|minutes?|mins?)$/.test(t); });
+  if(!toks.length) return [];
   var rows=planningUniverse().filter(function(d){
     var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
     return toks.every(function(t){ return h.indexOf(t)>=0; });
@@ -9652,7 +9868,7 @@ function dqAddStop(c){
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
   LOGI.push(it); teamStampNew('m',it.id);
-  try{ TVEXP[it.id]=true; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  /* Keep new cards collapsed (one-line) by default */
   savePlan();
   function afterOwn(){ refreshPlanner(); }
   if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
@@ -9711,10 +9927,23 @@ document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classLi
 document.addEventListener('keydown',function(e){
   var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
   if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    /* Always create from the typed line — never a silent no-op. */
+    smartTryEnter(t);
+    return;
+  }
   var _n=DQ.rows.length+((DQ.cats||[]).length); if(!_n) return;
   if(e.key==='ArrowDown'){ e.preventDefault(); DQ.on=(DQ.on+1)%_n; dqRender(); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); DQ.on=(DQ.on-1+_n)%_n; dqRender(); }
-  else if(e.key==='Enter'){ e.preventDefault(); var d=DQ.rows[DQ.on]; if(d){ dqPick(d.id,'prebook'); } else { var c=(DQ.cats||[])[DQ.on-DQ.rows.length]; if(c) dqAddStop(c); } }
+});
+document.addEventListener('paste',function(e){
+  var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
+  var txt=(e.clipboardData&&e.clipboardData.getData('text'))||'';
+  if(!txt || (txt.indexOf('\n')<0 && txt.indexOf('\t')<0)) return;
+  e.preventDefault();
+  smartBulkReview(txt, t.dataset.qwk, t.dataset.qday);
+  t.value=''; dqClose();
 });
 document.addEventListener('mousedown',function(e){
   var p=document.getElementById('dqPop'); if(!p) return;
@@ -10799,10 +11028,11 @@ function placeAt(zone){
   var tp=String(t).split('|');
   createVisit(p.id, p.type, parseInt(tp[0],10), tp[1]);
 }
-/* ---------- undo: snapshot the plan before destructive actions ---------- */
+/* ---------- undo / redo: snapshot the plan before destructive actions ---------- */
 var UNDO=[];
+var REDO=[];
 function undoSnap(label){
-  try{ UNDO.push({label:label,p:JSON.parse(JSON.stringify(planPayload()))}); if(UNDO.length>10) UNDO.shift(); }catch(e){}
+  try{ UNDO.push({label:label,p:JSON.parse(JSON.stringify(planPayload()))}); if(UNDO.length>25) UNDO.shift(); REDO=[]; }catch(e){}
 }
 function applyPlanSnapshot(p){
   ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
@@ -10810,15 +11040,48 @@ function applyPlanSnapshot(p){
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
   VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{}; PROSPECTS=Array.isArray(p.prospects)?p.prospects:[];
   ORD=p.ordx||{}; COORDOVR=p.coordovr||{}; EVMETA=p.evmeta||{}; TRIPBOOK=p.tripbook||{};
+  if(p.admin) ADMIN=p.admin;
+  if(p.owners) OWNERS=Object.assign({},p.owners);
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
 function undoRestore(){
   var u=UNDO.pop(); if(!u) return;
+  try{ REDO.push({label:'redo',p:JSON.parse(JSON.stringify(planPayload()))}); }catch(e){}
   applyPlanSnapshot(u.p); savePlan();
   withPreservedScroll(render);
-  aqToast('Restored');
+  aqToast('Undone');
 }
+function redoRestore(){
+  var u=REDO.pop(); if(!u) return;
+  try{ UNDO.push({label:'undo',p:JSON.parse(JSON.stringify(planPayload()))}); }catch(e){}
+  applyPlanSnapshot(u.p); savePlan();
+  withPreservedScroll(render);
+  aqToast('Redone');
+}
+document.addEventListener('keydown',function(e){
+  var tag=(e.target&&e.target.tagName)||'';
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag) && !(e.metaKey||e.ctrlKey)) return;
+  var mod=e.metaKey||e.ctrlKey;
+  if(mod && !e.shiftKey && (e.key==='z'||e.key==='Z')){ e.preventDefault(); undoRestore(); }
+  else if(mod && (e.shiftKey && (e.key==='z'||e.key==='Z') || e.key==='y'||e.key==='Y')){ e.preventDefault(); redoRestore(); }
+  else if(mod && (e.key==='d'||e.key==='D')){
+    /* Duplicate focused/selected logistics card */
+    var card=document.querySelector('.kcard:focus-within, .kcard.kccompact:hover, [data-lid]:focus-within');
+    var lid=card && (card.dataset.lid || (card.querySelector('[data-lid]')&&card.querySelector('[data-lid]').dataset.lid));
+    if(!lid && card && card.dataset.id && String(card.dataset.id).indexOf('L')===0) lid=card.dataset.id;
+    if(!lid) return;
+    var src=(LOGI||[]).filter(function(x){ return x.id===lid; })[0];
+    if(!src) return;
+    e.preventDefault();
+    undoSnap('Duplicate');
+    var copy=JSON.parse(JSON.stringify(src));
+    copy.id='L'+Date.now()+Math.floor(Math.random()*1000);
+    copy.conf=''; copy.notes=(copy.notes?copy.notes+' · ':'')+'Duplicated';
+    LOGI.push(copy); teamStampNew('m',copy.id); savePlan(); refreshPlanner();
+    aqToast('Duplicated', true);
+  }
+});
 /* small transient toast, optionally with Undo (kept ~10s) */
 function aqToast(msg,withUndo){
   var old=document.getElementById('aqToast'); if(old) old.remove();
@@ -12397,47 +12660,101 @@ function pbSaveErr(msg){
   try{ syncTripPlanHealth(); }catch(e){}
 }
 function pbSaveErrClear(){ var d=document.getElementById('pbSaveErr'); if(d) d.style.display='none'; try{ syncTripPlanHealth(); }catch(e){} }
+var _pbSaving={};          /* key -> true while a cloud write is in flight */
+var _pbRetryN={};          /* key -> consecutive failure count for backoff */
+var _pbAwaitCloud=false;   /* true until first successful plan load sets a version */
+function pbSyncChip(state,detail){
+  /* Subtle Saving / Saved / Offline draft — never a false “System Healthy”. */
+  try{
+    var el=document.getElementById('pbSyncChip');
+    if(!el){
+      el=document.createElement('div'); el.id='pbSyncChip';
+      el.style.cssText='position:fixed;right:14px;bottom:14px;z-index:4990;font:700 11px "Open Sans",Arial,sans-serif;'
+        +'padding:6px 11px;border-radius:16px;background:#fff;border:1px solid #d1d5db;color:#374151;'
+        +'box-shadow:0 2px 10px rgba(0,0,0,.1);pointer-events:none;opacity:0;transition:opacity .25s';
+      document.body.appendChild(el);
+    }
+    if(!state){ el.style.opacity='0'; return; }
+    var map={saving:['Saving…','#1f2937'],saved:['Saved','#15803d'],draft:['Saved locally — syncing…','#b45309'],
+      offline:['Offline draft saved','#b45309'],error:['Cloud sync issue','#b91c1c']};
+    var m=map[state]||[detail||state,'#374151'];
+    el.textContent=m[0]; el.style.color=m[1]; el.style.opacity='1';
+    if(state==='saved'){ clearTimeout(pbSyncChip._t); pbSyncChip._t=setTimeout(function(){ el.style.opacity='0'; },2200); }
+  }catch(e){}
+}
 function cloudSave(key,obj){
-  if(!SB)return;
   if(PB_READONLY) return;                                      /* verification never writes */
-  /* Never invent a version. undefined = not loaded. null = row missing after
-     a partial load — refuse on production so we cannot overwrite live data. */
-  if(PB_VER[key]===undefined || (PB_VER[key]===null && !COLLAB_TEST)){
+  /* Always keep a durable local draft first (survives refresh). */
+  try{ if(key===PLAN_KEY) localStorage.setItem(LS_PLAN_KEY,JSON.stringify(obj)); }catch(e){}
+  if(!SB){ pbSyncChip('offline'); return; }
+  /* undefined = cloud not loaded yet → queue quietly; flush after load.
+     null = row missing after load → block writes so we never invent over live data. */
+  if(PB_VER[key]===undefined){
+    _pbPending[key]=obj;
+    _pbAwaitCloud=true;
+    pbSyncChip('draft');
+    cloudBadge('Saved locally — waiting for cloud');
+    return;
+  }
+  if(PB_VER[key]===null && !COLLAB_TEST){
     cloudBadge('Not synced — reload');
-    pbSaveErr(PB_VER[key]===null
-      ? 'Trip Plan cloud row is unavailable — editing is blocked. Reload or sign in again. Nothing was written.'
-      : 'Not synced with the cloud — reload this page before editing. Your latest change is NOT saved.');
-    pbLog('sync_failure',key,{reason:PB_VER[key]===null?'null_version_blocked':'no_version_loaded'}); return;
+    pbSaveErr('Trip Plan cloud row is unavailable — editing is blocked. Reload or sign in again. Local draft kept.');
+    pbLog('sync_failure',key,{reason:'null_version_blocked'}); return;
   }
   _pbPending[key]=obj;
   _lastSelfSave=Date.now();
+  pbSyncChip('saving');
   clearTimeout(_cloudTimers[key]);
   _cloudTimers[key]=setTimeout(function(){ pbSendSave(key); },700);
 }
 function pbSendSave(key,keepalive){
   var obj=_pbPending[key]; if(obj===undefined) return;
+  if(!SB){ pbSyncChip('offline'); return; }
+  if(PB_VER[key]===undefined || (PB_VER[key]===null && !COLLAB_TEST)) return;
+  if(_pbSaving[key] && !keepalive){
+    /* Overlapping save protection: coalesce — retry shortly with latest pending. */
+    clearTimeout(_cloudTimers[key]);
+    _cloudTimers[key]=setTimeout(function(){ pbSendSave(key); },450);
+    return;
+  }
+  _pbSaving[key]=true;
   _lastSelfSave=Date.now();
   var args={ p_id:key, p_expected_version:PB_VER[key], p_data:obj,
     p_actor:pbActor(), p_territory:(typeof terr==='string'?terr:null), p_reason:'save' };
+  function doneFlight(){ _pbSaving[key]=false; }
+  function scheduleRetry(){
+    var n=(_pbRetryN[key]|0)+1; _pbRetryN[key]=n;
+    var wait=Math.min(30000, 800*Math.pow(2,Math.min(n,5)));
+    clearTimeout(_cloudTimers[key]);
+    _cloudTimers[key]=setTimeout(function(){ pbSendSave(key); }, wait);
+    pbSyncChip('error');
+  }
   function ack(out){
-    if(out&&out.ok){ PB_VER[key]=out.version; if(_pbPending[key]===obj) delete _pbPending[key]; pbSaveErrClear(); cloudBadge('Saved to cloud'); return; }
+    doneFlight();
+    if(out&&out.ok){
+      PB_VER[key]=out.version; _pbRetryN[key]=0; _pbAwaitCloud=false;
+      if(_pbPending[key]===obj) delete _pbPending[key];
+      /* If newer edits arrived during flight, send them next. */
+      if(_pbPending[key]!==undefined){ clearTimeout(_cloudTimers[key]); _cloudTimers[key]=setTimeout(function(){ pbSendSave(key); },200); }
+      pbSaveErrClear(); pbSyncChip('saved'); cloudBadge('Saved to cloud'); return;
+    }
     if(out&&out.reason==='stale'){ pbHandleStale(key); return; }
     cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((out&&out.reason)||'save_failed')});
+    scheduleRetry();
   }
   if(keepalive && _PB_TOKEN){
-    /* page is being hidden/closed: fire a keepalive request the browser will finish */
     try{
       fetch(SB_URL+'/rest/v1/rpc/pb_save_state',{ method:'POST', keepalive:true,
         headers:{'apikey':SB_KEY,'Authorization':'Bearer '+_PB_TOKEN,'Content-Type':'application/json'},
         body:JSON.stringify(args)
-      }).then(function(r){ return r.json(); }).then(ack).catch(function(){});
-    }catch(e){}
+      }).then(function(r){ return r.json(); }).then(ack).catch(function(){ doneFlight(); scheduleRetry(); });
+    }catch(e){ doneFlight(); }
     return;
   }
   SB.rpc('pb_save_state',args).then(function(r){
-    if(r&&r.error){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String(r.error.message||r.error)}); return; }
+    if(r&&r.error){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String(r.error.message||r.error)}); doneFlight(); scheduleRetry(); return; }
     ack(r&&r.data);
-  },function(e){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((e&&e.message)||e)}); });
+  },function(e){ cloudBadge('Cloud save failed'); pbSaveErr(); pbLog('sync_failure',key,{error:String((e&&e.message)||e)}); doneFlight(); scheduleRetry(); });
 }
 /* Debounced writes must not be lost to a refresh/close: flush anything pending
    the moment the page is hidden. */
@@ -12509,6 +12826,14 @@ function cloudLoad(cb){
       cloudBadge('Loaded from cloud');
     }
     try{ syncTripPlanHealth(); }catch(e){}
+    /* Flush any edits that were queued while the plan version was still loading. */
+    try{
+      if(_pbPending[PLAN_KEY]!==undefined && PB_VER[PLAN_KEY]!=null){
+        _pbAwaitCloud=false;
+        clearTimeout(_cloudTimers[PLAN_KEY]);
+        _cloudTimers[PLAN_KEY]=setTimeout(function(){ pbSendSave(PLAN_KEY); },300);
+      }
+    }catch(e){}
     cb&&cb();
   },function(e){
     cloudBadge('Cloud load failed');
@@ -14016,7 +14341,7 @@ function mobToday_render_legacy(){
       }).join('')+'</div>';
   }
 
-  h+='<div class="dq tm-dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(today==null?'':today)+'" data-qterr="'+esc(MOB.terr)+'" placeholder="+ Add — dealer, place, stop or meeting…" autocomplete="off" spellcheck="false"></div>';
+  h+='<div class="dq tm-dq"><input class="dqin" data-qwk="'+wk+'" data-qday="'+(today==null?'':today)+'" data-qterr="'+esc(MOB.terr)+'" placeholder="+ Add anything…" autocomplete="off" spellcheck="false" title="Type naturally — Enter creates the appointment"></div>';
   h+='<button class="tm-primary" id="mobAdd">+ Add Quick Item</button>';
   h+='</div>';
   return h;
@@ -15488,6 +15813,7 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 
 </script>
 <script src="/year-glance.js"></script>
+<script src="/smart-entry.js?v=se2"></script>
 <script src="/my-team.js?v=mt4"></script>
 </body>
 </html>

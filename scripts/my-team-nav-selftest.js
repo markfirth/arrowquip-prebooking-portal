@@ -23,7 +23,7 @@ chk('getPortalAdmin bridge present', /function getPortalAdmin\(/.test(html));
 chk('my-team uses getPortalAdmin', /getPortalAdmin/.test(mt));
 chk('Add User send invitation CTA', /SEND INVITATION/.test(mt));
 chk('Status column in table', /LAST SIGN-IN[\s\S]*STATUS[\s\S]*ADMIN/.test(mt));
-chk('SW cache bumped for My Team', /aq-prebooking-v3/.test(fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8')));
+chk('SW cache bumped for My Team', /aq-prebooking-v[4-9]/.test(fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8')));
 chk('SW network-first for my-team.js', /my-team\.js/.test(fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8')));
 
 /* Behavioral: prove window.terr mutation does not affect lexical terr */
