@@ -597,55 +597,74 @@ body.wkfull-on{overflow:hidden;}
 .aqPlanStrip .aqPlanSep{color:#d1d5db;font-size:12px;user-select:none;}
 #allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
 #allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
-#yearView{display:none;padding:8px 16px 24px;min-height:calc(100vh - 140px);}
+#yearView{display:none;padding:6px 12px 20px;min-height:calc(100vh - 140px);}
 #yearView.is-on{display:block;}
-.yg-wrap{background:#fff;border:1px solid var(--line);border-radius:0;overflow:hidden;min-height:480px;}
-.yg-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
-.yg-cats{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line-soft);}
-.yg-chip{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:700 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
-.yg-chip.on{border-color:var(--yg,#cf202f);color:#111;box-shadow:inset 0 -2px 0 var(--yg,#cf202f);}
-.yg-legend{display:flex;flex-wrap:wrap;gap:8px 12px;padding:6px 10px 8px;font-size:10px;color:#6b7280;border-bottom:1px solid var(--line-soft);}
-.yg-leg{display:inline-flex;align-items:center;gap:4px;}
-.yg-leg i{width:8px;height:8px;border-radius:2px;display:inline-block;}
-.yg-board{padding:4px 6px 8px;overflow:auto;max-height:calc(100vh - 210px);}
-.yg-head{display:grid;grid-template-columns:72px repeat(31,minmax(18px,1fr));gap:1px;position:sticky;top:0;z-index:3;background:#fff;padding:2px 0 4px;border-bottom:1px solid #e5e7eb;}
-.yg-head .yg-corner{font-size:9px;font-weight:700;color:#9ca3af;padding-top:10px;}
-.yg-head .yg-hd{text-align:center;font-size:9px;font-weight:700;color:#6b7280;line-height:1.1;padding:2px 0;}
-.yg-head .yg-hd span{display:block;font-size:8px;font-weight:600;color:#b0b5bb;}
-.yg-head .yg-hd.we{color:#c4c8cd;background:#fafbfc;}
-.yg-month{display:grid;grid-template-columns:72px repeat(31,minmax(18px,1fr));gap:1px;align-items:stretch;margin:0;padding:1px 0;border-bottom:1px solid #f0f1f3;min-height:36px;}
-.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 4px 0 2px;}
-.yg-cell{appearance:none;border:1px solid #eef0f2;background:#fff;border-radius:0;min-height:34px;padding:1px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;}
-.yg-cell.na{border:0;background:transparent;cursor:default;min-height:34px;}
-.yg-cell.we{background:#f7f8fa;}
-.yg-cell.today{border-color:var(--aq-red);box-shadow:inset 0 0 0 1px var(--aq-red);}
-.yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
-.yg-cell.has{background:#fff;}
-.yg-cell:hover:not(.na){border-color:#c9ced4;background:#fcfcfd;}
-.yg-d{font-size:8px;font-weight:700;color:#374151;line-height:1;padding:0 1px;}
-.yg-wk{font-size:7px;font-weight:700;color:#b0b5bb;line-height:1;padding:0 1px;}
+.yg-wrap{background:#fff;border:1px solid var(--line);overflow:hidden;min-height:480px;}
+.yg-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
+.yg-tb-left,.yg-tb-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.yg-ctrl{width:auto!important;min-width:0;max-width:160px;height:28px;padding:2px 8px;font-size:12px;}
+.yg-mem{max-width:200px;}
+.yg-seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;}
+.yg-seg-btn{appearance:none;border:0;background:transparent;font:700 11px inherit;padding:5px 10px;cursor:pointer;color:#6b7280;}
+.yg-seg-btn.on{background:#e8eaed;color:#111;}
+.yg-export{position:relative;}
+.yg-export-menu{position:absolute;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.08);min-width:140px;display:flex;flex-direction:column;}
+.yg-export-menu[hidden]{display:none!important;}
+.yg-export-menu button{appearance:none;border:0;background:#fff;text-align:left;padding:8px 12px;font:600 12px inherit;cursor:pointer;}
+.yg-export-menu button:hover{background:#f3f4f6;}
+.yg-sync-warn{flex:1 0 100%;font-size:11px;font-weight:600;color:#7f1d1d;background:#fef2f2;border:1px solid #fecaca;padding:6px 8px;}
+.yg-main{display:flex;align-items:stretch;min-height:420px;}
+.yg-board{flex:1 1 auto;padding:4px 6px 8px;overflow:auto;max-height:calc(100vh - 200px);min-width:0;}
+.yg-key{flex:0 0 148px;border-left:1px solid var(--line);background:#fafbfc;padding:8px 8px 12px;display:flex;flex-direction:column;gap:4px;}
+.yg-key-h{display:flex;justify-content:space-between;align-items:center;font:800 10px inherit;letter-spacing:.06em;color:#6b7280;margin-bottom:4px;}
+.yg-key-x{appearance:none;border:0;background:transparent;font-size:16px;cursor:pointer;color:#9ca3af;line-height:1;}
+.yg-key-b{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;}
+.yg-key-row{appearance:none;border:0;background:transparent;display:flex;align-items:center;gap:6px;padding:4px 2px;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;opacity:.45;}
+.yg-key-row.on{opacity:1;color:#111;}
+.yg-key-row i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;}
+.yg-key-ic{width:14px;text-align:center;flex:0 0 auto;}
+.yg-key-note{font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.35;}
+.yg-outlook{color:#b45309;}
+.yg-key-manage{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;padding:8px 2px 0;border-top:1px solid var(--line-soft);margin-top:6px;}
+.yg-key-manage:hover{color:var(--aq-red);}
+.yg-wrap.yg-key-collapsed .yg-board{max-width:100%;}
+.yg-head,.yg-month{display:grid;grid-template-columns:36px repeat(var(--yg-cols,42),minmax(14px,1fr));gap:1px;align-items:stretch;}
+.yg-head{position:sticky;top:0;z-index:3;background:#fff;padding:2px 0 4px;border-bottom:1px solid #e5e7eb;}
+.yg-corner{min-height:14px;}
+.yg-hd{text-align:center;font-size:9px;font-weight:700;color:#6b7280;line-height:1.1;padding:2px 0;}
+.yg-hd.we{color:#9ca3af;background:#f3f4f6;}
+.yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #d1d5db;}
+.yg-month{margin:0;padding:1px 0;border-bottom:1px solid #f0f1f3;min-height:32px;}
+.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 2px;}
+.yg-cell{appearance:none;border:1px solid #3f4450;background:#2b3038;border-radius:0;min-height:32px;padding:1px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#fff;}
+.yg-cell.na{border:0;background:transparent;cursor:default;min-height:32px;}
+.yg-cell.we{background:#3a404a;border-color:#4b5160;}
+.yg-cell.today{box-shadow:inset 0 0 0 1px var(--aq-red);}
+.yg-cell.today .yg-d{color:#ffb4bc;font-weight:800;}
+.yg-cell:hover:not(.na){filter:brightness(1.08);}
+.yg-d{font-size:8px;font-weight:700;color:#f3f4f6;line-height:1;padding:0 1px;}
 .yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
-.yg-bar{display:block;font-size:7px;font-weight:700;color:#fff;border-radius:1px;padding:0 1px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:8px;}
-.yg-more{font-size:7px;font-weight:700;color:#6b7280;}
-.yg-mem{min-width:160px;max-width:220px;min-height:28px;height:auto;max-height:72px;}
+.yg-chip{display:block;font-size:7px;font-weight:800;border-radius:2px;padding:0 2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:9px;text-align:center;}
+.yg-chip.tent{outline:1px dashed rgba(255,255,255,.7);outline-offset:-1px;opacity:.85;}
+.yg-chip.act{font-size:9px;line-height:1.2;}
 .yg-panel{position:sticky;bottom:0;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:5;}
 .yg-ph{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px 6px;}
 .yg-psub{font-size:11px;color:#9ca3af;margin-top:2px;}
-.yg-pb{max-height:180px;overflow:auto;padding:0 12px 8px;}
+.yg-pb{max-height:220px;overflow:auto;padding:0 12px 8px;}
+.yg-psec{margin-bottom:8px;}
+.yg-psec-h{font:800 10px inherit;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;margin:6px 0 4px;}
 .yg-pline{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start;}
 .yg-pcat{flex:0 0 auto;font-size:9px;font-weight:800;color:#fff;border-radius:3px;padding:2px 5px;}
 .yg-pt{font-size:12px;font-weight:700;color:#111;}
 .yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
-.yg-pf{display:flex;gap:8px;padding:8px 12px 12px;}
+.yg-statusline{font-size:12px;margin-bottom:4px;}
+.yg-link{appearance:none;border:0;background:transparent;color:var(--aq-red);font:700 11px inherit;cursor:pointer;padding:2px 0;text-decoration:underline;}
+.yg-pf{display:flex;gap:8px;padding:8px 12px 12px;flex-wrap:wrap;}
 .yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
-.yg-focus{border-top:1px solid var(--line);}
-.yg-focus>summary{list-style:none;cursor:pointer;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;padding:10px 12px;}
-.yg-focus>summary::-webkit-details-marker{display:none;}
-.yg-focus-body{padding:0 12px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-.yg-fn label{display:block;font-size:10px;font-weight:700;color:#6b7280;margin-bottom:3px;}
-.yg-fn textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:5px;font:12px 'Open Sans',Arial,sans-serif;padding:6px;resize:vertical;min-height:48px;}
-@media(max-width:900px){.yg-focus-body{grid-template-columns:1fr 1fr;}.yg-mlbl{width:48px;font-size:10px;}}
-@media(max-width:640px){.yg-focus-body{grid-template-columns:1fr;}.yg-cell{min-height:28px;}}
+.yg-mctable{width:100%;border-collapse:collapse;font-size:12px;}
+.yg-mctable th,.yg-mctable td{padding:4px;border-bottom:1px solid var(--line-soft);text-align:left;}
+@media(max-width:900px){.yg-key{flex-basis:120px;}.yg-mlbl{font-size:10px;}.yg-ctrl{max-width:120px;}}
+@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-cell{min-height:26px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
 #allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
@@ -2350,6 +2369,8 @@ let allMode='cal', mapWeek=32, leaderFilter='JW';
 let PLAN_MODE='weekly'; /* weekly | year */
 var YG_EVENTS=[];
 var YG_NOTES={};
+var YG_AVAIL={};
+var YG_CAT_CUSTOM=[];
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
 let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="", mFilterAR="";
@@ -3885,12 +3906,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{})};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[])};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -11133,11 +11154,11 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
        automatically; same-event edits become per-card conflicts. */
     var _confl=mergeEventPayload(p);
     /* non-event settings adopt the incoming value (not scheduled events) */
-    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);}
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
