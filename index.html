@@ -1921,6 +1921,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .mt-table tbody tr.mt-inactive td{opacity:.55;}
 .mt-name{font-weight:700;}
 .mt-status{font-size:10.5px;color:#9ca3af;margin-top:2px;font-weight:600;}
+.mt-status-pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:#6b7280;padding:2px 0;}
+.mt-status-pill.on{color:#15803d;}
+.mt-status-pill.off{color:#9ca3af;}
+.mt-role{max-width:200px;}
 .mt-email{color:var(--aq-red,#cf202f);font-weight:600;text-decoration:none;}
 .mt-email:hover{text-decoration:underline;}
 .mt-dial{color:#111;font-weight:600;text-decoration:none;}
@@ -2503,6 +2507,25 @@ function jit(id){var x=0;for(var i=0;i<id.length;i++){x=(x*31+id.charCodeAt(i))>
 let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let PLAN_MODE='weekly'; /* weekly | year */
+/* Bridge for external modules (my-team.js): `let terr` / `let PLAN_MODE` are NOT
+   on window, so `window.terr = 'Team'` was a no-op for render(). Always navigate
+   through goMyTeam / setPortalTerr. */
+function setPortalTerr(t){ terr=t; }
+function setPortalPlanMode(m){ PLAN_MODE=m; }
+function getPortalTerr(){ return terr; }
+function getPortalAdmin(){ return ADMIN; }
+function goMyTeam(){
+  PLAN_MODE='weekly';
+  terr='Team';
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  try{ document.body.classList.remove('trips-layout-on'); }catch(e){}
+  render();
+}
+window.goMyTeam=goMyTeam;
+window.setPortalTerr=setPortalTerr;
+window.setPortalPlanMode=setPortalPlanMode;
+window.getPortalTerr=getPortalTerr;
+window.getPortalAdmin=getPortalAdmin;
 var YG_EVENTS=[];
 var YG_NOTES={};
 var YG_AVAIL={};
@@ -3631,9 +3654,12 @@ function xvNextLabel(d){
    program, rates, markets and the planning year change without
    code edits — 2028/2029/2030 are a settings change, not a rewrite.
    ============================================================ */
-let ADMIN={};      /* admin/planning settings — persisted in the shared plan */
-let COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
-let RIDEALONG={};  /* 'terr|wk' -> executive id (ride-alongs) — persisted too */
+/* ADMIN must be `var` (window-visible): my-team.js and other external scripts
+   read/write global.ADMIN. A `let ADMIN` binding made My Team edit a separate
+   empty object while the planner kept the lexical roster — users never synced. */
+var ADMIN={};      /* admin/planning settings — persisted in the shared plan */
+var COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
+var RIDEALONG={};  /* 'terr|wk' -> executive id (ride-alongs) — persisted too */
 
 /* Official dealer program (seed). Editable afterwards in Planning Settings. */
 const PROGRAM_DEFAULT=[
@@ -3675,8 +3701,8 @@ function adminInit(){
   if(!Array.isArray(ADMIN.team)) ADMIN.team=[];
   teamSeedFromKnown();
 }
-var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS',TC:'TC',LEAD:'LEAD'};
-var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support',TC:'Travel Coordinator',LEAD:'Leadership'};
+var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS',TC:'TC',SA:'SA',LEAD:'LEAD'};
+var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support',TC:'Travel Coordinator',SA:'Sales Assistant',LEAD:'Leadership'};
 /* Multi-select team filter (device-local, per territory).
    Outlook-style: TEAM_ALL means every member is selected; TEAM_ALL=false with
    empty TEAM_IDS means nobody selected (valid — show empty itinerary, not All).
@@ -3714,7 +3740,7 @@ function teamList(terrFilter, includeInactive){
     }
     return true;
   });
-  var order={AM:0,DSR:1,ISS:2,TC:3,LEAD:4};
+  var order={AM:0,DSR:1,ISS:2,SA:3,TC:4,LEAD:5};
   rows.sort(function(a,b){ return (order[a.role]||9)-(order[b.role]||9) || String(a.name).localeCompare(String(b.name)); });
   return rows;
 }
@@ -3923,7 +3949,7 @@ function openTeamModal(editId){
   if(!teamCanManage()){ cloudBadge('Admin only'); return; }
   var existing=editId?teamById(editId):null;
   var wrap=document.createElement('div'); wrap.className='pbModal'; wrap.id='teamModal';
-  var roleOpts=['AM','DSR','ISS','TC','LEAD'].map(function(r){
+  var roleOpts=['AM','DSR','ISS','SA','TC','LEAD'].map(function(r){
     return '<option value="'+r+'"'+(existing&&existing.role===r?' selected':'')+'>'+r+' — '+esc(TEAM_ROLE_LABEL[r]||r)+'</option>';
   }).join('');
   var terrOpts=['East','South','Central','West','Exports'].map(function(t){
@@ -3978,7 +4004,7 @@ function openTeamModal(editId){
     var t=wrap.querySelector('#tm_terr').value;
     var err=wrap.querySelector('#tm_err');
     if(!name){ err.textContent='Enter a name'; return; }
-    if(['AM','DSR','ISS','TC','LEAD'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
+    if(['AM','DSR','ISS','SA','TC','LEAD'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
     var reuse=null;
     (ADMIN.team||[]).forEach(function(m){
       if(existing&&m.id===existing.id) return;
@@ -6433,7 +6459,7 @@ function tripsNavHTML(){
   if(teamShowNav()){
     var isAllTerr=(terr==='All');
     var members=teamList(isAllTerr?null:terr,false);
-    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
     if(isAllTerr){
       members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
     }
@@ -6447,7 +6473,7 @@ function tripsNavHTML(){
     }
     if(isAllTerr){
       checks+='<div class="sb-rolef">'
-        +['AM','DSR','ISS','TC','LEAD'].map(function(r){
+        +['AM','DSR','ISS','SA','TC','LEAD'].map(function(r){
           return '<button type="button" class="'+(ALL_ROLE_F[r]!==false?'on':'')+'" data-allrole="'+r+'">'+r+'</button>';
         }).join('')+'</div>';
       var byTerr={};
@@ -6539,7 +6565,7 @@ function tripsNavWire(navEl){
   nav.querySelectorAll('[data-allrole]').forEach(function(b){
     b.addEventListener('click',function(e){
       e.stopPropagation();
-      window.ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+      window.ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
       var r=b.dataset.allrole; ALL_ROLE_F[r]=!(ALL_ROLE_F[r]!==false);
       try{ if(terr==='All') renderAllView(); else _wkRerender(); }catch(err){}
     });
@@ -6673,7 +6699,7 @@ function kbToolbarHTML(wk){
   var canBook=false;
   try{ canBook=!!(typeof pbIsAdmin==='function'&&pbIsAdmin())||teamSelectedMembers().some(function(){return false;});
     var me=null; try{ me=(ADMIN.team||[]).filter(function(m){ return m.email&&typeof pbWho==='function'&&String(m.email).toLowerCase()===String(pbWho()).toLowerCase(); })[0]; }catch(e){}
-    if(me&&(me.role==='TC'||me.accessGroup==='coordinator'||me.isAdmin)) canBook=true;
+    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.isAdmin)) canBook=true;
     if(typeof pbIsAdmin==='function'&&pbIsAdmin()) canBook=true;
   }catch(e){}
   return ''
@@ -7515,7 +7541,7 @@ var ALL_MAP_MODE=(function(){ try{ return localStorage.getItem('aqAllMapMode')||
 var ALL_METRIC_FILTER='';
 var ALL_NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqAllNavOpen'); return v==null?true:v==='1'; }catch(e){ return true; } })();
 var ITINERARIES=ITINERARIES||{}; /* memberId|wk -> {status,version,sentAt,payloadHash} */
-var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
 
 function allScrollToWeek(wk,behavior){
   var el=document.querySelector('#allWeeks [data-allwk="'+wk+'"]');
@@ -11141,16 +11167,18 @@ function tripFlagDirtyIfSubmitted(t,wk){
 }
 function salesAssistantForTerr(t){
   var list=(ADMIN&&ADMIN.team)||[];
-  var tcs=list.filter(function(m){
-    if(!m||m.active===false) return false;
-    if(m.role!=='TC'&&m.accessGroup!=='coordinator') return false;
-    if(!m.email) return false;
-    var terrs=Array.isArray(m.terrs)?m.terrs:(m.terr?[m.terr]:[]);
-    return !terrs.length||terrs.indexOf('All')>=0||terrs.indexOf(t)>=0;
-  });
-  if(tcs.length) return tcs[0];
-  /* Fallback: any named travel coordinator with email */
-  return list.filter(function(m){ return m&&m.active!==false&&m.email&&/nikita/i.test(m.name||''); })[0]||null;
+  var pick=function(pred){
+    return list.filter(function(m){
+      if(!m||m.active===false||!m.email) return false;
+      if(!pred(m)) return false;
+      var terrs=Array.isArray(m.terrs)?m.terrs:(m.terr?[m.terr]:[]);
+      return !terrs.length||terrs.indexOf('All')>=0||terrs.indexOf(t)>=0;
+    })[0]||null;
+  };
+  /* Prefer Sales Assistant, then Travel Coordinator / coordinator group, then Nikita by name */
+  return pick(function(m){ return m.role==='SA'; })
+    || pick(function(m){ return m.role==='TC'||m.accessGroup==='coordinator'; })
+    || pick(function(m){ return /nikita/i.test(m.name||''); });
 }
 function tripValidateReady(t,wk,member){
   var issues=[], soft=[];
@@ -12930,8 +12958,14 @@ function pbRenderAcct(){
         menu.classList.remove('open');
         var a=b.dataset.gear;
         if(a==='team'){
-          if(typeof openMyTeam==='function') openMyTeam();
-          else { terr='Team'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); }
+          /* CRITICAL: mutate lexical `terr` here (same scope as render), matching
+             Master/Settings. External openMyTeam used to set window.terr only —
+             a no-op for `let terr` — so My Team never stayed open. */
+          PLAN_MODE='weekly';
+          terr='Team';
+          document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+          try{ document.body.classList.remove('trips-layout-on'); }catch(err){}
+          render();
           return;
         }
         if(a==='master'){ terr='Master'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
@@ -15454,6 +15488,6 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 
 </script>
 <script src="/year-glance.js"></script>
-<script src="/my-team.js"></script>
+<script src="/my-team.js?v=mt4"></script>
 </body>
 </html>
