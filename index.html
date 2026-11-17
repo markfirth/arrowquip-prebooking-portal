@@ -73,7 +73,27 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqNavLinks .tab:hover{color:var(--aq-red);}
 /* Sales nav has no active marker; this red underline is the one addition (see notes) */
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
-/* ---- Page heading: home-module title / teamBadge ---- */
+/* Team member strip — under territory nav, ~34px */
+.aqTeamNav{display:none;background:#fff;border-bottom:1px solid var(--line);height:34px;min-height:34px;}
+.aqTeamNav.on{display:block;}
+.aqTeamInner{display:flex;align-items:center;gap:2px;height:34px;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
+.aqTeamInner::-webkit-scrollbar{display:none;}
+.aqTeamInner .tmb{
+  appearance:none;background:none;border:0;cursor:pointer;font-family:inherit;
+  height:34px;padding:0 10px;font-size:11.5px;font-weight:600;color:#6b7280;
+  white-space:nowrap;box-shadow:inset 0 -2px 0 0 transparent;transition:color .15s,box-shadow .15s;
+}
+.aqTeamInner .tmb:hover{color:var(--aq-black);}
+.aqTeamInner .tmb.on{color:var(--aq-black);box-shadow:inset 0 -2px 0 0 var(--aq-red);}
+.aqTeamInner .tmb .tr{font-weight:500;color:#9ca3af;margin-left:4px;font-size:10.5px;}
+.aqTeamInner .tmb.on .tr{color:var(--aq-red);}
+.aqTeamInner .tmb-add{
+  appearance:none;background:none;border:0;cursor:pointer;height:28px;width:28px;
+  border-radius:4px;color:#9ca3af;font-size:16px;line-height:1;margin-left:4px;flex:0 0 auto;
+}
+.aqTeamInner .tmb-add:hover{color:var(--aq-red);background:#fef2f2;}
+.aqTeamInner .tmb-spacer{flex:1 1 auto;}
+/* ---- Page heading ---- */
 .wrap{max-width:100%;margin:0 auto;padding:1rem 20px 40px;}
 /* ---- KPI cards: discrete tiles per approved mockup, Sales card chrome
        (1px #e5e7eb, 4px radius, no shadow) ---- */
@@ -105,6 +125,10 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
   border:1px solid var(--line);
   border-radius:var(--radius);
   overflow:hidden;
+}
+body.team-nav-on .planwrap.trips-kanban{
+  height:calc(100vh - 182px);
+  max-height:calc(100vh - 182px);
 }
 .planwrap.trips-kanban.nav-collapsed{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
@@ -1649,6 +1673,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
     <div class="aqNavItem"><button class="tab" data-t="Exports">Exports</button></div>
   </div>
   </div></div>
+  <div class="aqTeamNav" id="teamNav" aria-label="Territory team"><div class="aqTeamInner" id="teamNavInner"></div></div>
 </header>
 <div class="wrap">
   <div class="cards" id="cards"></div>
@@ -2054,8 +2079,8 @@ function wkShown(list){
 var WKG_STATE=(function(){ try{ return JSON.parse(localStorage.getItem('aqWkGroups')||'{}')||{}; }catch(e){ return {}; } })();
 function wkRefDay(w){ return (+w===31)?new Date(2026,6,29,12):new Date(wkStart(+w).getTime()+6*WK_DAY); }
 function wkVisitCount(w){ try{ var n=0;
-  dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===w) n++; });
-  if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===w&&x.terr===terr) n++; });
+  dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===w&&teamFilterMatch('d',d.id)) n++; });
+  if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===w&&x.terr===terr&&teamFilterMatch('x',x.id)) n++; });
   return n; }catch(e){ return 0; } }
 function wkWithDividers(list,render){
   var c=wkRefDay(wkCurrent()), cy=c.getFullYear(), cm=c.getMonth(), cq=Math.floor(cm/3)+1;
@@ -2361,12 +2386,14 @@ function wkStopSeq(t,wk){
   if(typeof wk!=='number') return out;
   dealersIn(t).forEach(function(d){
     if(ASSIGN[d.id]!==wk||DAY[d.id]==null) return;
+    if(!teamFilterMatch('d',d.id)) return;
     var m=sfMasterMerge(d);
     if(m.lat==null||m.lon==null) return;
     out.push({key:'d:'+d.id,name:m.name,lat:m.lat,lon:m.lon,day:DAY[d.id],time:TIME[d.id]||'',dur:DUR[d.id]||(wk===31?60:90),ty:'dealer'});
   });
   XVISITS.forEach(function(x){
     if(x.terr!==t||x.wk!==wk||x.day==null) return;
+    if(!teamFilterMatch('x',x.id)) return;
     var d=byId[x.dealer]||uniById(x.dealer); if(!d) return;
     var m=sfMasterMerge(d);
     if(m.lat==null||m.lon==null) return;
@@ -2374,6 +2401,7 @@ function wkStopSeq(t,wk){
   });
   LOGI.forEach(function(it){
     if(it.terr!==t||it.wk!==wk||it.day==null||!travelHasLocation(it)) return;
+    if(!teamFilterMatch('m',it.id)) return;
     out.push({key:'m:'+it.id,name:travelPlaceLabel(it)||TRAVEL_TYPES[travelType(it)].label,
       lat:+it.lat,lon:+it.lon,day:it.day,time:it.time||'',dur:travelDur(it),
       ty:normType(it.type),code:(it.airportCode||'').toUpperCase()});
@@ -3055,6 +3083,176 @@ function adminInit(){
   /* legacy spelling: normalize any stored "Graeme" to "Graheme" */
   ADMIN.leaders.forEach(function(l){ if(l.id==='Graeme'){l.id='Graheme';} if(l.name==='Graeme'){l.name='Graheme';} });
   ADMIN.audit=ADMIN.audit||[];
+  /* Territory team roster (DSR / ISS / AM). Seed from known TMs without
+     duplicating; historical appointments stay unassigned until explicitly owned. */
+  if(!Array.isArray(ADMIN.team)) ADMIN.team=[];
+  teamSeedFromKnown();
+}
+var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS'};
+var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support'};
+var TEAM_SEL='all';   /* 'all' | member id — device-local filter for the open territory */
+var OWNERS={};         /* 'd:id'|'x:id'|'m:id' -> team member id */
+function teamSeedFromKnown(){
+  try{
+    var have={};
+    (ADMIN.team||[]).forEach(function(m){ if(m&&m.terr&&m.name) have[m.terr+'|'+String(m.name).toLowerCase()]=1; });
+    function addSeed(terr,name,role){
+      name=String(name||'').trim(); if(!name||name==='—'||name==='Exports'||name==='Export Support') return;
+      var k=terr+'|'+name.toLowerCase(); if(have[k]) return;
+      ADMIN.team.push({id:'seed_'+terr+'_'+role+'_'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,24),
+        name:name, email:'', role:role||'AM', terr:terr, active:true, source:'seed'});
+      have[k]=1;
+    }
+    ['East','South','Central','West'].forEach(function(t){
+      addSeed(t, (FLAT.tm&&FLAT.tm[t])||'', 'AM');
+      try{
+        dealersIn(t).forEach(function(d){ if(d&&d.tm) addSeed(t, d.tm, 'AM'); });
+      }catch(e){}
+    });
+  }catch(e){}
+}
+function teamList(terrFilter, includeInactive){
+  var rows=(ADMIN.team||[]).filter(function(m){
+    if(!m||!m.id) return false;
+    if(!includeInactive && m.active===false) return false;
+    if(terrFilter && m.terr!==terrFilter) return false;
+    return true;
+  });
+  var order={AM:0,DSR:1,ISS:2};
+  rows.sort(function(a,b){
+    return (order[a.role]||9)-(order[b.role]||9) || String(a.name).localeCompare(String(b.name));
+  });
+  return rows;
+}
+function teamById(id){ var L=ADMIN.team||[]; for(var i=0;i<L.length;i++) if(L[i].id===id) return L[i]; return null; }
+function teamCanManage(){ try{ return pbIsAdmin()||!PB_USER; }catch(e){ return true; } }
+function teamSelGet(){ return TEAM_SEL||'all'; }
+function teamSelSet(id){
+  TEAM_SEL=id||'all';
+  try{ sessionStorage.setItem('aqTeamSel_'+terr, TEAM_SEL); }catch(e){}
+  try{ refreshPlanner(); }catch(e){ try{render();}catch(_){} }
+  renderTeamNav();
+}
+function teamOwnerKey(kind,id){ return kind+':'+id; }
+function teamOwnerOf(kind,id){ return OWNERS[teamOwnerKey(kind,id)]||null; }
+function teamSetOwner(kind,id,memberId){
+  var k=teamOwnerKey(kind,id);
+  if(!memberId) delete OWNERS[k]; else OWNERS[k]=memberId;
+}
+function teamFilterMatch(kind,id){
+  if(!teamShowNav()) return true;
+  var sel=teamSelGet();
+  if(!sel||sel==='all') return true;
+  var o=teamOwnerOf(kind,id);
+  /* Unassigned historical items appear only under All — never reassigned. */
+  return o===sel;
+}
+function teamStampNew(kind,id){
+  var sel=teamSelGet();
+  if(sel&&sel!=='all') teamSetOwner(kind,id,sel);
+}
+function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'; }
+function renderTeamNav(){
+  var bar=document.getElementById('teamNav');
+  var inner=document.getElementById('teamNavInner');
+  if(!bar||!inner) return;
+  if(!teamShowNav()){ bar.classList.remove('on'); document.body.classList.remove('team-nav-on'); inner.innerHTML=''; return; }
+  bar.classList.add('on'); document.body.classList.add('team-nav-on');
+  try{ var kept=sessionStorage.getItem('aqTeamSel_'+terr); if(kept) TEAM_SEL=kept; }catch(e){}
+  if(TEAM_SEL!=='all'){ var _tm=teamById(TEAM_SEL); if(!_tm||_tm.active===false||(_tm.terr&&_tm.terr!==terr)) TEAM_SEL='all'; }
+  var members=teamList(terr,false);
+  var h='<button type="button" class="tmb'+(TEAM_SEL==='all'?' on':'')+'" data-teamsel="all">All</button>';
+  members.forEach(function(m){
+    h+='<button type="button" class="tmb'+(TEAM_SEL===m.id?' on':'')+'" data-teamsel="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+      +esc(m.name)+'<span class="tr">· '+esc(m.role)+'</span></button>';
+  });
+  if(teamCanManage()) h+='<button type="button" class="tmb-add" data-teamadd="1" title="Add team member">+</button>';
+  inner.innerHTML=h;
+  inner.querySelectorAll('[data-teamsel]').forEach(function(b){
+    b.addEventListener('click',function(e){ e.stopPropagation(); teamSelSet(b.dataset.teamsel); });
+  });
+  var add=inner.querySelector('[data-teamadd]');
+  if(add) add.addEventListener('click',function(e){ e.stopPropagation(); openTeamModal(); });
+}
+function openTeamModal(editId){
+  if(!teamCanManage()){ cloudBadge('Admin only'); return; }
+  var existing=editId?teamById(editId):null;
+  var wrap=document.createElement('div'); wrap.className='pbModal'; wrap.id='teamModal';
+  var roleOpts=['AM','DSR','ISS'].map(function(r){
+    return '<option value="'+r+'"'+(existing&&existing.role===r?' selected':'')+'>'+r+' — '+esc(TEAM_ROLE_LABEL[r])+'</option>';
+  }).join('');
+  var terrOpts=['East','South','Central','West'].map(function(t){
+    return '<option value="'+t+'"'+((existing?existing.terr:terr)===t?' selected':'')+'>'+t+'</option>';
+  }).join('');
+  var roster=teamList(terr,true).map(function(m){
+    return '<tr><td>'+esc(m.name)+'</td><td>'+esc(m.role)+'</td><td style="color:#9ca3af;font-size:11px">'+esc(m.email||'—')+'</td>'
+      +'<td>'+(m.active===false?'<span style="color:#b45309">Inactive</span>':'Active')+'</td>'
+      +'<td><button type="button" data-teamedit="'+esc(m.id)+'" style="font-size:11px;margin-right:6px">Edit</button>'
+      +(m.active===false
+        ?'<button type="button" data-teamreact="'+esc(m.id)+'" style="font-size:11px">Reactivate</button>'
+        :'<button type="button" data-teamdeact="'+esc(m.id)+'" style="font-size:11px;color:#cf202f">Deactivate</button>')
+      +'</td></tr>';
+  }).join('')||'<tr><td colspan="5" style="color:#9ca3af">No team members yet for '+esc(terr)+'.</td></tr>';
+  wrap.innerHTML='<div class="pbCard"><button class="pbClose" id="tm_x">×</button>'
+    +'<h3>'+(existing?'Edit team member':'Territory team')+'</h3>'
+    +'<div class="pbSub">'+esc(terr)+' — DSR · ISS · AM. Historical appointments stay unassigned until owned.</div>'
+    +(existing?'':'<table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>'+roster+'</tbody></table>')
+    +'<div class="pbAdd" style="margin-top:16px;flex-direction:column;align-items:stretch">'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<input id="tm_name" placeholder="Full name" value="'+esc(existing?existing.name:'')+'" style="flex:1 1 140px">'
+        +'<input id="tm_email" placeholder="Email" value="'+esc(existing?existing.email||'':'')+'" style="flex:1 1 160px">'
+        +'<select id="tm_role">'+roleOpts+'</select>'
+        +'<select id="tm_terr">'+terrOpts+'</select>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:10px">'
+        +'<button class="btn" id="tm_save" style="background:var(--aq-red);color:#fff;border:0;padding:7px 14px;border-radius:5px;font-weight:700">'+(existing?'Save':'Add member')+'</button>'
+        +(existing?'<button class="btn" id="tm_cancel" style="padding:7px 12px">Cancel</button>':'')
+      +'</div>'
+      +'<div class="pbErr" id="tm_err"></div>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  function close(){ wrap.remove(); }
+  wrap.querySelector('#tm_x').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  var c=wrap.querySelector('#tm_cancel'); if(c) c.onclick=function(){ close(); openTeamModal(); };
+  wrap.querySelectorAll('[data-teamedit]').forEach(function(b){ b.onclick=function(){ close(); openTeamModal(b.dataset.teamedit); }; });
+  wrap.querySelectorAll('[data-teamdeact]').forEach(function(b){ b.onclick=function(){
+    var m=teamById(b.dataset.teamdeact); if(!m) return;
+    m.active=false; audit('team',{action:'deactivate',id:m.id,name:m.name});
+    if(TEAM_SEL===m.id){ TEAM_SEL='all'; try{ sessionStorage.setItem('aqTeamSel_'+terr,'all'); }catch(e){} }
+    savePlan(); renderTeamNav(); try{ refreshPlanner(); }catch(e){} close(); openTeamModal();
+  }; });
+  wrap.querySelectorAll('[data-teamreact]').forEach(function(b){ b.onclick=function(){
+    var m=teamById(b.dataset.teamreact); if(!m) return;
+    m.active=true; audit('team',{action:'reactivate',id:m.id,name:m.name}); savePlan(); renderTeamNav(); close(); openTeamModal();
+  }; });
+  wrap.querySelector('#tm_save').onclick=function(){
+    var name=wrap.querySelector('#tm_name').value.trim();
+    var email=wrap.querySelector('#tm_email').value.trim().toLowerCase();
+    var role=wrap.querySelector('#tm_role').value;
+    var t=wrap.querySelector('#tm_terr').value;
+    var err=wrap.querySelector('#tm_err');
+    if(!name){ err.textContent='Enter a name'; return; }
+    if(['AM','DSR','ISS'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
+    /* Reuse existing active row with same email or same name+territory */
+    var reuse=null;
+    (ADMIN.team||[]).forEach(function(m){
+      if(existing&&m.id===existing.id) return;
+      if(email&&m.email&&m.email.toLowerCase()===email) reuse=m;
+      else if(!reuse&&m.terr===t&&String(m.name).toLowerCase()===name.toLowerCase()&&m.active!==false) reuse=m;
+    });
+    if(reuse && !existing){
+      reuse.name=name; reuse.email=email||reuse.email; reuse.role=role; reuse.terr=t; reuse.active=true;
+      audit('team',{action:'reuse',id:reuse.id,name:name}); savePlan(); renderTeamNav(); close(); cloudBadge('Updated existing team member'); return;
+    }
+    if(existing){
+      existing.name=name; existing.email=email; existing.role=role; existing.terr=t;
+      audit('team',{action:'edit',id:existing.id,name:name}); savePlan(); renderTeamNav(); close(); cloudBadge('Team member saved'); return;
+    }
+    var id='tm_'+Date.now().toString(36)+Math.floor(Math.random()*1000);
+    ADMIN.team.push({id:id,name:name,email:email,role:role,terr:t,active:true,source:'manual'});
+    audit('team',{action:'add',id:id,name:name,role:role,terr:t}); savePlan(); renderTeamNav(); close(); cloudBadge('Team member added');
+  };
 }
 function planYear(){ return (ADMIN.defaults&&+ADMIN.defaults.targetYear)||2027; }
 function pbWho(){ try{ return (PB_USER&&PB_USER.email)||'local user'; }catch(e){ return 'local user'; } }
@@ -3232,12 +3430,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -5027,7 +5225,8 @@ function migrateTravel(){
 }
 function addTravel(type,wk){
   var t=TRAVEL_TYPES[type]?type:'other';
-  LOGI.push({id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terr,
+  var lid='L'+Date.now()+Math.floor(Math.random()*1000);
+  LOGI.push({id:lid, terr:terr,
     wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
     name:'', address:'', lat:null, lon:null,
     airportCode:'', airportName:'',
@@ -5035,6 +5234,7 @@ function addTravel(type,wk){
     day:null, time:'',
     day2:null, time2:'',           /* check-out / drop-off */
     conf:'', notes:''});
+  teamStampNew('m',lid);
   savePlan(); refreshPlanner();
 }
 function setTravelField(id,field,val){
@@ -5071,7 +5271,7 @@ function geocodeTravel(id){
 function itineraryFor(t,wk){
   var items=[];
   mapScope(t).map(sfMasterMerge).forEach(function(d){
-    if(ASSIGN[d.id]===wk){
+    if(ASSIGN[d.id]===wk && teamFilterMatch('d',d.id)){
       items.push({kind:'dealer', id:d.id, key:'d:'+d.id, type:'dealer', name:d.name,
         address:d.address||'', lat:d.lat, lon:d.lon,
         day:(DAY[d.id]==null?null:DAY[d.id]), time:TIME[d.id]||'',
@@ -5081,6 +5281,7 @@ function itineraryFor(t,wk){
   });
   XVISITS.forEach(function(x){
     if(!((t==='All'||x.terr===t) && x.wk===wk)) return;
+    if(!teamFilterMatch('x',x.id)) return;
     var d=byId[x.dealer]||uniById(x.dealer); if(!d) return; var m=sfMasterMerge(d);
     items.push({kind:'xvisit', id:'xv:'+x.id, key:'x:'+x.id, type:'dealer', name:m.name+' — '+xvType(x.type).label,
       address:m.address||'', lat:m.lat, lon:m.lon,
@@ -5089,7 +5290,7 @@ function itineraryFor(t,wk){
       status:(x.done?'Confirmed':'Pending')});
   });
   LOGI.forEach(function(it){
-    if((t==='All'||it.terr===t) && it.wk===wk){
+    if((t==='All'||it.terr===t) && it.wk===wk && teamFilterMatch('m',it.id)){
       var ty=travelType(it);
       items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
         address:it.address||'', lat:it.lat, lon:it.lon,
@@ -5317,9 +5518,9 @@ function logiRowDetail(x){
 function tripsEventCount(wk){
   try{
     var n=0;
-    dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===wk) n++; });
-    if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)) n++; });
-    if(typeof LOGI!=='undefined') LOGI.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)) n++; });
+    dealersIn(terr).forEach(function(d){ if(ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id)) n++; });
+    if(typeof XVISITS!=='undefined') XVISITS.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)&&teamFilterMatch('x',x.id)) n++; });
+    if(typeof LOGI!=='undefined') LOGI.forEach(function(x){ if(x.wk===wk && (terr==='All'||x.terr===terr)&&teamFilterMatch('m',x.id)) n++; });
     return n;
   }catch(e){ return 0; }
 }
@@ -5405,15 +5606,15 @@ function _dayEntriesHTML(wk, labs, ds, wlogi, xw, TL){
 
 function kanbanWeekHTML(wk){
   if(wk==='remote'){
-    var dsR=dealersIn(terr).filter(function(d){return ASSIGN[d.id]==='remote';});
-    var wlogiR=LOGI.filter(function(x){return x.terr===terr && x.wk==='remote';});
+    var dsR=dealersIn(terr).filter(function(d){return ASSIGN[d.id]==='remote'&&teamFilterMatch('d',d.id);});
+    var wlogiR=LOGI.filter(function(x){return x.terr===terr && x.wk==='remote'&&teamFilterMatch('m',x.id);});
     var cardsR=(dsR.length||wlogiR.length)?(dsR.map(function(d){return dvCard(dvViewInitial(d,'remote'));}).join('')+wlogiR.map(function(x){return travelCard(x,'remote');}).join('')):'';
     cardsR+=dqInputHTML('remote','');
     return '<div class="kb-day" data-wk="remote"><div class="kb-dayh"><b>Remote / Direct</b><span>book remotely</span></div><div class="kb-colb" data-drop="remote|">'+cardsR+'</div></div>';
   }
-  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;});
-  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
-  var xw=XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;});
+  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id);});
+  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk&&teamFilterMatch('m',x.id);});
+  var xw=XVISITS.filter(function(x){return x.terr===terr && x.wk===wk&&teamFilterMatch('x',x.id);});
   var labs=dayLabels(wk);
   var TL=tlCompute(terr,wk);
   var days=_dayEntriesHTML(wk,labs,ds,wlogi,xw,TL);
@@ -5454,15 +5655,15 @@ function kbToolbarHTML(wk){
 
 function weekCard(wk){
   var isk=wk===31, isRemote=wk==='remote';
-  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk;}).sort(function(a,b){return b.booking-a.booking;});
+  var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id);}).sort(function(a,b){return b.booking-a.booking;});
   var wf=wkForecast(terr,wk);
   var rev=wf.b,loads=wf.l,pct=ttOf(terr)?rev/ttOf(terr)*100:0, apc=apptCount(ds);
   var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
   var title=isRemote?'REMOTE / DIRECT':(isk?'WK 31 · KICKOFF':'WK '+wkNo(wk)+' – '+wkYear(wk));
   var dates=isRemote?'book remotely':wkDY(wk);
   var md=settingsFor(terr).maxDrive;
-  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk;});
-  var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk;}):[];
+  var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk&&teamFilterMatch('m',x.id);});
+  var xw=(typeof wk==='number')?XVISITS.filter(function(x){return x.terr===terr && x.wk===wk&&teamFilterMatch('x',x.id);}):[];
   var cards;
   if(isRemote){ cards=(ds.length||wlogi.length)?(ds.sort(function(a,b){return b.booking-a.booking;}).map(function(d){return dvCard(dvViewInitial(d,wk));}).join('')+wlogi.map(function(x){return travelCard(x,wk);}).join('')):''; cards+=dqInputHTML('remote',''); }
   else {
@@ -5705,11 +5906,14 @@ function createVisit(dealerId,type,wk,day){
     ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
     DAY[dealerId]=day; TIME[dealerId]='';
     if(type==='visit') PTYPE[dealerId]='visit'; else delete PTYPE[dealerId];
+    teamStampNew('d',dealerId);
   } else {
     if(wk==='remote') return;
-    XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:dealerId,
+    var xid='X'+Date.now()+Math.floor(Math.random()*1000);
+    XVISITS.push({id:xid, dealer:dealerId,
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
       wk:parseInt(wk,10), day:day, time:'', dur:60, type:type, notes:'', done:false});
+    teamStampNew('x',xid);
   }
   savePlan(); refreshPlanner();
 }
@@ -7126,7 +7330,7 @@ function mapHTML(tl, weekSel, colorBy){
   tl.forEach(function(t){
     /* Map only: overlay Salesforce lat/lon (sfMasterMerge keeps planner coords when SF has none).
        Grouping stays by seed territory (t via dealersIn) so no dealer moves between territories. */
-    var ds=dealersIn(t).map(sfMasterMerge).filter(function(d){ var a=ASSIGN[d.id]; var inw=(weekSel==='all')?(typeof a==='number'&&a!==31):(a===weekSel); return inw && d.lat!=null && d.lon!=null && d.lon<-50; });
+    var ds=dealersIn(t).map(sfMasterMerge).filter(function(d){ var a=ASSIGN[d.id]; var inw=(weekSel==='all')?(typeof a==='number'&&a!==31):(a===weekSel); return inw && d.lat!=null && d.lon!=null && d.lon<-50 && teamFilterMatch('d',d.id); });
     total+=ds.length;
     var byWk={}; ds.forEach(function(d){ var k=ASSIGN[d.id]; (byWk[k]=byWk[k]||[]).push(d); });
     Object.keys(byWk).forEach(function(k){ var g=byWk[k];
@@ -7306,12 +7510,13 @@ function stopsForWeek(t,wk){
   var out=[];
   if(typeof wk==='number'){
     var allowed={}; poolFiltered(t).forEach(function(d){allowed[d.id]=1;});
-    mapScope(t).map(sfMasterMerge).forEach(function(d){ if(ASSIGN[d.id]===wk && allowed[d.id]) out.push(dealerStop(d,wk)); });
-    LOGI.forEach(function(it){ if((t==='All'||it.terr===t) && it.wk===wk) out.push(manualStop(it,wk)); });
+    mapScope(t).map(sfMasterMerge).forEach(function(d){ if(ASSIGN[d.id]===wk && allowed[d.id] && teamFilterMatch('d',d.id)) out.push(dealerStop(d,wk)); });
+    LOGI.forEach(function(it){ if((t==='All'||it.terr===t) && it.wk===wk && teamFilterMatch('m',it.id)) out.push(manualStop(it,wk)); });
     /* additional visits: independent stops at the dealer's location on their own
        date. revenue/loads stay 0 so week totals are never double-counted. */
     XVISITS.forEach(function(x){
       if(!((t==='All'||x.terr===t) && x.wk===wk)) return;
+      if(!teamFilterMatch('x',x.id)) return;
       var d=byId[x.dealer]||uniById(x.dealer); if(!d) return; d=sfMasterMerge(d);
       var labs=dayLabels(wk);
       out.push({key:'x:'+x.id, id:x.dealer, kind:'xvisit', name:d.name+' — '+xvType(x.type).label, type:'dealer',
@@ -7971,15 +8176,17 @@ function dqAddStop(c){
     airportCode:'', airportName:'', airline:'', flightNo:'',
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
-  LOGI.push(it); savePlan(); refreshPlanner();
+  LOGI.push(it); teamStampNew('m',it.id); savePlan(); refreshPlanner();
 }
 function dqAddActivity(id,act){
   var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
   if(wk==='remote'){ return dqPick(id,'visit'); }
   dqClose();
   var d=uniById(id)||byId[id]; if(!d) return;
-  XVISITS.push({id:'X'+Date.now()+Math.floor(Math.random()*1000), dealer:id, terr:terr,
+  var xid='X'+Date.now()+Math.floor(Math.random()*1000);
+  XVISITS.push({id:xid, dealer:id, terr:terr,
     wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:60, type:'visit', act:act, notes:'', done:false});
+  teamStampNew('x',xid);
   savePlan(); refreshPlanner();
   setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
 }
@@ -9758,6 +9965,7 @@ function pbRestoreNav(){
 function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings';
   pbSaveNav();
+  try{ renderTeamNav(); }catch(e){}
   document.getElementById("cards").style.display=(isMaster||isSettings)?'none':'';
   if(!isMaster&&!isSettings) renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings)?'':'none';
@@ -9982,11 +10190,11 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
        automatically; same-event edits become per-card conflicts. */
     var _confl=mergeEventPayload(p);
     /* non-event settings adopt the incoming value (not scheduled events) */
-    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride);
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners);
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
