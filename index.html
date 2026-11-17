@@ -637,74 +637,102 @@ body.wkfull-on{overflow:hidden;}
 .aqPlanStrip .aqPlanSep{color:#d1d5db;font-size:12px;user-select:none;}
 #allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
 #allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
-#yearView{display:none;padding:6px 12px 20px;min-height:calc(100vh - 140px);}
+#yearShell{display:none;flex-direction:column;min-height:calc(100vh - 140px);}
+#yearShell.is-on{display:flex;}
+#yearView{flex:1 1 auto;padding:6px 12px 12px;min-height:0;overflow:auto;}
 #yearView.is-on{display:block;}
-.yg-wrap{background:#fff;border:1px solid var(--line);overflow:hidden;min-height:480px;}
-.yg-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
-.yg-tb-left,.yg-tb-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
-.yg-ctrl{width:auto!important;min-width:0;max-width:160px;height:28px;padding:2px 8px;font-size:12px;}
-.yg-mem{max-width:200px;}
-.yg-seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;}
-.yg-seg-btn{appearance:none;border:0;background:transparent;font:700 11px inherit;padding:5px 10px;cursor:pointer;color:#6b7280;}
-.yg-seg-btn.on{background:#e8eaed;color:#111;}
-.yg-export{position:relative;}
-.yg-export-menu{position:absolute;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.08);min-width:140px;display:flex;flex-direction:column;}
-.yg-export-menu[hidden]{display:none!important;}
-.yg-export-menu button{appearance:none;border:0;background:#fff;text-align:left;padding:8px 12px;font:600 12px inherit;cursor:pointer;}
-.yg-export-menu button:hover{background:#f3f4f6;}
+.yg-docbar{position:sticky;bottom:0;flex:0 0 44px;}
+.yg-wrap{background:#fff;border:1px solid var(--line);overflow:visible;min-height:420px;}
+.yg-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line-soft);background:#fff;position:relative;}
+.yg-tb-left,.yg-tb-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative;}
+.yg-year-lbl{font:800 14px inherit;min-width:44px;text-align:center;color:#111;}
+.yg-team-btn{max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+.yg-team-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid var(--line);box-shadow:0 10px 28px rgba(0,0,0,.12);border-radius:8px;min-width:220px;max-height:320px;overflow:auto;padding:6px;}
+.yg-toolbar .kbb,.yg-panel .kbb,.yg-mctable .kbb{
+  appearance:none;font-family:inherit;font-size:12px;font-weight:700;height:28px;padding:0 10px;
+  border-radius:5px;border:1px solid var(--line);background:#fff;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;
+}
+.yg-toolbar .kbb:hover:not(:disabled),.yg-panel .kbb:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.yg-toolbar .kbb:disabled{opacity:.45;cursor:not-allowed;}
+.yg-toolbar .kbb.primary,.yg-panel .kbb.primary,.yg-mctable .kbb.primary{background:var(--aq-red,#cf202f);border-color:var(--aq-red,#cf202f);color:#fff;}
+.yg-toolbar .kbb.primary:hover,.yg-panel .kbb.primary:hover{filter:brightness(.96);color:#fff;}
+.yg-toolbar .kbb.icon{width:28px;padding:0;font-size:16px;}
+.yg-team-roles{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.yg-role{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:700 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
+.yg-role.on{border-color:var(--aq-red);color:var(--aq-red);background:#fff7f8;}
+.yg-tm{display:flex;align-items:center;gap:8px;width:100%;appearance:none;border:0;background:transparent;font:600 12px inherit;padding:6px;border-radius:5px;cursor:pointer;text-align:left;}
+.yg-tm:hover{background:#f5f6f7;}
+.yg-tm .box{width:14px;height:14px;border-radius:50%;border:1.5px solid #c4c7cb;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex:0 0 auto;}
+.yg-tm.on .box{background:var(--aq-red);border-color:var(--aq-red);}
+.yg-tm.partial .box{background:#fff;border-color:var(--aq-red);color:var(--aq-red);}
 .yg-sync-warn{flex:1 0 100%;font-size:11px;font-weight:600;color:#7f1d1d;background:#fef2f2;border:1px solid #fecaca;padding:6px 8px;}
-.yg-main{display:flex;align-items:stretch;min-height:420px;}
-.yg-board{flex:1 1 auto;padding:4px 6px 8px;overflow:auto;max-height:calc(100vh - 200px);min-width:0;}
+.yg-main{display:flex;align-items:stretch;min-height:360px;}
+.yg-board{flex:1 1 auto;padding:6px 8px 10px;overflow:auto;max-height:calc(100vh - 280px);min-width:0;}
 .yg-key{flex:0 0 148px;border-left:1px solid var(--line);background:#fafbfc;padding:8px 8px 12px;display:flex;flex-direction:column;gap:4px;}
 .yg-key-h{display:flex;justify-content:space-between;align-items:center;font:800 10px inherit;letter-spacing:.06em;color:#6b7280;margin-bottom:4px;}
 .yg-key-x{appearance:none;border:0;background:transparent;font-size:16px;cursor:pointer;color:#9ca3af;line-height:1;}
 .yg-key-b{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;}
-.yg-key-row{appearance:none;border:0;background:transparent;display:flex;align-items:center;gap:6px;padding:4px 2px;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;opacity:.45;}
+.yg-key-row{appearance:none;border:0;background:transparent;display:flex;align-items:center;gap:6px;padding:4px 2px;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;opacity:.4;}
 .yg-key-row.on{opacity:1;color:#111;}
-.yg-key-row i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;}
-.yg-key-ic{width:14px;text-align:center;flex:0 0 auto;}
-.yg-key-note{font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.35;}
-.yg-outlook{color:#b45309;}
+.yg-key-row i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;box-sizing:border-box;}
 .yg-key-manage{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;padding:8px 2px 0;border-top:1px solid var(--line-soft);margin-top:6px;}
 .yg-key-manage:hover{color:var(--aq-red);}
 .yg-wrap.yg-key-collapsed .yg-board{max-width:100%;}
-.yg-head,.yg-month{display:grid;grid-template-columns:36px repeat(var(--yg-cols,42),minmax(14px,1fr));gap:1px;align-items:stretch;}
+.yg-head,.yg-month{display:grid;grid-template-columns:36px repeat(var(--yg-cols,37),minmax(12px,1fr));gap:2px;align-items:stretch;}
 .yg-head{position:sticky;top:0;z-index:3;background:#fff;padding:2px 0 4px;border-bottom:1px solid #e5e7eb;}
-.yg-corner{min-height:14px;}
+.yg-corner{min-height:12px;}
 .yg-hd{text-align:center;font-size:9px;font-weight:700;color:#6b7280;line-height:1.1;padding:2px 0;}
-.yg-hd.we{color:#9ca3af;background:#f3f4f6;}
-.yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #d1d5db;}
-.yg-month{margin:0;padding:1px 0;border-bottom:1px solid #f0f1f3;min-height:32px;}
+.yg-hd.we{color:#9ca3af;background:#f3f4f6;border-radius:3px;}
+.yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #e5e7eb;}
+.yg-month{margin:0;padding:2px 0;border-bottom:1px solid #f3f4f6;min-height:28px;}
 .yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 2px;}
-.yg-cell{appearance:none;border:1px solid #3f4450;background:#2b3038;border-radius:0;min-height:32px;padding:1px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#fff;}
-.yg-cell.na{border:0;background:transparent;cursor:default;min-height:32px;}
-.yg-cell.we{background:#3a404a;border-color:#4b5160;}
-.yg-cell.today{box-shadow:inset 0 0 0 1px var(--aq-red);}
-.yg-cell.today .yg-d{color:#ffb4bc;font-weight:800;}
-.yg-cell:hover:not(.na){filter:brightness(1.08);}
-.yg-d{font-size:8px;font-weight:700;color:#f3f4f6;line-height:1;padding:0 1px;}
-.yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
-.yg-chip{display:block;font-size:7px;font-weight:800;border-radius:2px;padding:0 2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:9px;text-align:center;}
-.yg-chip.tent{outline:1px dashed rgba(255,255,255,.7);outline-offset:-1px;opacity:.85;}
-.yg-chip.act{font-size:9px;line-height:1.2;}
+.yg-cell{appearance:none;border:1px solid #e8eaed;background:#fff;border-radius:4px;min-height:28px;padding:2px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#111;}
+.yg-cell.na{border:0;background:transparent;cursor:default;min-height:28px;}
+.yg-cell.we{background:#f3f4f6;border-color:#e5e7eb;}
+.yg-cell.today{box-shadow:inset 0 0 0 1.5px var(--aq-red);}
+.yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
+.yg-cell.sel{background:#fef2f2;border-color:#fecaca;}
+.yg-cell:hover:not(.na){border-color:#c9ced4;}
+.yg-d{font-size:9px;font-weight:600;color:#374151;line-height:1;padding:0 1px;}
+.yg-bars{display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;}
+.yg-bar{display:block;height:5px;border-radius:2px;width:100%;}
 .yg-panel{position:sticky;bottom:0;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:5;}
 .yg-ph{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px 6px;}
-.yg-psub{font-size:11px;color:#9ca3af;margin-top:2px;}
-.yg-pb{max-height:220px;overflow:auto;padding:0 12px 8px;}
-.yg-psec{margin-bottom:8px;}
-.yg-psec-h{font:800 10px inherit;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;margin:6px 0 4px;}
+.yg-pb{max-height:200px;overflow:auto;padding:0 12px 8px;}
 .yg-pline{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start;}
 .yg-pcat{flex:0 0 auto;font-size:9px;font-weight:800;color:#fff;border-radius:3px;padding:2px 5px;}
 .yg-pt{font-size:12px;font-weight:700;color:#111;}
 .yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
-.yg-statusline{font-size:12px;margin-bottom:4px;}
-.yg-link{appearance:none;border:0;background:transparent;color:var(--aq-red);font:700 11px inherit;cursor:pointer;padding:2px 0;text-decoration:underline;}
 .yg-pf{display:flex;gap:8px;padding:8px 12px 12px;flex-wrap:wrap;}
 .yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
 .yg-mctable{width:100%;border-collapse:collapse;font-size:12px;}
 .yg-mctable th,.yg-mctable td{padding:4px;border-bottom:1px solid var(--line-soft);text-align:left;}
-@media(max-width:900px){.yg-key{flex-basis:120px;}.yg-mlbl{font-size:10px;}.yg-ctrl{max-width:120px;}}
-@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-cell{min-height:26px;}}
+.yg-monthly{border-top:1px solid var(--line);padding:14px 12px 18px;background:#fafbfc;}
+.yg-monthly-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.yg-monthly-h b{font-size:14px;color:#111;}
+.yg-monthly-h span{font-size:12px;color:#9ca3af;font-weight:600;}
+.yg-monthly-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.yg-mcard{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px 8px;min-height:140px;display:flex;flex-direction:column;}
+.yg-mh{display:flex;justify-content:space-between;align-items:center;font:800 11px inherit;letter-spacing:.04em;color:#111;margin-bottom:8px;}
+.yg-medit{appearance:none;border:0;background:transparent;cursor:pointer;color:#9ca3af;font-size:12px;padding:2px;}
+.yg-medit:hover{color:var(--aq-red);}
+.yg-mflab{font:700 9px inherit;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
+.yg-mfocus{font:700 13px inherit;color:#111;line-height:1.25;}
+.yg-mnotes{font-size:11px;color:#6b7280;margin-top:2px;}
+.yg-mset{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 12px inherit;cursor:pointer;padding:0;text-align:left;}
+.yg-mset:hover{color:var(--aq-red);}
+.yg-mdiv{height:1px;background:#f0f1f3;margin:8px 0;}
+.yg-mevs{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
+.yg-mev{display:flex;align-items:flex-start;gap:6px;font-size:11px;}
+.yg-mev i{width:7px;height:7px;border-radius:50%;margin-top:4px;flex:0 0 auto;}
+.yg-mev-l{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#374151;cursor:pointer;padding:0;text-align:left;}
+.yg-mev-l:hover{color:var(--aq-red);}
+.yg-mempty{font-size:11px;color:#b0b5bb;}
+.yg-madd{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 11px inherit;cursor:pointer;padding:6px 0 0;text-align:left;align-self:flex-start;}
+.yg-madd:hover{color:var(--aq-red);}
+@media(max-width:1000px){.yg-monthly-grid{grid-template-columns:1fr 1fr;}.yg-key{flex-basis:120px;}}
+@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-monthly-grid{grid-template-columns:1fr;}.yg-cell{min-height:24px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
 #allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
@@ -1988,7 +2016,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <footer class="trips-docbar" id="allTripsDocBar" aria-label="Trip documents"></footer>
     </div>
   </div>
-  <div id="yearView" style="display:none;" aria-label="Year at a Glance"></div>
+  <div id="yearShell" style="display:none;" aria-label="Year at a Glance">
+    <div id="yearView"></div>
+    <footer class="trips-docbar yg-docbar" id="yearDocBar" aria-label="Year documents"></footer>
+  </div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
@@ -2417,6 +2448,7 @@ var YG_EVENTS=[];
 var YG_NOTES={};
 var YG_AVAIL={};
 var YG_CAT_CUSTOM=[];
+var YG_FOCUS={};
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
 let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="", mFilterAR="";
@@ -4031,12 +4063,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[])};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[]),ygfocus:(typeof YG_FOCUS!=='undefined'?YG_FOCUS:{})};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -10844,24 +10876,35 @@ function tripOpenReviewModal(t, wk, member){
 function tripsDocBarRender(){
   var ov=(typeof _hcOverall==='function')?_hcOverall():'ok';
   var label=({ok:'System Healthy',warn:'System Check',fail:'System Issues',pending:'System …'}[ov]||'System Healthy');
+  var yearMode=(typeof PLAN_MODE!=='undefined' && PLAN_MODE==='year');
   var none=teamIsNone();
   var single=teamSingleMember();
-  var hint=none?'Select a traveller':(single?esc(single.name):'');
+  var hint=yearMode
+    ? ((typeof YG!=='undefined' && YG.year)?('Year '+YG.year):'Year overview')
+    : (none?'Select a traveller':(single?esc(single.name):''));
+  var disableTrip=(!yearMode && none);
+  var docLabel=yearMode?'Year Documents':'Trip Documents';
   var html='<div class="tdb-left"><span class="tdb-dot '+esc(ov)+'"></span><span class="tdb-status">'+esc(label)+'</span>'
     +(hint?'<span class="tdb-hint">'+hint+'</span>':'')
     +'</div>'
-    +'<div class="tdb-right"><span class="tdb-label">Trip Documents</span>'
-    +'<button type="button" class="tdb-btn excel" data-tripdoc="excel"'+(none?' disabled':'')+' title="Download Excel itinerary">📗 Excel ↓</button>'
-    +'<button type="button" class="tdb-btn pdf" data-tripdoc="pdf"'+(none?' disabled':'')+' title="Download PDF itinerary">📕 PDF ↓</button>'
-    +'<button type="button" class="tdb-btn send" data-tripdoc="send"'+(none?' disabled':'')+' title="Review and send itinerary">✉ Review &amp; Send</button>'
+    +'<div class="tdb-right"><span class="tdb-label">'+esc(docLabel)+'</span>'
+    +'<button type="button" class="tdb-btn excel" data-tripdoc="excel"'+(disableTrip?' disabled':'')+' title="'+(yearMode?'Download year overview Excel':'Download Excel itinerary')+'">📗 Excel ↓</button>'
+    +'<button type="button" class="tdb-btn pdf" data-tripdoc="pdf"'+(disableTrip?' disabled':'')+' title="'+(yearMode?'Download year overview PDF':'Download PDF itinerary')+'">📕 PDF ↓</button>'
+    +'<button type="button" class="tdb-btn send" data-tripdoc="send"'+(disableTrip?' disabled':'')+' title="Review and send">✉ Review &amp; Send</button>'
     +'</div>';
   function wire(bar, wk){
     if(!bar) return;
     bar.innerHTML=html;
     bar.querySelectorAll('[data-tripdoc]').forEach(function(b){
       b.onclick=function(){
-        if(teamIsNone()){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
         var kind=b.dataset.tripdoc;
+        if(yearMode){
+          if(kind==='excel' && typeof ygExportExcel==='function') ygExportExcel();
+          else if(kind==='pdf' && typeof ygExportPdf==='function') ygExportPdf();
+          else if(kind==='send') ygReviewSend();
+          return;
+        }
+        if(teamIsNone()){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
         var t=(terr==='All'?(single&&single.terr)||'East':terr);
         if(kind==='excel') tripExportExcel(t, wk, teamIsSingle()?teamSingleMember():null);
         else if(kind==='pdf') tripExportPdf(t, wk, teamIsSingle()?teamSingleMember():null);
@@ -10872,6 +10915,35 @@ function tripsDocBarRender(){
   var focusWk=(typeof focusWkGet==='function'?focusWkGet():wkCurrent());
   wire(document.getElementById('tripsDocBar'), focusWk);
   wire(document.getElementById('allTripsDocBar'), (typeof ALL_WK==='number'?ALL_WK:focusWk));
+  wire(document.getElementById('yearDocBar'), focusWk);
+}
+function ygReviewSend(){
+  var y=(typeof YG!=='undefined'&&YG.year)?YG.year:new Date().getFullYear();
+  var t=(typeof terr==='string'?terr:'All');
+  var wrap=document.createElement('div');
+  wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(440px,94vw)"><div class="mh"><div class="mt">Review &amp; Send — Year '+y+'</div><button type="button" class="mclose" id="ygRsX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#374151">Preview the annual overview, then confirm recipients before sending. Nothing is emailed until you approve.</p>'
+    +'<label style="display:block;font:700 11px inherit;color:#6b7280;margin-bottom:4px">Recipients</label>'
+    +'<textarea id="ygRsTo" rows="3" class="msearch" style="width:100%;min-height:64px" placeholder="name@arrowquip.com"></textarea>'
+    +'<p style="font-size:11px;color:#9ca3af;margin:8px 0 12px">Territory filter: <b>'+esc(t)+'</b></p>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'
+    +'<button type="button" class="btn" id="ygRsPdf">Preview PDF</button>'
+    +'<button type="button" class="btn" id="ygRsXls">Preview Excel</button>'
+    +'<button type="button" class="btn" id="ygRsSend" style="background:var(--aq-red);color:#fff;border:0">Confirm &amp; Send</button>'
+    +'</div></div></div>';
+  document.body.appendChild(wrap);
+  function close(){ wrap.remove(); }
+  wrap.querySelector('#ygRsX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#ygRsPdf').onclick=function(){ if(typeof ygExportPdf==='function') ygExportPdf(); };
+  wrap.querySelector('#ygRsXls').onclick=function(){ if(typeof ygExportExcel==='function') ygExportExcel(); };
+  wrap.querySelector('#ygRsSend').onclick=function(){
+    var to=(wrap.querySelector('#ygRsTo').value||'').trim();
+    if(!to){ if(typeof aqToast==='function') aqToast('Add at least one recipient'); return; }
+    if(typeof aqToast==='function') aqToast('Email send is not configured yet — preview documents instead');
+  };
 }
 function exportTripPlans(){
   var terrs=["East","South","Central","West","Exports"]; var weeks=[31].concat(FIELD_NUMS); var body='';
@@ -11341,7 +11413,12 @@ function render(){
   if(planStrip) planStrip.style.display=(isMaster||isSettings||isTeam)?'none':'flex';
   document.querySelectorAll('[data-planmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.planmode===(yearMode?'year':'weekly')); });
   var yv=document.getElementById('yearView');
+  var ys=document.getElementById('yearShell');
   var tv=document.getElementById('teamView');
+  if(ys){
+    ys.classList.toggle('is-on', yearMode);
+    ys.style.display=yearMode?'flex':'none';
+  }
   if(yv){
     yv.classList.toggle('is-on', yearMode);
     yv.style.display=yearMode?'block':'none';
@@ -11364,9 +11441,11 @@ function render(){
       if(typeof ygShow==='function') ygShow(true);
       else if(typeof ygRender==='function') ygRender();
       else if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;font:600 13px Open Sans,Arial,sans-serif;color:#6b7280">Year at a Glance failed to load. Reload the page.</div>';
+      try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e3){}
     }catch(e){ console.error(e); if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;color:#b42318">Year at a Glance error — see console.</div>'; }
     return;
   }
+  if(ys){ ys.classList.remove('is-on'); ys.style.display='none'; }
   document.getElementById("cards").style.display='none';
   renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings&&!isTeam)?'':'none';
@@ -11610,11 +11689,11 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
        automatically; same-event edits become per-card conflicts. */
     var _confl=mergeEventPayload(p);
     /* non-event settings adopt the incoming value (not scheduled events) */
-    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
