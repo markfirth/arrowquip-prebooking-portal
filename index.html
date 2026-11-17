@@ -97,10 +97,8 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* ===== Desktop Trips Kanban (layout only — branding unchanged) ===== */
 /* ===== Desktop Trips — compact Kanban / List ===== */
 .planwrap.trips-kanban{
-  display:grid;
-  grid-template-columns:260px minmax(0,1fr);
-  gap:0;
-  align-items:stretch;
+  display:flex;
+  flex-direction:column;
   height:calc(100vh - 140px);
   max-height:calc(100vh - 140px);
   background:#fff;
@@ -108,26 +106,59 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
   border-radius:var(--radius);
   overflow:hidden;
 }
-.planwrap.trips-kanban.nav-collapsed{grid-template-columns:minmax(0,1fr);}
+.planwrap.trips-kanban > .trips-body{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:260px minmax(0,1fr);
+  gap:0;
+  align-items:stretch;
+}
+.planwrap.trips-kanban.nav-collapsed > .trips-body{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
 /* Default split ≈ 70% itinerary / 30% map of remaining space via fr units;
    --trips-map-w overrides with a remembered pixel width after the user drags. */
-.planwrap.trips-kanban.map-split{
+.planwrap.trips-kanban.map-split > .trips-body{
   grid-template-columns:260px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
-.planwrap.trips-kanban.nav-collapsed.map-split{
+.planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{
   grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
 }
-.planwrap.trips-kanban.map-full{
+.planwrap.trips-kanban.map-full > .trips-body{
   grid-template-columns:260px minmax(0,1fr);
 }
-.planwrap.trips-kanban.nav-collapsed.map-full{
+.planwrap.trips-kanban.nav-collapsed.map-full > .trips-body{
   grid-template-columns:minmax(0,1fr);
 }
 .planwrap.trips-kanban.map-full .boardcol,
 .planwrap.trips-kanban.map-full .trips-split{display:none;}
 .planwrap.trips-kanban.map-collapsed .trips-split,
 .planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
+.trips-docbar{
+  flex:0 0 44px;height:44px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 12px;background:#fff;border-top:1px solid var(--line);z-index:6;
+}
+.trips-docbar .tdb-left{display:inline-flex;align-items:center;gap:8px;min-width:0;}
+.trips-docbar .tdb-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:#16a34a;}
+.trips-docbar .tdb-dot.warn{background:#f59e0b;}
+.trips-docbar .tdb-dot.fail{background:#dc2626;}
+.trips-docbar .tdb-status{font:700 12px inherit;color:#374151;white-space:nowrap;}
+.trips-docbar .tdb-right{display:inline-flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto;}
+.trips-docbar .tdb-label{font:800 10px inherit;letter-spacing:.06em;text-transform:uppercase;color:#8b9096;margin-right:2px;}
+.trips-docbar .tdb-btn{
+  appearance:none;font-family:inherit;font-size:11px;font-weight:700;height:28px;padding:0 10px;
+  border-radius:5px;border:1px solid var(--line);background:#fff;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.trips-docbar .tdb-btn:hover:not(:disabled){border-color:#9ca3af;}
+.trips-docbar .tdb-btn:disabled{opacity:.45;cursor:not-allowed;}
+.trips-docbar .tdb-btn.excel{border-color:#86efac;color:#166534;}
+.trips-docbar .tdb-btn.pdf{border-color:#fca5a5;color:#991b1b;}
+.trips-docbar .tdb-btn.send{background:var(--aq-red,#CC162E);border-color:var(--aq-red,#CC162E);color:#fff;}
+.trips-docbar .tdb-btn.send:hover:not(:disabled){filter:brightness(.96);}
+.trips-docbar .tdb-hint{font-size:11px;color:#9ca3af;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#plannerView.trips-on #sysHealth{display:none!important;}
 .trips-nav{
   background:#fff;border-right:1px solid var(--line);
   display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;width:100%;
@@ -169,8 +200,9 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .sb-sec-body{padding:0 6px 8px;}
 .sb-check{display:flex;align-items:center;gap:8px;width:100%;appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;padding:5px 6px;border-radius:5px;text-align:left;color:#1f2328;font-size:12px;}
 .sb-check:hover{background:#f5f6f7;}
-.sb-check .box{width:14px;height:14px;border-radius:50%;border:1.5px solid #c4c7cb;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;box-sizing:border-box;}
+.sb-check .box{width:14px;height:14px;border-radius:50%;border:1.5px solid #c4c7cb;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;box-sizing:border-box;font-weight:800;line-height:1;}
 .sb-check.on .box{background:var(--aq-red);border-color:var(--aq-red);}
+.sb-check.partial .box{background:#fff;border-color:var(--aq-red);color:var(--aq-red);}
 .sb-check .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
 .sb-check .rl{color:#9ca3af;font-weight:500;font-size:11px;margin-left:4px;}
 .sb-attn{display:flex;align-items:center;gap:8px;width:100%;appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;padding:5px 6px;border-radius:5px;text-align:left;font-size:12px;color:#374151;}
@@ -190,22 +222,30 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .kcc-who{flex:0 0 auto;font-size:9.5px;font-weight:700;color:#9ca3af;letter-spacing:.02em;margin-left:2px;}
 .boardcol{min-width:0;display:flex;flex-direction:column;background:#f7f8fa;min-height:0;height:100%;overflow:hidden;}
 .kb-toolbar{
-  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  display:flex;align-items:center;gap:6px;flex-wrap:nowrap;
   padding:6px 8px;background:#fff;border-bottom:1px solid var(--line-soft);flex:0 0 auto;
+  min-height:40px;box-sizing:border-box;
 }
 .kb-toolbar .kbb{
-  appearance:none;font-family:inherit;font-size:11px;font-weight:600;height:28px;padding:0 8px;
+  appearance:none;font-family:inherit;font-size:11px;font-weight:600;height:28px;line-height:26px;padding:0 10px;
   border:1px solid var(--line,#d7dbdf);border-radius:5px;background:#fff;color:#374151;cursor:pointer;white-space:nowrap;
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;margin:0;vertical-align:middle;
 }
 .kb-toolbar .kbb:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
 .kb-toolbar .kbb.on{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);background:#fff7f8;}
 .kb-toolbar .kbb.primary{background:var(--aq-red,#cf202f);border-color:var(--aq-red,#cf202f);color:#fff;}
 .kb-toolbar .kbb.primary:hover{filter:brightness(.96);color:#fff;}
+.kb-toolbar .kbb.confbtn{
+  margin-top:0;height:28px;padding:0 10px;font-size:11px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;border-radius:5px;
+}
+.kb-toolbar .kbb.confbtn.on{background:#fff;border-color:#16a34a;color:#16a34a;}
 .kb-toolbar .kb-title{font-size:12px;font-weight:700;color:var(--aq-black);margin:0 4px;white-space:nowrap;}
 .kb-toolbar .kb-space{flex:1 1 auto;min-width:4px;}
 .kb-toolbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;}
 .kb-toolbar .seg .kbb{border:0;border-radius:0;border-right:1px solid var(--line);}
 .kb-toolbar .seg .kbb:last-child{border-right:0;}
+.kb-empty-sel{margin:18px 12px;padding:14px 16px;border:1px dashed #d1d5db;border-radius:8px;background:#fff;color:#6b7280;font-size:13px;text-align:center;}
 .kb-board-wrap{flex:1 1 auto;overflow:auto;padding:6px 8px 10px;min-height:0;width:100%;}
 .kb-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:start;width:100%;min-width:0;}
 .kb-list{display:flex;flex-direction:column;gap:4px;width:100%;max-width:none;min-width:0;}
@@ -279,8 +319,8 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 #plannerView.trips-on .hint{display:none;}
 #plannerView.trips-on .planwrap.trips-kanban{border-radius:0;border-left:0;border-right:0;border-top:0;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban.map-split{grid-template-columns:260px minmax(0,1fr);}
-  .planwrap.trips-kanban.nav-collapsed.map-split{grid-template-columns:minmax(0,1fr);}
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:260px minmax(0,1fr);}
+  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr);}
   .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
 
@@ -1897,49 +1937,55 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <div class="pa" id="planActions"><div class="seg" id="terrSeg" style="display:none"><button data-tm="plan" class="segb on">Schedule</button><button data-tm="map" class="segb">Map</button></div><div class="seg"><button class="segb" id="histBtn">History</button></div></div>
     </div>
     <div class="planwrap trips-kanban map-split" id="planwrap">
-      <div class="sidebar" style="display:none" aria-hidden="true">
-        <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
-          <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
-        <div class="sbbody" id="poolBody" data-drop="pool"></div>
-      </div>
-      <aside class="trips-nav" id="tripsNav" aria-label="Trip week planner"></aside>
-      <div class="boardcol">
-        <div class="kb-toolbar" id="kbToolbar"></div>
-        <div class="kb-board-wrap"><div class="weeks kb-list" id="weeks"></div></div>
-      </div>
-      <div class="trips-split" id="tripsSplit" title="Drag to resize map"></div>
-      <aside class="trips-map" id="tripsMapPane">
-        <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
-        <div class="map-fabs">
-          <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
-          <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
+      <div class="trips-body">
+        <div class="sidebar" style="display:none" aria-hidden="true">
+          <div class="sbhead"><div class="t" id="sbTitle">Dealer Pool</div><div class="s" id="sbSub"></div>
+            <input class="sbsearch" id="sbSearch" placeholder="Search dealers…"><div class="sbfilters"><select id="poolState" class="sbsel"></select><select id="poolSort" class="sbsel"><option value="name">A–Z</option><option value="state">By state</option></select></div></div>
+          <div class="sbbody" id="poolBody" data-drop="pool"></div>
         </div>
-        <div id="tripsMapSlot" data-wkmapslot></div>
-      </aside>
+        <aside class="trips-nav" id="tripsNav" aria-label="Trip week planner"></aside>
+        <div class="boardcol">
+          <div class="kb-toolbar" id="kbToolbar"></div>
+          <div class="kb-board-wrap"><div class="weeks kb-list" id="weeks"></div></div>
+        </div>
+        <div class="trips-split" id="tripsSplit" title="Drag to resize map"></div>
+        <aside class="trips-map" id="tripsMapPane">
+          <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
+          <div class="map-fabs">
+            <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
+            <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
+          </div>
+          <div id="tripsMapSlot" data-wkmapslot></div>
+        </aside>
+      </div>
+      <footer class="trips-docbar" id="tripsDocBar" aria-label="Trip documents"></footer>
     </div>
     <div id="terrSched" class="subview" style="display:none"></div>
     <div id="terrMap" class="subview" style="display:none"></div>
   </div>
   <div id="allView" style="display:none;">
     <div class="planwrap trips-kanban map-collapsed" id="allPlanwrap">
-      <aside class="trips-nav" id="allTripsNav" aria-label="Company travel calendar"></aside>
-      <div class="boardcol">
-        <div class="kb-toolbar" id="allToolbar"></div>
-        <div class="all-metrics" id="allMetrics"></div>
-        <div class="allboard-scroll" id="allBoardScroll">
-          <div class="allboard-weeks" id="allWeeks"></div>
-          <div id="ganttWrap" style="display:none" aria-hidden="true"></div>
+      <div class="trips-body">
+        <aside class="trips-nav" id="allTripsNav" aria-label="Company travel calendar"></aside>
+        <div class="boardcol">
+          <div class="kb-toolbar" id="allToolbar"></div>
+          <div class="all-metrics" id="allMetrics"></div>
+          <div class="allboard-scroll" id="allBoardScroll">
+            <div class="allboard-weeks" id="allWeeks"></div>
+            <div id="ganttWrap" style="display:none" aria-hidden="true"></div>
+          </div>
         </div>
+        <div class="trips-split" id="allTripsSplit" title="Drag to resize map"></div>
+        <aside class="trips-map" id="allTripsMapPane">
+          <button type="button" class="map-back" data-allmapback="1" title="Return to overview">← Back to Overview</button>
+          <div class="map-fabs">
+            <button type="button" class="map-fab" data-allmapmode="full" title="Maximize map">⛶</button>
+            <button type="button" class="map-fab" data-allmapmode="collapsed" title="Collapse map">✕</button>
+          </div>
+          <div id="allMapSlot"><div id="leaderMap" style="height:100%;min-height:280px"></div></div>
+        </aside>
       </div>
-      <div class="trips-split" id="allTripsSplit" title="Drag to resize map"></div>
-      <aside class="trips-map" id="allTripsMapPane">
-        <button type="button" class="map-back" data-allmapback="1" title="Return to overview">← Back to Overview</button>
-        <div class="map-fabs">
-          <button type="button" class="map-fab" data-allmapmode="full" title="Maximize map">⛶</button>
-          <button type="button" class="map-fab" data-allmapmode="collapsed" title="Collapse map">✕</button>
-        </div>
-        <div id="allMapSlot"><div id="leaderMap" style="height:100%;min-height:280px"></div></div>
-      </aside>
+      <footer class="trips-docbar" id="allTripsDocBar" aria-label="Trip documents"></footer>
     </div>
   </div>
   <div id="yearView" style="display:none;" aria-label="Year at a Glance"></div>
@@ -3335,10 +3381,13 @@ function adminInit(){
 }
 var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS',TC:'TC',LEAD:'LEAD'};
 var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support',TC:'Travel Coordinator',LEAD:'Leadership'};
-/* Multi-select team filter (device-local). TEAM_ALL=true shows whole territory
-   including historically unassigned items. Otherwise only OWNERS in TEAM_IDS. */
+/* Multi-select team filter (device-local, per territory).
+   Outlook-style: TEAM_ALL means every member is selected; TEAM_ALL=false with
+   empty TEAM_IDS means nobody selected (valid — show empty itinerary, not All).
+   Root cause of prior bugs: deselecting the last person forced TEAM_ALL=true,
+   and clicking one person while All was on collapsed to that person alone. */
 var TEAM_ALL=true;
-var TEAM_IDS={};       /* id -> true when selected */
+var TEAM_IDS={};       /* id -> true when selected (ignored when TEAM_ALL) */
 var OWNERS={};         /* 'd:id'|'x:id'|'m:id' -> team member id */
 var CAL_Y=null, CAL_M=null;  /* sidebar calendar month (0-based month) */
 var SB_SEC=(function(){ try{ return JSON.parse(localStorage.getItem('aqSbSec')||'{}')||{}; }catch(e){ return {}; } })();
@@ -3376,6 +3425,9 @@ function teamList(terrFilter, includeInactive){
 function teamById(id){ var L=ADMIN.team||[]; for(var i=0;i<L.length;i++) if(L[i].id===id) return L[i]; return null; }
 function teamCanManage(){ try{ return pbIsAdmin()||!PB_USER; }catch(e){ return true; } }
 function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'||terr==='All'; }
+function teamRoster(){
+  return teamList(terr==='All'?null:terr,false)||[];
+}
 function teamLoadSel(){
   try{
     var raw=sessionStorage.getItem('aqTeamSel2_'+terr);
@@ -3384,7 +3436,7 @@ function teamLoadSel(){
     if(o&&o.all){ TEAM_ALL=true; TEAM_IDS={}; return; }
     TEAM_ALL=false; TEAM_IDS={};
     (o.ids||[]).forEach(function(id){ if(teamById(id)) TEAM_IDS[id]=true; });
-    if(!Object.keys(TEAM_IDS).length){ TEAM_ALL=true; }
+    /* empty ids with all:false is intentional "nobody selected" */
   }catch(e){ TEAM_ALL=true; TEAM_IDS={}; }
 }
 function teamSaveSel(){
@@ -3393,20 +3445,55 @@ function teamSaveSel(){
     else sessionStorage.setItem('aqTeamSel2_'+terr, JSON.stringify({all:false,ids:Object.keys(TEAM_IDS)}));
   }catch(e){}
 }
-function teamIsAll(){ return !teamShowNav() || TEAM_ALL; }
-function teamIsSelected(id){ if(TEAM_ALL) return true; return !!TEAM_IDS[id]; }
-function teamToggleAll(){
-  TEAM_ALL=true; TEAM_IDS={}; teamSaveSel();
+function teamIsAll(){
+  if(!teamShowNav()) return true;
+  if(TEAM_ALL) return true;
+  var members=teamRoster();
+  return !!(members.length && members.every(function(m){ return !!TEAM_IDS[m.id]; }));
+}
+function teamIsNone(){
+  return teamShowNav() && !TEAM_ALL && !Object.keys(TEAM_IDS).length;
+}
+function teamIsPartial(){
+  if(!teamShowNav() || TEAM_ALL || teamIsNone()) return false;
+  var members=teamRoster();
+  if(!members.length) return false;
+  var n=members.filter(function(m){ return TEAM_IDS[m.id]; }).length;
+  return n>0 && n<members.length;
+}
+function teamIsSelected(id){
+  if(!teamShowNav()) return true;
+  if(TEAM_ALL) return true;
+  return !!TEAM_IDS[id];
+}
+function teamSelectedMembers(){
+  if(!teamShowNav()) return teamRoster();
+  if(TEAM_ALL) return teamRoster();
+  return teamRoster().filter(function(m){ return TEAM_IDS[m.id]; });
+}
+function teamIsSingle(){ return teamSelectedMembers().length===1; }
+function teamSingleMember(){ var L=teamSelectedMembers(); return L.length===1?L[0]:null; }
+function teamRefreshViews(){
   try{ if(terr==='All') renderAllView(); else refreshPlanner(); }catch(e){ try{render();}catch(_){} }
+  try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e2){}
+}
+function teamToggleAll(){
+  /* Fully selected → clear everyone. Unchecked or partial → select everyone. */
+  if(teamIsAll()){ TEAM_ALL=false; TEAM_IDS={}; }
+  else { TEAM_ALL=true; TEAM_IDS={}; }
+  teamSaveSel();
+  teamRefreshViews();
 }
 function teamToggleMember(id){
-  var members=teamList(terr==='All'?null:terr,false);
+  if(!id) return;
+  var members=teamRoster();
   if(TEAM_ALL){
-    /* From All → focus this person only */
-    TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[id]=true;
+    /* Uncheck this person only; keep every other member selected. */
+    TEAM_ALL=false; TEAM_IDS={};
+    members.forEach(function(m){ if(m.id!==id) TEAM_IDS[m.id]=true; });
   } else if(TEAM_IDS[id]){
     delete TEAM_IDS[id];
-    if(!Object.keys(TEAM_IDS).length){ TEAM_ALL=true; }
+    /* empty selection is valid — do not snap back to All */
   } else {
     TEAM_IDS[id]=true;
     if(members.length && members.every(function(m){ return TEAM_IDS[m.id]; })){
@@ -3414,7 +3501,7 @@ function teamToggleMember(id){
     }
   }
   teamSaveSel();
-  try{ if(terr==='All') renderAllView(); else refreshPlanner(); }catch(e){ try{render();}catch(_){} }
+  teamRefreshViews();
 }
 function teamOwnerKey(kind,id){ return kind+':'+id; }
 function teamOwnerOf(kind,id){ return OWNERS[teamOwnerKey(kind,id)]||null; }
@@ -3423,16 +3510,52 @@ function teamSetOwner(kind,id,memberId){
   if(!memberId) delete OWNERS[k]; else OWNERS[k]=memberId;
 }
 function teamFilterMatch(kind,id){
-  if(!teamShowNav() || TEAM_ALL) return true;
+  if(!teamShowNav()) return true;
+  if(TEAM_ALL) return true;
+  if(!Object.keys(TEAM_IDS).length) return false; /* nobody selected → hide individual travel */
   var o=teamOwnerOf(kind,id);
   if(!o) return false; /* unassigned historical only under All */
   return !!TEAM_IDS[o];
 }
 function teamStampNew(kind,id){
-  if(!teamShowNav() || TEAM_ALL) return;
+  if(!teamShowNav()) return;
+  if(TEAM_ALL) return; /* All view: leave unassigned rather than inventing ownership */
   var ids=Object.keys(TEAM_IDS);
-  /* Exactly one person selected → auto-assign. Multi-select leaves unassigned. */
   if(ids.length===1) teamSetOwner(kind,id,ids[0]);
+  /* Multi-select: ownership chosen via teamPickOwner after create */
+}
+function teamPickOwner(kind, id, onDone){
+  var members=teamSelectedMembers();
+  if(members.length<=1){
+    if(members.length===1) teamSetOwner(kind,id,members[0].id);
+    if(onDone) onDone(members[0]||null);
+    return;
+  }
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(400px,94vw)"><div class="mh"><div class="mt">Assign traveller</div><button class="mclose" id="tpoX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Multiple team members are selected. Choose who this appointment belongs to.</p>'
+    +members.map(function(m){
+      return '<button type="button" class="kbb" data-tpo="'+esc(m.id)+'" style="display:block;width:100%;margin:0 0 6px;height:32px;text-align:left">'
+        +esc(m.name)+' · '+esc(m.role)+'</button>';
+    }).join('')
+    +'<button type="button" class="kbb" id="tpoSkip" style="margin-top:6px">Leave unassigned</button>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#tpoX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelectorAll('[data-tpo]').forEach(function(b){
+    b.onclick=function(){
+      teamSetOwner(kind,id,b.dataset.tpo);
+      try{ savePlan(); }catch(e){}
+      close();
+      if(onDone) onDone(teamById(b.dataset.tpo));
+      try{ refreshPlanner(); }catch(e2){}
+    };
+  });
+  var sk=wrap.querySelector('#tpoSkip');
+  if(sk) sk.onclick=function(){ close(); if(onDone) onDone(null); };
 }
 function teamInitials(memberId){
   var m=teamById(memberId); if(!m||!m.name) return '';
@@ -3442,7 +3565,9 @@ function teamInitials(memberId){
   return (parts[0].charAt(0)+parts[parts.length-1].charAt(0)).toUpperCase();
 }
 function teamWhoBadge(kind,id){
-  var o=teamOwnerOf(kind,id); if(!o) return '';
+  /* Only show ownership chips when more than one traveller is in view. */
+  if(teamSelectedMembers().length<=1) return '';
+  var o=teamOwnerOf(kind,id); if(!o) return '<span class="kcc-who" title="Unassigned — needs owner">?</span>';
   var ini=teamInitials(o); if(!ini) return '';
   return '<span class="kcc-who" title="'+esc((teamById(o)||{}).name||'')+'">'+esc(ini)+'</span>';
 }
@@ -3543,7 +3668,7 @@ function openTeamModal(editId){
   wrap.querySelectorAll('[data-teamdeact]').forEach(function(b){ b.onclick=function(){
     var m=teamById(b.dataset.teamdeact); if(!m) return;
     m.active=false; audit('team',{action:'deactivate',id:m.id,name:m.name});
-    if(TEAM_IDS[m.id]){ delete TEAM_IDS[m.id]; if(!Object.keys(TEAM_IDS).length) TEAM_ALL=true; teamSaveSel(); }
+    if(TEAM_IDS[m.id]){ delete TEAM_IDS[m.id]; teamSaveSel(); }
     savePlan(); try{ refreshPlanner(); }catch(e){} close(); openTeamModal();
   }; });
   wrap.querySelectorAll('[data-teamreact]').forEach(function(b){ b.onclick=function(){
@@ -4343,6 +4468,7 @@ function renderPlanner(opts){
   /* keep legacy pool hidden but populated for any code that reads it */
   try{ syncWeekMap(renderPlanner._opts||{}); }catch(e){}
   renderPlanner._opts=null;
+  try{ tripsDocBarRender(); }catch(e){}
   mapInvalidateSoon();
 }
 /* ===================== PHASE 1 — LOCATION-BASED TRAVEL LOGIC =====================
@@ -5359,6 +5485,7 @@ function renderHealth(){
   var sc=el.querySelector('#shScan'); if(sc) sc.onclick=function(){ sc.disabled=true; runHealth();
     auditGeoDrift(function(){ sc.disabled=false; renderHealth(); }, function(done,total){ if(sc) sc.textContent='Scanning… '+done+'/'+total; if((done%10)===0) renderHealth(); }); };
   var ca=el.querySelector('#shCoordAudit'); if(ca) ca.onclick=function(){ openCoordAudit(); };
+  try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e){}
 }
 /* ===================== COORDINATE AUDIT VIEW =====================
    Per-dealer coordinate integrity, no console required. Shows source, expected
@@ -5607,7 +5734,10 @@ function addTravel(type,wk){
     day2:null, time2:'',           /* check-out / drop-off */
     conf:'', notes:''});
   teamStampNew('m',lid);
-  savePlan(); refreshPlanner();
+  savePlan();
+  if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',lid)){
+    teamPickOwner('m', lid, function(){ refreshPlanner(); });
+  } else refreshPlanner();
 }
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
@@ -5945,7 +6075,14 @@ function tripsNavHTML(){
     if(isAllTerr){
       members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
     }
-    var checks='<button type="button" class="sb-check'+(TEAM_ALL?' on':'')+'" data-teamall="1"><span class="box">'+(TEAM_ALL?'✓':'')+'</span><span class="nm">All team members</span></button>';
+    var allOn=teamIsAll(), partial=teamIsPartial();
+    var checks='<button type="button" class="sb-check'+(allOn?' on':'')+(partial?' partial':'')+'" data-teamall="1" title="Select or clear all team members">'
+      +'<span class="box">'+(allOn?'✓':(partial?'−':''))+'</span><span class="nm">All team members</span></button>';
+    function memberCheck(m){
+      var on=teamIsSelected(m.id);
+      return '<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
+        +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+    }
     if(isAllTerr){
       checks+='<div class="sb-rolef">'
         +['AM','DSR','ISS','TC','LEAD'].map(function(r){
@@ -5956,28 +6093,16 @@ function tripsNavHTML(){
       (TERRS||[]).forEach(function(t){
         var list=byTerr[t]||[]; if(!list.length) return;
         checks+='<div class="sb-team-terr">'+esc(t)+'</div>';
-        list.forEach(function(m){
-          var on=TEAM_ALL||!!TEAM_IDS[m.id];
-          checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-            +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
-        });
+        list.forEach(function(m){ checks+=memberCheck(m); });
       });
       Object.keys(byTerr).forEach(function(t){
         if((TERRS||[]).indexOf(t)>=0) return;
         var list=byTerr[t]||[]; if(!list.length) return;
         checks+='<div class="sb-team-terr">'+esc(t||'Other')+'</div>';
-        list.forEach(function(m){
-          var on=TEAM_ALL||!!TEAM_IDS[m.id];
-          checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-            +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
-        });
+        list.forEach(function(m){ checks+=memberCheck(m); });
       });
     } else {
-      members.forEach(function(m){
-        var on=TEAM_ALL||!!TEAM_IDS[m.id];
-        checks+='<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-          +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
-      });
+      members.forEach(function(m){ checks+=memberCheck(m); });
     }
     teamHtml='<details class="sb-sec" data-sbsec="team"'+(sbSecOpen('team',true)?' open':'')+'>'
       +'<summary>Team — '+esc(isAllTerr?'All territories':terr)
@@ -6151,12 +6276,13 @@ function _dayEntriesHTML(wk, labs, ds, wlogi, xw, TL){
 }
 
 function kanbanWeekHTML(wk){
+  var emptyBanner=teamIsNone()?'<div class="kb-empty-sel">Select a team member to view their travel plan.</div>':'';
   if(wk==='remote'){
     var dsR=dealersIn(terr).filter(function(d){return ASSIGN[d.id]==='remote'&&teamFilterMatch('d',d.id);});
     var wlogiR=LOGI.filter(function(x){return x.terr===terr && x.wk==='remote'&&teamFilterMatch('m',x.id);});
     var cardsR=(dsR.length||wlogiR.length)?(dsR.map(function(d){return dvCard(dvViewInitial(d,'remote'));}).join('')+wlogiR.map(function(x){return travelCard(x,'remote');}).join('')):'';
     cardsR+=dqInputHTML('remote','');
-    return '<div class="kb-day" data-wk="remote"><div class="kb-dayh"><b>Remote / Direct</b><span>book remotely</span></div><div class="kb-colb" data-drop="remote|">'+cardsR+'</div></div>';
+    return emptyBanner+'<div class="kb-day" data-wk="remote"><div class="kb-dayh"><b>Remote / Direct</b><span>book remotely</span></div><div class="kb-colb" data-drop="remote|">'+cardsR+'</div></div>';
   }
   var ds=dealersIn(terr).filter(function(d){return ASSIGN[d.id]===wk&&teamFilterMatch('d',d.id);});
   var wlogi=LOGI.filter(function(x){return x.terr===terr && x.wk===wk&&teamFilterMatch('m',x.id);});
@@ -6165,7 +6291,7 @@ function kanbanWeekHTML(wk){
   var TL=tlCompute(terr,wk);
   var days=_dayEntriesHTML(wk,labs,ds,wlogi,xw,TL);
   /* Standard planning experience: compact full-width vertical days only */
-  return days.map(function(d){
+  return emptyBanner+days.map(function(d){
     if(d.i==='none'){
       return '<div class="kb-day"><div class="kb-dayh"><b>Needs a day</b></div><div class="kb-colb" data-drop="'+wk+'|none">'+d.html+'</div></div>';
     }
@@ -6177,23 +6303,22 @@ function kanbanWeekHTML(wk){
 
 function kbToolbarHTML(wk){
   var now=wkCurrent();
-  var ckey=terr+'|'+wk; var confirmed=!!CONF[ckey];
+  var confState=tripWeekConfState(terr,wk);
   var mapOn=(MAP_UI_MODE!=='collapsed');
   return ''
-    +'<button type="button" class="kbb icon" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">'+(NAV_OPEN?'☰':'☰')+'</button>'
+    +'<button type="button" class="kbb icon" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">☰</button>'
     +'<button type="button" class="kbb icon" data-wkgo="-1" title="Previous week">‹</button>'
     +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-wkgo="0" title="Actual current calendar week">This Week</button>'
     +'<button type="button" class="kbb icon" data-wkgo="1" title="Next week">›</button>'
     +'<span class="kb-title">WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk))+'</span>'
     +'<span class="kb-space"></span>'
     +'<button type="button" class="kbb'+(mapOn?' on':'')+'" data-maptog="1" title="'+(mapOn?'Hide map':'Show map')+'">'+(mapOn?'Map ✓':'Map')+'</button>'
-    +'<button type="button" class="kbb confbtn'+(confirmed?' on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>'
+    +'<button type="button" class="kbb confbtn'+(confState.on?' on':'')+'" data-confweek="'+wk+'">'+(confState.label)+'</button>'
     +'<div class="kb-more">'
       +'<button type="button" class="kbb icon" data-more="1" title="More">⋯</button>'
       +'<div class="kb-more-menu" role="menu">'
         +'<button type="button" data-cardall="1">Expand all appointments</button>'
         +'<button type="button" data-cardall="0">Collapse all appointments</button>'
-        +'<button type="button" data-dl="'+wk+'">Download trip plan</button>'
         +'<button type="button" data-hist="1">History</button>'
       +'</div>'
     +'</div>';
@@ -7332,6 +7457,7 @@ function renderAllOverview(){
   });
   setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 80);
   if(ALL_MAP_MODE!=='collapsed'){ try{ allDrawMapInto('leaderMap'); }catch(e){} }
+  try{ tripsDocBarRender(); }catch(e){}
 }
 function allDrawMapInto(elId){
   /* reuse allDrawMap after ensuring #leaderMap exists */
@@ -9091,7 +9217,11 @@ function dqAddStop(c){
     airportCode:'', airportName:'', airline:'', flightNo:'',
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
-  LOGI.push(it); teamStampNew('m',it.id); savePlan(); refreshPlanner();
+  LOGI.push(it); teamStampNew('m',it.id); savePlan();
+  function afterOwn(){ refreshPlanner(); }
+  if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
+    teamPickOwner('m', it.id, afterOwn);
+  else afterOwn();
 }
 function dqAddActivity(id,act){
   var inp=DQ.inp; if(!inp) return; var wk=inp.dataset.qwk, day=inp.dataset.qday;
@@ -9102,8 +9232,14 @@ function dqAddActivity(id,act){
   XVISITS.push({id:xid, dealer:id, terr:terr,
     wk:parseInt(wk,10), day:(day===''?null:parseInt(day,10)), time:'', dur:60, type:'visit', act:act, notes:'', done:false});
   teamStampNew('x',xid);
-  savePlan(); refreshPlanner();
-  setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+  savePlan();
+  function afterOwn(){
+    refreshPlanner();
+    setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+  }
+  if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('x',xid))
+    teamPickOwner('x', xid, afterOwn);
+  else afterOwn();
 }
 function dqRender(){
   var inp=DQ.inp; if(!inp) return;
@@ -10364,6 +10500,11 @@ function wireDnD(){
   document.querySelectorAll('[data-wkmapfocus]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_mapWk=_wknum(b.dataset.wkmapfocus);_wkRerender();}));
   document.querySelectorAll('[data-wkfull]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var k=terr+'|'+b.dataset.wkfull;_wkFull=(_wkFull===k)?null:k;document.body.classList.toggle('wkfull-on',!!_wkFull);_wkRerender();}));
   document.querySelectorAll('[data-addmenu]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openAddMenu(_wknum(b.dataset.addmenu),b);}));
+  document.querySelectorAll('[data-confweek]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    var v=b.dataset.confweek;
+    tripConfirmWeek(v==='remote'?'remote':parseInt(v,10));
+  }));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id.slice(0,3)==='xv:'?(XVISITS.filter(function(x){return 'xv:'+x.id===id;})[0]||{}).dealer:id);}));
@@ -10406,16 +10547,331 @@ function tpWeekTable(wk,vs,ls,showRep,t){
 }
 function tpOpen(title,body){ var html='<html><head><title>'+title+'</title><meta charset="utf-8"><style>'+TP_CSS+'</style></head><body><div class="noprint"><button onclick="window.print()">🖨  Print / Save as PDF</button></div>'+body+'</body></html>'; var w=window.open('','_blank'); if(!w){alert('Please allow pop-ups to view the trip plan.');return;} w.document.write(html); w.document.close(); }
 function exportWeek(t,wk){
-  var vs=dealersIn(t).filter(function(d){return ASSIGN[d.id]===wk;});
-  var ls=LOGI.filter(function(x){return x.terr===t && x.wk===wk;});
-  var jn=[]; vs.forEach(function(d){(JOINA[d.id]||[]).forEach(function(n){if(jn.indexOf(n)<0)jn.push(n);});});
-  var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
-  var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">'+esc(t)+' — '+esc(FLAT.tm[t]||'')+'</div><div class="pwk">'+wlabel+'</div></div>';
-  var _wf=wkForecast(t,wk);
-  var _ride=rideLine(t,wk);
-  body+='<div class="meta">'+(_ride?('<span class="lead">'+esc(_ride)+'</span> &nbsp;|&nbsp; '):'')+vs.length+' visits · '+_wf.l+' loads · '+fmtUSD(_wf.b)+' · '+apptCount(vs)+'/'+vs.length+' confirmed'+(jn.length?(' &nbsp;|&nbsp; <span class="lead">Leaders joining: '+esc(jn.join(', '))+'</span>'):'')+'</div>';
-  body+=tpWeekTable(wk,vs,ls,false,t);
-  tpOpen(t+' — '+wlabel, body);
+  tripExportPdf(t, wk, null);
+}
+
+/* —— Trip confirmation + documents (Weekly Planner footer) —— */
+function tripConfKey(t,wk,memberId){ return memberId?(t+'|'+wk+'|'+memberId):(t+'|'+wk); }
+function tripWeekIsConfirmed(t,wk,memberId){
+  if(memberId && CONF[tripConfKey(t,wk,memberId)]) return true;
+  /* Legacy territory-wide key still counts when viewing that person alone */
+  return !!CONF[tripConfKey(t,wk)];
+}
+function tripWeekConfState(t,wk){
+  var members=teamSelectedMembers();
+  if(!members.length){
+    return {on:false, label:'Confirm week', disabled:true};
+  }
+  if(members.length===1){
+    var on=tripWeekIsConfirmed(t,wk,members[0].id);
+    return {on:on, label:on?'Confirmed ✓':'Confirm week', member:members[0]};
+  }
+  var allOn=members.every(function(m){ return tripWeekIsConfirmed(t,wk,m.id); });
+  return {on:allOn, label:allOn?'Confirmed ✓':'Confirm week', multi:true};
+}
+function tripToggleConfirm(t,wk,memberId){
+  var k=tripConfKey(t,wk,memberId);
+  if(CONF[k]) delete CONF[k]; else CONF[k]=true;
+  /* Do not invent confirmation for other travellers */
+  savePlan(); refreshPlanner();
+}
+function tripConfirmWeek(wk){
+  var t=terr;
+  var members=teamSelectedMembers();
+  if(!members.length){
+    if(typeof aqToast==='function') aqToast('Select a traveller before confirming their week');
+    return;
+  }
+  if(members.length===1){
+    tripToggleConfirm(t,wk,members[0].id);
+    return;
+  }
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(420px,94vw)"><div class="mh"><div class="mt">Confirm whose week?</div><button class="mclose" id="tcwX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Multiple travellers are selected. Confirm one person at a time — never everyone silently.</p>'
+    +members.map(function(m){
+      var on=tripWeekIsConfirmed(t,wk,m.id);
+      return '<button type="button" class="kbb" data-tcw="'+esc(m.id)+'" style="display:block;width:100%;margin:0 0 6px;height:32px;text-align:left">'
+        +esc(m.name)+' · '+esc(m.role)+(on?' — Confirmed ✓':'')+'</button>';
+    }).join('')
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#tcwX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelectorAll('[data-tcw]').forEach(function(b){
+    b.onclick=function(){ tripToggleConfirm(t,wk,b.dataset.tcw); close(); };
+  });
+}
+
+function tripMapsUrl(lat,lon,address){
+  if(lat!=null && lon!=null && isFinite(+lat) && isFinite(+lon))
+    return 'https://www.google.com/maps?q='+encodeURIComponent(+lat+','+ +lon);
+  if(address) return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address);
+  return '';
+}
+function tripItemForMember(member, kind, id){
+  if(!member) return true;
+  var o=teamOwnerOf(kind,id);
+  if(o) return o===member.id;
+  /* Unassigned historical: only include when All is selected */
+  return TEAM_ALL;
+}
+function tripCollectWeek(t, wk, member){
+  var vs=dealersIn(t).filter(function(d){
+    return ASSIGN[d.id]===wk && tripItemForMember(member,'d',d.id);
+  });
+  var ls=LOGI.filter(function(x){
+    return x.terr===t && x.wk===wk && tripItemForMember(member,'m',x.id);
+  });
+  var xs=XVISITS.filter(function(x){
+    return x.terr===t && x.wk===wk && tripItemForMember(member,'x',x.id);
+  });
+  return {vs:vs, ls:ls, xs:xs};
+}
+function tripLocMeta(it, dealer){
+  var lat=null, lon=null, address='', unverified=false;
+  if(dealer){
+    lat=dealer.lat; lon=dealer.lon; address=dealer.address||dealer.loc||'';
+    if((lat==null||lon==null) && address) unverified=true;
+    if(lat==null&&lon==null&&!address) unverified=true;
+  } else if(it){
+    lat=it.lat; lon=it.lon; address=it.address||it.airportName||it.airportCode||it.name||'';
+    if((lat==null||lon==null) && !it.virtual) unverified=true;
+  }
+  return {lat:lat, lon:lon, address:address, maps:tripMapsUrl(lat,lon,address), unverified:unverified};
+}
+function tripRowsFlat(t, wk, member){
+  var bag=tripCollectWeek(t,wk,member);
+  var rows=[], labs=(typeof wk==='number')?dayLabels(wk):[];
+  function pushRow(day, time, type, title, loc, conf, missing){
+    rows.push({day:day, time:time||'', type:type, title:title, loc:loc, conf:!!conf, missing:!!missing});
+  }
+  bag.vs.forEach(function(d){
+    var meta=tripLocMeta(null,d);
+    pushRow(DAY[d.id], TIME[d.id], 'Dealer visit', d.name, meta, !!APPT[d.id], meta.unverified||!String(TIME[d.id]||'').trim());
+  });
+  bag.xs.forEach(function(x){
+    var d=byId[x.dealer]||uniById(x.dealer);
+    var meta=tripLocMeta(null,d);
+    pushRow(x.day, x.time, xvType(x.type).label, (d?d.name:x.dealer), meta, !!x.done, meta.unverified);
+  });
+  bag.ls.forEach(function(it){
+    var ty=travelType(it);
+    var T=TRAVEL_TYPES[ty]||{label:ty};
+    var meta=tripLocMeta(it,null);
+    var missing=!String(it.conf||'').trim() && /^(flight_|hotel|rental_)/.test(ty);
+    pushRow(it.day, it.time, T.label, it.name||it.airportCode||T.label, meta, !!String(it.conf||'').trim(), missing||meta.unverified);
+  });
+  rows.sort(function(a,b){
+    var da=a.day==null?99:a.day, db=b.day==null?99:b.day;
+    if(da!==db) return da-db;
+    return String(a.time||'99').localeCompare(String(b.time||'99'));
+  });
+  rows.forEach(function(r){
+    r.dayLabel=(r.day==null||!labs[r.day])?'Day TBD':(labs[r.day][0]+' · '+labs[r.day][1]);
+  });
+  return rows;
+}
+function tripPickTravellers(opts, onDone){
+  opts=opts||{};
+  var members=teamSelectedMembers();
+  if(!members.length){
+    if(typeof aqToast==='function') aqToast('Select a traveller to generate documents');
+    return;
+  }
+  if(members.length===1 && !opts.force){ onDone([members[0]]); return; }
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(440px,94vw)"><div class="mh"><div class="mt">'+(opts.title||'Select traveller')+'</div><button class="mclose" id="tptX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">'+(opts.hint||'Generate a personal itinerary for each selected traveller. Documents are never combined across people.')+'</p>'
+    +members.map(function(m){
+      return '<label style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:13px">'
+        +'<input type="checkbox" class="tpt-m" value="'+esc(m.id)+'" checked> '+esc(m.name)+' · '+esc(m.role)+'</label>';
+    }).join('')
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">'
+    +'<button type="button" class="kbb" id="tptCancel">Cancel</button>'
+    +'<button type="button" class="kbb primary" id="tptGo">'+(opts.ok||'Continue')+'</button>'
+    +'</div></div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#tptX').onclick=close;
+  wrap.querySelector('#tptCancel').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#tptGo').onclick=function(){
+    var ids=[];
+    wrap.querySelectorAll('.tpt-m:checked').forEach(function(c){ ids.push(c.value); });
+    if(!ids.length){ alert('Select at least one traveller'); return; }
+    close();
+    onDone(ids.map(function(id){ return teamById(id); }).filter(Boolean));
+  };
+}
+function tripExportPdf(t, wk, member){
+  function run(m){
+    var bag=tripCollectWeek(t,wk,m);
+    var wlabel=(wk==='remote')?'Remote / Direct':('Week '+wkNo(wk)+(wk===31?' · Kickoff':'')+' — '+WEEKDATES[wk]);
+    var who=m?(m.name+(m.role?(' · '+m.role):'')):(FLAT.tm[t]||'');
+    var body='<div class="phead"><div class="brand">ARROWQUIP</div><div class="ptitle">Travel Portal — '+esc(t)+(who?(' · '+esc(who)):'')+'</div><div class="pwk">'+wlabel+'</div></div>';
+    var rows=tripRowsFlat(t,wk,m);
+    var flags=rows.filter(function(r){ return r.missing||(r.loc&&r.loc.unverified); });
+    body+='<div class="meta">'+rows.length+' appointments'
+      +(flags.length?(' · <span style="color:#b45309">'+flags.length+' item(s) need review (booking or location)</span>'):'')
+      +'</div>';
+    var table='<table class="sched"><thead><tr><th>Day</th><th>Time</th><th>Type</th><th>Details</th><th>Location</th></tr></thead><tbody>';
+    if(!rows.length) table+='<tr><td colspan="5" style="color:#999;text-align:center">Nothing scheduled.</td></tr>';
+    rows.forEach(function(r){
+      var loc=r.loc||{};
+      var locHtml=esc(loc.address||'');
+      if(loc.maps) locHtml+=' · <a href="'+esc(loc.maps)+'">Google Maps</a>';
+      if(loc.unverified) locHtml+=' <span style="color:#b45309">· Unverified location</span>';
+      table+='<tr class="r"><td class="tm">'+esc(r.dayLabel)+'</td><td class="du">'+(r.time?t12s(r.time):'')+'</td>'
+        +'<td class="ty">'+esc(r.type)+'</td><td class="nm">'+esc(r.title)+(r.conf?' <span class="ok">✓</span>':'')
+        +(r.missing?' <span style="color:#b45309">needs booking</span>':'')+'</td><td class="lo">'+locHtml+'</td></tr>';
+    });
+    table+='</tbody></table>';
+    /* Keep legacy table for dealer/logi shape when no member filter needed */
+    if(!m) body+=tpWeekTable(wk,bag.vs,bag.ls,false,t);
+    else body+=table;
+    tpOpen((m?m.name+' — ':'')+t+' — '+wlabel, body);
+  }
+  if(member){ run(member); return; }
+  tripPickTravellers({title:'Export PDF', ok:'Export PDF'}, function(list){
+    list.forEach(function(m){ run(m); });
+  });
+}
+function tripExportExcel(t, wk, member){
+  function run(m){
+    var rows=tripRowsFlat(t,wk,m);
+    var lines=['Day,Time,Type,Title,Address,Maps,Confirmed,NeedsReview'];
+    rows.forEach(function(r){
+      var loc=r.loc||{};
+      var maps=loc.maps?('=HYPERLINK("'+String(loc.maps).replace(/"/g,'""')+'","Open map")'):'';
+      lines.push([
+        '"'+String(r.dayLabel).replace(/"/g,'""')+'"',
+        r.time?t12s(r.time):'',
+        '"'+String(r.type).replace(/"/g,'""')+'"',
+        '"'+String(r.title||'').replace(/"/g,'""')+'"',
+        '"'+String(loc.address||'').replace(/"/g,'""')+'"',
+        maps,
+        r.conf?'yes':'no',
+        (r.missing||loc.unverified)?'yes':'no'
+      ].join(','));
+    });
+    var blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='Arrowquip_Trip_'+(m?m.name.replace(/\s+/g,'_'):t)+'_WK'+(wkNo(wk)||wk)+'.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+    if(typeof aqToast==='function') aqToast('Excel-friendly itinerary downloaded'+(m?(' for '+m.name):''));
+  }
+  if(member){ run(member); return; }
+  tripPickTravellers({title:'Export Excel', ok:'Export Excel'}, function(list){
+    list.forEach(function(m){ run(m); });
+  });
+}
+function tripReviewSend(t, wk){
+  tripPickTravellers({title:'Review & Send', ok:'Open review', hint:'Each traveller receives their own itinerary email. Never mix personal travel details.'}, function(list){
+    list.forEach(function(m){ tripOpenReviewModal(t, wk, m); });
+  });
+}
+function tripOpenReviewModal(t, wk, member){
+  var rows=tripRowsFlat(t,wk,member);
+  var missing=rows.filter(function(r){ return r.missing||(r.loc&&r.loc.unverified); });
+  var email=(member&&member.email)||'';
+  var wlabel=(wk==='remote')?'Remote / Direct':('WK '+wkNo(wk)+' · '+(WEEKDATES[wk]||''));
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(640px,96vw)"><div class="mh"><div class="mt">Review &amp; Send</div><button class="mclose" id="trsX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px;display:flex;flex-direction:column;gap:8px;max-height:78vh;overflow:auto">'
+    +'<div><b>'+esc(member.name)+'</b> · '+esc(member.role||'')+' · '+esc(t)+'<div style="color:#6b7280;font-size:12px">'+esc(wlabel)+'</div></div>'
+    +'<div style="border:1px solid var(--line);border-radius:6px;padding:8px;max-height:180px;overflow:auto;font-size:12px">'
+    +(rows.length?rows.map(function(r){
+      return '<div style="padding:4px 0;border-bottom:1px solid #f0f1f3"><b>'+esc(r.dayLabel)+'</b> '
+        +(r.time?esc(t12s(r.time))+' · ':'')+esc(r.type)+' — '+esc(r.title)
+        +(r.missing||(r.loc&&r.loc.unverified)?' <span style="color:#b45309">needs review</span>':'')
+        +'</div>';
+    }).join(''):'<div style="color:#9ca3af">No appointments this week.</div>')
+    +'</div>'
+    +(missing.length?'<div style="font-size:12px;color:#b45309">'+missing.length+' item(s) missing booking confirmation or verified location.</div>':'')
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280">Recipient</label>'
+    +'<input id="trsTo" class="msearch" value="'+esc(email)+'" placeholder="traveller@arrowquip.com">'
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280">CC</label>'
+    +'<input id="trsCc" class="msearch" placeholder="optional@arrowquip.com">'
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280">Subject</label>'
+    +'<input id="trsSub" class="msearch" value="'+esc('Arrowquip travel itinerary — '+member.name+' — '+wlabel)+'">'
+    +'<label style="font-size:11px;font-weight:700;color:#6b7280">Message</label>'
+    +'<textarea id="trsMsg" class="msearch" rows="3">Hi '+(member.name.split(' ')[0]||'')+',\n\nPlease find your travel itinerary for '+wlabel+'.\n\nThanks,\nTravel Coordination</textarea>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px">'
+    +'<label><input type="checkbox" id="trsPdf" checked> PDF itinerary</label>'
+    +'<label><input type="checkbox" id="trsXls" checked> Excel itinerary</label>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<button type="button" class="kbb" id="trsPrevPdf">Preview PDF</button>'
+    +'<button type="button" class="kbb" id="trsPrevXls">Download Excel</button>'
+    +'<span style="flex:1"></span>'
+    +'<button type="button" class="kbb" id="trsCancel">Cancel</button>'
+    +'<button type="button" class="kbb primary" id="trsSend">Send Email</button>'
+    +'</div>'
+    +'<div id="trsNote" style="font-size:11px;color:#9ca3af">Email sends only after you confirm. If the mail transport is not connected, delivery stays pending.</div>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#trsX').onclick=close;
+  wrap.querySelector('#trsCancel').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#trsPrevPdf').onclick=function(){ tripExportPdf(t,wk,member); };
+  wrap.querySelector('#trsPrevXls').onclick=function(){ tripExportExcel(t,wk,member); };
+  wrap.querySelector('#trsSend').onclick=function(){
+    var to=wrap.querySelector('#trsTo').value.trim();
+    if(!to){ alert('Recipient email required'); return; }
+    if(!wrap.querySelector('#trsPdf').checked && !wrap.querySelector('#trsXls').checked){
+      alert('Select at least one attachment'); return;
+    }
+    /* Authorized email transport is not wired for trip itineraries yet —
+       never claim success. Record a history note instead. */
+    try{
+      if(typeof openHistory==='function'){ /* history UI exists */ }
+      var note={at:Date.now(), kind:'trip_email_pending', terr:t, wk:wk, memberId:member.id, to:to,
+        subject:wrap.querySelector('#trsSub').value};
+      window.TRIP_EMAIL_LOG=window.TRIP_EMAIL_LOG||[];
+      window.TRIP_EMAIL_LOG.push(note);
+    }catch(e){}
+    var noteEl=wrap.querySelector('#trsNote');
+    if(noteEl) noteEl.innerHTML='<span style="color:#b45309">Email integration pending — nothing was sent. Review documents were prepared for '+esc(to)+'. Connect Microsoft Graph or Resend to enable delivery.</span>';
+    if(typeof aqToast==='function') aqToast('Email pending — transport not connected');
+  };
+}
+
+function tripsDocBarRender(){
+  var ov=(typeof _hcOverall==='function')?_hcOverall():'ok';
+  var label=({ok:'System Healthy',warn:'System Check',fail:'System Issues',pending:'System …'}[ov]||'System Healthy');
+  var none=teamIsNone();
+  var single=teamSingleMember();
+  var hint=none?'Select a traveller':(single?esc(single.name):'');
+  var html='<div class="tdb-left"><span class="tdb-dot '+esc(ov)+'"></span><span class="tdb-status">'+esc(label)+'</span>'
+    +(hint?'<span class="tdb-hint">'+hint+'</span>':'')
+    +'</div>'
+    +'<div class="tdb-right"><span class="tdb-label">Trip Documents</span>'
+    +'<button type="button" class="tdb-btn excel" data-tripdoc="excel"'+(none?' disabled':'')+' title="Download Excel itinerary">📗 Excel ↓</button>'
+    +'<button type="button" class="tdb-btn pdf" data-tripdoc="pdf"'+(none?' disabled':'')+' title="Download PDF itinerary">📕 PDF ↓</button>'
+    +'<button type="button" class="tdb-btn send" data-tripdoc="send"'+(none?' disabled':'')+' title="Review and send itinerary">✉ Review &amp; Send</button>'
+    +'</div>';
+  function wire(bar, wk){
+    if(!bar) return;
+    bar.innerHTML=html;
+    bar.querySelectorAll('[data-tripdoc]').forEach(function(b){
+      b.onclick=function(){
+        if(teamIsNone()){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
+        var kind=b.dataset.tripdoc;
+        var t=(terr==='All'?(single&&single.terr)||'East':terr);
+        if(kind==='excel') tripExportExcel(t, wk, teamIsSingle()?teamSingleMember():null);
+        else if(kind==='pdf') tripExportPdf(t, wk, teamIsSingle()?teamSingleMember():null);
+        else if(kind==='send') tripReviewSend(t, wk);
+      };
+    });
+  }
+  var focusWk=(typeof focusWkGet==='function'?focusWkGet():wkCurrent());
+  wire(document.getElementById('tripsDocBar'), focusWk);
+  wire(document.getElementById('allTripsDocBar'), (typeof ALL_WK==='number'?ALL_WK:focusWk));
 }
 function exportTripPlans(){
   var terrs=["East","South","Central","West","Exports"]; var weeks=[31].concat(FIELD_NUMS); var body='';
