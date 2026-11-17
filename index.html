@@ -77,7 +77,13 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 /* Team member strip — under territory nav, ~34px */
 .aqTeamNav{display:none!important;} /* team selection moved into Trips sidebar */
 /* ---- Page heading ---- */
-.wrap{max-width:100%;margin:0 auto;padding:0 0 24px;}
+.wrap{max-width:100%;width:100%;margin:0;padding:0;box-sizing:border-box;}
+#plannerView,#allView{width:100%;max-width:100%;box-sizing:border-box;}
+#plannerView.trips-on .planwrap.trips-kanban,
+#allView .planwrap.trips-kanban{margin:0;}
+/* Cloud error banner sits above the frozen trip documents footer, never over it */
+body.trips-layout-on #pbSaveErr{bottom:44px !important;}
+body.trips-layout-on #sysHealth{display:none !important;}
 /* ---- KPI cards (legacy sales metrics — cleared on travel views) ---- */
 .cards{display:none;gap:12px;margin-bottom:0;}
 .card{position:relative;display:flex;flex-direction:column;flex:1;align-items:flex-start;justify-content:center;padding:.625rem .875rem .75rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);min-width:0;line-height:1.2;overflow:hidden;}
@@ -96,37 +102,60 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 
 /* ===== Desktop Trips Kanban (layout only — branding unchanged) ===== */
 /* ===== Desktop Trips — compact Kanban / List ===== */
+/* Must beat base .planwrap {display:grid; 252px 1fr} — that grid was laying
+   trips-body and the footer as two columns, crushing the workspace to ~252px. */
+#planwrap.planwrap.trips-kanban,
+#allPlanwrap.planwrap.trips-kanban,
 .planwrap.trips-kanban{
-  display:flex;
-  flex-direction:column;
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-columns:none !important;
+  gap:0 !important;
+  width:100%;
+  max-width:100%;
   height:calc(100vh - 140px);
   max-height:calc(100vh - 140px);
   background:#fff;
   border:1px solid var(--line);
   border-radius:var(--radius);
   overflow:hidden;
+  box-sizing:border-box;
 }
+/* Base body grid — keep specificity below #id.map-* overrides below. */
 .planwrap.trips-kanban > .trips-body{
   flex:1 1 auto;
   min-height:0;
+  min-width:0;
+  width:100%;
   display:grid;
-  grid-template-columns:260px minmax(0,1fr);
+  grid-template-columns:240px minmax(0,1fr);
   gap:0;
   align-items:stretch;
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.nav-collapsed > .trips-body,
 .planwrap.trips-kanban.nav-collapsed > .trips-body{grid-template-columns:minmax(0,1fr);}
 .planwrap.trips-kanban.nav-collapsed .trips-nav{display:none;}
-/* Default split ≈ 70% itinerary / 30% map of remaining space via fr units;
-   --trips-map-w overrides with a remembered pixel width after the user drags. */
+/* Default split ≈ itinerary flex + map ~38% of the grid.
+   IMPORTANT: never put commas inside a var() fallback (minmax would break
+   parsing of the whole grid-template-columns declaration). --trips-map-w
+   must always be a single length token (px or %).
+   #id selectors required so these beat any #planwrap trips-body base rule. */
+#planwrap.planwrap.trips-kanban.map-split > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.map-split > .trips-body,
 .planwrap.trips-kanban.map-split > .trips-body{
-  grid-template-columns:260px minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
+  grid-template-columns:240px minmax(0,1fr) 5px var(--trips-map-w, 38%);
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed.map-split > .trips-body,
+#allPlanwrap.planwrap.trips-kanban.nav-collapsed.map-split > .trips-body,
 .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{
-  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w,minmax(220px,30%));
+  grid-template-columns:minmax(0,1fr) 5px var(--trips-map-w, 38%);
 }
+#planwrap.planwrap.trips-kanban.map-full > .trips-body,
 .planwrap.trips-kanban.map-full > .trips-body{
-  grid-template-columns:260px minmax(0,1fr);
+  grid-template-columns:240px minmax(0,1fr);
 }
+#planwrap.planwrap.trips-kanban.nav-collapsed.map-full > .trips-body,
 .planwrap.trips-kanban.nav-collapsed.map-full > .trips-body{
   grid-template-columns:minmax(0,1fr);
 }
@@ -135,9 +164,10 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .planwrap.trips-kanban.map-collapsed .trips-split,
 .planwrap.trips-kanban.map-collapsed .trips-map{display:none;}
 .trips-docbar{
-  flex:0 0 44px;height:44px;box-sizing:border-box;
+  flex:0 0 44px;height:44px;width:100%;max-width:100%;box-sizing:border-box;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:0 12px;background:#fff;border-top:1px solid var(--line);z-index:6;
+  padding:0 12px;background:#fff;border-top:1px solid var(--line);z-index:20;
+  position:relative;
 }
 .trips-docbar .tdb-left{display:inline-flex;align-items:center;gap:8px;min-width:0;}
 .trips-docbar .tdb-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:#16a34a;}
@@ -319,9 +349,16 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 #plannerView.trips-on .hint{display:none;}
 #plannerView.trips-on .planwrap.trips-kanban{border-radius:0;border-left:0;border-right:0;border-top:0;}
 @media(max-width:1100px){
-  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:260px minmax(0,1fr);}
+  /* Keep the map available down to tablet widths; only drop the splitter handle. */
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr) var(--trips-map-w, 36%);}
+  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr) var(--trips-map-w, 36%);}
+  .planwrap.trips-kanban.map-split .trips-split{display:none;}
+}
+@media(max-width:900px){
+  .planwrap.trips-kanban.map-split > .trips-body{grid-template-columns:220px minmax(0,1fr);}
   .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{grid-template-columns:minmax(0,1fr);}
-  .planwrap.trips-kanban.map-split .trips-split,.planwrap.trips-kanban.map-split .trips-map{display:none;}
+  .planwrap.trips-kanban.map-split .trips-split,
+  .planwrap.trips-kanban.map-split .trips-map{display:none;}
 }
 
 .sidebar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);position:sticky;top:105px;height:calc(100vh - 121px);display:flex;flex-direction:column;overflow:hidden;z-index:30;}
@@ -637,74 +674,102 @@ body.wkfull-on{overflow:hidden;}
 .aqPlanStrip .aqPlanSep{color:#d1d5db;font-size:12px;user-select:none;}
 #allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
 #allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
-#yearView{display:none;padding:6px 12px 20px;min-height:calc(100vh - 140px);}
+#yearShell{display:none;flex-direction:column;min-height:calc(100vh - 140px);}
+#yearShell.is-on{display:flex;}
+#yearView{flex:1 1 auto;padding:6px 12px 12px;min-height:0;overflow:auto;}
 #yearView.is-on{display:block;}
-.yg-wrap{background:#fff;border:1px solid var(--line);overflow:hidden;min-height:480px;}
-.yg-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#fafbfc;}
-.yg-tb-left,.yg-tb-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
-.yg-ctrl{width:auto!important;min-width:0;max-width:160px;height:28px;padding:2px 8px;font-size:12px;}
-.yg-mem{max-width:200px;}
-.yg-seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;}
-.yg-seg-btn{appearance:none;border:0;background:transparent;font:700 11px inherit;padding:5px 10px;cursor:pointer;color:#6b7280;}
-.yg-seg-btn.on{background:#e8eaed;color:#111;}
-.yg-export{position:relative;}
-.yg-export-menu{position:absolute;right:0;top:100%;z-index:20;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.08);min-width:140px;display:flex;flex-direction:column;}
-.yg-export-menu[hidden]{display:none!important;}
-.yg-export-menu button{appearance:none;border:0;background:#fff;text-align:left;padding:8px 12px;font:600 12px inherit;cursor:pointer;}
-.yg-export-menu button:hover{background:#f3f4f6;}
+.yg-docbar{position:sticky;bottom:0;flex:0 0 44px;}
+.yg-wrap{background:#fff;border:1px solid var(--line);overflow:visible;min-height:420px;}
+.yg-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line-soft);background:#fff;position:relative;}
+.yg-tb-left,.yg-tb-right{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative;}
+.yg-year-lbl{font:800 14px inherit;min-width:44px;text-align:center;color:#111;}
+.yg-team-btn{max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+.yg-team-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid var(--line);box-shadow:0 10px 28px rgba(0,0,0,.12);border-radius:8px;min-width:220px;max-height:320px;overflow:auto;padding:6px;}
+.yg-toolbar .kbb,.yg-panel .kbb,.yg-mctable .kbb{
+  appearance:none;font-family:inherit;font-size:12px;font-weight:700;height:28px;padding:0 10px;
+  border-radius:5px;border:1px solid var(--line);background:#fff;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;
+}
+.yg-toolbar .kbb:hover:not(:disabled),.yg-panel .kbb:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.yg-toolbar .kbb:disabled{opacity:.45;cursor:not-allowed;}
+.yg-toolbar .kbb.primary,.yg-panel .kbb.primary,.yg-mctable .kbb.primary{background:var(--aq-red,#cf202f);border-color:var(--aq-red,#cf202f);color:#fff;}
+.yg-toolbar .kbb.primary:hover,.yg-panel .kbb.primary:hover{filter:brightness(.96);color:#fff;}
+.yg-toolbar .kbb.icon{width:28px;padding:0;font-size:16px;}
+.yg-team-roles{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.yg-role{appearance:none;border:1px solid var(--line);background:#fff;border-radius:4px;font:700 10px inherit;padding:3px 6px;cursor:pointer;color:#6b7280;}
+.yg-role.on{border-color:var(--aq-red);color:var(--aq-red);background:#fff7f8;}
+.yg-tm{display:flex;align-items:center;gap:8px;width:100%;appearance:none;border:0;background:transparent;font:600 12px inherit;padding:6px;border-radius:5px;cursor:pointer;text-align:left;}
+.yg-tm:hover{background:#f5f6f7;}
+.yg-tm .box{width:14px;height:14px;border-radius:50%;border:1.5px solid #c4c7cb;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex:0 0 auto;}
+.yg-tm.on .box{background:var(--aq-red);border-color:var(--aq-red);}
+.yg-tm.partial .box{background:#fff;border-color:var(--aq-red);color:var(--aq-red);}
 .yg-sync-warn{flex:1 0 100%;font-size:11px;font-weight:600;color:#7f1d1d;background:#fef2f2;border:1px solid #fecaca;padding:6px 8px;}
-.yg-main{display:flex;align-items:stretch;min-height:420px;}
-.yg-board{flex:1 1 auto;padding:4px 6px 8px;overflow:auto;max-height:calc(100vh - 200px);min-width:0;}
+.yg-main{display:flex;align-items:stretch;min-height:360px;}
+.yg-board{flex:1 1 auto;padding:6px 8px 10px;overflow:auto;max-height:calc(100vh - 280px);min-width:0;}
 .yg-key{flex:0 0 148px;border-left:1px solid var(--line);background:#fafbfc;padding:8px 8px 12px;display:flex;flex-direction:column;gap:4px;}
 .yg-key-h{display:flex;justify-content:space-between;align-items:center;font:800 10px inherit;letter-spacing:.06em;color:#6b7280;margin-bottom:4px;}
 .yg-key-x{appearance:none;border:0;background:transparent;font-size:16px;cursor:pointer;color:#9ca3af;line-height:1;}
 .yg-key-b{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;}
-.yg-key-row{appearance:none;border:0;background:transparent;display:flex;align-items:center;gap:6px;padding:4px 2px;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;opacity:.45;}
+.yg-key-row{appearance:none;border:0;background:transparent;display:flex;align-items:center;gap:6px;padding:4px 2px;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;opacity:.4;}
 .yg-key-row.on{opacity:1;color:#111;}
-.yg-key-row i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;}
-.yg-key-ic{width:14px;text-align:center;flex:0 0 auto;}
-.yg-key-note{font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.35;}
-.yg-outlook{color:#b45309;}
+.yg-key-row i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;box-sizing:border-box;}
 .yg-key-manage{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#6b7280;cursor:pointer;text-align:left;padding:8px 2px 0;border-top:1px solid var(--line-soft);margin-top:6px;}
 .yg-key-manage:hover{color:var(--aq-red);}
 .yg-wrap.yg-key-collapsed .yg-board{max-width:100%;}
-.yg-head,.yg-month{display:grid;grid-template-columns:36px repeat(var(--yg-cols,42),minmax(14px,1fr));gap:1px;align-items:stretch;}
+.yg-head,.yg-month{display:grid;grid-template-columns:36px repeat(var(--yg-cols,37),minmax(12px,1fr));gap:2px;align-items:stretch;}
 .yg-head{position:sticky;top:0;z-index:3;background:#fff;padding:2px 0 4px;border-bottom:1px solid #e5e7eb;}
-.yg-corner{min-height:14px;}
+.yg-corner{min-height:12px;}
 .yg-hd{text-align:center;font-size:9px;font-weight:700;color:#6b7280;line-height:1.1;padding:2px 0;}
-.yg-hd.we{color:#9ca3af;background:#f3f4f6;}
-.yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #d1d5db;}
-.yg-month{margin:0;padding:1px 0;border-bottom:1px solid #f0f1f3;min-height:32px;}
+.yg-hd.we{color:#9ca3af;background:#f3f4f6;border-radius:3px;}
+.yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #e5e7eb;}
+.yg-month{margin:0;padding:2px 0;border-bottom:1px solid #f3f4f6;min-height:28px;}
 .yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 2px;}
-.yg-cell{appearance:none;border:1px solid #3f4450;background:#2b3038;border-radius:0;min-height:32px;padding:1px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#fff;}
-.yg-cell.na{border:0;background:transparent;cursor:default;min-height:32px;}
-.yg-cell.we{background:#3a404a;border-color:#4b5160;}
-.yg-cell.today{box-shadow:inset 0 0 0 1px var(--aq-red);}
-.yg-cell.today .yg-d{color:#ffb4bc;font-weight:800;}
-.yg-cell:hover:not(.na){filter:brightness(1.08);}
-.yg-d{font-size:8px;font-weight:700;color:#f3f4f6;line-height:1;padding:0 1px;}
-.yg-bars{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto;}
-.yg-chip{display:block;font-size:7px;font-weight:800;border-radius:2px;padding:0 2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:9px;text-align:center;}
-.yg-chip.tent{outline:1px dashed rgba(255,255,255,.7);outline-offset:-1px;opacity:.85;}
-.yg-chip.act{font-size:9px;line-height:1.2;}
+.yg-cell{appearance:none;border:1px solid #e8eaed;background:#fff;border-radius:4px;min-height:28px;padding:2px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#111;}
+.yg-cell.na{border:0;background:transparent;cursor:default;min-height:28px;}
+.yg-cell.we{background:#f3f4f6;border-color:#e5e7eb;}
+.yg-cell.today{box-shadow:inset 0 0 0 1.5px var(--aq-red);}
+.yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
+.yg-cell.sel{background:#fef2f2;border-color:#fecaca;}
+.yg-cell:hover:not(.na){border-color:#c9ced4;}
+.yg-d{font-size:9px;font-weight:600;color:#374151;line-height:1;padding:0 1px;}
+.yg-bars{display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;}
+.yg-bar{display:block;height:5px;border-radius:2px;width:100%;}
 .yg-panel{position:sticky;bottom:0;border-top:1px solid var(--line);background:#fff;box-shadow:0 -6px 20px rgba(0,0,0,.06);z-index:5;}
 .yg-ph{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px 6px;}
-.yg-psub{font-size:11px;color:#9ca3af;margin-top:2px;}
-.yg-pb{max-height:220px;overflow:auto;padding:0 12px 8px;}
-.yg-psec{margin-bottom:8px;}
-.yg-psec-h{font:800 10px inherit;letter-spacing:.05em;text-transform:uppercase;color:#8b9096;margin:6px 0 4px;}
+.yg-pb{max-height:200px;overflow:auto;padding:0 12px 8px;}
 .yg-pline{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start;}
 .yg-pcat{flex:0 0 auto;font-size:9px;font-weight:800;color:#fff;border-radius:3px;padding:2px 5px;}
 .yg-pt{font-size:12px;font-weight:700;color:#111;}
 .yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
-.yg-statusline{font-size:12px;margin-bottom:4px;}
-.yg-link{appearance:none;border:0;background:transparent;color:var(--aq-red);font:700 11px inherit;cursor:pointer;padding:2px 0;text-decoration:underline;}
 .yg-pf{display:flex;gap:8px;padding:8px 12px 12px;flex-wrap:wrap;}
 .yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
 .yg-mctable{width:100%;border-collapse:collapse;font-size:12px;}
 .yg-mctable th,.yg-mctable td{padding:4px;border-bottom:1px solid var(--line-soft);text-align:left;}
-@media(max-width:900px){.yg-key{flex-basis:120px;}.yg-mlbl{font-size:10px;}.yg-ctrl{max-width:120px;}}
-@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-cell{min-height:26px;}}
+.yg-monthly{border-top:1px solid var(--line);padding:14px 12px 18px;background:#fafbfc;}
+.yg-monthly-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.yg-monthly-h b{font-size:14px;color:#111;}
+.yg-monthly-h span{font-size:12px;color:#9ca3af;font-weight:600;}
+.yg-monthly-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.yg-mcard{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px 8px;min-height:140px;display:flex;flex-direction:column;}
+.yg-mh{display:flex;justify-content:space-between;align-items:center;font:800 11px inherit;letter-spacing:.04em;color:#111;margin-bottom:8px;}
+.yg-medit{appearance:none;border:0;background:transparent;cursor:pointer;color:#9ca3af;font-size:12px;padding:2px;}
+.yg-medit:hover{color:var(--aq-red);}
+.yg-mflab{font:700 9px inherit;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
+.yg-mfocus{font:700 13px inherit;color:#111;line-height:1.25;}
+.yg-mnotes{font-size:11px;color:#6b7280;margin-top:2px;}
+.yg-mset{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 12px inherit;cursor:pointer;padding:0;text-align:left;}
+.yg-mset:hover{color:var(--aq-red);}
+.yg-mdiv{height:1px;background:#f0f1f3;margin:8px 0;}
+.yg-mevs{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
+.yg-mev{display:flex;align-items:flex-start;gap:6px;font-size:11px;}
+.yg-mev i{width:7px;height:7px;border-radius:50%;margin-top:4px;flex:0 0 auto;}
+.yg-mev-l{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#374151;cursor:pointer;padding:0;text-align:left;}
+.yg-mev-l:hover{color:var(--aq-red);}
+.yg-mempty{font-size:11px;color:#b0b5bb;}
+.yg-madd{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 11px inherit;cursor:pointer;padding:6px 0 0;text-align:left;align-self:flex-start;}
+.yg-madd:hover{color:var(--aq-red);}
+@media(max-width:1000px){.yg-monthly-grid{grid-template-columns:1fr 1fr;}.yg-key{flex-basis:120px;}}
+@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-monthly-grid{grid-template-columns:1fr;}.yg-cell{min-height:24px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
 #allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
@@ -915,9 +980,18 @@ body.wkfull-on{overflow:hidden;}
 .tv-place{flex:1 1 auto;min-width:0;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tv-place i{color:var(--muted-2);}
 /* compact collapsed flight / hotel row */
-.tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:36px;padding:0;margin-bottom:4px;}
-.tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:7px 9px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);}
+.tvcard.tvcompact,.kcard.kccompact{display:flex;align-items:center;min-height:32px;height:auto;padding:0;margin-bottom:3px;background:#fff;border:1px solid var(--line-soft,#e8eaed);border-radius:5px;}
+.tvcard.tvcompact.sched-nested,.kcard.kccompact.sched-nested{margin-left:14px;border-left:2px solid #93c5fd;background:#f8fbff;}
+.sched-nest-tag{flex:0 0 auto;font-size:9px;font-weight:700;color:#2563eb;letter-spacing:.02em;text-transform:uppercase;}
+.sched-class-row{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:11px;color:#6b7280;}
+.sched-class-row select{font:600 11px inherit;border:1px solid var(--line);border-radius:4px;padding:3px 6px;background:#fff;color:#111;}
+.tvc-row,.kcc-row{flex:1 1 auto;display:flex;align-items:center;gap:7px;min-width:0;background:none;border:0;padding:5px 8px;cursor:pointer;font:inherit;text-align:left;color:var(--aq-black,#1c1c1e);min-height:32px;}
 .tvc-row:hover,.kcc-row:hover{background:#fafbfc;}
+.kcc-ic,.tvc-ic{flex:0 0 auto;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;line-height:1;}
+.kcc-main,.tvc-main{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600;}
+.kcc-time,.tvc-time{flex:0 0 auto;font-size:11px;font-weight:600;color:#6b7280;white-space:nowrap;}
+.kcc-caret,.tvc-caret{flex:0 0 auto;color:#9ca3af;font-size:11px;margin-left:2px;}
+.kcc-stat{flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#15803d;background:#e7f3ec;border-radius:10px;padding:1px 6px;}
 .tvc-ic,.kcc-ic{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:9px;}
 .tvc-main,.kcc-main{flex:0 1 auto;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tvc-time,.kcc-time{flex:0 0 auto;font-size:11px;color:#5c6169;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:46px;}
@@ -1569,6 +1643,18 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 /* an appointment the chain can't reach in time: a quiet red fade on the card */
 .kcard.tl-late,.tvcard.tl-late{background:#fdf0f0;border-color:#f3c1c1;box-shadow:inset 3px 0 0 #dc8a8a;opacity:.92;}
 .tl-late input:disabled{color:#6b7280;}
+.kcard.sched-conflict,.tvcard.sched-conflict,.kcard.kccompact.sched-conflict,.tvcard.tvcompact.sched-conflict{
+  border-color:#ef4444;box-shadow:inset 2px 0 0 #ef4444;
+}
+.sched-warn{flex:0 0 auto;color:#dc2626;font-size:11px;font-weight:700;line-height:1;cursor:help;padding:0 2px;}
+.trip-status{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;margin-right:8px;white-space:nowrap;}
+.trip-status.ready{color:#b45309;}
+.trip-status.booking{color:#2563eb;}
+.trip-status.booked{color:#16a34a;}
+.trip-status.sent{color:#0f766e;}
+.kb-toolbar .kbb.confbtn.readybtn{border-color:#d1d5db;color:#374151;}
+.kb-toolbar .kbb.confbtn.readybtn.on{background:#fff;border-color:#b45309;color:#b45309;}
+.booked-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin-left:4px;vertical-align:middle;}
 .legrow button:hover{border-color:#111;}
 .lsug{color:#92610a;white-space:nowrap;}
 .lsug .lsugx{border:0;background:none;padding:0 2px;color:#c2b49a;font-size:11px;}
@@ -1784,6 +1870,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/scheduling.js"></script>
 <style>
 #gate{position:fixed;inset:0;z-index:99999;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Open Sans',Arial,sans-serif;}
 #gate .gbox{background:#1b1b1b;border:1px solid #2c2c2c;border-radius:10px;padding:40px 44px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
@@ -1834,6 +1921,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .mt-table tbody tr.mt-inactive td{opacity:.55;}
 .mt-name{font-weight:700;}
 .mt-status{font-size:10.5px;color:#9ca3af;margin-top:2px;font-weight:600;}
+.mt-status-pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:#6b7280;padding:2px 0;}
+.mt-status-pill.on{color:#15803d;}
+.mt-status-pill.off{color:#9ca3af;}
+.mt-role{max-width:200px;}
 .mt-email{color:var(--aq-red,#cf202f);font-weight:600;text-decoration:none;}
 .mt-email:hover{text-decoration:underline;}
 .mt-dial{color:#111;font-weight:600;text-decoration:none;}
@@ -1988,7 +2079,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
       <footer class="trips-docbar" id="allTripsDocBar" aria-label="Trip documents"></footer>
     </div>
   </div>
-  <div id="yearView" style="display:none;" aria-label="Year at a Glance"></div>
+  <div id="yearShell" style="display:none;" aria-label="Year at a Glance">
+    <div id="yearView"></div>
+    <footer class="trips-docbar yg-docbar" id="yearDocBar" aria-label="Year documents"></footer>
+  </div>
   <div id="masterView" style="display:none;">
     <div id="sfBanner" class="sfbanner connecting"></div>
     <div class="tablecard">
@@ -2413,10 +2507,30 @@ function jit(id){var x=0;for(var i=0;i<id.length;i++){x=(x*31+id.charCodeAt(i))>
 let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let PLAN_MODE='weekly'; /* weekly | year */
+/* Bridge for external modules (my-team.js): `let terr` / `let PLAN_MODE` are NOT
+   on window, so `window.terr = 'Team'` was a no-op for render(). Always navigate
+   through goMyTeam / setPortalTerr. */
+function setPortalTerr(t){ terr=t; }
+function setPortalPlanMode(m){ PLAN_MODE=m; }
+function getPortalTerr(){ return terr; }
+function getPortalAdmin(){ return ADMIN; }
+function goMyTeam(){
+  PLAN_MODE='weekly';
+  terr='Team';
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  try{ document.body.classList.remove('trips-layout-on'); }catch(e){}
+  render();
+}
+window.goMyTeam=goMyTeam;
+window.setPortalTerr=setPortalTerr;
+window.setPortalPlanMode=setPortalPlanMode;
+window.getPortalTerr=getPortalTerr;
+window.getPortalAdmin=getPortalAdmin;
 var YG_EVENTS=[];
 var YG_NOTES={};
 var YG_AVAIL={};
 var YG_CAT_CUSTOM=[];
+var YG_FOCUS={};
 let poolState="", poolSort="pot_desc";
 let msort={key:"booking",dir:-1};
 let mFilterTerr="", mFilterAM="", mFilterArea="", mFilterStatus="", mFilterRT="", mFilterAR="";
@@ -2542,13 +2656,16 @@ function mapModeApplyDom(){
   wrap.classList.remove('map-collapsed','map-split','map-full','nav-collapsed');
   wrap.classList.add('map-'+(MAP_UI_MODE||'split'));
   if(!NAV_OPEN) wrap.classList.add('nav-collapsed');
-  if(MAP_SPLIT_PX!=null){
-    wrap.style.setProperty('--trips-map-w', MAP_SPLIT_PX+'px');
+  /* Always a single length token. Commas/minmax inside --trips-map-w invalidate
+     the entire grid-template-columns rule in CSS. */
+  if(MAP_SPLIT_PX!=null && isFinite(MAP_SPLIT_PX) && MAP_SPLIT_PX>0){
+    wrap.style.setProperty('--trips-map-w', Math.round(MAP_SPLIT_PX)+'px');
   } else {
-    /* 30% of remaining workspace until the user drags the divider */
-    wrap.style.setProperty('--trips-map-w', 'minmax(200px,30%)');
+    wrap.style.setProperty('--trips-map-w', '38%');
   }
   var pv=document.getElementById('plannerView'); if(pv) pv.classList.add('trips-on');
+  try{ document.body.classList.add('trips-layout-on'); }catch(e){}
+  try{ mapInvalidateSoon(); }catch(e){}
 }
 function mapInvalidateSoon(){
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },40);
@@ -2647,21 +2764,85 @@ function roadMi(a,b){ const d=hav(a,b); return d==null?null:d*1.2; }
 function minOf(t){var x=(t||'0:0').split(':');return (+x[0])*60+(+x[1]);}
 function fmtDur(m){m=Math.round(m); if(m<60)return m+'m'; var hh=Math.floor(m/60),mm=m%60; return hh+'h'+(mm?(' '+mm+'m'):'');}
 function addMin(t,m){var x=minOf(t)+m; x=((x%1440)+1440)%1440; var hh=Math.floor(x/60),mm=x%60; return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;}
-/* forgiving keyboard time entry -> 'HH:MM' (24h) or null.
-   '9'->'09:00'  '540'->'05:40pm? no: see rules'  '0715'->'07:15'  '5:30'->'17:30'
-   Rules: optional a/p suffix wins; otherwise 1-6 means PM, 7-11 means AM,
-   13-23 stays 24-hour. '402' -> 4:02 PM. '540p' -> 5:40 PM. */
+/* Intelligent time entry → 'HH:MM' (24h), '' (clear), null (invalid), or
+   {ambiguous:true,h,mm,raw} when AM/PM cannot be determined.
+   Accepts: 9am, 9 am, 9:30am, 930am, 2pm, 230pm, 14:30, 1430. */
 function parseTimeLoose(v){
-  v=String(v||'').trim().toLowerCase().replace(/\s+/g,'').replace(/\./g,':');
-  if(!v) return '';
-  var m=v.match(/^(\d{1,2}):?(\d{2})?(a|p)?m?$/);
-  if(!m) return null;
-  var h=+m[1], mm=(m[2]!=null)?+m[2]:0, ap=m[3];
-  if(h>23||mm>59) return null;
-  if(ap==='a'){ h=h%12; }
-  else if(ap==='p'){ h=(h%12)+12; }
-  else if(h>=1&&h<=6){ h+=12; }          /* bare 1-6 = afternoon */
+  var raw=String(v==null?'':v).trim();
+  if(!raw) return '';
+  var s=raw.toLowerCase().replace(/\s+/g,'').replace(/\./g,':');
+  var m=s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm|a|p)?$/);
+  if(!m){
+    /* 3–4 digit military / shorthand without colon: 930, 1430, 930am */
+    m=s.match(/^(\d{3,4})(am|pm|a|p)?$/);
+    if(m){
+      var dig=m[1], apx=m[2]||'';
+      if(dig.length===3){ m=['',dig.charAt(0),dig.slice(1),apx]; }
+      else { m=['',dig.slice(0,2),dig.slice(2),apx]; }
+    } else return null;
+  }
+  var h=+m[1], mm=m[2]!=null&&m[2]!==''?+m[2]:0;
+  var apRaw=m[3]||'';
+  var ap=apRaw.indexOf('p')===0?'p':(apRaw.indexOf('a')===0?'a':'');
+  if(!isFinite(h)||!isFinite(mm)||mm>59) return null;
+  if(ap==='a'){
+    if(h>12) return null;
+    h=h%12;
+  } else if(ap==='p'){
+    if(h>12) return null;
+    h=(h%12)+12;
+  } else {
+    /* No AM/PM: 00–23 allowed as 24h; 1–12 alone is ambiguous */
+    if(h>23) return null;
+    if(h>=1&&h<=12) return {ambiguous:true, h:h, mm:mm, raw:raw};
+  }
   return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm;
+}
+function parseTimeOrAsk(val, onDone){
+  var pv=parseTimeLoose(val);
+  if(pv&&typeof pv==='object'&&pv.ambiguous){
+    askAmPm(pv, onDone);
+    return null;
+  }
+  return pv;
+}
+function askAmPm(info, onDone){
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  var sample=function(ap){
+    var h=info.h%12; if(ap==='p') h+=12; if(info.h===12&&ap==='a') h=0; if(info.h===12&&ap==='p') h=12;
+    return t12s((h<10?'0':'')+h+':'+(info.mm<10?'0':'')+info.mm);
+  };
+  wrap.innerHTML='<div class="modalbox" style="width:min(360px,92vw)"><div class="mh"><div class="mt">Morning or afternoon?</div><button type="button" class="mclose" id="ampX">×</button></div>'
+    +'<div style="padding:14px 16px;font-size:13px">'
+    +'<p style="margin:0 0 12px;color:#6b7280">You typed <b>'+esc(info.raw)+'</b>. Which did you mean?</p>'
+    +'<button type="button" class="kbb" id="ampAM" style="display:block;width:100%;margin:0 0 8px;height:36px">'+esc(sample('a'))+' — AM</button>'
+    +'<button type="button" class="kbb primary" id="ampPM" style="display:block;width:100%;height:36px">'+esc(sample('p'))+' — PM</button>'
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#ampX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#ampAM').onclick=function(){ close(); onDone&&onDone(parseTimeLoose(info.h+':'+(info.mm<10?'0':'')+info.mm+'am')); };
+  wrap.querySelector('#ampPM').onclick=function(){ close(); onDone&&onDone(parseTimeLoose(info.h+':'+(info.mm<10?'0':'')+info.mm+'pm')); };
+}
+/** After a time edit, re-number ORD for that day so cards follow clock order. Never moves locked/confirmed stops relative to each other incorrectly — only sorts by time. */
+function reorderDayChronologically(t,wk,day){
+  if(typeof wk!=='number'||day==null) return;
+  var keys=[];
+  try{
+    dealersIn(t).forEach(function(d){
+      if(ASSIGN[d.id]===wk&&DAY[d.id]===day&&teamFilterMatch('d',d.id)&&TIME[d.id]) keys.push({key:'d:'+d.id,t:minOf(TIME[d.id])});
+    });
+    XVISITS.forEach(function(x){
+      if(x.terr===t&&x.wk===wk&&x.day===day&&teamFilterMatch('x',x.id)&&x.time) keys.push({key:'x:'+x.id,t:minOf(x.time)});
+    });
+    LOGI.forEach(function(it){
+      if(it.terr===t&&it.wk===wk&&it.day===day&&teamFilterMatch('m',it.id)&&it.time) keys.push({key:'m:'+it.id,t:minOf(it.time)});
+    });
+  }catch(e){ return; }
+  keys.sort(function(a,b){ return a.t-b.t||a.key.localeCompare(b.key); });
+  keys.forEach(function(k,i){ ORD[k.key]=(i+1)*10; });
+  tlInvalidate();
 }
 function travelRow(a,b,md){ var mi=roadMi([a.lat,a.lon],[b.lat,b.lon]); if(mi==null)mi=0; var dmin=Math.max(15,Math.round(mi/55*60)); var ta=TIME[a.id],tb=TIME[b.id]; var gap=(ta&&tb)?(minOf(tb)-minOf(ta)):null; var warn=(dmin/60>md)||(gap!=null&&dmin>gap); var txt='↓ drive ~'+fmtDur(dmin)+(mi>=1?(' · ~'+Math.round(mi)+' mi'):' · local'); return '<div class="distrow'+(warn?' warn':'')+'">'+txt+(warn?' ⚠':'')+'</div>'; }
 
@@ -2932,9 +3113,144 @@ function tlCompute(t,wk){
     if(!s2.fixed&&s2.sug==null&&s2.need!=null){ s2.sug=s2.need; s2.sugSrc='back'; }
   }
   seq.forEach(function(s){ by[s.key]=s; });
-  var out={seq:seq,by:by,conflicts:conflicts};
+  /* Context-aware overlaps (virtual / trade show / hotel) — genuine conflicts only */
+  var sched=null;
+  try{ sched=schedEvaluateWeek(t,wk,seq); }catch(e){ sched=null; }
+  if(sched&&sched.conflicts&&sched.conflicts.length){
+    sched.conflicts.forEach(function(c){
+      conflicts.push({
+        key:c.a,
+        sched:true,
+        reason:c.reason,
+        other:c.b,
+        needsUserResolution:!!c.needsUserResolution
+      });
+    });
+  }
+  var out={seq:seq,by:by,conflicts:conflicts,sched:sched};
   _tlCache[ck]=out;
   return out;
+}
+function schedBuffersCfg(){
+  var s=(typeof SETTINGS!=='undefined'&&SETTINGS)?SETTINGS:{};
+  var a=(typeof ADMIN!=='undefined'&&ADMIN&&ADMIN.schedBuffers)?ADMIN.schedBuffers:{};
+  return Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{}, s.schedBuffers||{}, a);
+}
+/** Build normalized events for AQScheduling from the live week. */
+function schedEventsFromPlan(t,wk,seq){
+  var evs=[], dayMin=function(day,time,dur){
+    if(day==null||!time) return null;
+    var sm=day*1440+(typeof minOf==='function'?minOf(time):0);
+    return {startMin:sm, endMin:sm+(dur||60)};
+  };
+  /* Dealers */
+  try{
+    dealersIn(t).forEach(function(d){
+      if(ASSIGN[d.id]!==wk) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('d',d.id)) return;
+      var iv=dayMin(DAY[d.id], TIME[d.id], DUR[d.id]||90);
+      if(!iv) return;
+      evs.push({
+        id:'d:'+d.id, kind:'dealer', type:'visit', name:d.name,
+        startMin:iv.startMin, endMin:iv.endMin, dur:DUR[d.id]||90,
+        locked:!!(TLE.lock&&TLE.lock['d:'+d.id]), confirmed:!!APPT[d.id],
+        schedClass:(STOPX[d.id]&&STOPX[d.id].schedClass)||null,
+        lat:d.lat, lon:d.lon, address:d.address
+      });
+    });
+  }catch(e){}
+  try{
+    XVISITS.forEach(function(x){
+      if(x.wk!==wk||(x.terr&&x.terr!==t&&t!=='All')) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('x',x.id)) return;
+      var iv=dayMin(x.day, x.time, x.dur||60);
+      if(!iv) return;
+      evs.push({
+        id:'x:'+x.id, kind:'xvisit', type:x.type||'visit', name:(byId[x.dealer]||uniById(x.dealer)||{}).name||'Visit',
+        startMin:iv.startMin, endMin:iv.endMin, dur:x.dur||60, act:x.act,
+        locked:!!(TLE.lock&&TLE.lock['x:'+x.id]), confirmed:!!x.done,
+        schedClass:x.schedClass||null
+      });
+    });
+  }catch(e){}
+  try{
+    LOGI.forEach(function(it){
+      if(it.wk!==wk||(it.terr&&it.terr!==t&&t!=='All')) return;
+      if(typeof teamFilterMatch==='function'&&!teamFilterMatch('m',it.id)) return;
+      var ty=typeof travelType==='function'?travelType(it):(it.type||'other');
+      var iv=dayMin(it.day, it.time, it.dur||(it.virtual?60:30));
+      if(!iv && ty!=='hotel') return;
+      if(ty==='hotel'&&!iv){
+        /* background hotel span uses check-in → checkout when available */
+        if(it.day==null) return;
+        var s0=it.day*1440+(it.time?minOf(it.time):18*60);
+        var e0=(it.day2!=null)?(it.day2*1440+(it.time2?minOf(it.time2):10*60)):(s0+12*60);
+        iv={startMin:s0,endMin:e0};
+      }
+      evs.push({
+        id:'m:'+it.id, kind:(ty==='hotel'?'hotel':'travel'), type:ty, name:it.name||ty,
+        startMin:iv.startMin, endMin:iv.endMin, dur:it.dur,
+        virtual:!!it.virtual, locked:!!(TLE.lock&&TLE.lock['m:'+it.id]),
+        confirmed:!!it.conf, schedClass:it.schedClass||null,
+        protected:!!it.schedProtected, parentId:it.parentId||null,
+        lat:it.lat, lon:it.lon, address:it.address,
+        meetingUrl:it.meetingUrl||it.joinUrl||''
+      });
+    });
+  }catch(e){}
+  /* Optional drive segments between consecutive located stops for virtual-during-drive */
+  try{
+    if(seq&&seq.length>1){
+      for(var i=0;i<seq.length-1;i++){
+        var a=seq[i], b=seq[i+1], trav=a.tnext;
+        if(!trav||trav.kind!=='drive'||trav.min==null) continue;
+        var leave=tlEnd(a);
+        if(leave==null) continue;
+        evs.push({id:'drive:'+a.key+'>'+b.key, kind:'drive', type:'drive', startMin:leave, endMin:leave+trav.min});
+      }
+    }
+  }catch(e){}
+  return evs;
+}
+function schedEvaluateWeek(t,wk,seq){
+  if(!window.AQScheduling) return {conflicts:[],nested:[],driveStops:[],soft:[]};
+  var evs=schedEventsFromPlan(t,wk,seq||[]);
+  return AQScheduling.evaluateSchedule(evs, schedBuffersCfg());
+}
+function schedNestParentOf(eventId, sched){
+  if(!sched||!sched.nested) return null;
+  for(var i=0;i<sched.nested.length;i++) if(sched.nested[i].childId===eventId) return sched.nested[i].parentId;
+  return null;
+}
+/** Human-readable conflict copy for subtle row warnings (no banners). */
+function schedConflictReasonText(reason){
+  var map={
+    'virtual-during-dealer':'Overlaps with dealer appointment',
+    'two-virtual-meetings':'Conflicts with Zoom meeting',
+    'virtual-during-flight':'Conflicts with confirmed flight',
+    'two-protected-physical':'Conflicts with another protected appointment',
+    'protected-trade-show-commitment':'Conflicts with a protected trade show commitment',
+    'overlap':'Scheduling conflict',
+    'late':'Insufficient driving time',
+    'airport-buffer':'Insufficient airport arrival time'
+  };
+  return map[reason]||reason||'Scheduling conflict';
+}
+function schedConflictInfo(key, wk){
+  try{
+    if(typeof wk!=='number') return null;
+    var TL=tlCompute(terr, wk);
+    var nested=false, conflict=false, reason='';
+    if(TL.sched&&TL.sched.nested){
+      TL.sched.nested.forEach(function(n){ if(n.childId===key) nested=true; });
+    }
+    (TL.conflicts||[]).forEach(function(c){
+      if(c.sched&&(c.key===key||c.other===key)){ conflict=true; reason=schedConflictReasonText(c.reason); }
+      else if(c.key===key&&c.lateMin){ conflict=true; reason='Insufficient driving time'; }
+    });
+    if(!conflict&&!nested) return null;
+    return {conflict:conflict, nested:nested, reason:reason};
+  }catch(e){ return null; }
 }
 /* --- timeline writers --- */
 /* lock = the ONLY thing that fixes a time. Locking a card freezes whatever
@@ -3023,6 +3339,8 @@ function hydrateDriveRows(){
   });
 }
 let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
+/* Per-traveller trip booking workflow: Planning → Ready to Book → Booking in Progress → Booked → Reviewed & Sent */
+let TRIPBOOK={};
 /* AR Issues — a MANUALLY-MANAGED portal field (no Salesforce AR integration).
    Keyed by dealer id in its own map so it survives Salesforce sync (which only
    replaces DEALERS) and is never overwritten by other dealers' updates. */
@@ -3336,9 +3654,12 @@ function xvNextLabel(d){
    program, rates, markets and the planning year change without
    code edits — 2028/2029/2030 are a settings change, not a rewrite.
    ============================================================ */
-let ADMIN={};      /* admin/planning settings — persisted in the shared plan */
-let COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
-let RIDEALONG={};  /* 'terr|wk' -> executive id (ride-alongs) — persisted too */
+/* ADMIN must be `var` (window-visible): my-team.js and other external scripts
+   read/write global.ADMIN. A `let ADMIN` binding made My Team edit a separate
+   empty object while the planner kept the lexical roster — users never synced. */
+var ADMIN={};      /* admin/planning settings — persisted in the shared plan */
+var COMMITS=[];    /* immutable confirmed-commitment ledger — persisted too  */
+var RIDEALONG={};  /* 'terr|wk' -> executive id (ride-alongs) — persisted too */
 
 /* Official dealer program (seed). Editable afterwards in Planning Settings. */
 const PROGRAM_DEFAULT=[
@@ -3374,13 +3695,14 @@ function adminInit(){
   /* legacy spelling: normalize any stored "Graeme" to "Graheme" */
   ADMIN.leaders.forEach(function(l){ if(l.id==='Graeme'){l.id='Graheme';} if(l.name==='Graeme'){l.name='Graheme';} });
   ADMIN.audit=ADMIN.audit||[];
+  ADMIN.schedBuffers=Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{}, ADMIN.schedBuffers||{});
   /* Territory team roster (DSR / ISS / AM). Seed from known TMs without
      duplicating; historical appointments stay unassigned until explicitly owned. */
   if(!Array.isArray(ADMIN.team)) ADMIN.team=[];
   teamSeedFromKnown();
 }
-var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS',TC:'TC',LEAD:'LEAD'};
-var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support',TC:'Travel Coordinator',LEAD:'Leadership'};
+var TEAM_ROLES={AM:'AM',DSR:'DSR',ISS:'ISS',TC:'TC',SA:'SA',LEAD:'LEAD'};
+var TEAM_ROLE_LABEL={AM:'Account Manager',DSR:'Dealer Success Rep',ISS:'Inside Sales Support',TC:'Travel Coordinator',SA:'Sales Assistant',LEAD:'Leadership'};
 /* Multi-select team filter (device-local, per territory).
    Outlook-style: TEAM_ALL means every member is selected; TEAM_ALL=false with
    empty TEAM_IDS means nobody selected (valid — show empty itinerary, not All).
@@ -3418,7 +3740,7 @@ function teamList(terrFilter, includeInactive){
     }
     return true;
   });
-  var order={AM:0,DSR:1,ISS:2,TC:3,LEAD:4};
+  var order={AM:0,DSR:1,ISS:2,SA:3,TC:4,LEAD:5};
   rows.sort(function(a,b){ return (order[a.role]||9)-(order[b.role]||9) || String(a.name).localeCompare(String(b.name)); });
   return rows;
 }
@@ -3627,7 +3949,7 @@ function openTeamModal(editId){
   if(!teamCanManage()){ cloudBadge('Admin only'); return; }
   var existing=editId?teamById(editId):null;
   var wrap=document.createElement('div'); wrap.className='pbModal'; wrap.id='teamModal';
-  var roleOpts=['AM','DSR','ISS','TC','LEAD'].map(function(r){
+  var roleOpts=['AM','DSR','ISS','SA','TC','LEAD'].map(function(r){
     return '<option value="'+r+'"'+(existing&&existing.role===r?' selected':'')+'>'+r+' — '+esc(TEAM_ROLE_LABEL[r]||r)+'</option>';
   }).join('');
   var terrOpts=['East','South','Central','West','Exports'].map(function(t){
@@ -3682,7 +4004,7 @@ function openTeamModal(editId){
     var t=wrap.querySelector('#tm_terr').value;
     var err=wrap.querySelector('#tm_err');
     if(!name){ err.textContent='Enter a name'; return; }
-    if(['AM','DSR','ISS','TC','LEAD'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
+    if(['AM','DSR','ISS','SA','TC','LEAD'].indexOf(role)<0){ err.textContent='Pick a role'; return; }
     var reuse=null;
     (ADMIN.team||[]).forEach(function(m){
       if(existing&&m.id===existing.id) return;
@@ -3706,13 +4028,24 @@ function openTeamModal(editId){
 function sbAttentionItems(){
   var items=[], focus=focusWkGet();
   if(!teamShowNav()) return items;
-  /* Scheduling conflicts / insufficient drive time in focused week */
+  /* Genuine scheduling conflicts only (context-aware engine + late arrivals) */
   try{
     if(typeof focus==='number'){
       var TL=tlCompute(terr,focus);
       var n=(TL.conflicts||[]).length;
       if(n) items.push({id:'conflicts',urgent:true,icon:'⚠',label:'Scheduling conflicts',count:n,wk:focus});
+      /* Virtual during drive — needs a confirmed stopping place (not a hard conflict) */
+      var ds=(TL.sched&&TL.sched.driveStops)||[];
+      if(ds.length) items.push({id:'drivestop',urgent:false,icon:'○',label:'Confirm stop for virtual meeting',count:ds.length,wk:focus});
     }
+  }catch(e){}
+  /* Submitted trips changed after Ready to Book — coordinator review */
+  try{
+    var dirty=0;
+    Object.keys(TRIPBOOK||{}).forEach(function(k){
+      var rec=TRIPBOOK[k]; if(rec&&rec.needsReview) dirty++;
+    });
+    if(dirty) items.push({id:'tripreview',urgent:true,icon:'⚠',label:'Trip changes need review',count:dirty});
   }catch(e){}
   /* Unconfirmed dealer appointments in focused week */
   try{
@@ -3787,21 +4120,7 @@ function sbAttentionItems(){
     });
     if(od) items.push({id:'overdue',urgent:true,icon:'✓',label:'Overdue follow-ups',count:od,ref:odRef});
   }catch(e){}
-  /* Completed visits awaiting PLAUD transcript */
-  try{
-    var pend=0, pendRef=null;
-    dealersIn(terr).forEach(function(d){
-      if(!teamFilterMatch('d',d.id)) return;
-      if(!APPT[d.id]) return;
-      var v=VISIT[d.id]||{};
-      if(!(v.plaud&&(v.plaud.transcript||v.plaud.summary||v.plaud.reportNotes))){ pend++; if(!pendRef) pendRef=d.id; }
-    });
-    XVISITS.forEach(function(x){
-      if(x.terr!==terr||!x.done||!teamFilterMatch('x',x.id)) return;
-      if(!(x.plaud&&(x.plaud.transcript||x.plaud.summary||x.plaud.reportNotes))){ pend++; if(!pendRef) pendRef='x:'+x.id; }
-    });
-    if(pend) items.push({id:'transcripts',urgent:false,icon:'○',label:'Pending transcripts',count:pend,ref:pendRef});
-  }catch(e){}
+  /* PLAUD transcripts stay in the visit workflow — not listed in Needs Attention */
   /* Annual / weekly travel needing coordinator attention */
   try{
     if(typeof allTripsNeedingAttention==='function'){
@@ -4031,12 +4350,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(p.tripbook)TRIPBOOK=p.tripbook;if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[])};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,tripbook:TRIPBOOK,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[]),ygfocus:(typeof YG_FOCUS!=='undefined'?YG_FOCUS:{})};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -4957,12 +5276,24 @@ function airportSearch(q){
   });
 }
 /* write a picked (or manually entered) airport onto a travel item */
-function setTravelAirport(id,ap){
+function setTravelAirport(id,ap,which){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!ap) return;
-  it.airportCode=ap.code||ap.icao||'';
-  it.airportName=ap.name||'';
-  it.lat=(ap.lat!=null?+ap.lat:null); it.lon=(ap.lon!=null?+ap.lon:null);
-  it.address=[ap.city,ap.region].filter(Boolean).join(', ');
+  which=which||'dep';
+  var code=ap.code||ap.icao||'';
+  var name=ap.name||'';
+  var city=[ap.city,ap.region].filter(Boolean).join(', ');
+  if(which==='arr'){
+    it.arrAirport=code; it.arrAirportName=name;
+    if(!it.airportCode){ it.airportCode=code; it.airportName=name; }
+  } else {
+    it.depAirport=code; it.depAirportName=name;
+    it.airportCode=code; it.airportName=name;
+    it.lat=(ap.lat!=null?+ap.lat:null); it.lon=(ap.lon!=null?+ap.lon:null);
+    it.address=city;
+  }
+  /* Collapsed label prefers airline + route */
+  if(it.depAirport&&it.arrAirport) it.name=(it.airline?it.airline+' · ':'')+it.depAirport+' → '+it.arrAirport;
+  tripFlagDirtyIfSubmitted(it.terr, it.wk);
   savePlan(); refreshPlanner();
 }
 /* ---- airport typeahead: one shared dropdown for every .ap-in input ----
@@ -4978,7 +5309,7 @@ function apInit(){
   function hide(){ box.style.display='none'; box.innerHTML=''; _apInput=null; _apResults=[]; }
   function pick(i){
     var inp=_apInput, ap=_apResults[i]; hide(); if(!inp||!ap) return;
-    if(inp.dataset.tv){ setTravelAirport(inp.dataset.tv,ap); }
+    if(inp.dataset.tv){ setTravelAirport(inp.dataset.tv,ap, inp.dataset.ap||'dep'); }
     else { inp.value=ap.code||ap.icao||''; inp.dispatchEvent(new Event('change',{bubbles:true})); }
   }
   function manualForm(){
@@ -5006,7 +5337,7 @@ function apInit(){
       if(!isFinite(lat)||!isFinite(lon)){ cloudBadge('Coordinates needed — use Locate'); return; }
       var ap={code:'',icao:'',name:g('name'),city:g('city'),region:g('ctry'),lat:lat,lon:lon};
       var inp2=_apInput; hide();
-      if(inp2&&inp2.dataset.tv) setTravelAirport(inp2.dataset.tv,ap);
+      if(inp2&&inp2.dataset.tv) setTravelAirport(inp2.dataset.tv,ap, inp2.dataset.ap||'dep');
     };
   }
   function show(inp){
@@ -5742,7 +6073,15 @@ function addTravel(type,wk){
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
   if(field==='day'||field==='day2') it[field]=(val===''?null:parseInt(val,10));
-  else if(field==='time'||field==='time2'){ var pv=parseTimeLoose(val); if(pv==null){ refreshPlanner(); return; } it[field]=pv; }  /* typing never locks — only the 🔒 does */
+  else if(field==='time'||field==='time2'){
+    var pv=parseTimeLoose(val);
+    if(pv&&typeof pv==='object'&&pv.ambiguous){
+      askAmPm(pv,function(resolved){ if(resolved){ it[field]=resolved; afterTravelEdit(it); } else refreshPlanner(); });
+      return;
+    }
+    if(pv==null){ refreshPlanner(); return; }
+    it[field]=pv;
+  }
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='dur'){ var nd=normDur(parseDur(val)); if(nd==null){ refreshPlanner(); return; } it.dur=nd; }
   else if(field==='airportCode'){
@@ -5750,7 +6089,16 @@ function setTravelField(id,field,val){
     it.airportCode=(val||'').toUpperCase();
     if(a){ it.airportName=a.name; it.lat=a.lat; it.lon=a.lon; it.address=a.city; }
   }
+  else if(field==='bookStatus'){ it.bookStatus=val||''; }
   else it[field]=val;
+  afterTravelEdit(it);
+}
+function afterTravelEdit(it){
+  try{
+    if(it&&typeof it.wk==='number'&&it.day!=null) reorderDayChronologically(it.terr||terr, it.wk, it.day);
+    tlInvalidate();
+    tripFlagDirtyIfSubmitted(it&&it.terr, it&&it.wk);
+  }catch(e){}
   savePlan(); refreshPlanner();
 }
 /* geocode an address field and persist coordinates */
@@ -5875,21 +6223,37 @@ function travelCard(it,wk,tl){
   var isFlight=(ty==='flight_in'||ty==='flight_out'||ty==='flight_stop');
   var isHotel=(ty==='hotel');
   var located=travelHasLocation(it);
-  /* ---- compact collapsed row for flights & hotels (click to expand) ---- */
+  /* ---- universal compact collapsed row (every travel type) ---- */
   var _mainT=it.time?t12s(it.time):((tl&&tl.sug!=null)?t12s(addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440)):'');
-  if((isFlight||isHotel) && !tvExpanded(it.id)){
-    var whenWord=isHotel?'Check-in':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':'Lands'));
+  if(!tvExpanded(it.id)){
     var whoBadge=teamWhoBadge('m',it.id);
-    var label=isFlight
-      ? (T.label+(it.airportCode?(' · '+esc(it.airportCode)):(it.name?(' · '+esc(it.name)):'')))
-      : (esc(it.name||'Hotel'));
-    var timePart=_mainT?('<span class="tvc-time">'+whenWord+' '+_mainT+'</span>'):'';
-    var stat=(located||it.virtual)?'':'<span class="tv-bad">Needs address</span>';
-    return '<div class="tvcard tvcompact t-'+ty+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
-      +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="Click to edit details">'
+    var label;
+    var timeDisp=_mainT||'';
+    if(isFlight){
+      var fromC=it.airportCode||it.depAirport||'';
+      var toC=it.arrAirport||'';
+      var route=(fromC&&toC)?(fromC+' → '+toC):(fromC||toC||'');
+      label=[it.airline, route||it.name||it.airportName||'Flight'].filter(Boolean).join(' · ')||'Flight';
+      var arrT=it.time2?t12s(it.time2):'';
+      if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
+      else if(_mainT) timeDisp=_mainT;
+    } else {
+      label=it.name||T.label||'Stop';
+    }
+    var booked=!!(it.conf||it.bookStatus==='booked');
+    var cinfo=schedConflictInfo('m:'+it.id, wk);
+    var nested=!!(cinfo&&cinfo.nested);
+    if(!nested){ try{ nested=!!schedNestParentOf('m:'+it.id, tlCompute(terr,wk).sched); }catch(e){} }
+    return '<div class="tvcard tvcompact t-'+ty+(nested?' sched-nested':'')+(cinfo&&cinfo.conflict?' sched-conflict':'')+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'">'
+      +'<button class="tvc-row" data-tvexpand="'+it.id+'" title="'+(cinfo&&cinfo.reason?esc(cinfo.reason):'Click to edit details')+'">'
         +'<span class="tvc-ic" style="background:'+T.color+'">'+T.icon+'</span>'
-        +'<span class="tvc-main">'+label+'</span>'+whoBadge+timePart+stat
-        +'<span class="tvc-caret">▸</span>'
+        +(nested?'<span class="sched-nest-tag">In event</span>':'')
+        +'<span class="tvc-main">'+esc(label)+'</span>'
+        +whoBadge
+        +(timeDisp?('<span class="tvc-time">'+timeDisp+'</span>'):'')
+        +(booked?'<span class="booked-dot" title="Booked"></span>':'')
+        +(cinfo&&cinfo.conflict?'<span class="sched-warn" title="'+esc(cinfo.reason)+'">⚠</span>':'')
+        +'<span class="tvc-caret">▾</span>'
       +'</button>'
       +'<button class="tv-del tvc-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>';
@@ -5904,16 +6268,21 @@ function travelCard(it,wk,tl){
   /* --- place row: airport picker for flights, address + locate for everything else --- */
   var place;
   if(isFlight){
-    /* intelligent airport search: type a name, city, IATA/ICAO code or region */
+    var depDisp=it.depAirport
+      ?(it.depAirport+(it.depAirportName?(' — '+it.depAirportName):''))
+      :(it.airportCode?(it.airportCode+' — '+(it.airportName||it.address||'')):'');
+    var arrDisp=it.arrAirport?(it.arrAirport+(it.arrAirportName?(' — '+it.arrAirportName):'')):'';
     place='<div class="tv-row">'
-      +'<input class="tv-in ap-in" data-tv="'+it.id+'" autocomplete="off" spellcheck="false"'
-      +' value="'+esc(it.airportCode?(it.airportCode+' — '+(it.airportName||it.address||'')):'')+'"'
-      +' placeholder="Search airport, city or code">'
-      +'</div>'
-      /* airline + flight number: pick from the list or type anything */
-      +'<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="airline" list="aqAirlines" value="'+esc(it.airline||'')+'" placeholder="Airline — Delta, United, Air Canada…">'
       +'<input class="tv-in tv-fno" data-tv="'+it.id+'" data-f="flightNo" value="'+esc(it.flightNo||'')+'" placeholder="Flight #">'
+      +'</div>'
+      +'<div class="tv-row">'
+      +'<input class="tv-in ap-in" data-tv="'+it.id+'" data-ap="dep" autocomplete="off" spellcheck="false"'
+      +' value="'+esc(depDisp)+'" placeholder="Departure airport — city or code">'
+      +'</div>'
+      +'<div class="tv-row">'
+      +'<input class="tv-in ap-in" data-tv="'+it.id+'" data-ap="arr" autocomplete="off" spellcheck="false"'
+      +' value="'+esc(arrDisp)+'" placeholder="Arrival airport — city or code">'
       +'</div>';
   } else {
     place='<div class="tv-row">'
@@ -5933,73 +6302,92 @@ function travelCard(it,wk,tl){
      else shows the LIVE computed time and updates automatically. */
   var tvFixed=!!(((tl?tl.locked:TLE.lock['m:'+it.id]))&&it.time);
   var autoT=(!tvFixed&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
-  var whenLbl=isHotel?'Arrive':(ty==='rental_return'?'Return':(ty==='flight_in'?'Arrives':(ty==='flight_out'?'Departs':(ty==='flight_stop'?'Lands':'When'))));
+  var whenLbl=isHotel?'Arrive':(isFlight?'Depart':(ty==='rental_return'?'Return':'When'));
   var showW=tvFixed?it.time:(autoT||it.time);
-  /* Day · Time · Duration on ONE line, each with a small label above. The
-     dwell duration (when present) is the third column; the calculated
-     departure shows on a subtle line below. */
-  var hasDur=travelHasDuration(ty);
+  var timeTip='Type 9am, 930am, 2pm, 14:30…';
+  var hasDur=!isFlight&&travelHasDuration(ty);
   var depMin=(hasDur&&tl&&tl.sug!=null)?(tl.sug+(+it.dur||0)):null;
   var depLbl=(depMin!=null)?t12s(addMin('00:00',((Math.round(depMin)%1440)+1440)%1440)):'';
   var when='<div class="tv-row tv-when3">'
     +'<div class="tvcol tvcol-day"><span class="tv-lbl">'+whenLbl+'</span>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select></div>'
     +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
-      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time" value="'+esc(showW?t12s(showW):'')+'"'+(tvFixed?' disabled':'')
-      +(tvFixed?' title="Fixed — unlock to change"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'></div>'
+      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 9am" data-tv="'+it.id+'" data-f="time" value="'+esc(showW?t12s(showW):'')+'"'+(tvFixed?' disabled':'')
+      +(tvFixed?' title="Fixed — unlock to change"':' title="'+timeTip+'"')+'></div>'
     +(hasDur?('<div class="tvcol tvcol-dur"><span class="tv-lbl">Dur</span>'
-      +'<input class="tv-in tv-dur" data-tv="'+it.id+'" data-f="dur" title="How long you stay — e.g. 30m, 1h, 1h 30m, 2h. Pushes the stops after it later." value="'+esc(fmtDur(+it.dur||60))+'"></div>'):'')
+      +'<input class="tv-in tv-dur" data-tv="'+it.id+'" data-f="dur" title="How long you stay — e.g. 30m, 1h, 1h 30m, 2h." value="'+esc(fmtDur(+it.dur||60))+'"></div>'):'')
     +'</div>'
     +(depLbl?'<div class="tv-deprow" title="Calculated departure">→ leaves '+esc(depLbl)+'</div>':'');
   var durRow='';
   var when2='';
-  if(isHotel){
-    /* check-out IS the departure: the next morning chains from it. With no
-       checkout entered, a locked appointment the next day pulls it backwards
-       and the computed leave-by time shows right in the field. */
+  if(isFlight){
+    when2='<div class="tv-row tv-when3">'
+      +'<div class="tvcol tvcol-day"><span class="tv-lbl">Arrive</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:it.day)+'</select></div>'
+      +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
+      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 2:30pm" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2?t12s(it.time2):'')+'" title="'+timeTip+'"></div>'
+      +'</div>'
+      +'<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation / reference">'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
+      +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
+        return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')
+      +'</select></div>'
+      +'<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Additional notes"></div>';
+  } else if(isHotel){
     var autoCo=(!it.time2&&tl&&tl.depSug!=null)?addMin('00:00',((Math.round(tl.depSug)%1440)+1440)%1440):'';
     var showCo=it.time2||autoCo;
     when2='<div class="tv-row tv-when3">'
       +'<div class="tvcol tvcol-day"><span class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">Checkout</span>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:(autoCo?Math.floor(tl.depSug/1440):null))+'</select></div>'
       +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
-      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="time" data-tv="'+it.id+'" data-f="time2" value="'+esc(showCo?t12s(showCo):'')+'"'
-      +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':' title="Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override"')+'></div>'
-      +'</div>';
+      +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 10am" data-tv="'+it.id+'" data-f="time2" value="'+esc(showCo?t12s(showCo):'')+'"'
+      +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':' title="'+timeTip+'"')+'></div>'
+      +'</div>'
+      +'<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation">'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
+      +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
+        return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')
+      +'</select></div>';
+  } else if(isRental){
+    when2='<div class="tv-row">'
+      +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation">'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
+      +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
+        return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')
+      +'</select></div>';
   }
-  var tlRow='';
-
-  /* airline / flight number / confirmation / notes removed — the box stays
-     compact: place + day + time (plus check-out for hotels). */
-  var flight='', conf='';
-
   var badge=it.virtual
     ? '<span class="tv-ok" title="Virtual — reserves time, no map stop">Virtual</span>'
+    : (isFlight||isHotel||isRental)
+    ? ((it.conf||it.bookStatus==='booked')?'<span class="tv-ok" title="Booked">Booked</span>':'<span class="tv-ok" title="Travel stop">Travel</span>')
     : located
     ? '<span class="tv-ok" title="Included in routing">Located</span>'
     : '<span class="tv-bad" title="Excluded from routing until it has a location">Needs address</span>';
 
-  /* the lock is always on the card — lock now or after the fact */
   var lockBtn='<button class="tlock'+(tvFixed?' on':'')+'" data-tlock="m:'+it.id+'" title="'
     +(tvFixed?'Locked — the time is fixed; click to unlock and it updates automatically again'
       :'Click to lock the time this card is showing so it can\'t change')
     +'">'+(tvFixed?'🔒':'🔓')+'</button>';
-  /* unreachable at its set time: fade the card red instead of a banner */
-  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
-  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
-  /* travel cards move exactly like visit cards: drag to a day (or a position
-     within one) and every arrival downstream recalculates */
-  var collapseBtn=(isFlight||isHotel)?('<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>'):'';
+  var cinfoX=schedConflictInfo('m:'+it.id, wk);
+  var lateCls=((tl&&tl.lateMin)||(cinfoX&&cinfoX.conflict)?' tl-late':'')+(cinfoX&&cinfoX.conflict?' sched-conflict':'');
+  var lateTitle=(cinfoX&&cinfoX.reason)?(' title="'+esc(cinfoX.reason)+'"'):((tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'');
+  var collapseBtn='<button class="tv-collapse" data-tvexpand="'+it.id+'" title="Collapse">▾</button>';
   return '<div class="tvcard t-'+ty+lateCls+'" data-lid="'+it.id+'" data-drag="1" data-id="lg:'+it.id+'"'+lateTitle+'>'
     +'<div class="tv-head">'
       +'<span class="tv-ic" style="background:'+T.color+'">'+T.icon+'</span>'
       +typeSel
       +badge
+      +(cinfoX&&cinfoX.conflict?'<span class="sched-warn" title="'+esc(cinfoX.reason)+'">⚠</span>':'')
       +collapseBtn
       +lockBtn
       +'<button class="tv-del" data-ldel="'+it.id+'" title="Remove">×</button>'
     +'</div>'
-    +'<div class="tv-body">'+place+when+durRow+when2+flight+conf+tlRow+'</div>'
+    +'<div class="tv-body">'+place+when+durRow+when2+'</div>'
     +'</div>';
 }
 /* printable/trip-plan row */
@@ -6071,7 +6459,7 @@ function tripsNavHTML(){
   if(teamShowNav()){
     var isAllTerr=(terr==='All');
     var members=teamList(isAllTerr?null:terr,false);
-    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
     if(isAllTerr){
       members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
     }
@@ -6085,7 +6473,7 @@ function tripsNavHTML(){
     }
     if(isAllTerr){
       checks+='<div class="sb-rolef">'
-        +['AM','DSR','ISS','TC','LEAD'].map(function(r){
+        +['AM','DSR','ISS','SA','TC','LEAD'].map(function(r){
           return '<button type="button" class="'+(ALL_ROLE_F[r]!==false?'on':'')+'" data-allrole="'+r+'">'+r+'</button>';
         }).join('')+'</div>';
       var byTerr={};
@@ -6177,7 +6565,7 @@ function tripsNavWire(navEl){
   nav.querySelectorAll('[data-allrole]').forEach(function(b){
     b.addEventListener('click',function(e){
       e.stopPropagation();
-      window.ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+      window.ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
       var r=b.dataset.allrole; ALL_ROLE_F[r]=!(ALL_ROLE_F[r]!==false);
       try{ if(terr==='All') renderAllView(); else _wkRerender(); }catch(err){}
     });
@@ -6305,20 +6693,33 @@ function kbToolbarHTML(wk){
   var now=wkCurrent();
   var confState=tripWeekConfState(terr,wk);
   var mapOn=(MAP_UI_MODE!=='collapsed');
+  var st=confState.status||TRIP_STATUS.planning;
+  var statusHtml='<span class="trip-status '+esc(st.cls)+'" title="Trip booking status">'+esc(st.label)+'</span>';
+  /* Sales assistants can advance status from the more menu */
+  var canBook=false;
+  try{ canBook=!!(typeof pbIsAdmin==='function'&&pbIsAdmin())||teamSelectedMembers().some(function(){return false;});
+    var me=null; try{ me=(ADMIN.team||[]).filter(function(m){ return m.email&&typeof pbWho==='function'&&String(m.email).toLowerCase()===String(pbWho()).toLowerCase(); })[0]; }catch(e){}
+    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.isAdmin)) canBook=true;
+    if(typeof pbIsAdmin==='function'&&pbIsAdmin()) canBook=true;
+  }catch(e){}
   return ''
     +'<button type="button" class="kbb icon" data-navtog="1" title="'+(NAV_OPEN?'Hide sidebar':'Show sidebar')+'">☰</button>'
     +'<button type="button" class="kbb icon" data-wkgo="-1" title="Previous week">‹</button>'
     +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-wkgo="0" title="Actual current calendar week">This Week</button>'
     +'<button type="button" class="kbb icon" data-wkgo="1" title="Next week">›</button>'
     +'<span class="kb-title">WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk))+'</span>'
+    +statusHtml
     +'<span class="kb-space"></span>'
     +'<button type="button" class="kbb'+(mapOn?' on':'')+'" data-maptog="1" title="'+(mapOn?'Hide map':'Show map')+'">'+(mapOn?'Map ✓':'Map')+'</button>'
-    +'<button type="button" class="kbb confbtn'+(confState.on?' on':'')+'" data-confweek="'+wk+'">'+(confState.label)+'</button>'
+    +'<button type="button" class="kbb confbtn readybtn'+(confState.on?' on':'')+'" data-confweek="'+wk+'" title="Submit this traveller’s trip for booking">'+esc(confState.label)+'</button>'
     +'<div class="kb-more">'
       +'<button type="button" class="kbb icon" data-more="1" title="More">⋯</button>'
       +'<div class="kb-more-menu" role="menu">'
         +'<button type="button" data-cardall="1">Expand all appointments</button>'
         +'<button type="button" data-cardall="0">Collapse all appointments</button>'
+        +(canBook?('<button type="button" data-tripstatus="booking" data-wk="'+wk+'">Mark Booking in Progress</button>'
+          +'<button type="button" data-tripstatus="booked" data-wk="'+wk+'">Mark Booked</button>'
+          +'<button type="button" data-tripstatus="sent" data-wk="'+wk+'">Mark Reviewed &amp; Sent</button>'):'')
         +'<button type="button" data-hist="1">History</button>'
       +'</div>'
     +'</div>';
@@ -6379,7 +6780,7 @@ function weekCard(wk){
       cards+=dqInputHTML(wk,i)+'</div>';
     });
   }
-  var confBtn='<button class="confbtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Confirmed ✓':'Confirm week')+'</button>';
+  var confBtn='<button class="confbtn readybtn '+(confirmed?'on':'')+'" data-conf="'+ckey+'">'+(confirmed?'Ready ✓':'Ready to Book')+'</button>';
   var open=wkIsOpen(wk);
   var wkShort=isRemote?'Remote':(isk?'WK 31':'WK '+wkNo(wk));
   var dateRange=isRemote?'direct / book remotely':(WEEKDATES[wk]||'');
@@ -6466,19 +6867,21 @@ function dvCard(v,tl){
   var isFixed=!v.remote&&((tl&&(tl.locked||tl.conf))||(!tl&&(TLE.lock[tkey]||v.done)));
   var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=isFixed?v.time:(autoT||v.time);
-  /* ---- compact one-line row (click anywhere to expand) ---- */
+  /* ---- compact one-line row: icon | name | time | status | chevron ---- */
   if(!dvExpanded(v.ref)){
-    var lateClsC=(tl&&tl.lateMin)?' tl-late':'';
+    var endT=(showT&&v.dur)?t12s(addMin(showT,v.dur)):'';
+    var timeRange=showT?(endT?(t12s(showT)+'–'+endT):t12s(showT)):'—';
+    var cinfoD=schedConflictInfo(tkey, typeof v.wk==='number'?v.wk:null);
+    var lateClsC=((tl&&tl.lateMin)||(cinfoD&&cinfoD.conflict)?' tl-late':'')+(cinfoD&&cinfoD.conflict?' sched-conflict':'');
     return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
-      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="Click to edit details">'
-        +'<span class="kcc-time">'+(showT?t12s(showT):'—')+'</span>'
+      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+(cinfoD&&cinfoD.reason?esc(cinfoD.reason):'Click to edit details')+'">'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
         +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
-        +'<span class="kcc-dur">'+esc(fmtDur(v.dur||90))+'</span>'
-        +(v.done?'<span class="kcc-stat">Conf</span>':'')
-        +(isFixed?'<span class="kcc-lock">🔒</span>':'')
-        +'<span class="kcc-caret">▸</span>'
+        +'<span class="kcc-time">'+timeRange+'</span>'
+        +(v.done?'<span class="booked-dot" title="Confirmed"></span>':'')
+        +(cinfoD&&cinfoD.conflict?'<span class="sched-warn" title="'+esc(cinfoD.reason)+'">⚠</span>':'')
+        +'<span class="kcc-caret">▾</span>'
       +'</button>'
       +'<button class="cx kcc-del" data-vdel="'+v.ref+'" title="Remove">✕</button>'
     +'</div>';
@@ -6496,19 +6899,20 @@ function dvCard(v,tl){
   /* week + day come from WHERE the card sits — moving it is the only way to
      change them. The card edits only time, duration and notes inline. */
   var ctl=v.remote?'':'<div class="kc-ctl">'
-      +'<input class="vf vtime" type="text" autocomplete="off" spellcheck="false" placeholder="time" '+da+' data-f="time"'+(isFixed?' disabled':'')
-      +' title="'+(isFixed?'Fixed — unlock to change':'Type 9, 540, 402p, 0715… — 1-6 means PM, 7-11 means AM, add a/p to override')+'" value="'+esc(showT?t12s(showT):'')+'">'
+      +'<input class="vf vtime" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 9am" '+da+' data-f="time"'+(isFixed?' disabled':'')
+      +' title="'+(isFixed?'Fixed — unlock to change':'Type 9am, 930am, 2pm, 14:30…')+'" value="'+esc(showT?t12s(showT):'')+'">'
       +'<input class="vf vdur" '+da+' data-f="dur" title="Duration — e.g. 45m, 1h 30m, 8h, 36h" value="'+fmtDur(v.dur)+'">'
       +lockBtn
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
-  /* unreachable at its set time: fade the card red instead of a banner */
-  var lateCls=(tl&&tl.lateMin)?' tl-late':'';
-  var lateTitle=(tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'';
+  var cinfoE=schedConflictInfo(tkey, typeof v.wk==='number'?v.wk:null);
+  var lateCls=((tl&&tl.lateMin)||(cinfoE&&cinfoE.conflict)?' tl-late':'')+(cinfoE&&cinfoE.conflict?' sched-conflict':'');
+  var lateTitle=(cinfoE&&cinfoE.reason)?(' title="'+esc(cinfoE.reason)+'"'):((tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'');
   return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
+      +(cinfoE&&cinfoE.conflict?'<span class="sched-warn" title="'+esc(cinfoE.reason)+'">⚠</span>':'')
       +'<button class="tv-collapse" data-dvexpand="'+v.ref+'" title="Collapse">▾</button>'
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
@@ -6523,21 +6927,47 @@ function dvCard(v,tl){
 /* one writer for every inline field on either card kind */
 function setVisitField(ref,f,val){
   var kind=ref.slice(0,1), id=ref.slice(2);
+  var finish=function(){
+    try{
+      var day=kind==='i'?DAY[id]:(XVISITS.filter(function(v){return v.id===id;})[0]||{}).day;
+      var w=kind==='i'?ASSIGN[id]:(XVISITS.filter(function(v){return v.id===id;})[0]||{}).wk;
+      var tr=kind==='i'?((byId[id]||uniById(id)||{}).territory||terr):(XVISITS.filter(function(v){return v.id===id;})[0]||{}).terr||terr;
+      if(typeof w==='number'&&day!=null) reorderDayChronologically(tr,w,day);
+      tlInvalidate();
+      tripFlagDirtyIfSubmitted(tr,w);
+    }catch(e){}
+    savePlan();
+  };
   if(kind==='i'){
     if(f==='wk'){ var prev=ASSIGN[id]; ASSIGN[id]=(val==='remote')?'remote':parseInt(val,10); if(ASSIGN[id]!==prev) DAY[id]=null; }
     else if(f==='day') DAY[id]=(val===''?null:parseInt(val,10));
-    else if(f==='time'){ var pv=parseTimeLoose(val); if(pv==null) return false; TIME[id]=pv; }   /* typing never locks — only the 🔒 does */
+    else if(f==='time'){
+      var pv=parseTimeLoose(val);
+      if(pv&&typeof pv==='object'&&pv.ambiguous){
+        askAmPm(pv,function(resolved){ if(resolved){ TIME[id]=resolved; finish(); refreshPlanner(); } });
+        return null;
+      }
+      if(pv==null) return false; TIME[id]=pv;
+    }
     else if(f==='dur'){ var n=normDur(parseDur(val)); if(n==null) return false; DUR[id]=n; }
     else if(f==='notes'){ var s=STOPX[id]=STOPX[id]||{}; s.notes=val; }
   } else {
     var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return false;
     if(f==='wk'){ var nw=parseInt(val,10); if(!isFinite(nw)) return false; if(x.wk!==nw) x.day=null; x.wk=nw; }
     else if(f==='day') x.day=(val===''?null:parseInt(val,10));
-    else if(f==='time'){ var pvx=parseTimeLoose(val); if(pvx==null) return false; x.time=pvx; }  /* typing never locks — only the 🔒 does */
+    else if(f==='time'){
+      var pvx=parseTimeLoose(val);
+      if(pvx&&typeof pvx==='object'&&pvx.ambiguous){
+        askAmPm(pvx,function(resolved){ if(resolved){ x.time=resolved; finish(); refreshPlanner(); } });
+        return null;
+      }
+      if(pvx==null) return false; x.time=pvx;
+    }
     else if(f==='dur'){ var n2=normDur(parseDur(val)); if(n2==null) return false; x.dur=n2; }
     else if(f==='notes') x.notes=val;
   }
-  savePlan(); return true;
+  finish();
+  return true;
 }
 function toggleVisitConf(ref){
   var kind=ref.slice(0,1), id=ref.slice(2);
@@ -6574,11 +7004,13 @@ function createVisit(dealerId,type,wk,day){
   type=(type==='visit')?'visit':'prebook';
   day=(day==null||day===''||day==='none')?null:parseInt(day,10);
   if(day!=null&&!isFinite(day)) day=null;
+  var expandRef=null;
   if(ASSIGN[dealerId]==='pool'||ASSIGN[dealerId]==null){
     ASSIGN[dealerId]=(wk==='remote')?'remote':parseInt(wk,10);
     DAY[dealerId]=day; TIME[dealerId]='';
     if(type==='visit') PTYPE[dealerId]='visit'; else delete PTYPE[dealerId];
     teamStampNew('d',dealerId);
+    expandRef='i:'+dealerId;
   } else {
     if(wk==='remote') return;
     var xid='X'+Date.now()+Math.floor(Math.random()*1000);
@@ -6586,7 +7018,9 @@ function createVisit(dealerId,type,wk,day){
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
       wk:parseInt(wk,10), day:day, time:'', dur:60, type:type, notes:'', done:false});
     teamStampNew('x',xid);
+    expandRef='x:'+xid;
   }
+  if(expandRef){ try{ DVEXP[expandRef]=true; sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} }
   savePlan(); refreshPlanner();
 }
 function renderAllView(){
@@ -7107,7 +7541,7 @@ var ALL_MAP_MODE=(function(){ try{ return localStorage.getItem('aqAllMapMode')||
 var ALL_METRIC_FILTER='';
 var ALL_NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqAllNavOpen'); return v==null?true:v==='1'; }catch(e){ return true; } })();
 var ITINERARIES=ITINERARIES||{}; /* memberId|wk -> {status,version,sentAt,payloadHash} */
-var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,TC:true,LEAD:true};
+var ALL_ROLE_F=window.ALL_ROLE_F||{AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
 
 function allScrollToWeek(wk,behavior){
   var el=document.querySelector('#allWeeks [data-allwk="'+wk+'"]');
@@ -9155,14 +9589,14 @@ function dqInputHTML(wk,day){
 function dqMatches(q){
   var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
   var rows=planningUniverse().filter(function(d){
-    var h=[d.name,d.loc,d.city,d.address].join(' ').toLowerCase();
+    var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
     return toks.every(function(t){ return h.indexOf(t)>=0; });
   });
   var q0=toks[0];
   var score=function(d){ var n=(d.name||'').toLowerCase();
     return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
   rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
-  return rows.slice(0,8);
+  return rows.slice(0,10);
 }
 var DQ={inp:null,rows:[],on:0};
 function dqClose(){ var p=document.getElementById('dqPop'); if(p) p.remove(); DQ.rows=[]; }
@@ -9217,7 +9651,9 @@ function dqAddStop(c){
     airportCode:'', airportName:'', airline:'', flightNo:'',
     day:(day===''?null:parseInt(day,10)), time:'', day2:null, time2:'', conf:'', notes:''};
   if(c.v){ it.virtual=true; it.dur=60; }
-  LOGI.push(it); teamStampNew('m',it.id); savePlan();
+  LOGI.push(it); teamStampNew('m',it.id);
+  try{ TVEXP[it.id]=true; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  savePlan();
   function afterOwn(){ refreshPlanner(); }
   if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
     teamPickOwner('m', it.id, afterOwn);
@@ -9297,58 +9733,119 @@ document.addEventListener('mousedown',function(e){
 },true);
 window.addEventListener('resize',function(){ if(document.getElementById('dqPop')) dqRender(); });
 document.addEventListener('scroll',function(e){ if(document.getElementById('dqPop')&&DQ.inp){ dqRender(); } },true);
-/* Dealer / Prospect picker: search the master library or quick-create a
-   potential/prospect/competitor, then drop it straight into the week. */
+/* Dealer / Prospect picker: Existing dealer (portal records) | Potential new
+   (manual / Google Places when configured). Drops straight into the week. */
+function placesConfigured(){
+  try{
+    if(typeof SETTINGS!=='undefined' && SETTINGS && SETTINGS.googlePlacesKey) return true;
+    if(window.AQ_GOOGLE_PLACES_KEY) return true;
+  }catch(e){}
+  return false;
+}
 function openDealerAdd(wk,day){
   _closeAddMenu();
   var wrap=document.getElementById('dpModal'); if(wrap) wrap.remove();
   wrap=document.createElement('div'); wrap.id='dpModal'; wrap.className='aqmodal';
   var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
   var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
-  wrap.innerHTML='<div class="aqmodal-box">'
-    +'<div class="aqmodal-h">Add to '+esc(typeof wk==='number'?('WK '+wkNo(wk)):'trip')+'</div>'
-    +'<input id="dpSearch" '+inp+' placeholder="Search any dealer, prospect or territory…" autocomplete="off">'
+  var mode='existing';
+  wrap.innerHTML='<div class="aqmodal-box" style="max-width:480px">'
+    +'<div class="aqmodal-h" style="display:flex;align-items:center;gap:8px"><span style="color:var(--aq-red)">🤝</span> Add dealer visit'
+    +'<button id="dpClose" class="btn" style="margin-left:auto;padding:4px 8px">×</button></div>'
+    +'<div style="display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-bottom:10px">'
+    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 12px inherit;padding:8px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing dealer</button>'
+    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 12px inherit;padding:8px;cursor:pointer;color:#6b7280">Potential new dealer</button>'
+    +'</div>'
+    +'<div id="dpExisting">'
+    +'<input id="dpSearch" '+inp+' placeholder="Search dealer name, city, state or account…" autocomplete="off">'
     +'<div id="dpResults" class="dp-results"></div>'
-    +'<div class="dp-div">or create a new account</div>'
-    +'<label '+lbl+'>Name<input id="dpName" '+inp+'></label>'
+    +'</div>'
+    +'<div id="dpPotential" style="display:none">'
+    +'<input id="dpPlaces" '+inp+' placeholder="Search business name, town or address…" autocomplete="off">'
+    +'<div id="dpPlacesNote" style="font-size:11px;color:#6b7280;margin:6px 0 8px"></div>'
+    +'<div id="dpPlacesResults" class="dp-results"></div>'
+    +'<div class="dp-div">or enter manually</div>'
+    +'<label '+lbl+'>Business name<input id="dpName" '+inp+'></label>'
     +'<label '+lbl+'>Address<input id="dpAddr" '+inp+' placeholder="Street, City, State"></label>'
     +'<div style="display:flex;gap:8px;margin-top:8px">'
       +'<label '+lbl+' style="flex:1">Type<select id="dpType" '+inp+'><option value="potential">Potential Dealer</option><option value="prospect">New Prospect</option><option value="competitor">Competitor</option></select></label>'
-      +'<label '+lbl+' style="flex:1">Contact (optional)<input id="dpContact" '+inp+'></label>'
+      +'<label '+lbl+' style="flex:1">Phone<input id="dpPhone" '+inp+'></label>'
     +'</div>'
-    +'<div style="display:flex;gap:8px;margin-top:8px">'
-      +'<label '+lbl+' style="flex:1">Phone (optional)<input id="dpPhone" '+inp+'></label>'
-    +'</div>'
-    +'<label '+lbl+'>Notes (optional)<input id="dpNotes" '+inp+'></label>'
     +'<div id="dpMsg" style="font-size:11px;color:#666;min-height:15px;margin-top:8px"></div>'
-    +'<div style="display:flex;gap:8px;margin-top:6px"><button id="dpCreate" class="btn" style="flex:1;padding:9px;background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700">Create & add to trip</button>'
-    +'<button id="dpClose" class="btn" style="padding:9px">Close</button></div>'
-    +'</div>';
+    +'<button id="dpCreate" class="btn" style="width:100%;margin-top:8px;padding:9px;background:var(--aq-red,#cf202f);color:#fff;border-color:var(--aq-red,#cf202f);font-weight:700">Create &amp; add to trip</button>'
+    +'</div></div>';
   document.body.appendChild(wrap);
   var $=function(s){return wrap.querySelector(s);};
   $('#dpClose').onclick=function(){ wrap.remove(); };
   wrap.onclick=function(e){ if(e.target===wrap) wrap.remove(); };
+  function setTab(tab){
+    mode=tab;
+    wrap.querySelectorAll('[data-dptab]').forEach(function(b){
+      var on=b.dataset.dptab===tab;
+      b.classList.toggle('on',on);
+      b.style.color=on?'var(--aq-red)':'#6b7280';
+      b.style.background=on?'#fff':'#f5f6f7';
+      b.style.boxShadow=on?'inset 0 -2px 0 var(--aq-red)':'none';
+    });
+    $('#dpExisting').style.display=tab==='existing'?'':'none';
+    $('#dpPotential').style.display=tab==='potential'?'':'none';
+    if(tab==='existing') setTimeout(function(){ $('#dpSearch').focus(); },20);
+    else {
+      $('#dpPlacesNote').textContent=placesConfigured()
+        ? 'Search Google Places for farm equipment and related businesses.'
+        : 'Google Places is not configured yet. Enter the business name and address manually — it will be geocoded with the existing address lookup. Add AQ_GOOGLE_PLACES_KEY (or Settings → googlePlacesKey) when ready.';
+      setTimeout(function(){ $('#dpPlaces').focus(); },20);
+    }
+  }
+  wrap.querySelectorAll('[data-dptab]').forEach(function(b){ b.onclick=function(){ setTab(b.dataset.dptab); }; });
   var renderResults=function(){
-    var q=($('#dpSearch').value||'').toLowerCase().trim();
-    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type to search every territory…</div>'; return; }
-    var rows=planningUniverse().filter(function(d){ return (d.name||'').toLowerCase().includes(q)||(d.loc||'').toLowerCase().includes(q)||(d.territory||'').toLowerCase().includes(q); }).slice(0,30);
-    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — create it below.</div>'; return; }
+    var q=($('#dpSearch').value||'').trim();
+    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, postal code or account…</div>'; return; }
+    var rows=dqMatches(q);
+    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Potential new dealer.</div>'; return; }
     $('#dpResults').innerHTML=rows.map(function(d){
       var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
+      var sub=[d.city,d.loc,d.territory].filter(Boolean).join(' · ');
       return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
-        +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span></button>';
+        +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc(sub)+'</span></button>';
     }).join('');
-    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){ b.onclick=function(){ addDealerToWeek(b.dataset.pick,wk,day); wrap.remove(); }; });
+    $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){
+      b.onclick=function(){
+        createVisit(b.dataset.pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        wrap.remove();
+      };
+    });
   };
   $('#dpSearch').addEventListener('input',renderResults); renderResults();
+  var placesTimer=null;
+  $('#dpPlaces').addEventListener('input',function(){
+    clearTimeout(placesTimer);
+    placesTimer=setTimeout(function(){
+      var q=($('#dpPlaces').value||'').trim();
+      var box=$('#dpPlacesResults');
+      if(!q){ box.innerHTML=''; return; }
+      if(!placesConfigured()){
+        box.innerHTML='<div class="dp-hint">Places API awaiting credentials — use the manual fields below, or pick a close existing dealer above.</div>';
+        $('#dpName').value=q;
+        return;
+      }
+      box.innerHTML='<div class="dp-hint">Searching Google Places…</div>';
+      /* Hook point for server-backed Places Autocomplete when key is configured. */
+      box.innerHTML='<div class="dp-hint">Places search endpoint not deployed yet. Use manual entry.</div>';
+      $('#dpName').value=q;
+    },280);
+  });
   $('#dpCreate').onclick=function(){
-    var nm=$('#dpName').value.trim(); if(!nm){ $('#dpMsg').textContent='Enter a name.'; return; }
+    var nm=$('#dpName').value.trim(); if(!nm){ $('#dpMsg').textContent='Enter a business name.'; return; }
     $('#dpMsg').textContent='Locating address…';
     addProspect({ name:nm, address:$('#dpAddr').value.trim(), ptype2:$('#dpType').value,
-      contact:$('#dpContact').value.trim(), phone:$('#dpPhone').value.trim(), notes:$('#dpNotes').value.trim(), territory:terr },
-      function(p){ addDealerToWeek(p.id,wk,day); wrap.remove(); });
+      phone:$('#dpPhone').value.trim(), territory:terr },
+      function(p){
+        createVisit(p.id,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        wrap.remove();
+      });
   };
-  setTimeout(function(){ $('#dpSearch').focus(); },30);
+  setTab('existing');
 }
 /* ---------- Leader Map (company-wide) ---------- */
 let _lvMap=null;
@@ -9974,10 +10471,31 @@ function renderSettings(){
           +'<td style="padding:3px 0;color:var(--muted-2);white-space:nowrap">'+esc(a.by||'')+'</td></tr>';
       }).join('')+'</tbody></table></div>'
     : '<div style="font-size:12px;color:var(--muted-2);padding:6px 0">No changes recorded yet.</div>';
+  /* Scheduling buffers (context-aware travel engine) */
+  if(!ADMIN.schedBuffers) ADMIN.schedBuffers=Object.assign({}, (window.AQScheduling&&AQScheduling.DEFAULT_BUFFERS)||{});
+  var sb=ADMIN.schedBuffers;
+  var bufFields=[
+    ['virtualPrepMin','Virtual meeting prep (min)'],
+    ['tradeShowReturnMin','Return to trade show (min)'],
+    ['dealerPrepMin','Dealer meeting prep (min)'],
+    ['dealerOverrunMin','Dealer overrun buffer (min)'],
+    ['airportDomesticMin','Domestic airport arrival (min)'],
+    ['airportIntlMin','International airport arrival (min)'],
+    ['rentalPickupMin','Rental car collection (min)'],
+    ['hotelCheckInMin','Hotel check-in (min)'],
+    ['hotelCheckOutMin','Hotel checkout (min)'],
+    ['drivePaddingPct','Driving time padding (%)']
+  ];
+  var bufBody='<div '+row.replace('border-bottom:1px solid var(--line-soft)','border-bottom:0')+' style="gap:12px">'
+    +bufFields.map(function(p){
+      return fld(p[1],'<input class="schedBufIn" data-k="'+p[0]+'" type="number" min="0" '+inp+' value="'+(sb[p[0]]!=null?sb[p[0]]:'')+'">');
+    }).join('')
+    +'</div><div style="font-size:11px;color:var(--muted-2);margin-top:6px">Defaults used by the context-aware scheduler. Override per appointment from the expanded Scheduling dropdown. Does not auto-move locked or confirmed appointments.</div>';
   host.innerHTML=
      sec('Currency','One centralized exchange rate drives every CAD conversion. Auto-refreshed daily; last successful rate is kept when the provider is unreachable.',curBody)
     +sec('Average Revenue Per Load','Dealer target revenue = Target Loads × the value for the dealer\'s market. Dealers in unknown markets become problem rows.',rplBody)
     +sec('Planning Defaults','The target year drives every label and calculation — '+(Y+1)+' and beyond are a settings change, not a rewrite.',defBody)
+    +sec('Scheduling Buffers','Preparation and transition times for virtual meetings, trade shows, dealers, airports and hotels.',bufBody)
     +sec(Y+' Dealer Program','Tier, dealer margin and co-op derive automatically from Target Loads. Edit the bands here — no code changes needed.',progBody)
     +sec('Audit Log','Who changed what, when — targets, rates, overrides, commitments and locks.',audBody);
   /* wiring */
@@ -10006,6 +10524,15 @@ function renderSettings(){
     audit('default',{field:k,old:ADMIN.defaults[k],neu:v});
     ADMIN.defaults[k]=v;
     recalcTargets(); saveAdmin(); renderSettings();
+  };});
+  host.querySelectorAll('.schedBufIn').forEach(function(el){ el.onchange=function(){
+    if(!ADMIN.schedBuffers) ADMIN.schedBuffers={};
+    var k=el.dataset.k, v=parseFloat(el.value);
+    if(!isFinite(v)||v<0){ renderSettings(); return; }
+    audit('sched-buffer',{field:k,old:ADMIN.schedBuffers[k],neu:v});
+    ADMIN.schedBuffers[k]=Math.round(v);
+    try{ tlInvalidate(); }catch(e){}
+    saveAdmin(); renderSettings();
   };});
   host.querySelectorAll('.progIn').forEach(function(el){ el.onchange=function(){
     var i=+el.dataset.i, k=el.dataset.k, p=ADMIN.program[i]; if(!p) return;
@@ -10282,7 +10809,7 @@ function applyPlanSnapshot(p){
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
   VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{}; PROSPECTS=Array.isArray(p.prospects)?p.prospects:[];
-  ORD=p.ordx||{}; COORDOVR=p.coordovr||{}; EVMETA=p.evmeta||{};
+  ORD=p.ordx||{}; COORDOVR=p.coordovr||{}; EVMETA=p.evmeta||{}; TRIPBOOK=p.tripbook||{};
   if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;
   ensureAssignDefaults(); invalidateUniverse();
 }
@@ -10390,6 +10917,10 @@ function wireDnD(){
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
     var ok=setVisitField(el.dataset.vref, el.dataset.f, el.value);
     if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
+    refreshPlanner();
+  }));
+  document.querySelectorAll('.sched-class-sel[data-vref]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    setVisitField(el.dataset.vref, 'schedClass', el.value);
     refreshPlanner();
   }));
   document.querySelectorAll('.vnote').forEach(el=>{
@@ -10505,7 +11036,39 @@ function wireDnD(){
     var v=b.dataset.confweek;
     tripConfirmWeek(v==='remote'?'remote':parseInt(v,10));
   }));
-  document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const k=b.dataset.conf;CONF[k]=!CONF[k];if(!CONF[k])delete CONF[k];savePlan();refreshPlanner();}));
+  document.querySelectorAll('[data-tripstatus]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    var st=b.dataset.tripstatus, wk=+b.dataset.wk;
+    var members=teamSelectedMembers();
+    if(!members.length){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
+    var apply=function(m){
+      var extra={};
+      if(st==='booking') extra.bookingBy=(typeof pbWho==='function'?pbWho():'coordinator');
+      if(st==='booked'){ extra.bookedBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.bookedAt=new Date().toISOString(); extra.needsReview=false; }
+      if(st==='sent'){ extra.sentBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.sentAt=new Date().toISOString(); }
+      tripSetStatus(terr,wk,m.id,st,extra);
+      savePlan(); refreshPlanner();
+      if(typeof aqToast==='function') aqToast('Trip status: '+(TRIP_STATUS[st]?TRIP_STATUS[st].label:st));
+    };
+    if(members.length===1) apply(members[0]);
+    else {
+      var wrap=document.createElement('div'); wrap.className='modalbg';
+      wrap.innerHTML='<div class="modalbox" style="width:min(400px,94vw)"><div class="mh"><div class="mt">Update status for</div><button type="button" class="mclose" id="tssX">×</button></div>'
+        +'<div style="padding:12px 16px">'+members.map(function(m){
+          return '<button type="button" class="kbb" data-mid="'+esc(m.id)+'" style="display:block;width:100%;margin:0 0 6px;height:32px;text-align:left">'+esc(m.name)+'</button>';
+        }).join('')+'</div></div>';
+      document.body.appendChild(wrap);
+      wrap.querySelector('#tssX').onclick=function(){ wrap.remove(); };
+      wrap.querySelectorAll('[data-mid]').forEach(function(btn){
+        btn.onclick=function(){ var m=members.filter(function(x){return x.id===btn.dataset.mid;})[0]; wrap.remove(); if(m) apply(m); };
+      });
+    }
+  }));
+  document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    /* Legacy week confirm → Ready to Book flow */
+    var k=b.dataset.conf, parts=String(k).split('|');
+    if(parts.length>=2){ tripConfirmWeek(parts[1]==='remote'?'remote':parseInt(parts[1],10)); }
+  }));
   document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',function(e){e.stopPropagation();var v=b.dataset.dl; exportWeek(terr, v==='remote'?'remote':parseInt(v,10));}));
   document.querySelectorAll('#weeks .kc-name').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();var c=el.closest('.kcard');var id=c&&c.dataset.id;if(id)allDealerModal(id.slice(0,3)==='xv:'?(XVISITS.filter(function(x){return 'xv:'+x.id===id;})[0]||{}).dealer:id);}));
   /* travel items: one delegated handler for every typed field */
@@ -10550,50 +11113,278 @@ function exportWeek(t,wk){
   tripExportPdf(t, wk, null);
 }
 
-/* —— Trip confirmation + documents (Weekly Planner footer) —— */
+/* —— Ready to Book + trip booking status (Weekly Planner toolbar) —— */
+var TRIP_STATUS={
+  planning:{id:'planning',label:'Planning',cls:''},
+  ready:{id:'ready',label:'Ready to Book',cls:'ready'},
+  booking:{id:'booking',label:'Booking in Progress',cls:'booking'},
+  booked:{id:'booked',label:'Booked',cls:'booked'},
+  sent:{id:'sent',label:'Reviewed & Sent',cls:'sent'}
+};
 function tripConfKey(t,wk,memberId){ return memberId?(t+'|'+wk+'|'+memberId):(t+'|'+wk); }
+function tripBookGet(t,wk,memberId){
+  var k=tripConfKey(t,wk,memberId);
+  return TRIPBOOK[k]||null;
+}
+function tripBookStatus(t,wk,memberId){
+  var rec=tripBookGet(t,wk,memberId);
+  if(rec&&rec.status&&TRIP_STATUS[rec.status]) return TRIP_STATUS[rec.status];
+  /* Legacy Confirm Week → treat as Ready to Book */
+  if(CONF[tripConfKey(t,wk,memberId)]||CONF[tripConfKey(t,wk)]) return TRIP_STATUS.ready;
+  return TRIP_STATUS.planning;
+}
 function tripWeekIsConfirmed(t,wk,memberId){
-  if(memberId && CONF[tripConfKey(t,wk,memberId)]) return true;
-  /* Legacy territory-wide key still counts when viewing that person alone */
-  return !!CONF[tripConfKey(t,wk)];
+  var st=tripBookStatus(t,wk,memberId).id;
+  return st==='ready'||st==='booking'||st==='booked'||st==='sent';
 }
 function tripWeekConfState(t,wk){
   var members=teamSelectedMembers();
   if(!members.length){
-    return {on:false, label:'Confirm week', disabled:true};
+    return {on:false, label:'Ready to Book', disabled:true, status:TRIP_STATUS.planning};
   }
   if(members.length===1){
-    var on=tripWeekIsConfirmed(t,wk,members[0].id);
-    return {on:on, label:on?'Confirmed ✓':'Confirm week', member:members[0]};
+    var st=tripBookStatus(t,wk,members[0].id);
+    var on=st.id!=='planning';
+    return {on:on, label:on?(st.id==='ready'?'Ready ✓':st.label):'Ready to Book', member:members[0], status:st};
   }
   var allOn=members.every(function(m){ return tripWeekIsConfirmed(t,wk,m.id); });
-  return {on:allOn, label:allOn?'Confirmed ✓':'Confirm week', multi:true};
+  return {on:allOn, label:allOn?'Ready ✓':'Ready to Book', multi:true, status:allOn?TRIP_STATUS.ready:TRIP_STATUS.planning};
 }
-function tripToggleConfirm(t,wk,memberId){
+function tripFlagDirtyIfSubmitted(t,wk){
+  try{
+    if(typeof wk!=='number') return;
+    Object.keys(TRIPBOOK||{}).forEach(function(k){
+      if(k.indexOf((t||'')+'|'+wk)!==0) return;
+      var rec=TRIPBOOK[k];
+      if(!rec) return;
+      if(rec.status==='ready'||rec.status==='booking'||rec.status==='booked'||rec.status==='sent'){
+        rec.needsReview=true;
+        rec.changedAt=new Date().toISOString();
+        rec.changedBy=(typeof pbWho==='function'?pbWho():'traveller');
+      }
+    });
+  }catch(e){}
+}
+function salesAssistantForTerr(t){
+  var list=(ADMIN&&ADMIN.team)||[];
+  var pick=function(pred){
+    return list.filter(function(m){
+      if(!m||m.active===false||!m.email) return false;
+      if(!pred(m)) return false;
+      var terrs=Array.isArray(m.terrs)?m.terrs:(m.terr?[m.terr]:[]);
+      return !terrs.length||terrs.indexOf('All')>=0||terrs.indexOf(t)>=0;
+    })[0]||null;
+  };
+  /* Prefer Sales Assistant, then Travel Coordinator / coordinator group, then Nikita by name */
+  return pick(function(m){ return m.role==='SA'; })
+    || pick(function(m){ return m.role==='TC'||m.accessGroup==='coordinator'; })
+    || pick(function(m){ return /nikita/i.test(m.name||''); });
+}
+function tripValidateReady(t,wk,member){
+  var issues=[], soft=[];
+  if(!member||!member.id) issues.push('Assign a traveller before submitting.');
+  var pack=tripCollectWeek(t,wk,member);
+  var flights=(pack.ls||[]).filter(function(x){ var ty=travelType(x); return ty==='flight_in'||ty==='flight_out'||ty==='flight_stop'; });
+  var hotels=(pack.ls||[]).filter(function(x){ return travelType(x)==='hotel'; });
+  var rentals=(pack.ls||[]).filter(function(x){ var ty=travelType(x); return ty==='rental_pickup'||ty==='rental_return'; });
+  if(!(pack.vs||[]).length&&!(pack.ls||[]).length&&!(pack.xs||[]).length) issues.push('Add at least one destination or travel stop.');
+  flights.forEach(function(f){
+    if(f.day==null||!f.time) issues.push('Flight needs departure date and time'+(f.airline?(' ('+f.airline+')'):'')+'.');
+    if(!(f.depAirport||f.airportCode)||!f.arrAirport) soft.push('Flight route incomplete — add departure and arrival airports.');
+  });
+  hotels.forEach(function(h){
+    if(h.day==null) issues.push('Hotel needs a check-in day'+(h.name?(' ('+h.name+')'):'')+'.');
+    if(!h.name&&!h.address) soft.push('Hotel is missing a name or address.');
+  });
+  rentals.forEach(function(r){
+    if(r.day==null||!r.time) soft.push('Rental car timing is incomplete.');
+  });
+  try{
+    var TL=tlCompute(t,wk);
+    var hard=(TL.conflicts||[]).filter(function(c){ return c.sched||c.lateMin; });
+    if(hard.length) issues.push('Resolve '+hard.length+' scheduling conflict'+(hard.length>1?'s':'')+' before submitting.');
+  }catch(e){}
+  try{
+    var err=document.getElementById('pbSaveErr');
+    if(err&&err.style.display!=='none'&&err.offsetParent!==null) issues.push('Wait for cloud sync to succeed before submitting.');
+  }catch(e){}
+  return {ok:!issues.length, issues:issues, soft:soft, pack:pack, flights:flights, hotels:hotels, rentals:rentals};
+}
+function tripReadySummary(t,wk,member,pack){
+  var dest=[];
+  (pack.vs||[]).forEach(function(d){ if(d.name) dest.push(d.name); });
+  (pack.xs||[]).forEach(function(x){ var d=byId[x.dealer]||uniById(x.dealer); if(d&&d.name) dest.push(d.name); });
+  (pack.ls||[]).forEach(function(it){
+    var ty=travelType(it);
+    if(ty==='hotel'&&it.name) dest.push(it.name);
+  });
+  var uniq=[]; dest.forEach(function(n){ if(uniq.indexOf(n)<0) uniq.push(n); });
+  return {
+    traveller:member?member.name:'',
+    territory:t,
+    week:wkNo(wk),
+    dates:WEEKDATES[wk]||wkDY(wk),
+    destinations:uniq,
+    flights:(pack.ls||[]).filter(function(x){ var ty=travelType(x); return /^flight_/.test(ty); }).length,
+    hotels:(pack.ls||[]).filter(function(x){ return travelType(x)==='hotel'; }).length,
+    rentals:(pack.ls||[]).filter(function(x){ var ty=travelType(x); return /^rental_/.test(ty); }).length
+  };
+}
+function tripOpenLink(t,wk,memberId){
+  var u=new URL(location.href);
+  u.searchParams.set('terr',t);
+  u.searchParams.set('wk',String(wk));
+  if(memberId) u.searchParams.set('team',memberId);
+  u.searchParams.set('focus','trip');
+  return u.toString();
+}
+async function tripNotifySalesAssistant(t,wk,member,rec,summary){
+  var sa=salesAssistantForTerr(t);
+  if(!sa||!sa.email){
+    return {ok:false, message:'No sales assistant email is configured in My Team (Travel Coordinator).'};
+  }
+  var subject='Arrowquip TRAVEL | Ready to Book | '+summary.traveller+' | Week '+summary.week;
+  var link=tripOpenLink(t,wk,member.id);
+  var lines=[
+    'A trip is ready for booking.',
+    '',
+    'Traveller: '+summary.traveller,
+    'Territory: '+summary.territory,
+    'Trip dates: '+summary.dates,
+    'Destinations: '+(summary.destinations.join(', ')||'—'),
+    'Flights required: '+summary.flights,
+    'Hotels required: '+summary.hotels,
+    'Rental cars required: '+summary.rentals,
+    'Special instructions: '+(rec.notes||'—'),
+    '',
+    'Open trip: '+link
+  ];
+  var token=(typeof _PB_TOKEN!=='undefined'&&_PB_TOKEN)||null;
+  if(!token) return {ok:false, message:'Sign in required to notify the sales assistant.'};
+  try{
+    var resp=await fetch('/api/ready-to-book-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+      body:JSON.stringify({
+        to:sa.email,
+        toName:sa.name||'',
+        subject:subject,
+        text:lines.join('\n'),
+        html:'<div style="font-family:Arial,sans-serif;color:#111;line-height:1.45">'
+          +'<div style="font-weight:800;letter-spacing:.08em;color:#cc152f;margin-bottom:12px">ARROWQUIP TRAVEL</div>'
+          +'<p>A trip is ready for booking.</p>'
+          +'<table style="font-size:14px;border-collapse:collapse">'
+          +[['Traveller',summary.traveller],['Territory',summary.territory],['Trip dates',summary.dates],
+            ['Destinations',summary.destinations.join(', ')||'—'],['Flights required',String(summary.flights)],
+            ['Hotels required',String(summary.hotels)],['Rental cars required',String(summary.rentals)],
+            ['Special instructions',rec.notes||'—']].map(function(r){
+              return '<tr><td style="padding:4px 12px 4px 0;color:#6b7280">'+esc(r[0])+'</td><td style="padding:4px 0;font-weight:600">'+esc(r[1])+'</td></tr>';
+            }).join('')
+          +'</table>'
+          +'<p style="margin:18px 0"><a href="'+esc(link)+'" style="display:inline-block;background:#cc152f;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-weight:700">Open Trip</a></p>'
+          +'</div>',
+        tripKey:tripConfKey(t,wk,member.id),
+        idempotencyKey:rec.notifyKey||tripConfKey(t,wk,member.id)+'|'+String(rec.submittedAt||'')
+      })
+    });
+    var j=await resp.json().catch(function(){ return null; });
+    if(!j) return {ok:false, message:'Notification request failed.'};
+    return j;
+  }catch(e){
+    return {ok:false, message:String(e&&e.message||e)};
+  }
+}
+function tripSetStatus(t,wk,memberId,status,extra){
   var k=tripConfKey(t,wk,memberId);
-  if(CONF[k]) delete CONF[k]; else CONF[k]=true;
-  /* Do not invent confirmation for other travellers */
-  savePlan(); refreshPlanner();
+  var rec=TRIPBOOK[k]||{status:'planning'};
+  rec.status=status;
+  rec.updatedAt=new Date().toISOString();
+  rec.updatedBy=(typeof pbWho==='function'?pbWho():'user');
+  if(extra) Object.keys(extra).forEach(function(x){ rec[x]=extra[x]; });
+  TRIPBOOK[k]=rec;
+  /* Keep legacy CONF in sync for older readers */
+  if(status==='planning') delete CONF[k];
+  else CONF[k]=true;
+  return rec;
+}
+function tripSubmitReady(t,wk,member){
+  var v=tripValidateReady(t,wk,member);
+  if(!v.ok){
+    var wrap=document.createElement('div'); wrap.className='modalbg';
+    wrap.innerHTML='<div class="modalbox" style="width:min(440px,94vw)"><div class="mh"><div class="mt">Complete before Ready to Book</div><button type="button" class="mclose" id="trbX">×</button></div>'
+      +'<div style="padding:12px 16px;font-size:13px"><ul style="margin:0;padding-left:18px">'
+      +v.issues.map(function(i){ return '<li style="margin:0 0 6px">'+esc(i)+'</li>'; }).join('')
+      +'</ul></div></div>';
+    document.body.appendChild(wrap);
+    wrap.querySelector('#trbX').onclick=function(){ wrap.remove(); };
+    wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
+    return;
+  }
+  var softNote=v.soft.length?('<p style="margin:0 0 10px;color:#b45309;font-size:12px">Optional: '+esc(v.soft[0])+(v.soft.length>1?(' (+'+(v.soft.length-1)+' more)'):'')+'</p>'):'';
+  var wrap2=document.createElement('div'); wrap2.className='modalbg';
+  wrap2.innerHTML='<div class="modalbox" style="width:min(460px,94vw)"><div class="mh"><div class="mt">Ready to Book</div><button type="button" class="mclose" id="trb2X">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Submit <b>'+esc(member.name)+'</b>’s week for the sales assistant to arrange bookings. This does not mean travel is already booked.</p>'
+    +softNote
+    +'<label style="display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px">Special instructions</label>'
+    +'<textarea id="trbNotes" rows="3" style="width:100%;font:13px inherit;border:1px solid var(--line);border-radius:6px;padding:8px"></textarea>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">'
+    +'<button type="button" class="kbb" id="trbCancel">Cancel</button>'
+    +'<button type="button" class="kbb primary" id="trbGo">Submit</button></div>'
+    +'</div></div>';
+  document.body.appendChild(wrap2);
+  var close=function(){ wrap2.remove(); };
+  wrap2.querySelector('#trb2X').onclick=close;
+  wrap2.querySelector('#trbCancel').onclick=close;
+  wrap2.addEventListener('click',function(e){ if(e.target===wrap2) close(); });
+  wrap2.querySelector('#trbGo').onclick=async function(){
+    var btn=wrap2.querySelector('#trbGo'); btn.disabled=true; btn.textContent='Submitting…';
+    var notes=(wrap2.querySelector('#trbNotes').value||'').trim();
+    var existing=tripBookGet(t,wk,member.id);
+    if(existing&&existing.status==='ready'&&existing.notifiedAt&&!existing.needsReview){
+      if(typeof aqToast==='function') aqToast('Already submitted — sales assistant was notified');
+      close(); return;
+    }
+    var submittedAt=new Date().toISOString();
+    var rec=tripSetStatus(t,wk,member.id,'ready',{
+      submittedAt:submittedAt,
+      submittedBy:(typeof pbWho==='function'?pbWho():'traveller'),
+      notes:notes,
+      needsReview:false,
+      notifyKey:tripConfKey(t,wk,member.id)+'|'+submittedAt
+    });
+    savePlan();
+    var summary=tripReadySummary(t,wk,member,v.pack);
+    var mail=await tripNotifySalesAssistant(t,wk,member,rec,summary);
+    rec.notifyResult={ok:!!mail.ok, sent:!!mail.sent, message:mail.message||'', at:new Date().toISOString(), id:mail.id||null};
+    if(mail.ok&&mail.sent){ rec.notifiedAt=rec.notifyResult.at; }
+    TRIPBOOK[tripConfKey(t,wk,member.id)]=rec;
+    savePlan(); refreshPlanner();
+    close();
+    if(mail.ok&&mail.sent){ if(typeof aqToast==='function') aqToast('Ready to Book — sales assistant notified'); }
+    else if(mail.ok&&!mail.sent){ if(typeof aqToast==='function') aqToast(mail.message||'Submitted — email not sent (transport/dry-run)'); }
+    else { if(typeof aqToast==='function') aqToast(mail.message||'Submitted — notification failed', false); }
+  };
 }
 function tripConfirmWeek(wk){
   var t=terr;
   var members=teamSelectedMembers();
   if(!members.length){
-    if(typeof aqToast==='function') aqToast('Select a traveller before confirming their week');
+    if(typeof aqToast==='function') aqToast('Select a traveller before submitting Ready to Book');
     return;
   }
   if(members.length===1){
-    tripToggleConfirm(t,wk,members[0].id);
+    tripSubmitReady(t,wk,members[0]);
     return;
   }
   var wrap=document.createElement('div'); wrap.className='modalbg';
-  wrap.innerHTML='<div class="modalbox" style="width:min(420px,94vw)"><div class="mh"><div class="mt">Confirm whose week?</div><button class="mclose" id="tcwX">×</button></div>'
+  wrap.innerHTML='<div class="modalbox" style="width:min(420px,94vw)"><div class="mh"><div class="mt">Whose trip is ready?</div><button class="mclose" id="tcwX">×</button></div>'
     +'<div style="padding:12px 16px;font-size:13px">'
-    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Multiple travellers are selected. Confirm one person at a time — never everyone silently.</p>'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Multiple travellers are selected. Submit one traveller’s trip at a time.</p>'
     +members.map(function(m){
-      var on=tripWeekIsConfirmed(t,wk,m.id);
+      var st=tripBookStatus(t,wk,m.id);
       return '<button type="button" class="kbb" data-tcw="'+esc(m.id)+'" style="display:block;width:100%;margin:0 0 6px;height:32px;text-align:left">'
-        +esc(m.name)+' · '+esc(m.role)+(on?' — Confirmed ✓':'')+'</button>';
+        +esc(m.name)+' · '+esc(m.role)+(st.id!=='planning'?(' — '+st.label):'')+'</button>';
     }).join('')
     +'</div></div>';
   document.body.appendChild(wrap);
@@ -10601,7 +11392,11 @@ function tripConfirmWeek(wk){
   wrap.querySelector('#tcwX').onclick=close;
   wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
   wrap.querySelectorAll('[data-tcw]').forEach(function(b){
-    b.onclick=function(){ tripToggleConfirm(t,wk,b.dataset.tcw); close(); };
+    b.onclick=function(){
+      var m=members.filter(function(x){ return x.id===b.dataset.tcw; })[0];
+      close();
+      if(m) tripSubmitReady(t,wk,m);
+    };
   });
 }
 
@@ -10844,24 +11639,35 @@ function tripOpenReviewModal(t, wk, member){
 function tripsDocBarRender(){
   var ov=(typeof _hcOverall==='function')?_hcOverall():'ok';
   var label=({ok:'System Healthy',warn:'System Check',fail:'System Issues',pending:'System …'}[ov]||'System Healthy');
+  var yearMode=(typeof PLAN_MODE!=='undefined' && PLAN_MODE==='year');
   var none=teamIsNone();
   var single=teamSingleMember();
-  var hint=none?'Select a traveller':(single?esc(single.name):'');
+  var hint=yearMode
+    ? ((typeof YG!=='undefined' && YG.year)?('Year '+YG.year):'Year overview')
+    : (none?'Select a traveller':(single?esc(single.name):''));
+  var disableTrip=(!yearMode && none);
+  var docLabel=yearMode?'Year Documents':'Trip Documents';
   var html='<div class="tdb-left"><span class="tdb-dot '+esc(ov)+'"></span><span class="tdb-status">'+esc(label)+'</span>'
     +(hint?'<span class="tdb-hint">'+hint+'</span>':'')
     +'</div>'
-    +'<div class="tdb-right"><span class="tdb-label">Trip Documents</span>'
-    +'<button type="button" class="tdb-btn excel" data-tripdoc="excel"'+(none?' disabled':'')+' title="Download Excel itinerary">📗 Excel ↓</button>'
-    +'<button type="button" class="tdb-btn pdf" data-tripdoc="pdf"'+(none?' disabled':'')+' title="Download PDF itinerary">📕 PDF ↓</button>'
-    +'<button type="button" class="tdb-btn send" data-tripdoc="send"'+(none?' disabled':'')+' title="Review and send itinerary">✉ Review &amp; Send</button>'
+    +'<div class="tdb-right"><span class="tdb-label">'+esc(docLabel)+'</span>'
+    +'<button type="button" class="tdb-btn excel" data-tripdoc="excel"'+(disableTrip?' disabled':'')+' title="'+(yearMode?'Download year overview Excel':'Download Excel itinerary')+'">📗 Excel ↓</button>'
+    +'<button type="button" class="tdb-btn pdf" data-tripdoc="pdf"'+(disableTrip?' disabled':'')+' title="'+(yearMode?'Download year overview PDF':'Download PDF itinerary')+'">📕 PDF ↓</button>'
+    +'<button type="button" class="tdb-btn send" data-tripdoc="send"'+(disableTrip?' disabled':'')+' title="Review and send">✉ Review &amp; Send</button>'
     +'</div>';
   function wire(bar, wk){
     if(!bar) return;
     bar.innerHTML=html;
     bar.querySelectorAll('[data-tripdoc]').forEach(function(b){
       b.onclick=function(){
-        if(teamIsNone()){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
         var kind=b.dataset.tripdoc;
+        if(yearMode){
+          if(kind==='excel' && typeof ygExportExcel==='function') ygExportExcel();
+          else if(kind==='pdf' && typeof ygExportPdf==='function') ygExportPdf();
+          else if(kind==='send') ygReviewSend();
+          return;
+        }
+        if(teamIsNone()){ if(typeof aqToast==='function') aqToast('Select a traveller first'); return; }
         var t=(terr==='All'?(single&&single.terr)||'East':terr);
         if(kind==='excel') tripExportExcel(t, wk, teamIsSingle()?teamSingleMember():null);
         else if(kind==='pdf') tripExportPdf(t, wk, teamIsSingle()?teamSingleMember():null);
@@ -10872,6 +11678,35 @@ function tripsDocBarRender(){
   var focusWk=(typeof focusWkGet==='function'?focusWkGet():wkCurrent());
   wire(document.getElementById('tripsDocBar'), focusWk);
   wire(document.getElementById('allTripsDocBar'), (typeof ALL_WK==='number'?ALL_WK:focusWk));
+  wire(document.getElementById('yearDocBar'), focusWk);
+}
+function ygReviewSend(){
+  var y=(typeof YG!=='undefined'&&YG.year)?YG.year:new Date().getFullYear();
+  var t=(typeof terr==='string'?terr:'All');
+  var wrap=document.createElement('div');
+  wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(440px,94vw)"><div class="mh"><div class="mt">Review &amp; Send — Year '+y+'</div><button type="button" class="mclose" id="ygRsX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#374151">Preview the annual overview, then confirm recipients before sending. Nothing is emailed until you approve.</p>'
+    +'<label style="display:block;font:700 11px inherit;color:#6b7280;margin-bottom:4px">Recipients</label>'
+    +'<textarea id="ygRsTo" rows="3" class="msearch" style="width:100%;min-height:64px" placeholder="name@arrowquip.com"></textarea>'
+    +'<p style="font-size:11px;color:#9ca3af;margin:8px 0 12px">Territory filter: <b>'+esc(t)+'</b></p>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'
+    +'<button type="button" class="btn" id="ygRsPdf">Preview PDF</button>'
+    +'<button type="button" class="btn" id="ygRsXls">Preview Excel</button>'
+    +'<button type="button" class="btn" id="ygRsSend" style="background:var(--aq-red);color:#fff;border:0">Confirm &amp; Send</button>'
+    +'</div></div></div>';
+  document.body.appendChild(wrap);
+  function close(){ wrap.remove(); }
+  wrap.querySelector('#ygRsX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelector('#ygRsPdf').onclick=function(){ if(typeof ygExportPdf==='function') ygExportPdf(); };
+  wrap.querySelector('#ygRsXls').onclick=function(){ if(typeof ygExportExcel==='function') ygExportExcel(); };
+  wrap.querySelector('#ygRsSend').onclick=function(){
+    var to=(wrap.querySelector('#ygRsTo').value||'').trim();
+    if(!to){ if(typeof aqToast==='function') aqToast('Add at least one recipient'); return; }
+    if(typeof aqToast==='function') aqToast('Email send is not configured yet — preview documents instead');
+  };
 }
 function exportTripPlans(){
   var terrs=["East","South","Central","West","Exports"]; var weeks=[31].concat(FIELD_NUMS); var body='';
@@ -11322,7 +12157,7 @@ function pbRestoreNav(){
     var ns=JSON.parse(localStorage.getItem('aqNavState')||'null');
     _pbNavReady=true;
     if(!ns) return;
-    var tabsOk=['All','East','South','Central','West','Exports','Master'];
+    var tabsOk=['All','East','South','Central','West','Exports','Master','Settings','Team'];
     if(tabsOk.indexOf(ns.terr)>=0) terr=ns.terr;
     if(ns.terrMode==='map'||ns.terrMode==='plan') terrMode=ns.terrMode;
     allMode=(ns.allMode==='map')?'map':(ns.allMode==='trip'?'trip':'overview');   /* legacy cal/leaders/leader → overview */
@@ -11341,7 +12176,12 @@ function render(){
   if(planStrip) planStrip.style.display=(isMaster||isSettings||isTeam)?'none':'flex';
   document.querySelectorAll('[data-planmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.planmode===(yearMode?'year':'weekly')); });
   var yv=document.getElementById('yearView');
+  var ys=document.getElementById('yearShell');
   var tv=document.getElementById('teamView');
+  if(ys){
+    ys.classList.toggle('is-on', yearMode);
+    ys.style.display=yearMode?'flex':'none';
+  }
   if(yv){
     yv.classList.toggle('is-on', yearMode);
     yv.style.display=yearMode?'block':'none';
@@ -11351,6 +12191,7 @@ function render(){
     tv.style.display=isTeam?'block':'none';
   }
   if(yearMode){
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
     document.getElementById("cards").style.display='none';
     document.getElementById("plannerView").style.display='none';
     document.getElementById("allView").style.display='none';
@@ -11364,9 +12205,11 @@ function render(){
       if(typeof ygShow==='function') ygShow(true);
       else if(typeof ygRender==='function') ygRender();
       else if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;font:600 13px Open Sans,Arial,sans-serif;color:#6b7280">Year at a Glance failed to load. Reload the page.</div>';
+      try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e3){}
     }catch(e){ console.error(e); if(yv) yv.innerHTML='<div class="yg-wrap" style="padding:24px;color:#b42318">Year at a Glance error — see console.</div>'; }
     return;
   }
+  if(ys){ ys.classList.remove('is-on'); ys.style.display='none'; }
   document.getElementById("cards").style.display='none';
   renderCards();
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings&&!isTeam)?'':'none';
@@ -11374,14 +12217,19 @@ function render(){
   document.getElementById("masterView").style.display=isMaster?'':'none';
   document.getElementById("settingsView").style.display=isSettings?'':'none';
   if(isTeam){
+    try{ document.body.classList.remove('trips-layout-on'); }catch(e0){}
     try{ if(typeof mtNormalizeTeam==='function') mtNormalizeTeam(); }catch(e){}
     try{ if(typeof renderMyTeam==='function') renderMyTeam(); }catch(e){ console.error(e); }
     return;
   }
-  if(isSettings) renderSettings();
-  else if(isMaster) renderMaster();
-  else if(isAll) renderAllView();
+  if(isSettings){ try{ document.body.classList.remove('trips-layout-on'); }catch(e0){} renderSettings(); }
+  else if(isMaster){ try{ document.body.classList.remove('trips-layout-on'); }catch(e0){} renderMaster(); }
+  else if(isAll){
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
+    renderAllView();
+  }
   else {
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
     document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
     var isPlan=terrMode!=='map', isMap=terrMode==='map';
     document.getElementById('planwrap').style.display=isPlan?'':'none';
@@ -11610,11 +12458,11 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
        automatically; same-event edits become per-card conflicts. */
     var _confl=mergeEventPayload(p);
     /* non-event settings adopt the incoming value (not scheduled events) */
-    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);}
+    if(p.settings)SETTINGS=p.settings; if(p.admin)ADMIN=p.admin; if(p.goal!=null)GOAL2027=p.goal; if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.commits))COMMITS=p.commits; if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.tle)TLE={lock:p.tle.lock||{}}; if(p.conf)CONF=p.conf; if(p.tripbook)TRIPBOOK=Object.assign({},p.tripbook); if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.tripbook)TRIPBOOK=Object.assign({},p.tripbook); if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
@@ -12109,7 +12957,17 @@ function pbRenderAcct(){
         e.stopPropagation();
         menu.classList.remove('open');
         var a=b.dataset.gear;
-        if(a==='team'){ if(typeof openMyTeam==='function') openMyTeam(); return; }
+        if(a==='team'){
+          /* CRITICAL: mutate lexical `terr` here (same scope as render), matching
+             Master/Settings. External openMyTeam used to set window.terr only —
+             a no-op for `let terr` — so My Team never stayed open. */
+          PLAN_MODE='weekly';
+          terr='Team';
+          document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+          try{ document.body.classList.remove('trips-layout-on'); }catch(err){}
+          render();
+          return;
+        }
         if(a==='master'){ terr='Master'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='settings'){ terr='Settings'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='trips'){
@@ -14630,6 +15488,6 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 
 </script>
 <script src="/year-glance.js"></script>
-<script src="/my-team.js"></script>
+<script src="/my-team.js?v=mt4"></script>
 </body>
 </html>

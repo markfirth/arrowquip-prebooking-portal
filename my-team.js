@@ -54,8 +54,9 @@
 
   var DEFAULT_JOB_ROLES = [
     { id: 'AM', label: 'AM — Account Manager', group: 'standard' },
-    { id: 'DSR', label: 'DSR — Dealer Success Rep', group: 'standard' },
+    { id: 'DSR', label: 'DSR — Dealer Success Representative', group: 'standard' },
     { id: 'ISS', label: 'ISS — Inside Sales Support', group: 'standard' },
+    { id: 'SA', label: 'Sales Assistant', group: 'coordinator' },
     { id: 'TC', label: 'Travel Coordinator', group: 'coordinator' },
     { id: 'LEAD', label: 'Leadership', group: 'leadership' },
   ];
@@ -67,7 +68,16 @@
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
   }
-  function ADMIN() { return global.ADMIN || (global.ADMIN = {}); }
+  function ADMIN() {
+    /* Prefer the portal's shared ADMIN (var on window). Never create a private
+       empty object — that desynced My Team from the planner roster. */
+    if (typeof global.getPortalAdmin === 'function') {
+      var via = global.getPortalAdmin();
+      if (via) return via;
+    }
+    if (!global.ADMIN) global.ADMIN = {};
+    return global.ADMIN;
+  }
   function teamArr() {
     var A = ADMIN();
     if (!Array.isArray(A.team)) A.team = [];
@@ -77,8 +87,26 @@
     var A = ADMIN();
     if (!Array.isArray(A.jobRoles) || !A.jobRoles.length) {
       A.jobRoles = DEFAULT_JOB_ROLES.map(function (r) { return Object.assign({}, r); });
+    } else {
+      /* Ensure Sales Assistant exists for older saved plans without requiring a reset */
+      if (!A.jobRoles.some(function (r) { return r && r.id === 'SA'; })) {
+        A.jobRoles.splice(3, 0, { id: 'SA', label: 'Sales Assistant', group: 'coordinator' });
+      }
+      /* Rename legacy Travel Coordinator label clarity; keep TC id */
+      A.jobRoles.forEach(function (r) {
+        if (r && r.id === 'TC' && (!r.label || r.label === 'Travel Coordinator')) r.label = 'Travel Coordinator';
+        if (r && r.id === 'DSR' && r.label && /Dealer Success Rep$/.test(r.label)) {
+          r.label = 'DSR — Dealer Success Representative';
+        }
+      });
     }
     return A.jobRoles;
+  }
+  function accountStatusLabel(m) {
+    if (!m || m.active === false) return 'Deactivated';
+    if (m.inviteStatus === 'pending' || m.inviteStatus === 'invited') return 'Invitation pending';
+    if (!m.email) return 'No login';
+    return 'Active';
   }
   function roleLabel(id) {
     var r = rolesArr().filter(function (x) { return x.id === id; })[0];
@@ -190,12 +218,32 @@
     } catch (e) {}
   }
 
+  function currentTerr() {
+    try {
+      if (typeof global.getPortalTerr === 'function') return global.getPortalTerr();
+    } catch (e) {}
+    return global.terr;
+  }
+
   function openMyTeam() {
-    if (!canManage()) { toast('Administrator access required', false); return; }
-    global.PLAN_MODE = 'weekly';
-    global.terr = 'Team';
-    document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
-    try { if (global.render) global.render(); } catch (e) {}
+    /* Root cause fix: index.html declares `let terr` / `let PLAN_MODE`, which are
+       NOT properties of window. Setting global.terr left render()'s lexical terr
+       unchanged, so Team view flashed then disappeared. Always navigate via
+       goMyTeam() which lives in the same scope as terr. */
+    if (typeof global.goMyTeam === 'function') {
+      global.goMyTeam();
+    } else {
+      try { if (global.setPortalPlanMode) global.setPortalPlanMode('weekly'); } catch (e) {}
+      try { if (global.setPortalTerr) global.setPortalTerr('Team'); else global.terr = 'Team'; } catch (e) {}
+      document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
+      var tv = document.getElementById('teamView');
+      if (tv) { tv.classList.add('is-on'); tv.style.display = 'block'; }
+      try { if (global.render) global.render(); else renderMyTeam(); } catch (e) {
+        console.error(e);
+        try { renderMyTeam(); } catch (e2) { console.error(e2); }
+      }
+    }
+    if (!canManage()) toast('View only — administrator access required to edit users', false);
   }
 
   function renderMyTeam() {
@@ -210,22 +258,15 @@
       var inactive = m.active === false;
       var email = m.email || '';
       var dial = m.dialpad || '';
-      var pending = m.inviteStatus === 'pending' || m.inviteStatus === 'invited';
-      var statusNote = inactive
-        ? '<div class="mt-status">Deactivated</div>'
-        : pending
-        ? '<div class="mt-status">Invitation pending</div>'
-        : !email
-        ? '<div class="mt-status">No login yet</div>'
-        : '';
+      var status = accountStatusLabel(m);
       var roleOpts = rolesArr()
         .map(function (r) {
-          return '<option value="' + esc(r.id) + '"' + (m.role === r.id ? ' selected' : '') + '>' + esc(r.id) + '</option>';
+          return '<option value="' + esc(r.id) + '"' + (m.role === r.id ? ' selected' : '') + '>' + esc(r.label || r.id) + '</option>';
         })
         .join('');
       return (
         '<tr class="' + (inactive ? 'mt-inactive' : '') + '" data-mid="' + esc(m.id) + '">' +
-        '<td><div class="mt-name">' + esc(m.name || '') + '</div>' + statusNote + '</td>' +
+        '<td><div class="mt-name">' + esc(m.name || '') + '</div></td>' +
         '<td>' +
         (email
           ? '<a class="mt-email" href="mailto:' + esc(email) + '">' + esc(email) + '</a>'
@@ -236,10 +277,11 @@
           ? '<a class="mt-dial" href="tel:' + esc(dial) + '">' + esc(dial) + '</a>'
           : '<span class="mt-muted">—</span>') +
         '</td>' +
-        '<td class="mt-last">' + esc(fmtLastSignIn(m.lastSignIn || _lastSignIn[String(email).toLowerCase()])) + '</td>' +
-        '<td><select class="mt-role" data-mtrole="' + esc(m.id) + '"' + (canManage() ? '' : ' disabled') + '>' + roleOpts + '</select></td>' +
         '<td>' + esc(terrDisplay(m)) + '</td>' +
-        '<td class="mt-admin"><input type="checkbox" data-mtadmin="' + esc(m.id) + '"' + (m.isAdmin ? ' checked' : '') + (canManage() ? '' : ' disabled') + '></td>' +
+        '<td><select class="mt-role" data-mtrole="' + esc(m.id) + '"' + (canManage() ? '' : ' disabled') + ' title="Position">' + roleOpts + '</select></td>' +
+        '<td class="mt-last">' + esc(fmtLastSignIn(m.lastSignIn || _lastSignIn[String(email).toLowerCase()])) + '</td>' +
+        '<td><span class="mt-status-pill' + (inactive ? ' off' : (status === 'Active' ? ' on' : '')) + '">' + esc(status) + '</span></td>' +
+        '<td class="mt-admin"><input type="checkbox" data-mtadmin="' + esc(m.id) + '"' + (m.isAdmin ? ' checked' : '') + (canManage() ? '' : ' disabled') + ' title="Administrator access"></td>' +
         '<td class="mt-actions"><button type="button" class="mt-more" data-mtmore="' + esc(m.id) + '" title="Actions" aria-label="Actions">⋯</button></td>' +
         '</tr>'
       );
@@ -247,7 +289,7 @@
 
     host.innerHTML =
       '<div class="mt-page">' +
-      '<div class="mt-head"><h1>MY TEAM</h1><div class="mt-sub">Arrowquip Travel Portal</div></div>' +
+      '<div class="mt-head"><h1>MY TEAM</h1></div>' +
       '<div class="mt-tabs"><button type="button" class="mt-tab on">USERS</button></div>' +
       '<div class="mt-card">' +
       '<div class="mt-toolbar">' +
@@ -255,10 +297,10 @@
       '<button type="button" class="mt-btn solid" id="mtAddUser">ADD USER</button>' +
       '</div>' +
       '<div class="mt-table-wrap"><table class="mt-table">' +
-      '<thead><tr><th>NAME</th><th>EMAIL</th><th>DIALPAD</th><th>LAST SIGN-IN</th><th>ROLE</th><th>TERRITORY</th><th>ADMIN</th><th></th></tr></thead>' +
-      '<tbody>' + (body || '<tr><td colspan="8" class="mt-empty">No team members yet. Click ADD USER to invite the first employee.</td></tr>') + '</tbody>' +
+      '<thead><tr><th>NAME</th><th>EMAIL</th><th>DIALPAD</th><th>TERRITORY</th><th>POSITION</th><th>LAST SIGN-IN</th><th>STATUS</th><th>ADMIN</th><th></th></tr></thead>' +
+      '<tbody>' + (body || '<tr><td colspan="9" class="mt-empty">No team members yet. Click ADD USER to invite the first employee.</td></tr>') + '</tbody>' +
       '</table></div>' +
-      '<p class="mt-foot">This list shows everyone who has an Arrowquip Travel Portal account. Administrators can add users, manage access and update team information.</p>' +
+      '<p class="mt-foot">Operational positions (AM, DSR, ISS, Sales Assistant) are separate from administrator access. Deactivating a user preserves their travel history.</p>' +
       '</div></div>';
 
     wireMyTeam(host);
@@ -410,7 +452,8 @@
     opts = opts || {};
     if (!canManage()) { toast('Administrator access required', false); return; }
     var existing = opts.member || null;
-    var preTerr = opts.preTerr || (global.terr && ['East', 'South', 'Central', 'West', 'Exports'].indexOf(global.terr) >= 0 ? global.terr : 'East');
+    var ct = currentTerr();
+    var preTerr = opts.preTerr || (ct && ['East', 'South', 'Central', 'West', 'Exports'].indexOf(ct) >= 0 ? ct : 'East');
     var sp = existing ? { first: existing.firstName || splitName(existing.name).first, last: existing.lastName || splitName(existing.name).last } : { first: '', last: '' };
     var wrap = document.createElement('div');
     wrap.className = 'mt-modalbg';
@@ -429,16 +472,18 @@
       '</div>' +
       '<label>Company email<input id="mtu_email" type="email" value="' + esc(existing ? existing.email || '' : '') + '" placeholder="name@arrowquip.com"></label>' +
       '<label>Dialpad telephone<input id="mtu_dial" value="' + esc(existing ? existing.dialpad || '' : '') + '" placeholder="+1…"></label>' +
-      '<label>Role<select id="mtu_role">' + roleOpts + '</select></label>' +
+      '<label>Position<select id="mtu_role">' + roleOpts + '</select></label>' +
       '<div class="mt-label">Territory</div><div class="mt-checks" id="mtu_terrs">' +
       terrCheckboxes(existing ? memberTerrs(existing) : [preTerr], 'mtu_terr') +
       '</div>' +
+      '<div class="mt-label">Access permissions</div>' +
       '<label class="mt-check admin"><input type="checkbox" id="mtu_admin"' + (existing && existing.isAdmin ? ' checked' : '') + '> Administrator access</label>' +
+      '<p class="mt-hint" style="margin:6px 0 0">Positions control day-to-day work. Administrator access is separate and required to manage users.</p>' +
       '<div class="mt-err" id="mtu_err"></div>' +
       '</div>' +
       '<div class="mt-mf">' +
       '<button type="button" class="mt-btn ghost" id="mtu_cancel">CANCEL</button>' +
-      '<button type="button" class="mt-btn solid" id="mtu_save">' + (existing ? 'SAVE' : 'CREATE &amp; INVITE') + '</button>' +
+      '<button type="button" class="mt-btn solid" id="mtu_save">' + (existing ? 'SAVE CHANGES' : 'SEND INVITATION') + '</button>' +
       '</div></div>';
     document.body.appendChild(wrap);
     function close() { wrap.remove(); }
@@ -503,7 +548,7 @@
       close();
       toast(existing ? 'Saving & inviting…' : 'Creating account…');
       await inviteMember(member, { resend: true });
-      if (global.terr === 'Team') renderMyTeam();
+      if (currentTerr() === 'Team') renderMyTeam();
       else try { if (global.render) global.render(); } catch (e) {}
     };
   }
@@ -538,7 +583,7 @@
         save();
         toast(j.message || j.error || 'Allowlist updated; invite incomplete', false);
       }
-      if (global.terr === 'Team') renderMyTeam();
+      if (currentTerr() === 'Team') renderMyTeam();
     } catch (e) {
       toast('Invite failed — check connection', false);
     }
@@ -606,7 +651,7 @@
       save();
       close();
       toast('Roles saved');
-      if (global.terr === 'Team') renderMyTeam();
+      if (currentTerr() === 'Team') renderMyTeam();
     };
   }
 
