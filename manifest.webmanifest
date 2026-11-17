@@ -1,7 +1,7 @@
 {
-  "name": "Arrowquip TRAVEL",
-  "short_name": "TRAVEL",
-  "description": "Trip Command Centre — trip, day, appointments and tasks for field travel.",
+  "name": "Arrowquip Travel Portal",
+  "short_name": "Travel Portal",
+  "description": "Arrowquip Travel Portal — trip planning, appointments and field travel.",
   "start_url": "/?m=1",
   "scope": "/",
   "display": "standalone",
