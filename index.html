@@ -9614,16 +9614,47 @@ function preferHotelFromMemory(placeHint, brand){
   })[0];
   return hit||null;
 }
+function smartStampVisit(dealerId, wk, dayN, intent){
+  createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN);
+  if(!intent) return;
+  try{
+    if(intent.time && typeof intent.time==='string'){
+      if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
+        TIME[dealerId]=intent.time;
+        if(intent.durationMin) DUR[dealerId]=intent.durationMin;
+      } else {
+        var xv=XVISITS[XVISITS.length-1];
+        if(xv && xv.dealer===dealerId){
+          xv.time=intent.time;
+          if(intent.durationMin) xv.dur=intent.durationMin;
+        }
+      }
+      savePlan(); refreshPlanner();
+    } else if(intent.durationMin){
+      if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
+        DUR[dealerId]=intent.durationMin; savePlan(); refreshPlanner();
+      }
+    }
+  }catch(e){}
+}
 function applySmartIntent(intent, wk, day){
   if(!intent) return false;
   undoSnap('Add: '+(intent.name||intent.raw||'item'));
   var dayN=(day===''||day==null)?null:parseInt(day,10);
   if(intent.day!=null && (dayN==null||dayN==='')) dayN=intent.day;
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
   function finishTravel(it){
     LOGI.push(it); teamStampNew('m',it.id);
     /* Collapsed by default — do not auto-expand */
     savePlan();
     function afterOwn(){ refreshPlanner(); aqToast('Added · '+(it.name||intent.kind), true); }
+    /* Auto-assign to the single selected traveller when possible — no modal. */
+    try{
+      if(typeof teamSingleMember==='function'){
+        var one=teamSingleMember();
+        if(one && one.id && !teamOwnerOf('m',it.id)){ OWNERS['m:'+it.id]=one.id; savePlan(); }
+      }
+    }catch(e){}
     if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',it.id))
       teamPickOwner('m', it.id, afterOwn);
     else afterOwn();
@@ -9631,30 +9662,23 @@ function applySmartIntent(intent, wk, day){
   if(intent.kind==='dealer'){
     var dealers=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
     var ranked=(window.AQSmart&&AQSmart.rankDealers)?AQSmart.rankDealers(intent.query||intent.name, dealers):dqMatches(intent.query||intent.name);
-    if(ranked.length===1){
-      createVisit(ranked[0].id,'prebook',(wk==='remote'?'remote':parseInt(wk,10)), dayN);
-      if(intent.time && typeof intent.time==='string'){
-        var d0=ranked[0];
-        if(ASSIGN[d0.id]===(wk==='remote'?'remote':parseInt(wk,10))){
-          TIME[d0.id]=intent.time;
-          if(intent.durationMin) DUR[d0.id]=intent.durationMin;
-          savePlan();
-        } else {
-          var xv=XVISITS[XVISITS.length-1];
-          if(xv && xv.dealer===d0.id){ xv.time=intent.time; if(intent.durationMin) xv.dur=intent.durationMin; savePlan(); }
-        }
-      }
-      aqToast('Added · '+(ranked[0].name||'dealer'), true);
+    var best=(window.AQSmart&&AQSmart.clearBestDealer)?AQSmart.clearBestDealer(ranked):(ranked.length===1?ranked[0]:null);
+    if(best){
+      smartStampVisit(best.id, wk, dayN, intent);
+      aqToast('Added · '+(best.name||'dealer'), true);
       return true;
     }
     if(ranked.length>1){
-      /* Keep typeahead open with matches — do not invent a pick */
-      return false;
+      /* Still create the top match — user asked for type-and-go; they can undo. */
+      smartStampVisit(ranked[0].id, wk, dayN, intent);
+      aqToast('Added · '+(ranked[0].name||'dealer')+' (best match)', true);
+      return true;
     }
-    /* No dealer match — create a named other stop (prospect path available via ＋) */
+    /* No dealer match — create a named stop with the typed text */
     intent.kind='other'; intent.travelType='other';
+    if(!intent.name) intent.name=intent.raw||'Stop';
   }
-  if(intent.kind==='virtual' || intent.travelType){
+  if(intent.kind==='virtual' || intent.travelType || intent.kind==='other' || intent.kind==='drive' || intent.kind==='food' || intent.kind==='fuel'){
     var t=intent.travelType||'other';
     if(intent.kind==='hotel' && intent.preferPrevious){
       var mem=preferHotelFromMemory(intent.placeHint, (intent.name||'').split(/\s/)[0]);
@@ -9663,9 +9687,9 @@ function applySmartIntent(intent, wk, day){
         intent.placeHint=mem.city||intent.placeHint;
       }
     }
-    var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:(terr==='All'||terr==='Master'||terr==='Team')?'East':terr,
+    var it={id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terrFor,
       wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
-      name:intent.name||'', address:'', lat:null, lon:null,
+      name:intent.name||intent.raw||'Stop', address:'', lat:null, lon:null,
       airportCode:'', airportName:'', airline:intent.airline||'', flightNo:'',
       day:dayN, time:(intent.time||''), day2:(intent.dayEnd!=null?intent.dayEnd:null), time2:'',
       conf:'', notes:'', bookStatus:''};
@@ -9687,41 +9711,43 @@ function applySmartIntent(intent, wk, day){
     finishTravel(it);
     return true;
   }
-  return false;
+  /* Absolute fallback — never leave Enter as a no-op */
+  finishTravel({
+    id:'L'+Date.now()+Math.floor(Math.random()*1000), terr:terrFor,
+    wk:(wk==='remote'?'remote':parseInt(wk,10)), type:'other',
+    name:intent.name||intent.raw||'Stop', address:'', lat:null, lon:null,
+    airportCode:'', airportName:'', airline:'', flightNo:'',
+    day:dayN, time:(intent.time||''), day2:null, time2:'',
+    conf:'', notes:'', bookStatus:'', dur:intent.durationMin||60
+  });
+  return true;
 }
 function smartTryEnter(inp){
-  if(!inp || !window.AQSmart) return false;
-  var q=inp.value.trim(); if(!q) return false;
+  var q=(inp&&inp.value||'').trim(); if(!inp||!q) return false;
   /* Multi-line paste → bulk review */
-  if(/\n/.test(inp.value) || (q.split(/\n/).length>1)){
-    smartBulkReview(inp.value, inp.dataset.qwk, inp.dataset.qday);
+  if(/\n/.test(inp.value) || /\t/.test(inp.value)){
+    if(window.AQSmart) smartBulkReview(inp.value, inp.dataset.qwk, inp.dataset.qday);
+    else applySmartIntent({kind:'other',travelType:'other',name:q,raw:q}, inp.dataset.qwk, inp.dataset.qday);
     inp.value=''; dqClose();
     return true;
   }
-  var intent=AQSmart.parse(q);
-  if(!intent) return false;
+  var intent=window.AQSmart?AQSmart.parse(q):{kind:'other',travelType:'other',name:q,raw:q};
+  if(!intent) intent={kind:'other',travelType:'other',name:q,raw:q};
   if(intent.needsClarify && intent.needsClarify.indexOf('time_ampm')>=0 && intent.timeAmbiguous){
     askAmPm(intent.timeAmbiguous, function(resolved){
       if(!resolved) return;
       intent.time=resolved; intent.timeAmbiguous=null;
-      intent.needsClarify=intent.needsClarify.filter(function(x){ return x!=='time_ampm'; });
+      intent.needsClarify=(intent.needsClarify||[]).filter(function(x){ return x!=='time_ampm'; });
       applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
       inp.value=''; dqClose();
+      setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
     });
     return true;
   }
-  /* Dealer with multiple matches — fall through to typeahead */
-  if(intent.kind==='dealer'){
-    var dealers=(typeof planningUniverse==='function'?planningUniverse():DEALERS)||[];
-    var ranked=AQSmart.rankDealers(intent.query||intent.name, dealers);
-    if(ranked.length!==1) return false;
-  }
-  if(intent.confidence==='low' && intent.needsClarify && intent.needsClarify.length){
-    return false; /* keep typeahead / ask via UI */
-  }
-  var ok=applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
-  if(ok){ inp.value=''; dqClose(); }
-  return ok;
+  applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
+  inp.value=''; dqClose();
+  setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
+  return true;
 }
 function smartBulkReview(text, wk, day){
   if(!window.AQSmart) return;
@@ -9765,7 +9791,19 @@ function smartBulkReview(text, wk, day){
   };
 }
 function dqMatches(q){
+  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer. */
+  try{
+    if(window.AQSmart&&AQSmart.rankDealers){
+      var intent=AQSmart.parse(q);
+      var query=(intent&&(intent.query||intent.name))||q;
+      var ranked=AQSmart.rankDealers(query, planningUniverse());
+      if(ranked.length) return ranked.slice(0,10);
+    }
+  }catch(e){}
   var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  var stop={at:1,for:1,the:1,a:1,an:1,with:1,to:1,in:1,on:1,of:1,and:1,am:1,pm:1};
+  toks=toks.filter(function(t){ return !stop[t] && !/^\d+([.:]\d+)?(am|pm)?$/.test(t) && !/^(hours?|hrs?|minutes?|mins?)$/.test(t); });
+  if(!toks.length) return [];
   var rows=planningUniverse().filter(function(d){
     var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
     return toks.every(function(t){ return h.indexOf(t)>=0; });
@@ -9891,12 +9929,8 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
   if(e.key==='Enter'){
     e.preventDefault();
-    /* Prefer intelligent NL create when the typed line is clear. */
-    if(smartTryEnter(t)) return;
-    var d=DQ.rows[DQ.on];
-    if(d){ dqPick(d.id,'prebook'); return; }
-    var c=(DQ.cats||[])[DQ.on-DQ.rows.length];
-    if(c) dqAddStop(c);
+    /* Always create from the typed line — never a silent no-op. */
+    smartTryEnter(t);
     return;
   }
   var _n=DQ.rows.length+((DQ.cats||[]).length); if(!_n) return;
@@ -15779,7 +15813,7 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 
 </script>
 <script src="/year-glance.js"></script>
-<script src="/smart-entry.js?v=se1"></script>
+<script src="/smart-entry.js?v=se2"></script>
 <script src="/my-team.js?v=mt4"></script>
 </body>
 </html>

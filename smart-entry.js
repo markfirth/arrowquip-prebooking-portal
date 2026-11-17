@@ -286,22 +286,58 @@
     return out;
   }
 
-  /* Rank dealer candidates for a query against a list of {id,name,...} */
+  /* Rank dealer candidates. Prefer substring / token hits on the name; do not
+     require every filler word (at/for/hours) to appear in the dealer record. */
   function rankDealers(query, dealers) {
-    var toks = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
-    if (!toks.length) return [];
-    var rows = (dealers || []).filter(function (d) {
-      var h = [d.name, d.loc, d.city, d.address, d.zip, d.postal].join(' ').toLowerCase();
-      return toks.every(function (t) { return h.indexOf(t) >= 0; });
+    var q = String(query || '').toLowerCase().trim();
+    if (!q) return [];
+    var stop = { at: 1, for: 1, the: 1, a: 1, an: 1, with: 1, to: 1, in: 1, on: 1, of: 1, and: 1, am: 1, pm: 1 };
+    var toks = q.split(/\s+/).filter(function (t) {
+      if (stop[t]) return false;
+      if (/^\d+([.:]\d+)?(am|pm)?$/.test(t)) return false;
+      if (/^(hours?|hrs?|h|minutes?|mins?|m)$/.test(t)) return false;
+      return t.length >= 2;
     });
-    var q0 = toks[0];
-    rows.sort(function (a, b) {
-      var na = (a.name || '').toLowerCase(), nb = (b.name || '').toLowerCase();
-      var sa = (na.indexOf(q0) === 0 ? 0 : 1);
-      var sb = (nb.indexOf(q0) === 0 ? 0 : 1);
-      return sa - sb || na.localeCompare(nb);
+    if (!toks.length) toks = q.split(/\s+/).filter(Boolean).slice(0, 4);
+    var scored = [];
+    (dealers || []).forEach(function (d) {
+      var name = String(d.name || '').toLowerCase();
+      var hay = [name, d.loc, d.city, d.address, d.zip, d.postal].join(' ').toLowerCase();
+      if (!name) return;
+      var hit = 0, miss = 0;
+      toks.forEach(function (t) {
+        if (hay.indexOf(t) >= 0) hit++;
+        else miss++;
+      });
+      if (!hit) return;
+      /* Require most meaningful tokens; allow one miss for partial names */
+      if (miss > 1 || (toks.length >= 2 && hit < Math.ceil(toks.length * 0.6))) return;
+      var score = hit * 10 - miss * 3;
+      if (name.indexOf(toks[0]) === 0) score += 5;
+      if (name === q || name.indexOf(q) === 0) score += 20;
+      if (q.indexOf(name) >= 0 && name.length >= 4) score += 15;
+      scored.push({ d: d, score: score });
     });
-    return rows.slice(0, 8);
+    scored.sort(function (a, b) {
+      return b.score - a.score || String(a.d.name).localeCompare(String(b.d.name));
+    });
+    return scored.slice(0, 8).map(function (x) {
+      var row = x.d;
+      row._smartScore = x.score;
+      return row;
+    });
+  }
+
+  /* True when the top match is clearly better than the rest — safe to auto-pick. */
+  function clearBestDealer(ranked) {
+    if (!ranked || !ranked.length) return null;
+    if (ranked.length === 1) return ranked[0];
+    var a = ranked[0]._smartScore || 0, b = ranked[1]._smartScore || 0;
+    if (a >= b + 8) return ranked[0];
+    var na = String(ranked[0].name || '').toLowerCase();
+    /* Exact / near-exact name contained in query */
+    if (ranked[0]._smartScore >= 25) return ranked[0];
+    return null;
   }
 
   return {
@@ -310,6 +346,7 @@
     parseTimeLoose: parseTimeLoose,
     parseDuration: parseDuration,
     rankDealers: rankDealers,
+    clearBestDealer: clearBestDealer,
     detectKind: detectKind,
   };
 });

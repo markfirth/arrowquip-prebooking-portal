@@ -60,6 +60,13 @@ var ranked = AQ.rankDealers('double b', [
 ]);
 chk('dealer rank', ranked.length === 1 && ranked[0].id === '1');
 
+var rankedNl = AQ.rankDealers('Double B Farm Supply at 9am for 2 hours', [
+  { id: '1', name: 'Double B Farm Supply', city: 'Athens' },
+  { id: '2', name: 'Double Z Ranch', city: 'Rome' },
+]);
+chk('dealer rank ignores time filler words', rankedNl.length >= 1 && rankedNl[0].id === '1');
+chk('clearBestDealer picks top', AQ.clearBestDealer(rankedNl) && AQ.clearBestDealer(rankedNl).id === '1');
+
 if (failed) {
   console.error('\n' + failed + ' failed');
   process.exit(1);
