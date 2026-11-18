@@ -131,7 +131,13 @@
       var ty = travelType(it);
       if (ty === 'flight_out' || ty === 'flight_stop') add('flight_out', 'Outbound flight' + (it.airline ? (' · ' + it.airline) : ''), it.id);
       else if (ty === 'flight_in') add('flight_in', 'Return / inbound flight' + (it.airline ? (' · ' + it.airline) : ''), it.id);
-      else if (ty === 'hotel') add('hotel', 'Hotel' + (it.name ? (' · ' + it.name) : (it.address ? (' · ' + it.address) : '')), it.id);
+      else if (ty === 'hotel') {
+        var hTitle = 'Hotel';
+        if (it.stayNear && it.stayRadiusMin) hTitle = 'Hotel near ' + it.stayNear + ' (within ' + it.stayRadiusMin + ' min)';
+        else if (it.name) hTitle = 'Hotel · ' + it.name;
+        else if (it.address) hTitle = 'Hotel · ' + it.address;
+        add('hotel', hTitle, it.id);
+      }
       else if (ty === 'rental_pickup') add('rental', 'Rental car pickup', it.id);
       else if (ty === 'rental_return') add('rental_return', 'Rental car return', it.id);
       else if (ty === 'other' || ty === 'ground') add('ground', it.name || 'Ground transportation', it.id);

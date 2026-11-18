@@ -321,6 +321,30 @@ body.trips-layout-on #sysHealth{display:none !important;}
   box-shadow:0 1px 4px rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;
 }
 .map-fab:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.map-fab.on{background:#111;border-color:#111;color:#fff;}
+.map-fab.text{width:auto;padding:0 9px;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;}
+.map-fab.armed{background:#fff7ed;border-color:#b45309;color:#b45309;}
+.map-hint{
+  position:absolute;left:10px;bottom:10px;z-index:650;display:none;
+  background:rgba(255,255,255,.96);border:1px solid #e5e7eb;border-radius:4px;
+  padding:6px 10px;font:600 11px 'Open Sans',Arial,sans-serif;color:#374151;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);max-width:240px;
+}
+.planwrap.trips-kanban.map-split .map-hint.is-on,
+.planwrap.trips-kanban.map-full .map-hint.is-on{display:block;}
+.pin.pool{background:#9ca3af!important;opacity:.85;width:10px;height:10px;border-width:1px;}
+.pin.pool .pinseq{display:none;}
+.mpop{font:12px 'Open Sans',Arial,sans-serif;min-width:180px;max-width:240px;}
+.mpop b{display:block;font-size:12.5px;color:#111;margin:0 0 2px;}
+.mpop .msub{color:#6b7280;font-size:11px;margin:0 0 8px;}
+.mpop-days,.mpop-radii{display:flex;flex-wrap:wrap;gap:4px;}
+.mpop-days button,.mpop-radii button{
+  appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:3px;
+  font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.2px;text-transform:uppercase;
+  padding:4px 7px;cursor:pointer;color:#374151;
+}
+.mpop-days button:hover,.mpop-radii button:hover{border-color:#111;color:#111;}
+.mpop-radii button.primary{background:#111;border-color:#111;color:#fff;}
 .map-back{
   display:none;position:absolute;top:12px;left:12px;z-index:700;
   appearance:none;font-family:inherit;font-size:13px;font-weight:700;
@@ -2101,9 +2125,12 @@ body.portal-coord .aqPlanStrip{display:none!important;}
         <aside class="trips-map" id="tripsMapPane">
           <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
           <div class="map-fabs">
+            <button type="button" class="map-fab text" data-mappool="1" id="mapPoolBtn" title="Show all dealers — click to add to the trip">Dealers</button>
+            <button type="button" class="map-fab text" data-mapstay="1" id="mapStayBtn" title="Click the map to set an overnight near a town">Stay</button>
             <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
             <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
           </div>
+          <div class="map-hint" id="mapPlanHint"></div>
           <div id="tripsMapSlot" data-wkmapslot></div>
         </aside>
       </div>
@@ -2687,6 +2714,8 @@ function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderC
 /* ---- Trips Kanban focus / map chrome (device-local only — never in plan) ---- */
 var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!==''){ var n=parseInt(s,10); if(isFinite(n)) return n; } }catch(e){} return null; })();
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
+var MAP_SHOW_POOL=(function(){ try{ return localStorage.getItem('aqMapShowPool')==='1'; }catch(e){ return false; } })();
+var MAP_STAY_ARM=false;
 var MAP_SPLIT_PX=(function(){ try{ var s=localStorage.getItem('aqMapSplit'); if(s==null||s==='') return null; var n=parseInt(s,10); return (isFinite(n)&&n>=200&&n<=900)?n:null; }catch(e){ return null; } })();
 var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
 var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
@@ -2784,6 +2813,17 @@ function mapInvalidateSoon(){
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },40);
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },200);
 }
+/* Map plan controls live outside the week re-render — bind once. */
+(function(){
+  if(window._aqMapPlanWired) return;
+  window._aqMapPlanWired=true;
+  document.addEventListener('click',function(e){
+    var pool=e.target&&e.target.closest&&e.target.closest('[data-mappool]');
+    if(pool){ e.preventDefault(); e.stopPropagation(); mapTogglePool(); return; }
+    var stay=e.target&&e.target.closest&&e.target.closest('[data-mapstay]');
+    if(stay){ e.preventDefault(); e.stopPropagation(); mapToggleStayArm(); return; }
+  });
+})();
 
 /* ---- per-week map: ONE lazy Leaflet instance hosted in the Trips map pane ---- */
 let WKMAPON={};                 /* retained for compatibility */
@@ -2799,6 +2839,75 @@ function tvExpanded(id){ return !!TVEXP[id]; }
 function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; try{ sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
 function dvExpanded(ref){ return !!DVEXP[ref]; }
 function dvToggleExpand(ref){ DVEXP[ref]=!DVEXP[ref]; try{ sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
+/* Sales keyboard chain: Add → Time → Duration → next Add (no mouse required). */
+var _salesChain=null;
+var _salesChainAmpm=null;
+function salesChainArm(ref, wk, day, step){
+  if(!ref) return;
+  _salesChain={
+    ref:String(ref),
+    wk:String(wk==null?'':wk),
+    day:(day==null||day===''||day==='none')?'':String(day),
+    step:step||'time'
+  };
+  try{
+    DVEXP[ref]=true;
+    sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP));
+  }catch(e){}
+}
+function salesChainClear(){ _salesChain=null; }
+function salesChainFocus(){
+  var c=_salesChain; if(!c) return;
+  setTimeout(function(){
+    if(!_salesChain||_salesChain.ref!==c.ref) return;
+    function focusEl(el){
+      if(!el) return false;
+      try{ el.focus({preventScroll:true}); }catch(e){ try{ el.focus(); }catch(_){ } }
+      try{ if(el.select) el.select(); }catch(e2){}
+      return true;
+    }
+    if(c.step==='time'){
+      var t=document.querySelector('.vf.vtime[data-vref="'+c.ref+'"]')
+        ||document.querySelector('.vf[data-vref="'+c.ref+'"][data-f="time"]');
+      if(focusEl(t)) return;
+      c.step='dur';
+    }
+    if(c.step==='dur'){
+      var d=document.querySelector('.vf.vdur[data-vref="'+c.ref+'"]')
+        ||document.querySelector('.vf[data-vref="'+c.ref+'"][data-f="dur"]');
+      if(focusEl(d)) return;
+      c.step='add';
+    }
+    if(c.step==='add'){
+      try{ delete DVEXP[c.ref]; sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){}
+      _salesChain=null;
+      refreshPlanner({skipMap:true});
+      setTimeout(function(){
+        var n=document.querySelector('.dqin[data-qwk="'+c.wk+'"][data-qday="'+c.day+'"]');
+        if(n){ try{ n.focus({preventScroll:true}); }catch(e){ try{ n.focus(); }catch(_){ } } }
+      }, 30);
+    }
+  }, 35);
+}
+function salesChainFromDrop(el){
+  var drop=el&&el.closest&&el.closest('[data-drop]');
+  if(!drop||!drop.dataset.drop) return {wk:'', day:''};
+  var p=String(drop.dataset.drop).split('|');
+  return {wk:p[0]||'', day:(p[1]==null||p[1]==='none')?'':p[1]};
+}
+function salesChainAdvance(ref, field, el){
+  var loc=salesChainFromDrop(el);
+  if(field==='time'){
+    salesChainArm(ref, loc.wk, loc.day, 'dur');
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+    return;
+  }
+  if(field==='dur'){
+    salesChainArm(ref, loc.wk, loc.day, 'add');
+    salesChainFocus();
+  }
+}
 function cardsExpandAll(open){
   /* open=true expands every visible card this render; false collapses all */
   try{
@@ -6257,11 +6366,12 @@ function itineraryFor(t,wk){
   LOGI.forEach(function(it){
     if((t==='All'||it.terr===t) && it.wk===wk && teamFilterMatch('m',it.id)){
       var ty=travelType(it);
-      items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
+      items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, rawType:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
         address:it.address||'', lat:it.lat, lon:it.lon,
         day:(it.day==null?null:it.day), time:it.time||'',
         day2:it.day2, time2:it.time2,
         airline:it.airline, flightNo:it.flightNo, conf:it.conf, notes:it.notes,
+        stayNear:it.stayNear||'', stayRadiusMin:it.stayRadiusMin||null,
         located:travelHasLocation(it), raw:it});
     }
   });
@@ -6352,6 +6462,8 @@ function travelCard(it,wk,tl){
       var arrT=it.time2?t12s(it.time2):'';
       if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
       else if(_mainT) timeDisp=_mainT;
+    } else if(isHotel && it.stayNear && it.stayRadiusMin){
+      label='Near '+it.stayNear+' · within '+it.stayRadiusMin+' min';
     } else {
       label=it.name||T.label||'Stop';
     }
@@ -7115,7 +7227,14 @@ function setVisitField(ref,f,val){
     else if(f==='time'){
       var pv=parseTimeLoose(val);
       if(pv&&typeof pv==='object'&&pv.ambiguous){
-        askAmPm(pv,function(resolved){ if(resolved){ TIME[id]=resolved; finish(); refreshPlanner(); } });
+        askAmPm(pv,function(resolved){
+          if(!resolved) return;
+          TIME[id]=resolved; finish();
+          if(_salesChainAmpm){
+            var p=_salesChainAmpm; _salesChainAmpm=null;
+            salesChainAdvance(p.ref, p.f, p.el);
+          } else refreshPlanner();
+        });
         return null;
       }
       if(pv==null) return false; TIME[id]=pv;
@@ -7129,7 +7248,14 @@ function setVisitField(ref,f,val){
     else if(f==='time'){
       var pvx=parseTimeLoose(val);
       if(pvx&&typeof pvx==='object'&&pvx.ambiguous){
-        askAmPm(pvx,function(resolved){ if(resolved){ x.time=resolved; finish(); refreshPlanner(); } });
+        askAmPm(pvx,function(resolved){
+          if(!resolved) return;
+          x.time=resolved; finish();
+          if(_salesChainAmpm){
+            var p2=_salesChainAmpm; _salesChainAmpm=null;
+            salesChainAdvance(p2.ref, p2.f, p2.el);
+          } else refreshPlanner();
+        });
         return null;
       }
       if(pvx==null) return false; x.time=pvx;
@@ -7188,9 +7314,10 @@ function deleteVisit(ref){
 }
 /* create a card. Type is chosen here and is permanent for the card's life.
    day is optional — set when the card was dropped/placed on a specific day. */
-function createVisit(dealerId,type,wk,day){
-  var d=uniById(dealerId); if(!d) return;
-  if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return;
+function createVisit(dealerId,type,wk,day,opts){
+  opts=opts||{};
+  var d=uniById(dealerId); if(!d) return null;
+  if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return null;
   type=(type==='visit')?'visit':'prebook';
   day=(day==null||day===''||day==='none')?null:parseInt(day,10);
   if(day!=null&&!isFinite(day)) day=null;
@@ -7202,7 +7329,7 @@ function createVisit(dealerId,type,wk,day){
     teamStampNew('d',dealerId);
     expandRef='i:'+dealerId;
   } else {
-    if(wk==='remote') return;
+    if(wk==='remote') return null;
     var xid='X'+Date.now()+Math.floor(Math.random()*1000);
     XVISITS.push({id:xid, dealer:dealerId,
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
@@ -7210,8 +7337,17 @@ function createVisit(dealerId,type,wk,day){
     teamStampNew('x',xid);
     expandRef='x:'+xid;
   }
-  /* Leave cards collapsed by default (one-line). Expansion is user-driven. */
-  savePlan(); refreshPlanner();
+  savePlan();
+  /* Sales planning: expand and start time → duration → next add chain. */
+  if(opts.chain!==false && expandRef && wk!=='remote' && (typeof portalIsSalesMode!=='function'||portalIsSalesMode())){
+    var step=opts.step||'time';
+    salesChainArm(expandRef, wk, day, step);
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+  } else {
+    refreshPlanner();
+  }
+  return expandRef;
 }
 function renderAllView(){
   /* Leadership overview is the default. Map is a retractable pane (hidden by default).
@@ -9686,15 +9822,214 @@ function _wkMapEnsure(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_wkMap);
 }
 function _wkClear(){ if(!_wkMap) return; _wkMap.eachLayer(function(l){ if(!(l instanceof L.TileLayer)) _wkMap.removeLayer(l); }); }
+function mapPlanHintUpdate(){
+  var h=document.getElementById('mapPlanHint');
+  var poolBtn=document.getElementById('mapPoolBtn');
+  var stayBtn=document.getElementById('mapStayBtn');
+  if(poolBtn) poolBtn.classList.toggle('on', !!MAP_SHOW_POOL);
+  if(stayBtn) stayBtn.classList.toggle('armed', !!MAP_STAY_ARM);
+  if(!h) return;
+  if(MAP_STAY_ARM){
+    h.classList.add('is-on');
+    h.textContent='Click a town on the map, then choose how far you’re willing to stay from it.';
+  } else if(MAP_SHOW_POOL){
+    h.classList.add('is-on');
+    h.textContent='Grey dots are dealers not on this trip — click one to add it by day.';
+  } else {
+    h.classList.remove('is-on');
+    h.textContent='';
+  }
+}
+function mapTogglePool(){
+  MAP_SHOW_POOL=!MAP_SHOW_POOL;
+  try{ localStorage.setItem('aqMapShowPool', MAP_SHOW_POOL?'1':'0'); }catch(e){}
+  if(MAP_SHOW_POOL) MAP_STAY_ARM=false;
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
+function mapToggleStayArm(){
+  MAP_STAY_ARM=!MAP_STAY_ARM;
+  if(MAP_STAY_ARM && MAP_UI_MODE==='collapsed') mapModeSet('split');
+  mapPlanHintUpdate();
+  try{ if(_wkMap&&_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
+}
+function mapStayRadiusMeters(mins){
+  /* ~35 mph average road speed — preference for the EA, not a booking. */
+  var mi=(Math.max(15, +mins||30)/60)*35;
+  return mi*1609.34;
+}
+function mapPoolDealers(t, wk){
+  var onTrip={};
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&(s.kind==='dealer'||s.kind==='xvisit')&&s.id) onTrip[String(s.id).replace(/^xv:/,'')]=1;
+      if(s&&s.dealer) onTrip[String(s.dealer)]=1;
+    });
+  }catch(e){}
+  var list=[];
+  try{
+    (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+      if(!d||d.lat==null||d.lon==null||!isFinite(d.lat)||!isFinite(d.lon)) return;
+      if(onTrip[d.id]) return;
+      if(ASSIGN[d.id] && ASSIGN[d.id]!=='pool' && ASSIGN[d.id]!==wk && ASSIGN[d.id]!=='remote'){
+        /* already scheduled another week — still show lightly so they can add a second visit */
+      }
+      list.push(d);
+    });
+  }catch(e){}
+  return list;
+}
+function mapDealerAddPopup(d, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var sub=[d.city,d.loc||d.state].filter(Boolean).join(', ');
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-madd="'+esc(d.id)+'|'+wk+'|'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop"><b>'+esc(d.name)+'</b>'
+    +(sub?('<div class="msub">'+esc(sub)+'</div>'):'<div class="msub">Add to this week</div>')
+    +'<div class="mpop-days">'+days+'</div></div>';
+}
+function mapStayPopup(lat, lon, placeName, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var dayOpts=labs.map(function(l,i){
+    return '<button type="button" data-mstayday="'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop" data-mstaylat="'+lat+'" data-mstaylon="'+lon+'" data-mstayplace="'+esc(placeName)+'" data-mstaywk="'+wk+'">'
+    +'<b>Stay near '+esc(placeName)+'</b>'
+    +'<div class="msub">Tell Travel Coordination how far is acceptable. No hotel is booked yet.</div>'
+    +'<div class="msub" style="margin-bottom:4px">Night</div>'
+    +'<div class="mpop-days" id="mstayDays">'+dayOpts+'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Within</div>'
+    +'<div class="mpop-radii">'
+    +'<button type="button" data-mstaymin="30">30 min</button>'
+    +'<button type="button" data-mstaymin="60" class="primary">1 hour</button>'
+    +'<button type="button" data-mstaymin="90">90 min</button>'
+    +'<button type="button" data-mstaymin="120">2 hours</button>'
+    +'</div></div>';
+}
+function mapAddDealerToDay(dealerId, wk, day){
+  undoSnap('Map add dealer');
+  var ref=createVisit(dealerId, 'prebook', parseInt(wk,10), day, {chain:true, step:'time'});
+  if(!ref){
+    /* already on a week — createVisit may have made an xvisit; chain handles focus */
+    aqToast('Added from map');
+  } else {
+    aqToast('Added · pick time');
+  }
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+}
+function mapAddStayNear(lat, lon, placeName, wk, day, mins){
+  undoSnap('Overnight near '+placeName);
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+  var it={
+    id:'L'+Date.now()+Math.floor(Math.random()*1000),
+    terr:terrFor,
+    wk:parseInt(wk,10),
+    type:'hotel',
+    name:'Near '+placeName,
+    address:placeName,
+    lat:+lat, lon:+lon,
+    day:(day==null||day===''?null:parseInt(day,10)),
+    time:'', day2:null, time2:'',
+    conf:'', notes:'Stay within '+mins+' minutes of '+placeName+' — Travel Coordination to book',
+    bookStatus:'',
+    stayNear:placeName,
+    stayRadiusMin:+mins,
+    mapsUrl:'https://www.google.com/maps?q='+(+lat)+','+(+lon)
+  };
+  LOGI.push(it); teamStampNew('m', it.id);
+  try{
+    if(typeof teamSingleMember==='function'){
+      var one=teamSingleMember();
+      if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
+    }
+  }catch(e){}
+  MAP_STAY_ARM=false;
+  mapPlanHintUpdate();
+  try{ if(_wkMapEl) _wkMapEl.style.cursor=''; }catch(e){}
+  savePlan(); refreshPlanner({skipMap:false});
+  aqToast('Overnight preference set · within '+mins+' min of '+placeName);
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+}
+function mapReversePlace(lat, lon, cb){
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&addressdetails=1&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lon), {
+    headers:{'Accept':'application/json'}
+  }).then(function(r){ return r.json(); }).then(function(j){
+    var a=(j&&j.address)||{};
+    var place=a.city||a.town||a.village||a.hamlet||a.county||a.state||(j&&j.name)||('Location '+(+lat).toFixed(2)+', '+(+lon).toFixed(2));
+    if(a.state&&place.indexOf(a.state)<0 && !a.city && !a.town) place=place+(a.state?(', '+a.state):'');
+    else if(a.state && (a.city||a.town||a.village)) place=(a.city||a.town||a.village)+', '+a.state;
+    cb(place);
+  }).catch(function(){ cb('this location'); });
+}
+function mapBindPlanClicks(){
+  if(!_wkMap || _wkMap._aqPlanBound) return;
+  _wkMap._aqPlanBound=true;
+  _wkMap.on('click', function(ev){
+    if(!MAP_STAY_ARM) return;
+    var lat=ev.latlng.lat, lon=ev.latlng.lng;
+    var wk=focusWkGet();
+    if(typeof wk!=='number'){ aqToast('Pick a travel week first', false); return; }
+    var pop=L.popup({maxWidth:260}).setLatLng(ev.latlng).setContent('<div class="mpop"><b>Finding town…</b></div>').openOn(_wkMap);
+    mapReversePlace(lat, lon, function(place){
+      pop.setContent(mapStayPopup(lat, lon, place, wk));
+      /* default night = last day with activity, else day 0 */
+      var defaultDay=0;
+      try{
+        var items=itineraryFor(terr,wk);
+        items.forEach(function(s){ if(s.day!=null && s.day>defaultDay) defaultDay=s.day; });
+      }catch(e){}
+      pop._aqStayDay=defaultDay;
+      setTimeout(function(){
+        var root=pop.getElement(); if(!root) return;
+        root.querySelectorAll('[data-mstayday]').forEach(function(b){
+          if(+b.dataset.mstayday===defaultDay) b.classList.add('primary');
+          b.onclick=function(e){
+            e.preventDefault(); e.stopPropagation();
+            pop._aqStayDay=+b.dataset.mstayday;
+            root.querySelectorAll('[data-mstayday]').forEach(function(x){ x.classList.toggle('primary', +x.dataset.mstayday===pop._aqStayDay); });
+          };
+        });
+        root.querySelectorAll('[data-mstaymin]').forEach(function(b){
+          b.onclick=function(e){
+            e.preventDefault(); e.stopPropagation();
+            mapAddStayNear(lat, lon, place, wk, pop._aqStayDay, +b.dataset.mstaymin);
+          };
+        });
+      }, 0);
+    });
+  });
+}
 /* Draw one week's route from the SAME ordered itinerary the cards use, so the
    map always mirrors the schedule (drag / time / address / add / remove). */
 function drawWeekRoute(t,wk){
   _wkMapEnsure(); if(!_wkMap) return;
   _wkClear();
+  mapBindPlanClicks();
+  mapPlanHintUpdate();
+  try{ if(_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
   var gen=++_aqMapGen; _wkMap._aqGen=gen;
   var items=itineraryFor(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var bounds=[];
+  /* Overnight preference circles — show EA search radius without inventing hotels */
+  items.forEach(function(s){
+    if(s.rawType==='hotel' || (s.type==='hotel')){
+      var mins=(s.stayRadiusMin!=null?s.stayRadiusMin:(s.raw&&s.raw.stayRadiusMin));
+      if(!mins && s.notes && /within\s+(\d+)\s+min/i.test(s.notes)) mins=+RegExp.$1;
+      /* also read from LOGI source */
+      try{
+        var raw=(LOGI||[]).filter(function(x){ return x.id===s.id || x.id===s.rawId; })[0];
+        if(raw&&raw.stayRadiusMin) mins=raw.stayRadiusMin;
+      }catch(e){}
+      if(mins){
+        L.circle([s.lat,s.lon],{
+          radius:mapStayRadiusMeters(mins),
+          color:'#b45309', weight:1, opacity:.55, fillColor:'#fbbf24', fillOpacity:.08
+        }).addTo(_wkMap).bindTooltip('Stay within '+mins+' min of '+(s.stayNear||s.name||'town'));
+      }
+    }
+  });
   items.forEach(function(s,i){
     var st=STOP_TYPES[normType(s.type)]||STOP_TYPES.other;
     var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
@@ -9704,6 +10039,28 @@ function drawWeekRoute(t,wk){
       .bindTooltip(stopTip(s)).bindPopup(popupHTML(s));
     bounds.push([s.lat,s.lon]);
   });
+  /* Optional: all territory dealers for click-to-plan */
+  if(MAP_SHOW_POOL && typeof wk==='number'){
+    mapPoolDealers(t,wk).forEach(function(d){
+      var mk=L.marker([d.lat,d.lon],{icon:mkPin('#9ca3af','',null,'pool'), opacity:0.9, zIndexOffset:-50});
+      mk.addTo(_wkMap);
+      mk.bindTooltip('<b>'+esc(d.name)+'</b>'+(d.city?('<br>'+esc(d.city)):'')+'<br><span style="color:#6b7280">Click to add</span>', {sticky:true});
+      mk.bindPopup(mapDealerAddPopup(d, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          document.querySelectorAll('[data-madd]').forEach(function(b){
+            if(b._aqBound) return; b._aqBound=true;
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              var p=String(b.dataset.madd).split('|');
+              mapAddDealerToDay(p[0], p[1], p[2]);
+            };
+          });
+        }, 0);
+      });
+      bounds.push([d.lat,d.lon]);
+    });
+  }
   var legs=[];
   for(var i=1;i<items.length;i++){
     var a=items[i-1],b=items[i];
@@ -9712,7 +10069,7 @@ function drawWeekRoute(t,wk){
   }
   if(bounds.length){
     /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
-    var maxZ=(bounds.length<=1)?10:11;
+    var maxZ=MAP_SHOW_POOL?9:((bounds.length<=1)?10:11);
     _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
   } else _wkMap.setView([43.5,-95],4);
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
@@ -9805,27 +10162,42 @@ function preferHotelFromMemory(placeHint, brand){
   return hit||null;
 }
 function smartStampVisit(dealerId, wk, dayN, intent){
-  createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN);
-  if(!intent) return;
+  var hasTime=!!(intent&&intent.time&&typeof intent.time==='string');
+  var hasDur=!!(intent&&intent.durationMin);
+  /* Chain starts after create — skip steps the NL parse already filled. */
+  var step=!hasTime?'time':(!hasDur?'dur':'add');
+  var ref=createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN, {chain:false});
+  if(!intent){
+    if(ref){ salesChainArm(ref, wk, dayN, 'time'); refreshPlanner({skipMap:true}); salesChainFocus(); }
+    return ref;
+  }
   try{
-    if(intent.time && typeof intent.time==='string'){
+    if(hasTime){
       if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
         TIME[dealerId]=intent.time;
-        if(intent.durationMin) DUR[dealerId]=intent.durationMin;
+        if(hasDur) DUR[dealerId]=intent.durationMin;
       } else {
         var xv=XVISITS[XVISITS.length-1];
         if(xv && xv.dealer===dealerId){
           xv.time=intent.time;
-          if(intent.durationMin) xv.dur=intent.durationMin;
+          if(hasDur) xv.dur=intent.durationMin;
         }
       }
-      savePlan(); refreshPlanner();
-    } else if(intent.durationMin){
+    } else if(hasDur){
       if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
-        DUR[dealerId]=intent.durationMin; savePlan(); refreshPlanner();
+        DUR[dealerId]=intent.durationMin;
       }
     }
+    savePlan();
   }catch(e){}
+  if(ref && wk!=='remote' && (typeof portalIsSalesMode!=='function'||portalIsSalesMode())){
+    salesChainArm(ref, wk, dayN, step);
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+  } else {
+    refreshPlanner();
+  }
+  return ref;
 }
 function applySmartIntent(intent, wk, day){
   if(!intent) return false;
@@ -9936,7 +10308,13 @@ function smartTryEnter(inp){
   }
   applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
   inp.value=''; dqClose();
-  setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
+  /* Dealer chain focuses time/dur itself. Travel/other falls back to same-day Add. */
+  if(!_salesChain){
+    setTimeout(function(){
+      var n=document.querySelector('.dqin[data-qwk="'+inp.dataset.qwk+'"][data-qday="'+inp.dataset.qday+'"]')||inp;
+      try{ n.focus({preventScroll:true}); }catch(e){ try{n.focus();}catch(_){} }
+    },40);
+  }
   return true;
 }
 function smartBulkReview(text, wk, day){
@@ -10010,8 +10388,7 @@ function dqPick(id,type){
   var inp=DQ.inp; if(!inp) return;
   var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
-  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day));
-  setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
 }
 /* Everything the day-level + Add can create besides a dealer visit. k = stop type
    (existing TRAVEL_TYPES, so routing/cards/mobile all understand it); v = virtual:
@@ -11353,8 +11730,24 @@ function uiInit(){
       return;
     }
     if(typing){
-      /* Enter commits the inline edit (fires the change on blur) */
-      if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('vf')||e.target.classList.contains('vnote'))){ e.preventDefault(); e.target.blur(); }
+      /* Enter on time → duration → next Add anything (sales keyboard chain). */
+      if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('vf')){
+        e.preventDefault();
+        var ref=e.target.dataset.vref, f=e.target.dataset.f;
+        if(ref&&(f==='time'||f==='dur')){
+          e.target._salesChainEnter=true;
+          _salesChainAmpm={ref:ref, f:f, el:e.target};
+          var ok=setVisitField(ref, f, e.target.value);
+          if(ok===false){ _salesChainAmpm=null; refreshPlanner({skipMap:true}); return; }
+          if(ok===null) return; /* waiting on AM/PM picker — continues chain after pick */
+          _salesChainAmpm=null;
+          salesChainAdvance(ref, f, e.target);
+          return;
+        }
+        e.target.blur();
+        return;
+      }
+      if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('vnote')){ e.preventDefault(); e.target.blur(); }
       return;
     }
     if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ e.preventDefault(); undoRestore(); return; }
@@ -11378,6 +11771,8 @@ function wireDnD(){
   /* inline card fields: one writer for both card kinds. Notes never re-render
      the planner (no scroll jumps, no per-keystroke work) — they just persist. */
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    /* Enter handler already saved + advanced the sales chain */
+    if(el._salesChainEnter){ el._salesChainEnter=false; return; }
     var ok=setVisitField(el.dataset.vref, el.dataset.f, el.value);
     if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
     refreshPlanner();
