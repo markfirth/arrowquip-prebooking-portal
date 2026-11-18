@@ -336,6 +336,13 @@ body.trips-layout-on #sysHealth{display:none !important;}
 .pin.pool .pinseq{display:none;}
 .pin.air{background:#2563eb!important;width:12px;height:12px;border-width:1px;border-radius:2px;}
 .pin.air .pinseq{display:none;}
+/* Cindel pipeline — small soft dots; color = stage (kept quiet on the map) */
+.pin.pipe{opacity:.72;width:9px;height:9px;border-width:1px;border-color:rgba(255,255,255,.85);}
+.pin.pipe .pinseq{display:none;}
+.pin.pipe-new{background:#c4b5a0!important;}
+.pin.pipe-working{background:#94a3b8!important;}
+.pin.pipe-qualified{background:#86a8a0!important;}
+.pin.pipe-other{background:#a8a29e!important;}
 .mpop{font:12px 'Open Sans',Arial,sans-serif;min-width:180px;max-width:260px;}
 .mpop b{display:block;font-size:12.5px;color:#111;margin:0 0 2px;}
 .mpop .msub{color:#6b7280;font-size:11px;margin:0 0 8px;}
@@ -768,7 +775,7 @@ body.wkfull-on{overflow:hidden;}
 .yg-cell.we{background:#f3f4f6;border-color:#e5e7eb;}
 .yg-cell.today{box-shadow:inset 0 0 0 1.5px var(--aq-red);}
 .yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
-.yg-cell.sel{background:#fef2f2;border-color:#fecaca;}
+.yg-cell.sel{background:#fef2f2;border-color:#fecaca;box-shadow:inset 0 0 0 1.5px var(--aq-red,#cf202f);}
 .yg-cell:hover:not(.na){border-color:#c9ced4;}
 .yg-d{font-size:9px;font-weight:600;color:#374151;line-height:1;padding:0 1px;}
 .yg-bars{display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;}
@@ -782,33 +789,14 @@ body.wkfull-on{overflow:hidden;}
 .yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
 .yg-pf{display:flex;gap:8px;padding:8px 12px 12px;flex-wrap:wrap;}
 .yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
+.yg-daystrip{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--line-soft);margin-bottom:4px;}
+.yg-dchip{flex:1 1 120px;max-width:220px;background:#fafbfc;border:1px solid var(--line-soft);border-radius:6px;padding:6px 8px;}
+.yg-dchip b{display:block;font-size:10px;font-weight:800;color:#374151;letter-spacing:.02em;margin-bottom:2px;}
+.yg-dchip span{font-size:11px;color:#6b7280;line-height:1.3;}
 .yg-mctable{width:100%;border-collapse:collapse;font-size:12px;}
 .yg-mctable th,.yg-mctable td{padding:4px;border-bottom:1px solid var(--line-soft);text-align:left;}
-.yg-monthly{border-top:1px solid var(--line);padding:14px 12px 18px;background:#fafbfc;}
-.yg-monthly-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
-.yg-monthly-h b{font-size:14px;color:#111;}
-.yg-monthly-h span{font-size:12px;color:#9ca3af;font-weight:600;}
-.yg-monthly-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
-.yg-mcard{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px 8px;min-height:140px;display:flex;flex-direction:column;}
-.yg-mh{display:flex;justify-content:space-between;align-items:center;font:800 11px inherit;letter-spacing:.04em;color:#111;margin-bottom:8px;}
-.yg-medit{appearance:none;border:0;background:transparent;cursor:pointer;color:#9ca3af;font-size:12px;padding:2px;}
-.yg-medit:hover{color:var(--aq-red);}
-.yg-mflab{font:700 9px inherit;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
-.yg-mfocus{font:700 13px inherit;color:#111;line-height:1.25;}
-.yg-mnotes{font-size:11px;color:#6b7280;margin-top:2px;}
-.yg-mset{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 12px inherit;cursor:pointer;padding:0;text-align:left;}
-.yg-mset:hover{color:var(--aq-red);}
-.yg-mdiv{height:1px;background:#f0f1f3;margin:8px 0;}
-.yg-mevs{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
-.yg-mev{display:flex;align-items:flex-start;gap:6px;font-size:11px;}
-.yg-mev i{width:7px;height:7px;border-radius:50%;margin-top:4px;flex:0 0 auto;}
-.yg-mev-l{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#374151;cursor:pointer;padding:0;text-align:left;}
-.yg-mev-l:hover{color:var(--aq-red);}
-.yg-mempty{font-size:11px;color:#b0b5bb;}
-.yg-madd{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 11px inherit;cursor:pointer;padding:6px 0 0;text-align:left;align-self:flex-start;}
-.yg-madd:hover{color:var(--aq-red);}
-@media(max-width:1000px){.yg-monthly-grid{grid-template-columns:1fr 1fr;}.yg-key{flex-basis:120px;}}
-@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-monthly-grid{grid-template-columns:1fr;}.yg-cell{min-height:24px;}}
+@media(max-width:1000px){.yg-key{flex-basis:120px;}}
+@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-cell{min-height:24px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
 #allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
@@ -2184,6 +2172,7 @@ body.portal-coord .aqPlanStrip{display:none!important;}
           <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
           <div class="map-fabs">
             <button type="button" class="map-fab text" data-mappool="1" id="mapPoolBtn" title="Show all dealers — click to add to the trip">Dealers</button>
+            <button type="button" class="map-fab text" data-mappipe="1" id="mapPipeBtn" title="Cindel’s new dealers near this trip — subtle by pipeline stage">New</button>
             <button type="button" class="map-fab text" data-mapair="1" id="mapAirBtn" title="Show main commercial airports — airlines only, no private hangars">Airports</button>
             <button type="button" class="map-fab text" data-mapstay="1" id="mapStayBtn" title="Click the map to set an overnight near a town">Stay</button>
             <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
@@ -2774,6 +2763,12 @@ var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
 var MAP_SHOW_POOL=(function(){ try{ return localStorage.getItem('aqMapShowPool')==='1'; }catch(e){ return false; } })();
 var MAP_SHOW_AIR=(function(){ try{ return localStorage.getItem('aqMapShowAir')==='1'; }catch(e){ return false; } })();
+var MAP_SHOW_PIPE=(function(){ try{ return localStorage.getItem('aqMapShowPipe')==='1'; }catch(e){ return false; } })();
+/* Cindel new-dealer pipeline cache — shared by map layer + dealer typeahead */
+var PIPELINE_CACHE=[];
+var PIPELINE_CACHE_AT=0;
+var PIPELINE_FETCHING=false;
+var PIPELINE_GEO={}; /* sfLeadId → {lat,lon} */
 var MAP_STAY_ARM=false;
 /* Soft flight windows for sales planning — preference, not a booked flight time. */
 var FLIGHT_WINDOWS={
@@ -2885,6 +2880,8 @@ function mapInvalidateSoon(){
   document.addEventListener('click',function(e){
     var pool=e.target&&e.target.closest&&e.target.closest('[data-mappool]');
     if(pool){ e.preventDefault(); e.stopPropagation(); mapTogglePool(); return; }
+    var pipe=e.target&&e.target.closest&&e.target.closest('[data-mappipe]');
+    if(pipe){ e.preventDefault(); e.stopPropagation(); mapTogglePipe(); return; }
     var air=e.target&&e.target.closest&&e.target.closest('[data-mapair]');
     if(air){ e.preventDefault(); e.stopPropagation(); mapToggleAir(); return; }
     var stay=e.target&&e.target.closest&&e.target.closest('[data-mapstay]');
@@ -9926,9 +9923,11 @@ function _wkClear(){ if(!_wkMap) return; _wkMap.eachLayer(function(l){ if(!(l in
 function mapPlanHintUpdate(){
   var h=document.getElementById('mapPlanHint');
   var poolBtn=document.getElementById('mapPoolBtn');
+  var pipeBtn=document.getElementById('mapPipeBtn');
   var airBtn=document.getElementById('mapAirBtn');
   var stayBtn=document.getElementById('mapStayBtn');
   if(poolBtn) poolBtn.classList.toggle('on', !!MAP_SHOW_POOL);
+  if(pipeBtn) pipeBtn.classList.toggle('on', !!MAP_SHOW_PIPE);
   if(airBtn) airBtn.classList.toggle('on', !!MAP_SHOW_AIR);
   if(stayBtn) stayBtn.classList.toggle('armed', !!MAP_STAY_ARM);
   if(!h) return;
@@ -9938,6 +9937,9 @@ function mapPlanHintUpdate(){
   } else if(MAP_SHOW_AIR){
     h.classList.add('is-on');
     h.textContent='Blue markers are commercial airline airports — click one to fly in or out (morning / mid-day / afternoon).';
+  } else if(MAP_SHOW_PIPE){
+    h.classList.add('is-on');
+    h.textContent='Soft dots are Cindel’s new dealers near this trip — shade shows pipeline stage. Click to add.';
   } else if(MAP_SHOW_POOL){
     h.classList.add('is-on');
     h.textContent='Grey dots are dealers not on this trip — click one to add it by day.';
@@ -9950,6 +9952,19 @@ function mapTogglePool(){
   MAP_SHOW_POOL=!MAP_SHOW_POOL;
   try{ localStorage.setItem('aqMapShowPool', MAP_SHOW_POOL?'1':'0'); }catch(e){}
   if(MAP_SHOW_POOL) MAP_STAY_ARM=false;
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
+function mapTogglePipe(){
+  MAP_SHOW_PIPE=!MAP_SHOW_PIPE;
+  try{ localStorage.setItem('aqMapShowPipe', MAP_SHOW_PIPE?'1':'0'); }catch(e){}
+  if(MAP_SHOW_PIPE){
+    MAP_STAY_ARM=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+    pipelineEnsureNearTrip(terr, focusWkGet(), function(){
+      try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+    });
+  }
   mapPlanHintUpdate();
   try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
 }
@@ -10196,6 +10211,191 @@ function mapPoolDealers(t, wk){
   }catch(e){}
   return list;
 }
+/* —— Cindel pipeline on map / search —— */
+function pipeStageKey(status){
+  var s=String(status||'').toLowerCase();
+  if(/qualif|nurtur|warm|hot|opportunity/.test(s)) return 'qualified';
+  if(/work|contact|attempt|open|engaged|follow/.test(s)) return 'working';
+  if(/new|uncontact|not\s*contact|raw/.test(s)) return 'new';
+  return 'other';
+}
+function pipeStageColor(status){
+  var k=pipeStageKey(status);
+  return k==='qualified'?'#86a8a0':(k==='working'?'#94a3b8':(k==='new'?'#c4b5a0':'#a8a29e'));
+}
+function tripNearAnchors(t, wk){
+  var anchors=[];
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon)) anchors.push([+s.lat,+s.lon]);
+    });
+  }catch(e){}
+  if(!anchors.length){
+    try{
+      (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+        if(d&&d.lat!=null&&d.lon!=null&&isFinite(d.lat)&&isFinite(d.lon)) anchors.push([+d.lat,+d.lon]);
+      });
+    }catch(e){}
+  }
+  return anchors;
+}
+function tripNearStates(t, wk){
+  var seen={}, out=[];
+  function add(st){
+    st=String(st||'').trim().toUpperCase();
+    if(!/^[A-Z]{2}$/.test(st) || seen[st]) return;
+    seen[st]=1; out.push(st);
+  }
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      add(s.loc||s.state);
+      if(s.dealer&&byId[s.dealer]) add(byId[s.dealer].loc||byId[s.dealer].state);
+      if(s.kind==='dealer'||s.kind==='xvisit'){
+        var d=byId[String(s.id||'').replace(/^xv:/,'')];
+        if(d) add(d.loc||d.state);
+      }
+      /* infer from airport region like US-TX */
+      var reg=s.region||(s.raw&&s.raw.region)||'';
+      if(/-([A-Z]{2})$/.test(String(reg))) add(RegExp.$1);
+    });
+  }catch(e){}
+  try{
+    commercialAirportsNearTrip(t,wk).forEach(function(ap){
+      if(ap.region&&/-([A-Z]{2})$/.test(String(ap.region))) add(RegExp.$1);
+    });
+  }catch(e){}
+  return out.slice(0,12);
+}
+function pipelineMergeLeads(leads){
+  var by={}; PIPELINE_CACHE.forEach(function(l){ if(l&&l.sfLeadId) by[l.sfLeadId]=l; });
+  (leads||[]).forEach(function(l){
+    if(!l||!l.sfLeadId) return;
+    var prev=by[l.sfLeadId]||{};
+    by[l.sfLeadId]=Object.assign({}, prev, l, {
+      lat:l.lat!=null?l.lat:(prev.lat!=null?prev.lat:(PIPELINE_GEO[l.sfLeadId]&&PIPELINE_GEO[l.sfLeadId].lat)),
+      lon:l.lon!=null?l.lon:(prev.lon!=null?prev.lon:(PIPELINE_GEO[l.sfLeadId]&&PIPELINE_GEO[l.sfLeadId].lon)),
+      _pipeline:true, _prospect:true, ptype2:'potential'
+    });
+  });
+  PIPELINE_CACHE=Object.keys(by).map(function(k){ return by[k]; });
+  PIPELINE_CACHE_AT=Date.now();
+}
+function pipelineGeocodeLead(lead, cb){
+  if(!lead||!lead.sfLeadId){ if(cb) cb(null); return; }
+  if(lead.lat!=null&&lead.lon!=null&&isFinite(lead.lat)&&isFinite(lead.lon)){ if(cb) cb(lead); return; }
+  if(PIPELINE_GEO[lead.sfLeadId]){
+    lead.lat=PIPELINE_GEO[lead.sfLeadId].lat; lead.lon=PIPELINE_GEO[lead.sfLeadId].lon;
+    if(cb) cb(lead); return;
+  }
+  var q=[lead.address, [lead.city, lead.state||lead.loc].filter(Boolean).join(', ')].filter(Boolean)[0];
+  if(!q){
+    var st=String(lead.state||lead.loc||'').toUpperCase();
+    if(COORD[st]){
+      lead.lat=COORD[st][0]; lead.lon=COORD[st][1];
+      PIPELINE_GEO[lead.sfLeadId]={lat:lead.lat,lon:lead.lon,approx:true};
+      if(cb) cb(lead); return;
+    }
+    if(cb) cb(null); return;
+  }
+  geocodeQueue(q, function(r){
+    if(r&&r.lat!=null&&r.lon!=null){
+      lead.lat=+r.lat; lead.lon=+r.lon;
+      PIPELINE_GEO[lead.sfLeadId]={lat:lead.lat,lon:lead.lon};
+      if(cb) cb(lead);
+    } else if(cb) cb(null);
+  });
+}
+function pipelineEnsureNearTrip(t, wk, done){
+  if(typeof pbApiFetch!=='function'){ if(done) done(); return; }
+  var states=tripNearStates(t, wk);
+  var url='/api/salesforce-leads?limit=80';
+  if(states.length) url+='&states='+encodeURIComponent(states.join(','));
+  /* also keep a short recent list so search has fodder when states are empty */
+  PIPELINE_FETCHING=true;
+  pbApiFetch(url,{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+    PIPELINE_FETCHING=false;
+    if(j&&j.ok&&j.leads) pipelineMergeLeads(j.leads);
+    var pending=0, list=PIPELINE_CACHE.slice();
+    list.forEach(function(lead){
+      if(lead.lat!=null&&lead.lon!=null) return;
+      pending++;
+      pipelineGeocodeLead(lead, function(){ pending--; if(pending<=0&&done) done(); });
+    });
+    if(!pending&&done) done();
+  }).catch(function(){ PIPELINE_FETCHING=false; if(done) done(); });
+}
+function pipelineSearchRefresh(q){
+  q=String(q||'').trim();
+  if(q.length<2||typeof pbApiFetch!=='function') return;
+  clearTimeout(pipelineSearchRefresh._t);
+  pipelineSearchRefresh._t=setTimeout(function(){
+    pbApiFetch('/api/salesforce-leads?q='+encodeURIComponent(q)+'&limit=20',{cache:'no-store'})
+      .then(function(r){ return r.json(); }).then(function(j){
+        if(j&&j.ok&&j.leads){
+          pipelineMergeLeads(j.leads);
+          try{ if(DQ.inp&&document.getElementById('dqPop')) dqRender(); }catch(e){}
+        }
+      }).catch(function(){});
+  }, 260);
+}
+function mapPipeDealersNear(t, wk){
+  var anchors=tripNearAnchors(t, wk);
+  var maxDeg=3.5;
+  var onTrip={};
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.sfLeadId) onTrip[s.sfLeadId]=1;
+      var id=String(s&&s.id||'').replace(/^xv:/,'');
+      var p=byId[id];
+      if(p&&p.sfLeadId) onTrip[p.sfLeadId]=1;
+    });
+  }catch(e){}
+  var out=[];
+  PIPELINE_CACHE.forEach(function(l){
+    if(!l||!l.sfLeadId||onTrip[l.sfLeadId]) return;
+    var lat=l.lat, lon=l.lon;
+    if((lat==null||lon==null)&&PIPELINE_GEO[l.sfLeadId]){ lat=PIPELINE_GEO[l.sfLeadId].lat; lon=PIPELINE_GEO[l.sfLeadId].lon; }
+    if(lat==null||lon==null||!isFinite(lat)||!isFinite(lon)) return;
+    if(anchors.length){
+      var ok=false;
+      for(var i=0;i<anchors.length;i++){
+        if(Math.abs(lat-anchors[i][0])<=maxDeg && Math.abs(lon-anchors[i][1])<=maxDeg){ ok=true; break; }
+      }
+      if(!ok) return;
+    }
+    out.push(Object.assign({}, l, {lat:+lat, lon:+lon, id:'lead:'+l.sfLeadId}));
+  });
+  return out.slice(0,60);
+}
+function mapPipeAddPopup(lead, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var sub=[lead.city, lead.state||lead.loc, lead.status].filter(Boolean).join(' · ');
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-mpipe="'+esc(lead.sfLeadId)+'|'+wk+'|'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop"><b>'+esc(lead.name)+'</b>'
+    +'<div class="msub">'+esc(sub||'New dealer pipeline')+'</div>'
+    +'<div class="mpop-days">'+days+'</div></div>';
+}
+function mapAddPipeLeadToDay(sfLeadId, wk, day){
+  var lead=null;
+  for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
+  if(!lead){ aqToast('Pipeline lead not found', false); return; }
+  undoSnap('Map add pipeline');
+  var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
+  var finish=function(p){
+    createVisit(p.id,'visit',parseInt(wk,10), day, {chain:true, step:'time'});
+    aqToast('Added '+p.name+' · pick time');
+    try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  };
+  if(existing){ finish(existing); return; }
+  addProspect({
+    name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+    phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+    territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
+    notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
+  }, finish);
+}
 function mapDealerAddPopup(d, wk){
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var sub=[d.city,d.loc||d.state].filter(Boolean).join(', ');
@@ -10379,6 +10579,38 @@ function drawWeekRoute(t,wk){
       bounds.push([d.lat,d.lon]);
     });
   }
+  /* Optional: Cindel new-dealer pipeline near flight/trip anchors */
+  if(MAP_SHOW_PIPE && typeof wk==='number'){
+    mapPipeDealersNear(t,wk).forEach(function(lead){
+      var stage=pipeStageKey(lead.status);
+      var mk=L.marker([lead.lat,lead.lon],{
+        icon:mkPin(pipeStageColor(lead.status),'',null,'pipe pipe-'+stage),
+        opacity:0.78, zIndexOffset:-60
+      });
+      mk.addTo(_wkMap);
+      mk.bindTooltip(
+        '<b>'+esc(lead.name)+'</b>'
+        +(lead.city||lead.state?('<br>'+esc([lead.city,lead.state||lead.loc].filter(Boolean).join(', '))):'')
+        +(lead.status?('<br><span style="color:#6b7280">'+esc(lead.status)+'</span>'):'')
+        +'<br><span style="color:#9ca3af">New dealer · click to add</span>',
+        {sticky:true}
+      );
+      mk.bindPopup(mapPipeAddPopup(lead, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          document.querySelectorAll('[data-mpipe]').forEach(function(b){
+            if(b._aqBound) return; b._aqBound=true;
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              var p=String(b.dataset.mpipe).split('|');
+              mapAddPipeLeadToDay(p[0], p[1], p[2]);
+            };
+          });
+        }, 0);
+      });
+      bounds.push([lead.lat,lead.lon]);
+    });
+  }
   /* Optional: commercial airline airports (no private hangars / GA) */
   if(MAP_SHOW_AIR && typeof wk==='number'){
     commercialAirportsNearTrip(t,wk).forEach(function(ap){
@@ -10441,7 +10673,7 @@ function drawWeekRoute(t,wk){
   }
   if(bounds.length){
     /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
-    var maxZ=(MAP_SHOW_POOL||MAP_SHOW_AIR)?9:((bounds.length<=1)?10:11);
+    var maxZ=(MAP_SHOW_POOL||MAP_SHOW_AIR||MAP_SHOW_PIPE)?9:((bounds.length<=1)?10:11);
     _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
   } else _wkMap.setView([43.5,-95],4);
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
@@ -10731,28 +10963,56 @@ function smartBulkReview(text, wk, day){
   };
 }
 function dqMatches(q){
-  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer. */
+  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer.
+     Also merge Cindel’s new-dealer pipeline so one search covers both. */
+  pipelineSearchRefresh(q);
+  var rows=[];
   try{
     if(window.AQSmart&&AQSmart.rankDealers){
       var intent=AQSmart.parse(q);
       var query=(intent&&(intent.query||intent.name))||q;
       var ranked=AQSmart.rankDealers(query, planningUniverse());
-      if(ranked.length) return ranked.slice(0,10);
+      if(ranked.length) rows=ranked.slice(0,10);
     }
   }catch(e){}
-  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
   var stop={at:1,for:1,the:1,a:1,an:1,with:1,to:1,in:1,on:1,of:1,and:1,am:1,pm:1};
   toks=toks.filter(function(t){ return !stop[t] && !/^\d+([.:]\d+)?(am|pm)?$/.test(t) && !/^(hours?|hrs?|minutes?|mins?)$/.test(t); });
-  if(!toks.length) return [];
-  var rows=planningUniverse().filter(function(d){
-    var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
-    return toks.every(function(t){ return h.indexOf(t)>=0; });
+  if(!rows.length){
+    if(!toks.length) return [];
+    rows=planningUniverse().filter(function(d){
+      var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
+      return toks.every(function(t){ return h.indexOf(t)>=0; });
+    });
+    var q0=toks[0];
+    var score=function(d){ var n=(d.name||'').toLowerCase();
+      return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
+    rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
+    rows=rows.slice(0,10);
+  }
+  if(!toks.length) return rows;
+  var seen={}; rows.forEach(function(d){ seen[d.id]=1; if(d.sfLeadId) seen['lead:'+d.sfLeadId]=1; });
+  var pipeHits=[];
+  PIPELINE_CACHE.forEach(function(l){
+    if(!l||!l.sfLeadId) return;
+    var id='lead:'+l.sfLeadId;
+    if(seen[id]) return;
+    /* already converted to a local prospect */
+    var local=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId===l.sfLeadId; })[0];
+    if(local&&seen[local.id]) return;
+    var h=[l.name,l.city,l.state||l.loc,l.contactName,l.status,l.address].join(' ').toLowerCase();
+    if(!toks.every(function(t){ return h.indexOf(t)>=0; })) return;
+    pipeHits.push(local||{
+      id:id, sfLeadId:l.sfLeadId, name:l.name, city:l.city||'', loc:l.state||l.loc||'',
+      address:l.address||'', phone:l.phone||'', status:l.status||'',
+      _pipeline:true, _prospect:true, ptype2:'potential', contactName:l.contactName||''
+    });
   });
-  var q0=toks[0];
-  var score=function(d){ var n=(d.name||'').toLowerCase();
-    return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
-  rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
-  return rows.slice(0,10);
+  pipeHits.sort(function(a,b){
+    var an=(a.name||'').toLowerCase(), bn=(b.name||'').toLowerCase(), t0=toks[0];
+    return (an.indexOf(t0)===0?0:1)-(bn.indexOf(t0)===0?0:1)||an.localeCompare(bn);
+  });
+  return rows.concat(pipeHits.slice(0,6)).slice(0,14);
 }
 var DQ={inp:null,rows:[],on:0};
 function dqClose(){ var p=document.getElementById('dqPop'); if(p) p.remove(); DQ.rows=[]; }
@@ -10760,6 +11020,25 @@ function dqPick(id,type){
   var inp=DQ.inp; if(!inp) return;
   var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
+  /* Pipeline lead from typeahead — promote to local prospect then visit */
+  if(String(id).indexOf('lead:')===0){
+    var sfLeadId=String(id).slice(5);
+    var lead=null;
+    for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
+    var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
+    var finish=function(p){
+      createVisit(p.id,type||'visit',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
+    };
+    if(existing){ finish(existing); return; }
+    if(!lead){ aqToast('Pipeline lead not loaded', false); return; }
+    addProspect({
+      name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+      phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+      territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
+      notes:(lead.status?('Lead status: '+lead.status):'')
+    }, finish);
+    return;
+  }
   createVisit(id,type||'visit',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
 }
 /* Everything the day-level + Add can create besides a dealer visit. k = stop type
@@ -10853,10 +11132,11 @@ function dqRender(){
       +'<button type="button" data-dqmanual="1">'+(DQ.showManual?'Hide event types':'Browse event types')+'</button></div>';
   }
   DQ.rows.forEach(function(d,i){
-    var sub=[prospectTypeLabel(d),[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
+    var typeLbl=d._pipeline?(d.status?('Pipeline · '+d.status):'Pipeline'):prospectTypeLabel(d);
+    var sub=[typeLbl,[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
     var more=(DQ.more===d.id);
     h+='<div class="dq-row'+(i===DQ.on?' on':'')+'" data-dqi="'+i+'"><div class="dq-txt"><span class="dq-nm">'+esc(d.name)+'</span><span class="dq-sub">'+esc(sub)+'</span></div>'
-      +'<div class="dq-act"><button data-dqt="prebook" data-dqi="'+i+'">Pre-book</button><button data-dqt="visit" data-dqi="'+i+'">Visit</button><button data-dqa="dropin" data-dqi="'+i+'">Drop-in</button><button data-dqmore="'+i+'" title="More visit types">⋯</button></div></div>';
+      +'<div class="dq-act"><button data-dqt="visit" data-dqi="'+i+'">Visit</button><button data-dqa="dropin" data-dqi="'+i+'">Drop-in</button><button data-dqmore="'+i+'" title="More visit types">⋯</button></div></div>';
     if(more) h+='<div class="dq-moreline">'+DQ_ACTS.slice(1).map(function(a){ return '<button data-dqa="'+a[0]+'" data-dqi="'+i+'">'+a[1]+'</button>'; }).join('')+'</div>';
   });
   var lastG=null;
@@ -10986,18 +11266,27 @@ function openDealerAdd(wk,day){
   wrap.querySelectorAll('[data-dptab]').forEach(function(b){ b.onclick=function(){ setTab(b.dataset.dptab); }; });
   var renderResults=function(){
     var q=($('#dpSearch').value||'').trim();
-    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, postal code or account…</div>'; return; }
+    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, or account — current dealers and Cindel’s pipeline search together.</div>'; return; }
     var rows=dqMatches(q);
     if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Pipeline or New.</div>'; return; }
     $('#dpResults').innerHTML=rows.map(function(d){
-      var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
+      var t=d._pipeline?(d.status?('Pipeline · '+d.status):'Pipeline'):prospectTypeLabel(d);
+      var cls=d._pipeline?'pt-potential':(d._prospect?('pt-'+d.ptype2):'pt-current');
       var sub=[d.city,d.loc,d.territory].filter(Boolean).join(' · ');
       return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
         +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc(sub)+'</span></button>';
     }).join('');
     $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){
       b.onclick=function(){
-        createVisit(b.dataset.pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        var pick=b.dataset.pick;
+        if(String(pick).indexOf('lead:')===0){
+          var sf=String(pick).slice(5);
+          var lead=null;
+          for(var i=0;i<(rows||[]).length;i++) if(rows[i].sfLeadId===sf||rows[i].id===pick){ lead=rows[i]; break; }
+          if(!lead){ for(var j=0;j<PIPELINE_CACHE.length;j++) if(PIPELINE_CACHE[j].sfLeadId===sf){ lead=PIPELINE_CACHE[j]; break; } }
+          if(lead){ addLeadToTrip(lead); return; }
+        }
+        createVisit(pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
         wrap.remove();
       };
     });
