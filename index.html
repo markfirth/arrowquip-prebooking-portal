@@ -1941,15 +1941,26 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .aqModeSwitch button+button{border-left:1px solid #e5e7eb;}
 .aqModeSwitch button.on{background:#111;color:#fff;}
 .aqModeSwitch[hidden]{display:none!important;}
-#coordView{display:none;padding:0 0 48px;background:#f5f5f5;min-height:calc(100vh - 140px);}
+#coordView{display:none;padding:0;background:#f5f5f5;min-height:0;}
 #coordView.is-on{display:block;}
+body.portal-coord #coordView.is-on{border-bottom:1px solid #e5e7eb;}
+.coord-strip{padding:10px 16px 12px;background:#fafafa;}
+.coord-strip-h{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin:0 0 8px;}
+.coord-strip-h b{font:900 13px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#111;}
 .coord-page{max-width:1100px;margin:0 auto;padding:24px 20px 40px;}
 .coord-head h1{margin:0;font-family:var(--font-heading),Frutiger,Impact,sans-serif;font-size:28px;font-weight:900;letter-spacing:.5px;color:#111;text-transform:uppercase;}
-.coord-sub{margin-top:4px;font-size:12px;color:#6b7280;font-weight:600;}
+.coord-sub{margin-top:2px;font-size:12px;color:#6b7280;font-weight:600;}
 .coord-metrics{display:flex;gap:12px;margin:16px 0 14px;flex-wrap:wrap;}
+.coord-metrics-inline{margin:0;gap:8px;}
+.coord-metrics-inline .coord-m{padding:6px 10px;min-width:72px;}
+.coord-metrics-inline .coord-mn{font-size:16px;}
 .coord-m{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 16px;min-width:140px;}
 .coord-mn{font:900 22px Frutiger,'Open Sans',Arial,sans-serif;color:#111;line-height:1;}
 .coord-ml{margin-top:4px;font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;}
+.coord-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+.coord-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 8px;font:12px 'Open Sans',Arial,sans-serif;}
+.coord-chip-meta{color:#6b7280;font-size:11px;}
+.coord-empty-inline{font:600 12px 'Open Sans',Arial,sans-serif;color:#6b7280;padding:6px 0;}
 .coord-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;}
 .coord-toolbar select{font:12px 'Open Sans',Arial,sans-serif;border:1px solid #d1d5db;border-radius:4px;padding:5px 8px;background:#fff;}
 .coord-chk{font:600 12px 'Open Sans',Arial,sans-serif;color:#374151;display:inline-flex;align-items:center;gap:6px;}
@@ -2117,6 +2128,7 @@ body.portal-coord .aqPlanStrip{display:none!important;}
 </nav>
 <div class="wrap">
   <div class="cards" id="cards" style="display:none"></div>
+  <div id="coordView" style="display:none;" aria-label="Travel Coordination"></div>
   <div id="plannerView" style="display:none;">
     <div class="progbar" id="progBar">
       <div class="progtext" id="progText"></div>
@@ -2197,7 +2209,6 @@ body.portal-coord .aqPlanStrip{display:none!important;}
   </div>
   <div id="settingsView" style="display:none;"></div>
   <div id="teamView" style="display:none;" aria-label="My Team"></div>
-  <div id="coordView" style="display:none;" aria-label="Travel Coordination"></div>
 </div>
 <script>
 /* Dealer records are NOT shipped in the page any more: they load from the
@@ -3616,8 +3627,9 @@ function makeProspect(o){
     territory:o.territory||terr||'East', loc:o.loc||'', address:o.address||'',
     lat:(o.lat!=null?+o.lat:null), lon:(o.lon!=null?+o.lon:null),
     contactName:o.contact||'', contactPhone:o.phone||'', notes:o.notes||'',
+    sfLeadId:o.sfLeadId||'', city:o.city||'',
     booking:0, loads:0, lastYear:0, t27loads:0, tier:'', areaPlanning:true,
-    status:'Not Started', _prospect:true, _sf:false };
+    status:'Not Started', _prospect:true, _sf:false, _pipeline:!!o.sfLeadId };
 }
 function addProspect(o,cb){
   var p=makeProspect(o);
@@ -3713,7 +3725,7 @@ var XVISITS=[];
    prebook — counts in forecast dollars/loads, territory + weekly totals, reporting.
    visit   — relationship visit only: still on the planner/trip/map, zero forecast. */
 const XV_TYPES={
-  prebook:{label:'Pre-book',c:'#2563eb'},
+  prebook:{label:'Visit',c:'#16a34a'},
   visit:{label:'Visit',c:'#16a34a'}
 };
 function xvTypeKey(t){ return XV_TYPES[t]?t:'visit'; }
@@ -4973,7 +4985,7 @@ function dealerCard(d){
   var meta='<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>';
   var actions=isPro
     ? ('<span class="dmk"><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>')
-    : ('<span class="dmk"><button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>');
+    : ('<span class="dmk"><button class="dadd dvis'+(vN||pb?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN||pb?(Math.max(vN,pb?1:0)+' visit'+(Math.max(vN,pb?1:0)===1?'':'s')+' planned — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+((vN||pb)?('✓ Visit'+(vN>1?(' · '+vN):'')):'+ Visit')+'</button></span>');
   return '<div class="dcard'+(isPro?' dcard-pro':'')+'">'
     +'<div class="dn">'+esc(d.name)+' '+badge+'</div>'
     +'<div class="dm">'+meta+'</div>'
@@ -6314,6 +6326,8 @@ function addTravel(type,wk){
     day2:null, time2:'',           /* check-out / drop-off */
     conf:'', notes:''});
   teamStampNew('m',lid);
+  /* Compact by default — expand only when the user opens details. */
+  try{ delete TVEXP[lid]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
   savePlan();
   if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',lid)){
     teamPickOwner('m', lid, function(){ refreshPlanner(); });
@@ -7115,7 +7129,8 @@ function weekCard(wk){
    ref: 'i:<dealerId>' = the dealer's initial card (ASSIGN/DAY/TIME/DUR/STOPX)
         'x:<visitId>'  = an additional card (its XVISITS record)            */
 var VBADGE={
-  prebook:{label:'PRE-BOOK',cls:'pre',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="9" height="8" rx="1"/><path d="M1.5 5h9M4 1v2.5M8 1v2.5"/></svg>'},
+  /* Travel portal: every dealer stop reads as a Visit (legacy pre-book type kept for KPI math). */
+  prebook:{label:'VISIT',cls:'vis',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 11S2 7.4 2 4.8A4 4 0 0 1 10 4.8C10 7.4 6 11 6 11z"/><circle cx="6" cy="4.8" r="1.3"/></svg>'},
   visit  :{label:'VISIT',cls:'vis',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 11S2 7.4 2 4.8A4 4 0 0 1 10 4.8C10 7.4 6 11 6 11z"/><circle cx="6" cy="4.8" r="1.3"/></svg>'}
 };
 /* flexible duration: "45m", "1h 30m", "8h", "2:30", "36h", bare numbers
@@ -7373,7 +7388,7 @@ function createVisit(dealerId,type,wk,day,opts){
   opts=opts||{};
   var d=uniById(dealerId); if(!d) return null;
   if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return null;
-  type=(type==='visit')?'visit':'prebook';
+  type=(type==='prebook')?'prebook':'visit'; /* travel portal defaults to Visit */
   day=(day==null||day===''||day==='none')?null:parseInt(day,10);
   if(day!=null&&!isFinite(day)) day=null;
   var expandRef=null;
@@ -9036,7 +9051,7 @@ function tripBodyHTML(){
     var rows=groups[w].map(function(r){
       var meta=(r.kind==='litem')
         ? (TRIP_ITEM_TYPES[r.type]||'Item')+(r.notes?(' · '+esc(r.notes)):'')
-        : esc(r.tm||'—')+' · '+esc(r.terr)+(r.state?(' · '+esc(r.state)):'')+(r.ptype==='visit'?' · Visit':' · Pre-book')+(r.status==='Confirmed'?' · <b class="ok">Confirmed</b>':'');
+        : esc(r.tm||'—')+' · '+esc(r.terr)+(r.state?(' · '+esc(r.state)):'')+' · Visit'+(r.status==='Confirmed'?' · <b class="ok">Confirmed</b>':'');
       var timeTxt=r.time?t12s(r.time):(r.kind==='litem'?'':'—');
       return '<div class="ltp-stop'+(r.missing?' missing':'')+'" draggable="true" data-tripuid="'+r.uid+'">'
         +'<span class="ltp-grip">⋮⋮</span>'
@@ -9085,7 +9100,7 @@ function tripDownloadTrip(){
     groups[w].forEach(function(r){
       var drive='';
       if(r.lat!=null&&prev){ var mi=roadMi([prev.lat,prev.lon],[r.lat,r.lon]); if(mi!=null) drive='~'+fmtDur(Math.max(15,Math.round(mi/55*60)))+' · '+Math.round(mi)+' mi'; }
-      var typ=(r.kind==='litem')?(TRIP_ITEM_TYPES[r.type]||'Item'):(r.ptype==='visit'?'Visit':'Pre-book');
+      var typ=(r.kind==='litem')?(TRIP_ITEM_TYPES[r.type]||'Item'):'Visit';
       var locTxt=(r.kind==='litem')?esc(r.notes||''):(esc(r.state||'')+(r.address?(' · '+esc(r.address)):''));
       var qr='';
       if(r.lat!=null){ var g='https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon;
@@ -9658,7 +9673,7 @@ function stopTip(s){
   if(s.kind==='dealer'||s.kind==='xvisit'){
     if(s.state) h+='<br>'+esc(s.state);
     h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
-    h+='<br>'+(s.ptype==='visit'?'VISIT':'PRE-BOOK');
+    h+='<br>VISIT';
     var al=attLine(s); if(al) h+='<br><span style="color:#8e24aa">'+esc(al)+'</span>';
   } else if(s.rawType==='hotel'){
     h+='<br>Check-in: '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
@@ -10118,7 +10133,8 @@ function mapAddAirportFlight(ap, wk, day, role, windowId){
       if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
     }
   }catch(e){}
-  try{ TVEXP[it.id]=true; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  /* Stay compact — expand only when the salesperson opens details. */
+  try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
   savePlan(); refreshPlanner({skipMap:false});
   aqToast((role==='depart'?'Depart':'Arrive')+' '+ap.code+' · '+(flightWindowLabel(windowId||'morning')||'Morning'));
   try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
@@ -10179,7 +10195,7 @@ function mapStayPopup(lat, lon, placeName, wk){
 }
 function mapAddDealerToDay(dealerId, wk, day){
   undoSnap('Map add dealer');
-  var ref=createVisit(dealerId, 'prebook', parseInt(wk,10), day, {chain:true, step:'time'});
+  var ref=createVisit(dealerId, 'visit', parseInt(wk,10), day, {chain:true, step:'time'});
   if(!ref){
     /* already on a week — createVisit may have made an xvisit; chain handles focus */
     aqToast('Added from map');
@@ -10217,6 +10233,7 @@ function mapAddStayNear(lat, lon, placeName, wk, day, mins){
   MAP_STAY_ARM=false;
   mapPlanHintUpdate();
   try{ if(_wkMapEl) _wkMapEl.style.cursor=''; }catch(e){}
+  try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
   savePlan(); refreshPlanner({skipMap:false});
   aqToast('Overnight preference set · within '+mins+' min of '+placeName);
   try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
@@ -10490,7 +10507,7 @@ function smartStampVisit(dealerId, wk, dayN, intent){
   var hasDur=!!(intent&&intent.durationMin);
   /* Chain starts after create — skip steps the NL parse already filled. */
   var step=!hasTime?'time':(!hasDur?'dur':'add');
-  var ref=createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN, {chain:false});
+  var ref=createVisit(dealerId, 'visit', (wk==='remote'?'remote':parseInt(wk,10)), dayN, {chain:false});
   if(!intent){
     if(ref){ salesChainArm(ref, wk, dayN, 'time'); refreshPlanner({skipMap:true}); salesChainFocus(); }
     return ref;
@@ -10712,7 +10729,7 @@ function dqPick(id,type){
   var inp=DQ.inp; if(!inp) return;
   var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
-  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
+  createVisit(id,type||'visit',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
 }
 /* Everything the day-level + Add can create besides a dealer visit. k = stop type
    (existing TRAVEL_TYPES, so routing/cards/mobile all understand it); v = virtual:
@@ -10879,16 +10896,22 @@ function openDealerAdd(wk,day){
   var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
   var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
   var mode='existing';
-  wrap.innerHTML='<div class="aqmodal-box" style="max-width:480px">'
+  wrap.innerHTML='<div class="aqmodal-box" style="max-width:520px">'
     +'<div class="aqmodal-h" style="display:flex;align-items:center;gap:8px"><span style="color:var(--aq-red)">🤝</span> Add dealer visit'
     +'<button id="dpClose" class="btn" style="margin-left:auto;padding:4px 8px">×</button></div>'
     +'<div style="display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-bottom:10px">'
-    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 12px inherit;padding:8px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing dealer</button>'
-    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 12px inherit;padding:8px;cursor:pointer;color:#6b7280">Potential new dealer</button>'
+    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing</button>'
+    +'<button type="button" class="dp-tab" data-dptab="pipeline" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:#6b7280">Pipeline</button>'
+    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:#6b7280">New</button>'
     +'</div>'
     +'<div id="dpExisting">'
     +'<input id="dpSearch" '+inp+' placeholder="Search dealer name, city, state or account…" autocomplete="off">'
     +'<div id="dpResults" class="dp-results"></div>'
+    +'</div>'
+    +'<div id="dpPipeline" style="display:none">'
+    +'<input id="dpPipeSearch" '+inp+' placeholder="Search Cindel’s new-dealer pipeline (company, city, contact)…" autocomplete="off">'
+    +'<div id="dpPipeNote" style="font-size:11px;color:#6b7280;margin:6px 0 8px">Open Salesforce leads — add to this trip as a visit. Account conversion stays with ISS.</div>'
+    +'<div id="dpPipeResults" class="dp-results"></div>'
     +'</div>'
     +'<div id="dpPotential" style="display:none">'
     +'<input id="dpPlaces" '+inp+' placeholder="Search business name, town or address…" autocomplete="off">'
@@ -10918,8 +10941,10 @@ function openDealerAdd(wk,day){
       b.style.boxShadow=on?'inset 0 -2px 0 var(--aq-red)':'none';
     });
     $('#dpExisting').style.display=tab==='existing'?'':'none';
+    $('#dpPipeline').style.display=tab==='pipeline'?'':'none';
     $('#dpPotential').style.display=tab==='potential'?'':'none';
     if(tab==='existing') setTimeout(function(){ $('#dpSearch').focus(); },20);
+    else if(tab==='pipeline') setTimeout(function(){ $('#dpPipeSearch').focus(); },20);
     else {
       $('#dpPlacesNote').textContent=placesConfigured()
         ? 'Search Google Places for farm equipment and related businesses.'
@@ -10932,7 +10957,7 @@ function openDealerAdd(wk,day){
     var q=($('#dpSearch').value||'').trim();
     if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, postal code or account…</div>'; return; }
     var rows=dqMatches(q);
-    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Potential new dealer.</div>'; return; }
+    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Pipeline or New.</div>'; return; }
     $('#dpResults').innerHTML=rows.map(function(d){
       var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
       var sub=[d.city,d.loc,d.territory].filter(Boolean).join(' · ');
@@ -10947,6 +10972,62 @@ function openDealerAdd(wk,day){
     });
   };
   $('#dpSearch').addEventListener('input',renderResults); renderResults();
+  function addLeadToTrip(lead){
+    var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===lead.sfLeadId; })[0];
+    var finish=function(p){
+      createVisit(p.id,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+      wrap.remove();
+      aqToast('Added '+p.name+' from pipeline');
+    };
+    if(existing){ finish(existing); return; }
+    addProspect({
+      name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+      phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+      territory:terr, sfLeadId:lead.sfLeadId,
+      notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
+    }, finish);
+  }
+  var pipeTimer=null;
+  $('#dpPipeSearch').addEventListener('input',function(){
+    clearTimeout(pipeTimer);
+    pipeTimer=setTimeout(function(){
+      var q=($('#dpPipeSearch').value||'').trim();
+      var box=$('#dpPipeResults');
+      if(q.length<2){ box.innerHTML='<div class="dp-hint">Type at least 2 characters to search the pipeline.</div>'; return; }
+      box.innerHTML='<div class="dp-hint">Searching pipeline…</div>';
+      var localHits=(PROSPECTS||[]).filter(function(p){
+        var hay=((p.name||'')+' '+(p.city||'')+' '+(p.loc||'')+' '+(p.contactName||'')).toLowerCase();
+        return hay.indexOf(q.toLowerCase())>=0;
+      }).slice(0,8);
+      function paint(leads, note){
+        var rows=[].concat(leads||[]);
+        localHits.forEach(function(p){
+          if(!rows.some(function(r){ return (r.sfLeadId&&r.sfLeadId===p.sfLeadId)||r.name===p.name; }))
+            rows.unshift({sfLeadId:p.sfLeadId||'', name:p.name, city:p.city||'', state:p.loc||'', address:p.address||'', contactName:p.contactName||'', phone:p.phone||p.contactPhone||'', status:p._pipeline?'Local pipeline':'Local prospect', _local:true, _prospectId:p.id});
+        });
+        if(!rows.length){ box.innerHTML='<div class="dp-hint">'+(note||'No pipeline matches — try New to enter manually.')+'</div>'; return; }
+        box.innerHTML=(note?('<div class="dp-hint">'+esc(note)+'</div>'):'')+rows.map(function(d,i){
+          var sub=[d.city||d.state,d.contactName,d.status].filter(Boolean).join(' · ');
+          return '<button class="dp-row" data-pipei="'+i+'"><span class="dp-nm">'+esc(d.name)+'</span>'
+            +'<span class="ptbadge pt-potential">Pipeline</span><span class="dp-terr">'+esc(sub)+'</span></button>';
+        }).join('');
+        box._aqLeads=rows;
+        box.querySelectorAll('[data-pipei]').forEach(function(b){
+          b.onclick=function(){
+            var lead=box._aqLeads[+b.dataset.pipei];
+            if(!lead) return;
+            if(lead._prospectId){ createVisit(lead._prospectId,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day); wrap.remove(); return; }
+            addLeadToTrip(lead);
+          };
+        });
+      }
+      if(typeof pbApiFetch!=='function'){ paint([], 'Sign in required to search Salesforce leads.'); return; }
+      pbApiFetch('/api/salesforce-leads?q='+encodeURIComponent(q),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        if(!j||!j.ok){ paint([], (j&&j.error)?('Pipeline unavailable: '+j.error+' — local prospects still shown.'):'Pipeline unavailable — local prospects still shown.'); return; }
+        paint(j.leads||[], j.leads&&j.leads.length?'':'No open leads matched — try another spelling or New.');
+      }).catch(function(){ paint([], 'Pipeline request failed — local prospects still shown.'); });
+    },280);
+  });
   var placesTimer=null;
   $('#dpPlaces').addEventListener('input',function(){
     clearTimeout(placesTimer);
@@ -13491,13 +13572,27 @@ function render(){
   document.getElementById("cards").style.display='none';
   renderCards();
   if(coordMode){
-    try{ document.body.classList.remove('trips-layout-on'); }catch(e0){}
-    document.getElementById("plannerView").style.display='none';
-    document.getElementById("allView").style.display='none';
+    /* EA works in the same This Trip planner as sales, with booking fields visible
+       (portalIsSalesMode=false). Queue strip stays above for Ready-to-Book handoffs. */
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
+    document.getElementById("plannerView").style.display=(isAll||isMaster||isSettings||isTeam)?'none':'';
+    document.getElementById("allView").style.display=isAll?'':'none';
     document.getElementById("masterView").style.display='none';
     document.getElementById("settingsView").style.display='none';
     if(tv) tv.style.display='none';
+    if(cv){ cv.style.display='block'; cv.classList.add('is-on'); }
     try{ if(typeof renderCoord==='function') renderCoord(); else if(window.AQCoord&&AQCoord.render) AQCoord.render(); }catch(e){ console.error(e); }
+    if(isAll){ try{ renderAllView(); }catch(e){} return; }
+    if(!isAll&&!isMaster&&!isSettings&&!isTeam){
+      document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
+      var isPlan=terrMode!=='map', isMap=terrMode==='map';
+      document.getElementById('planwrap').style.display=isPlan?'':'none';
+      document.getElementById('terrSched').style.display='none';
+      document.getElementById('terrMap').style.display=isMap?'':'none';
+      if(isPlan){ renderPlanner(); wireDnD(); focusCurrentWeekOnce(); }
+      else { renderTerrMap(); }
+      document.getElementById('planTitle').textContent=terr+' · Travel Coordination';
+    }
     return;
   }
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings&&!isTeam)?'':'none';

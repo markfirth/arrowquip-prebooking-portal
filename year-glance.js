@@ -9,7 +9,7 @@ var YG_MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oc
 var YG_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 var YG_AVAIL_DEFAULTS = [
-  {id:'TR', abbr:'TR', label:'Travelling', color:'#2563eb', text:'#fff', system:true, class:'away'},
+  {id:'TR', abbr:'TR', label:'Away', color:'#2563eb', text:'#fff', system:true, class:'away'},
   {id:'OF', abbr:'OF', label:'In office', color:'#4b5563', text:'#fff', system:true, class:'present'},
   {id:'RM', abbr:'RM', label:'Working remotely', color:'#0d9488', text:'#fff', system:true, class:'present'},
   {id:'TS', abbr:'TS', label:'Trade show', color:'#d97706', text:'#fff', system:true, class:'away'},
@@ -260,6 +260,20 @@ function ygBuildActivities(){
   return byDay;
 }
 
+function ygTripIsBooked(terr, wk, memberId){
+  /* Booked / Sent / Completed trips → firm "I will be away" on Year at a Glance. */
+  try{
+    var TB=global.TRIPBOOK||{};
+    var keys=[];
+    if(memberId) keys.push(String(terr)+'|'+wk+'|'+memberId);
+    keys.push(String(terr)+'|'+wk);
+    for(var i=0;i<keys.length;i++){
+      var rec=TB[keys[i]];
+      if(rec && (rec.status==='booked'||rec.status==='sent'||rec.status==='completed')) return true;
+    }
+  }catch(e){}
+  return false;
+}
 function ygBuildAvailability(byAct){
   var byDay={}, team=ygTeam(), teamIds={};
   team.forEach(function(m){ teamIds[m.id]=m; });
@@ -302,6 +316,9 @@ function ygBuildAvailability(byAct){
     var parts=k.split('|'), mid=parts[0], wk=+parts[1], s=spans[k];
     var m=teamIds[mid]||(global.teamById&&global.teamById(mid));
     if(!m||!memberInFilter(m)||!s.hasOvernight||s.min>s.max) return;
+    var tripTerr=(m.terrs&&m.terrs[0])||(m.terr)||ygTerr()||'East';
+    if(tripTerr==='All') tripTerr=(m.terr)||'East';
+    var booked=ygTripIsBooked(tripTerr, wk, m.id);
     for(var di=s.min; di<=s.max; di++){
       var dt=ygFromWkDay(wk, di);
       if(!dt || dt.getFullYear()!==YG.year) continue;
@@ -309,11 +326,46 @@ function ygBuildAvailability(byAct){
       var dayActs=(byAct[iso]||[]).filter(function(a){ return a.member&&a.member.id===mid; });
       var isTs=dayActs.some(function(a){ return a.type==='tradeshow'; });
       pushAvail(byDay, iso, {
-        member:m, status:isTs?'TS':'TR', geo:s.geo||'', conf:s.conf, tentative:!s.conf,
+        member:m, status:isTs?'TS':'TR', geo:s.geo||'',
+        conf:booked||s.conf, tentative:!(booked||s.conf), booked:booked,
+        title:booked?'I will be away':(isTs?'Trade show':'Travelling'),
         acts:dayActs, source:'trip'
       });
     }
   });
+
+  /* Booked trips with only daytime visits (no hotel/flight yet) still mark Away. */
+  try{
+    var TB=global.TRIPBOOK||{};
+    Object.keys(TB).forEach(function(key){
+      var rec=TB[key];
+      if(!rec||!(rec.status==='booked'||rec.status==='sent'||rec.status==='completed')) return;
+      var parts=String(key).split('|');
+      var tTerr=parts[0], wk=+parts[1], mid=parts[2]||null;
+      if(!isFinite(wk)) return;
+      var m=mid?(teamIds[mid]||(global.teamById&&global.teamById(mid))):null;
+      var targets=m?[m]:team.filter(function(tm){
+        if(!memberInFilter(tm)) return false;
+        if(tTerr&&tTerr!=='All'&&tm.terr&&tm.terr!==tTerr&&!(tm.terrs&&tm.terrs.indexOf(tTerr)>=0)) return false;
+        return true;
+      });
+      targets.forEach(function(tm){
+        if(!memberInFilter(tm)) return;
+        for(var di=0; di<=6; di++){
+          var dt=ygFromWkDay(wk, di);
+          if(!dt || dt.getFullYear()!==YG.year) continue;
+          var iso=ygISO(dt);
+          var dayActs=(byAct[iso]||[]).filter(function(a){ return a.member&&a.member.id===tm.id; });
+          if(!dayActs.length && di>4) continue; /* skip empty weekend unless activity */
+          if((byDay[iso]||[]).some(function(r){ return r.member&&r.member.id===tm.id&&(r.source==='override'||r.booked); })) continue;
+          pushAvail(byDay, iso, {
+            member:tm, status:'TR', geo:'', conf:true, tentative:false, booked:true,
+            title:'I will be away', acts:dayActs, source:'tripbook'
+          });
+        }
+      });
+    });
+  }catch(e){}
 
   Object.keys(byAct).forEach(function(iso){
     (byAct[iso]||[]).forEach(function(ev){
@@ -502,7 +554,7 @@ function ygKeyEventsForMonth(month, byAct, byAvail){
     (byAvail[iso]||[]).forEach(function(r){
       if(r.source!=='trip' && r.source!=='event') return;
       if(r.status!=='TR' && r.status!=='TS' && r.status!=='CE' && r.status!=='HO') return;
-      var title=r.title || (r.geo?(r.status+' · '+r.geo):ygAvailCat(r.status).label);
+      var title=r.booked?'I will be away':(r.title || (r.geo?(r.status+' · '+r.geo):ygAvailCat(r.status).label));
       var id='av|'+iso+'|'+(r.member?r.member.id:'')+'|'+r.status;
       if(seen[id]) return; seen[id]=1;
       /* collapse consecutive travel into ranges later */
@@ -575,9 +627,10 @@ function ygPanelHTML(iso, byAct, byAvail){
     body+=rows.map(function(r){
       var cat=ygAvailCat(r.status);
       var m=r.member||{};
+      var awayLbl=r.booked?'I will be away':(r.title||cat.label);
       return '<div class="yg-pline"><span class="yg-pcat" style="background:'+cat.color+'">'+esc(cat.abbr)+'</span>'
         +'<div class="yg-pmain"><div class="yg-pt">'+esc(m.name||'Team')+(m.role?(' · '+esc(m.role)):'')+'</div>'
-        +'<div class="yg-ps">'+esc(cat.label)+(r.geo?(' · '+esc(r.geo)):'')+(r.tentative?' · Tentative':'')+'</div></div></div>';
+        +'<div class="yg-ps">'+esc(awayLbl)+(r.geo?(' · '+esc(r.geo)):'')+(r.tentative?' · Tentative':'')+(r.booked?' · Booked':'')+'</div></div></div>';
     }).join('');
   }
   if(acts.length){

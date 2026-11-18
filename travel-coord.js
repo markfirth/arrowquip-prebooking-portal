@@ -161,17 +161,25 @@
     try {
       if (global.setPortalTerr) global.setPortalTerr(row.terr);
       else global.terr = row.terr;
-      if (typeof global.FOCUS_WK !== 'undefined') global.FOCUS_WK = row.wk;
-      if (typeof global.ALL_WK !== 'undefined') global.ALL_WK = row.wk;
+      try {
+        if (typeof global.focusWkSet === 'function') global.focusWkSet(row.wk, { expand: true, silent: true });
+        else {
+          if (typeof global.FOCUS_WK !== 'undefined') global.FOCUS_WK = row.wk;
+          if (typeof global.ALL_WK !== 'undefined') global.ALL_WK = row.wk;
+        }
+      } catch (e0) {
+        if (typeof global.FOCUS_WK !== 'undefined') global.FOCUS_WK = row.wk;
+      }
       if (row.memberId && global.TEAM_IDS) {
         global.TEAM_ALL = false;
         global.TEAM_IDS = {};
         global.TEAM_IDS[row.memberId] = true;
         try { if (global.teamSaveSel) global.teamSaveSel(); } catch (e) {}
       }
-      if (global.setPortalMode) global.setPortalMode('sales');
-      else if (global.render) global.render();
-      toast('Opened trip for ' + row.traveller);
+      /* Stay in Travel Coordination so booking fields remain visible on This Trip. */
+      if (global.setPortalMode) global.setPortalMode('coord', { silent: true, force: true });
+      if (global.render) global.render();
+      toast('Opened trip for ' + row.traveller + ' — enter booking details on the cards');
     } catch (e) {
       console.error(e);
     }
@@ -398,39 +406,32 @@
     var m = metrics();
     var filter = global._COORD_FILTER || { attention: true };
     var rows = tripRows(filter);
-    var body = rows
+    var cards = rows
+      .slice(0, 12)
       .map(function (r) {
         var stLabel = (global.TRIP_STATUS && global.TRIP_STATUS[r.status] && global.TRIP_STATUS[r.status].label) || r.status;
         return (
-          '<tr data-ckey="' + esc(r.key) + '">' +
-          '<td><button type="button" class="coord-link" data-open="' + esc(r.key) + '">' + esc(r.traveller) + '</button>' +
-          (r.needsReview ? '<div class="coord-flag">Needs review</div>' : '') +
-          '</td>' +
-          '<td>' + esc(r.terr) + '</td>' +
-          '<td>' + esc(r.dates) + '</td>' +
-          '<td>' + esc(r.destination) + '</td>' +
-          '<td>' + r.confirmed + '/' + r.dealers + '</td>' +
-          '<td>' + r.bookedN + '/' + r.checklistN + '</td>' +
-          '<td><span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span></td>' +
-          '<td class="coord-acts">' +
+          '<div class="coord-chip" data-ckey="' + esc(r.key) + '">' +
+          '<button type="button" class="coord-link" data-open="' + esc(r.key) + '">' + esc(r.traveller) + '</button>' +
+          '<span class="coord-chip-meta">' + esc(r.terr) + ' · ' + esc(r.dates) + '</span>' +
+          (r.needsReview ? '<span class="coord-flag">Review</span>' : '') +
+          '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span>' +
           '<button type="button" class="kbb" data-ck="' + esc(r.key) + '">Checklist</button>' +
-          (r.status === 'ready' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booking">Start booking</button>' : '') +
-          (r.status === 'booking' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booked">Mark booked</button>' : '') +
-          (r.status === 'booked' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|sent">Mark sent</button>' : '') +
-          (r.status === 'sent' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|completed">Mark completed</button>' : '') +
-          '</td></tr>'
+          (r.status === 'ready' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booking">Start</button>' : '') +
+          (r.status === 'booking' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booked">Booked</button>' : '') +
+          '</div>'
         );
       })
       .join('');
     host.innerHTML =
-      '<div class="coord-page">' +
-      '<div class="coord-head"><h1>TRAVEL COORDINATION</h1>' +
-      '<div class="coord-sub">Sales EA booking queue · same trips as Sales Planning</div></div>' +
-      '<div class="coord-metrics">' +
-      '<div class="coord-m"><div class="coord-mn">' + m.ready + '</div><div class="coord-ml">Ready to book</div></div>' +
-      '<div class="coord-m"><div class="coord-mn">' + m.booking + '</div><div class="coord-ml">Bookings in progress</div></div>' +
-      '<div class="coord-m"><div class="coord-mn">' + m.completed + '</div><div class="coord-ml">Trips completed</div></div>' +
-      '</div>' +
+      '<div class="coord-strip">' +
+      '<div class="coord-strip-h">' +
+      '<div><b>TRAVEL COORDINATION</b><span class="coord-sub"> Same trip as sales — expand a card to enter airline, confirmation, and booking details sales don’t see.</span></div>' +
+      '<div class="coord-metrics coord-metrics-inline">' +
+      '<div class="coord-m"><div class="coord-mn">' + m.ready + '</div><div class="coord-ml">Ready</div></div>' +
+      '<div class="coord-m"><div class="coord-mn">' + m.booking + '</div><div class="coord-ml">Booking</div></div>' +
+      '<div class="coord-m"><div class="coord-mn">' + m.completed + '</div><div class="coord-ml">Done</div></div>' +
+      '</div></div>' +
       '<div class="coord-toolbar">' +
       '<label class="coord-chk"><input type="checkbox" id="coordAtt"' + (filter.attention !== false ? ' checked' : '') + '> Needs attention</label>' +
       '<select id="coordTerr"><option value="">All territories</option>' +
@@ -447,11 +448,9 @@
         })
         .join('') +
       '</select></div>' +
-      '<div class="coord-table-wrap"><table class="coord-table">' +
-      '<thead><tr><th>Traveller</th><th>Territory</th><th>Dates</th><th>Destination</th><th>Dealer conf.</th><th>Booking</th><th>Status</th><th></th></tr></thead>' +
-      '<tbody>' +
-      (body || '<tr><td colspan="8" class="coord-empty">No trips in the queue. Submitted Ready to Book trips appear here.</td></tr>') +
-      '</tbody></table></div></div>';
+      '<div class="coord-chip-row">' +
+      (cards || '<div class="coord-empty-inline">No trips in the queue — submitted Ready to Book trips appear here. Use This Trip below to enter booking details.</div>') +
+      '</div></div>';
 
     var att = host.querySelector('#coordAtt');
     if (att)
