@@ -507,7 +507,7 @@ function ygMonthRowHTML(month, byAvail, cols){
       +'<span class="yg-d">'+dayNum+'</span><span class="yg-bars">'+bar+'</span></button>';
   }
   return '<div class="yg-month" data-ygmonth="'+month+'" style="--yg-cols:'+cols+'">'
-    +'<div class="yg-mlbl">'+YG_MONTHS_SHORT[month]+'</div>'+cells+'</div>';
+    +'<button type="button" class="yg-mlbl" data-ygmonthpick="'+month+'" title="Show monthly focus">'+YG_MONTHS_SHORT[month]+'</button>'+cells+'</div>';
 }
 
 /* —— Monthly Focus & Events —— */
@@ -634,6 +634,18 @@ function ygPanelHTML(byAct, byAvail){
   var people=Object.keys(byPerson).map(function(id){ return byPerson[id]; });
   people.sort(function(a,b){ return String((a.member&&a.member.name)||'').localeCompare(String((b.member&&b.member.name)||'')); });
   var body='';
+  /* Monthly focus for the primary selected month (retained data — detail panel, not 12 cards) */
+  var focusMonth=ygParseISO(isos[0]).getMonth();
+  var focus=ygFocusFor(focusMonth);
+  if(focus&&focus.title){
+    body+='<div class="yg-focusbox"><div class="yg-flab">'+YG_MONTHS[focusMonth]+' · Monthly focus</div>'
+      +'<div class="yg-ftitle">'+esc(focus.title)+'</div>'
+      +(focus.notes?('<div class="yg-fnotes">'+esc(focus.notes)+'</div>'):'')
+      +'</div>';
+  } else if(ygCanAdmin()){
+    body+='<div class="yg-focusbox"><div class="yg-flab">'+YG_MONTHS[focusMonth]+' · Monthly focus</div>'
+      +'<button type="button" class="kbb" id="ygEditFocus" data-ygfocus="'+focusMonth+'">+ Set monthly focus</button></div>';
+  }
   /* Day-by-day where strip when more than one day is highlighted */
   if(isos.length>1){
     body+='<div class="yg-daystrip">';
@@ -781,7 +793,7 @@ function ygWire(host, byAct, byAvail){
       ygRender();
     };
   });
-  function ygClearSelection(){ YG.selectedDays={}; YG.panelDate=null; YG.rangeStart=null; ygRender(); }
+  function ygClearSelection(){ YG.selectedDays={}; YG.panelDate=null; YG.rangeStart=null; YG.focusMonth=null; ygRender(); }
   var pc=host.querySelector('#ygPanelClose'); if(pc) pc.onclick=ygClearSelection;
   var clr=host.querySelector('#ygClearDays'); if(clr) clr.onclick=ygClearSelection;
   var planDay=host.querySelector('#ygPlanDay');
@@ -793,6 +805,18 @@ function ygWire(host, byAct, byAvail){
   if(ow) ow.onclick=function(){ ygOpenWeekly(parseInt(ow.dataset.wk,10)); };
   var add=host.querySelector('#ygAddEvent'); if(add) add.onclick=function(){ var isos=ygSelectedIsos(); ygOpenEventModal(isos[0]||null, isos[0]||null); };
   var mc=host.querySelector('#ygManageCats'); if(mc) mc.onclick=function(){ ygOpenManageCats(); };
+  host.querySelectorAll('[data-ygmonthpick]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var m=parseInt(b.dataset.ygmonthpick,10);
+      /* Select the 1st of the month so the detail panel opens with monthly focus */
+      var iso=ygISO(ygDate(YG.year,m,1));
+      YG.selectedDays={}; YG.selectedDays[iso]=true; YG.panelDate=iso; YG.rangeStart=iso;
+      ygRender();
+    };
+  });
+  var ef=host.querySelector('#ygEditFocus');
+  if(ef) ef.onclick=function(){ ygEditFocus(parseInt(ef.dataset.ygfocus,10)); };
   document.addEventListener('click', function hideMenu(ev){
     if(!host.contains(ev.target)) return;
     var menu=host.querySelector('#ygTeamMenu');

@@ -151,8 +151,10 @@
   function metrics() {
     var rows = tripRows({});
     return {
-      ready: rows.filter(function (r) { return r.status === 'ready' || r.needsReview; }).length,
+      ready: rows.filter(function (r) { return r.status === 'ready'; }).length,
       booking: rows.filter(function (r) { return r.status === 'booking'; }).length,
+      booked: rows.filter(function (r) { return r.status === 'booked' || r.status === 'sent'; }).length,
+      attention: rows.filter(function (r) { return r.needsReview || r.status === 'ready'; }).length,
       completed: rows.filter(function (r) { return r.status === 'booked' || r.status === 'sent' || r.status === 'completed'; }).length,
     };
   }
@@ -177,7 +179,8 @@
         try { if (global.teamSaveSel) global.teamSaveSel(); } catch (e) {}
       }
       /* Stay in Travel Coordination so booking fields remain visible on This Trip. */
-      if (global.setPortalMode) global.setPortalMode('coord', { silent: true, force: true });
+      if (global.setWorkspace) global.setWorkspace('coord', { silent: true, force: true });
+      else if (global.setPortalMode) global.setPortalMode('coord', { silent: true, force: true });
       if (global.render) global.render();
       toast('Opened trip for ' + row.traveller + ' — enter booking details on the cards');
     } catch (e) {
@@ -406,32 +409,68 @@
     var m = metrics();
     var filter = global._COORD_FILTER || { attention: true };
     var rows = tripRows(filter);
-    var chips = rows
-      .slice(0, 10)
+    var selectedKey = global._COORD_SELECTED || null;
+    var selected = rows.filter(function (r) { return r.key === selectedKey; })[0] || rows[0] || null;
+    if (selected) global._COORD_SELECTED = selected.key;
+    var queue = rows
+      .slice(0, 24)
       .map(function (r) {
         var stLabel = (global.TRIP_STATUS && global.TRIP_STATUS[r.status] && global.TRIP_STATUS[r.status].label) || r.status;
+        var on = selected && selected.key === r.key;
         return (
-          '<div class="coord-chip" data-ckey="' + esc(r.key) + '">' +
-          '<button type="button" class="coord-link" data-open="' + esc(r.key) + '" title="Open this trip">' + esc(r.traveller) + '</button>' +
-          '<span class="coord-chip-meta">' + esc(r.dates) + '</span>' +
+          '<button type="button" class="coord-qrow' + (on ? ' on' : '') + '" data-open="' + esc(r.key) + '">' +
+          '<span class="cq-name">' + esc(r.traveller) + '</span>' +
+          '<span class="cq-meta">' + esc(r.terr) + ' · ' + esc(r.dates) + '</span>' +
           (r.needsReview ? '<span class="coord-flag">Review</span>' : '') +
-          '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span>' +
-          '<button type="button" class="kbb" data-ck="' + esc(r.key) + '">Checklist</button>' +
-          (r.status === 'ready' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booking">Start</button>' : '') +
-          (r.status === 'booking' ? '<button type="button" class="kbb" data-st="' + esc(r.key) + '|booked">Booked</button>' : '') +
-          '</div>'
+          '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span></button>'
         );
       })
       .join('');
+    var panel = '';
+    if (selected) {
+      var stLabel2 = (global.TRIP_STATUS && global.TRIP_STATUS[selected.status] && global.TRIP_STATUS[selected.status].label) || selected.status;
+      var ck = selected.checklist || [];
+      var ckLines = ['flight', 'hotel', 'rental']
+        .map(function (kind) {
+          var hit = ck.filter(function (c) {
+            return (c.kind || '').indexOf(kind) === 0 || c.kind === kind || (kind === 'rental' && /rental|car/.test(c.kind || ''));
+          })[0];
+          var done = hit && hit.status === 'booked';
+          var label = kind === 'flight' ? 'Flights' : kind === 'hotel' ? 'Hotel' : 'Rental car';
+          var hint = kind === 'flight' ? 'Enter confirmation and times' : kind === 'hotel' ? 'Add property and reservation' : 'Add supplier and pickup details';
+          return (
+            '<div class="coord-ckline' + (done ? ' done' : '') + '">' +
+            '<span class="ck-box">' + (done ? '✓' : '') + '</span>' +
+            '<div><b>' + label + '</b><span>' + hint + '</span></div></div>'
+          );
+        })
+        .join('');
+      panel =
+        '<div class="coord-panel">' +
+        '<div class="coord-panel-h"><b>' + esc(selected.traveller) + '</b><span>' + esc(stLabel2) + '</span></div>' +
+        '<div class="coord-panel-sub">' + esc(selected.terr) + ' · ' + esc(selected.dates) +
+        (selected.destination && selected.destination !== '—' ? ' · ' + esc(selected.destination) : '') + '</div>' +
+        '<div class="coord-cklist">' + ckLines + '</div>' +
+        '<div class="coord-panel-actions">' +
+        '<button type="button" class="kbb" data-ck="' + esc(selected.key) + '">Open checklist</button>' +
+        '<button type="button" class="kbb" data-itin="' + esc(selected.key) + '">Open itinerary</button>' +
+        (selected.status === 'ready' ? '<button type="button" class="kbb primary" data-st="' + esc(selected.key) + '|booking">Start booking</button>' : '') +
+        (selected.status === 'booking' ? '<button type="button" class="kbb primary" data-st="' + esc(selected.key) + '|booked">Mark booked</button>' : '') +
+        '</div></div>';
+    } else {
+      panel = '<div class="coord-panel empty"><p>No trips in this queue. Sales submits Ready to book from My Trips.</p></div>';
+    }
     host.innerHTML =
-      '<div class="coord-bar">' +
-      '<span class="coord-bar-label">Queue</span>' +
-      '<div class="coord-counts">' +
-      '<span class="coord-count' + (m.ready ? ' has ready' : '') + '"><b>' + m.ready + '</b>Ready</span>' +
-      '<span class="coord-count' + (m.booking ? ' has booking' : '') + '"><b>' + m.booking + '</b>Booking</span>' +
-      '<span class="coord-count' + (m.completed ? ' has' : '') + '"><b>' + m.completed + '</b>Done</span>' +
+      '<div class="coord-shell">' +
+      '<div class="coord-metrics">' +
+      '<span class="coord-count' + (m.ready ? ' has ready' : '') + '"><b>' + m.ready + '</b>Ready to book</span>' +
+      '<span class="coord-count' + (m.booking ? ' has booking' : '') + '"><b>' + m.booking + '</b>In progress</span>' +
+      '<span class="coord-count' + (m.booked ? ' has' : '') + '"><b>' + (m.booked || 0) + '</b>Booked</span>' +
+      '<span class="coord-count' + (m.attention ? ' has ready' : '') + '"><b>' + (m.attention || m.ready || 0) + '</b>Needs attention</span>' +
       '</div>' +
-      (chips ? '<div class="coord-chip-row">' + chips + '</div>' : '<div class="coord-bar-spacer"></div>') +
+      '<div class="coord-work">' +
+      '<div class="coord-queue">' +
+      '<div class="coord-qh">Booking queue' +
       '<div class="coord-bar-filters">' +
       '<label class="coord-chk"><input type="checkbox" id="coordAtt"' + (filter.attention !== false ? ' checked' : '') + '> Attention</label>' +
       '<select id="coordTerr" title="Territory"><option value="">All areas</option>' +
@@ -447,7 +486,11 @@
           return '<option value="' + s + '"' + (filter.status === s ? ' selected' : '') + '>' + s + '</option>';
         })
         .join('') +
-      '</select></div></div>';
+      '</select></div></div>' +
+      (queue || '<div class="coord-empty">Queue is clear.</div>') +
+      '</div>' +
+      panel +
+      '</div></div>';
 
     var att = host.querySelector('#coordAtt');
     if (att)
@@ -457,11 +500,11 @@
         if (att.checked) delete global._COORD_FILTER.status;
         renderCoord();
       };
-    var terr = host.querySelector('#coordTerr');
-    if (terr)
-      terr.onchange = function () {
+    var terrSel = host.querySelector('#coordTerr');
+    if (terrSel)
+      terrSel.onchange = function () {
         global._COORD_FILTER = global._COORD_FILTER || {};
-        global._COORD_FILTER.terr = terr.value || null;
+        global._COORD_FILTER.terr = terrSel.value || null;
         renderCoord();
       };
     var st = host.querySelector('#coordStat');
@@ -474,7 +517,15 @@
       };
     host.querySelectorAll('[data-open]').forEach(function (b) {
       b.onclick = function () {
+        global._COORD_SELECTED = b.dataset.open;
         var row = rows.filter(function (r) { return r.key === b.dataset.open; })[0];
+        renderCoord();
+        if (row) openTrip(row);
+      };
+    });
+    host.querySelectorAll('[data-itin]').forEach(function (b) {
+      b.onclick = function () {
+        var row = rows.filter(function (r) { return r.key === b.dataset.itin; })[0];
         if (row) openTrip(row);
       };
     });

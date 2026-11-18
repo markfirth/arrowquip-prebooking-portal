@@ -26,27 +26,32 @@
 @font-face{font-family:Frutiger;src:url("/fonts/frutiger/FrutigerLTStd-ExtraBlackCn.otf") format("opentype");font-weight:900;font-style:normal;font-display:swap;}
 
 :root{
-  /* Sales Portal palette */
+  /* Final Polish tokens (Frutiger remains approved brand typeface) */
   --font-heading:"Frutiger",sans-serif;
-  --aq-red:#cc152f;            /* Sales navLink:hover / accent red */
-  --aq-red-soft:#fef2f2;       /* Sales userDropdownItem:hover gradient start */
-  --aq-black:#1a1a1a;          /* Sales heading ink */
+  --font-body:"Open Sans","Segoe UI",Helvetica,Arial,sans-serif;
+  --aq-red:#B3202B;            /* Brand red */
+  --aq-red-soft:#fef2f2;
+  --aq-black:#161719;          /* Carbon */
   --aq-charcoal:#292828;
-  --ink:#171717;               /* Sales --foreground */
-  --muted:#6b7280;             /* Sales subtitle grey */
-  --muted-2:#9ca3af;           /* Sales summaryLabel / emptyState grey */
-  --line:#e5e7eb;              /* Sales card border */
-  --line-soft:#f3f4f6;         /* Sales gridLine */
-  --bg:#fff;                   /* Sales --background */
-  --panel:#fff;
-  --surface:#f9fafb;           /* Sales summaryItem:last-child */
-  --radius:4px;                /* Sales card/button radius */
-  --green:#16a34a;             /* Sales .positive */
+  --ink:#161719;
+  --muted:#69717A;             /* Steel */
+  --muted-2:#9ca3af;
+  --line:#e5e7eb;
+  --line-soft:#f0f1f3;
+  --bg:#FFFFFF;
+  --panel:#FFFFFF;
+  --canvas:#F5F6F7;
+  --surface:#F5F6F7;
+  --radius:5px;                /* 4–6px corners */
+  --space:8px;
+  --ctrl-h:36px;
+  --green:#16a34a;
+  --amber:#d97706;
   --green-bg:#f2f9f3;--green-bd:#bfe0c8;
-  --nav-h:60px;                /* Sales navContainer height */
+  --nav-h:60px;
 }
 *{box-sizing:border-box;} html,body{margin:0;padding:0;}
-body{font-family:"Open Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+body{font-family:var(--font-body);background:var(--canvas);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 .cond{font-family:var(--font-heading);font-weight:900;text-transform:uppercase;letter-spacing:.5px;}
 /* ---- Header: NavBar-module (utilityBar + mainNav) ---- */
 header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
@@ -63,19 +68,46 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqAction--solid{background:#000;border:1px solid #000;color:#fff;padding:6px 14px;font-weight:900;font-size:12px;}
 .aqAction--solid:hover{background:#fff;color:#000;}
 .aqMainNav{background-color:#000;border-bottom:1px solid #000;}
-.aqNavContainer{display:flex;justify-content:space-between;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;}
-.aqLogoContainer{display:flex;align-items:center;}
+.aqNavContainer{display:flex;align-items:center;height:var(--nav-h);margin:0 auto;padding:0 20px;gap:20px;}
+.aqLogoContainer{display:flex;align-items:center;flex:0 0 auto;}
 .aqLogo{height:40px;width:auto;display:block;transition:opacity .2s;}
 .aqLogo:hover{opacity:.8;}
-.aqNavLinks{display:flex;align-items:center;gap:30px;height:100%;}
+.aqNavLinks{display:flex;align-items:center;gap:24px;height:100%;flex:1 1 auto;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+/* Team Calendar — people × dates */
+.tc-matrix{display:flex;flex-direction:column;gap:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:auto;max-height:calc(100vh - 220px);}
+.tc-grid{display:grid;min-width:720px;border-collapse:collapse;}
+.tc-head,.tc-row{display:contents;}
+.tc-cell{border-bottom:1px solid var(--line-soft);border-right:1px solid var(--line-soft);padding:8px;min-height:56px;font-size:13px;}
+.tc-cell.name{position:sticky;left:0;z-index:2;background:#fff;min-width:160px;max-width:200px;border-right:1px solid var(--line);font-weight:700;color:var(--aq-black);}
+.tc-cell.hd{position:sticky;top:0;z-index:3;background:var(--canvas);font:800 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);min-height:40px;padding:10px 8px;}
+.tc-cell.hd.name{z-index:4;background:var(--canvas);}
+.tc-cell.today{background:#fff8f8;}
+.tc-block{display:block;width:100%;appearance:none;border:0;border-left:3px solid var(--aq-red);background:#f8f9fa;border-radius:3px;padding:6px 8px;text-align:left;cursor:pointer;font:600 12px var(--font-body);color:var(--ink);line-height:1.3;}
+.tc-block:hover{background:#fef2f2;}
+.tc-block .tc-sub{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;}
+.tc-empty{color:var(--muted-2);font-size:12px;padding:4px 0;}
+.tc-role{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:2px;}
+.page-h{font:900 24px/1.15 var(--font-heading);letter-spacing:.02em;text-transform:uppercase;color:var(--aq-black);margin:0;padding:12px 12px 4px;}
+.page-sub{font-size:13px;color:var(--muted);padding:0 12px 10px;margin:0;}
+.aqPlanStrip{display:flex;align-items:center;gap:8px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;}
+.aqPlanStrip [data-planmode]{appearance:none;border:0;background:transparent;font:800 12px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:4px;height:var(--ctrl-h);}
+.aqPlanStrip [data-planmode].on{color:var(--aq-red);background:var(--aq-red-soft);}
+.aqPlanSep{color:var(--line);font-weight:300;}
 .aqNavItem{display:flex;align-items:center;height:100%;position:relative;}
-/* nav links: Sales navLink, exactly */
-.aqNavLinks .tab{display:flex;align-items:center;height:100%;appearance:none;background:0 0;border:0;padding:20px 0;color:#fff;font-family:var(--font-heading);font-size:15px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .2s;}
+.aqNavLinks .tab{display:flex;align-items:center;height:100%;appearance:none;background:0 0;border:0;padding:20px 0;color:#fff;font-family:var(--font-heading);font-size:14px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .2s;}
 .aqNavLinks .tab:hover{color:var(--aq-red);}
-/* Sales nav has no active marker; this red underline is the one addition (see notes) */
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
-/* Team member strip — under territory nav, ~34px */
-.aqTeamNav{display:none!important;} /* team selection moved into Trips sidebar */
+.aqNavRight{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.aqTerrSelect{
+  appearance:none;height:32px;min-width:118px;padding:0 28px 0 10px;border:1px solid rgba(255,255,255,.28);
+  border-radius:5px;background:#111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%9ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color:#fff;font:700 12px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+}
+.aqTerrSelect:focus{outline:2px solid var(--aq-red);outline-offset:2px;}
+.aqTerrSelect option{color:#111;background:#fff;}
+#tabsLegacy{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+.aqTeamNav{display:none!important;}
 /* ---- Page heading ---- */
 .wrap{max-width:100%;width:100%;margin:0;padding:0;box-sizing:border-box;}
 #plannerView,#allView{width:100%;max-width:100%;box-sizing:border-box;}
@@ -713,11 +745,7 @@ body.wkfull-on{overflow:hidden;}
 
 
 /* ===== Plan mode strip (under black header) + Year at a Glance ===== */
-.aqPlanStrip{display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #eceef0;padding:0 20px;min-height:34px;}
-.aqPlanStrip button{appearance:none;border:0;background:transparent;font:600 12px 'Open Sans',Arial,sans-serif;padding:8px 2px 7px;cursor:pointer;color:#8b9096;border-bottom:2px solid transparent;margin-bottom:-1px;}
-.aqPlanStrip button.on{color:var(--aq-black,#1c1c1e);border-bottom-color:var(--aq-red,#cf202f);}
-.aqPlanStrip button:hover:not(.on){color:var(--aq-red,#cf202f);}
-.aqPlanStrip .aqPlanSep{color:#d1d5db;font-size:12px;user-select:none;}
+/* aqPlanStrip base styles defined with design tokens above */
 #allMapSlot{flex:1 1 auto;min-height:0;height:100%;position:relative;}
 #allMapSlot #leaderMap{position:absolute;inset:0;width:100%;height:100%;}
 #yearShell{display:none;flex-direction:column;min-height:calc(100vh - 140px);}
@@ -769,14 +797,22 @@ body.wkfull-on{overflow:hidden;}
 .yg-hd.we{color:#9ca3af;background:#f3f4f6;border-radius:3px;}
 .yg-hd.yg-sep,.yg-cell.yg-sep{box-shadow:inset 1px 0 0 #e5e7eb;}
 .yg-month{margin:0;padding:2px 0;border-bottom:1px solid #f3f4f6;min-height:28px;}
-.yg-mlbl{font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 2px;}
-.yg-cell{appearance:none;border:1px solid #e8eaed;background:#fff;border-radius:4px;min-height:28px;padding:2px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#111;}
+.yg-mlbl{appearance:none;border:0;background:transparent;font-size:11px;font-weight:800;color:var(--aq-black);letter-spacing:.02em;display:flex;align-items:center;padding:0 2px;cursor:pointer;font-family:inherit;text-align:left;}
+.yg-mlbl:hover{color:var(--aq-red);}
+.yg-cell{appearance:none;border:1px solid transparent;background:#fff;border-radius:4px;min-height:28px;padding:2px;cursor:pointer;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:1px;min-width:0;color:#111;}
 .yg-cell.na{border:0;background:transparent;cursor:default;min-height:28px;}
-.yg-cell.we{background:#f3f4f6;border-color:#e5e7eb;}
+.yg-cell.we{background:#f3f4f6;}
+.yg-cell.has{border-color:#e8eaed;}
 .yg-cell.today{box-shadow:inset 0 0 0 1.5px var(--aq-red);}
 .yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
 .yg-cell.sel{background:#fef2f2;border-color:#fecaca;box-shadow:inset 0 0 0 1.5px var(--aq-red,#cf202f);}
-.yg-cell:hover:not(.na){border-color:#c9ced4;}
+.yg-cell:hover:not(.na){border-color:#c9ced4;background:#fafbfc;}
+.yg-mlbl{cursor:pointer;}
+.yg-mlbl:hover{color:var(--aq-red);}
+.yg-focusbox{background:var(--canvas);border:1px solid var(--line-soft);border-radius:5px;padding:8px 10px;margin:0 0 10px;}
+.yg-focusbox .yg-flab{font:800 9px var(--font-heading);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.yg-focusbox .yg-ftitle{font:700 14px var(--font-body);color:var(--aq-black);}
+.yg-focusbox .yg-fnotes{font-size:12px;color:var(--muted);margin-top:2px;}
 .yg-d{font-size:9px;font-weight:600;color:#374151;line-height:1;padding:0 1px;}
 .yg-bars{display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;}
 .yg-bar{display:block;height:5px;border-radius:2px;width:100%;}
@@ -1932,70 +1968,57 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 #coordView{display:none;padding:0;background:transparent;min-height:0;}
 #coordView.is-on{display:block;}
 body.portal-coord #coordView.is-on{border-bottom:1px solid #e8eaed;}
-/* Slim booking-queue bar — sits above This Trip like a toolbar, not a second page */
-.coord-bar{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:6px 14px;background:#fff;min-height:40px;
-}
-.coord-bar-label{
-  font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase;
-  color:#8b9096;flex:0 0 auto;white-space:nowrap;
-}
-.coord-counts{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;}
+/* Coordination — queue + focused booking panel (Final Polish) */
+.coord-shell{background:#fff;}
+.coord-metrics{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px 0;}
 .coord-count{
-  appearance:none;border:0;background:transparent;cursor:default;
-  font:700 11px 'Open Sans',Arial,sans-serif;color:#6b7280;
-  padding:3px 8px;border-radius:3px;white-space:nowrap;
+  appearance:none;border:1px solid var(--line);background:var(--canvas);cursor:default;
+  font:700 12px var(--font-body);color:var(--muted);
+  padding:8px 12px;border-radius:5px;white-space:nowrap;min-width:110px;
 }
-.coord-count b{font:800 11px Frutiger,'Open Sans',Arial,sans-serif;color:#111;margin-right:3px;}
-.coord-count.has{background:#f5f6f7;color:#374151;}
-.coord-count.has.ready{background:#fef3c7;color:#92400e;}
+.coord-count b{display:block;font:900 20px var(--font-heading);color:var(--aq-black);margin:0 0 2px;line-height:1;}
+.coord-count.has{background:#fff;border-color:#d1d5db;color:#374151;}
+.coord-count.has.ready{background:#fffbeb;border-color:#fde68a;color:#92400e;}
 .coord-count.has.ready b{color:#92400e;}
-.coord-count.has.booking{background:#dbeafe;color:#1e40af;}
+.coord-count.has.booking{background:#eff6ff;border-color:#bfdbfe;color:#1e40af;}
 .coord-count.has.booking b{color:#1e40af;}
-.coord-bar-spacer{flex:1 1 auto;min-width:8px;}
+.coord-work{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);gap:0;min-height:168px;max-height:300px;}
+.coord-queue{border-right:1px solid var(--line-soft);overflow:auto;padding:8px 10px 12px;}
+.coord-qh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font:800 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .coord-bar-filters{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;}
 .coord-bar-filters select{
-  appearance:none;font:600 11px 'Open Sans',Arial,sans-serif;color:#374151;
+  appearance:none;font:600 11px var(--font-body);color:#374151;
   border:1px solid #e5e7eb;border-radius:4px;padding:4px 8px;background:#fff;height:28px;
 }
-.coord-chk{font:600 11px 'Open Sans',Arial,sans-serif;color:#6b7280;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
-.coord-chip-row{
-  display:flex;align-items:center;gap:6px;flex:1 1 220px;min-width:0;
-  overflow-x:auto;padding:0;scrollbar-width:thin;
-}
-.coord-chip{
-  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
-  background:#fafafa;border:1px solid #e8eaed;border-radius:4px;
-  padding:3px 6px 3px 8px;font:12px 'Open Sans',Arial,sans-serif;max-width:280px;
-}
-.coord-chip-meta{color:#9ca3af;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;}
-.coord-chip .kbb{height:24px;padding:0 8px;font-size:10px;margin:0;}
-.coord-link{appearance:none;border:0;background:none;font:700 12px inherit;color:#111;cursor:pointer;padding:0;white-space:nowrap;}
-.coord-link:hover{color:var(--aq-red,#cf202f);}
-.coord-flag{font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#b45309;}
-.coord-st{display:inline-block;font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#f3f4f6;color:#6b7280;}
+.coord-chk{font:600 11px var(--font-body);color:#6b7280;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.coord-qrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%;appearance:none;border:1px solid transparent;border-radius:5px;background:transparent;padding:8px;cursor:pointer;text-align:left;font:inherit;margin:0 0 4px;}
+.coord-qrow:hover{background:var(--canvas);}
+.coord-qrow.on{background:var(--aq-red-soft);border-color:#fecaca;}
+.coord-qrow .cq-name{font-weight:700;font-size:13px;color:var(--aq-black);flex:1 1 auto;}
+.coord-qrow .cq-meta{font-size:12px;color:var(--muted);flex:1 1 100%;}
+.coord-panel{padding:12px 14px;overflow:auto;}
+.coord-panel.empty{color:var(--muted);font-size:13px;}
+.coord-panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.coord-panel-h b{font-size:16px;color:var(--aq-black);}
+.coord-panel-h span{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;}
+.coord-panel-sub{font-size:13px;color:var(--muted);margin:4px 0 12px;}
+.coord-cklist{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.coord-ckline{display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--line-soft);border-radius:5px;background:var(--canvas);}
+.coord-ckline.done{background:#f2f9f3;border-color:#bfe0c8;}
+.coord-ckline .ck-box{width:18px;height:18px;border-radius:4px;border:1.5px solid #c4c7cb;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#fff;flex:0 0 auto;}
+.coord-ckline.done .ck-box{background:var(--green);border-color:var(--green);}
+.coord-ckline b{display:block;font-size:13px;color:var(--aq-black);}
+.coord-ckline span{font-size:12px;color:var(--muted);}
+.coord-panel-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.coord-empty{font-size:13px;color:var(--muted);padding:12px 4px;text-align:left;}
+.coord-flag{font:800 9px var(--font-heading);letter-spacing:.3px;text-transform:uppercase;color:#b45309;}
+.coord-st{display:inline-block;font:800 9px var(--font-heading);letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#f3f4f6;color:#6b7280;}
 .coord-st.ready{background:#fef3c7;color:#92400e;}
 .coord-st.booking{background:#dbeafe;color:#1e40af;}
 .coord-st.booked,.coord-st.sent,.coord-st.completed{background:#dcfce7;color:#166534;}
-.coord-page{max-width:1100px;margin:0 auto;padding:24px 20px 40px;}
-.coord-head h1{margin:0;font-family:var(--font-heading),Frutiger,Impact,sans-serif;font-size:28px;font-weight:900;letter-spacing:.5px;color:#111;text-transform:uppercase;}
-.coord-sub{margin-top:2px;font-size:12px;color:#6b7280;font-weight:600;}
-.coord-metrics{display:flex;gap:12px;margin:16px 0 14px;flex-wrap:wrap;}
-.coord-m{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 16px;min-width:140px;}
-.coord-mn{font:900 22px Frutiger,'Open Sans',Arial,sans-serif;color:#111;line-height:1;}
-.coord-ml{margin-top:4px;font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;}
-.coord-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;}
-.coord-toolbar select{font:12px 'Open Sans',Arial,sans-serif;border:1px solid #d1d5db;border-radius:4px;padding:5px 8px;background:#fff;}
-.coord-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:4px;overflow:auto;}
-.coord-table{width:100%;border-collapse:collapse;font:12px 'Open Sans',Arial,sans-serif;}
-.coord-table th{text-align:left;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fafafa;white-space:nowrap;}
-.coord-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;color:#111;}
-.coord-acts{white-space:nowrap;}
-.coord-acts .kbb{margin:0 4px 0 0;height:28px;padding:0 10px;font-size:11px;}
-.coord-empty{text-align:center;color:#6b7280;padding:28px 12px!important;}
+@media(max-width:900px){.coord-work{grid-template-columns:1fr;max-height:none;}.coord-queue{border-right:0;border-bottom:1px solid var(--line-soft);max-height:180px;}}
 body.portal-coord #planTitle{font-size:0;}
-body.portal-coord #planTitle::after{content:'Booking · This Trip';font:800 13px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#111;}
+body.portal-coord #planTitle::after{content:'Booking · This Trip';font:800 13px var(--font-heading);letter-spacing:.3px;text-transform:uppercase;color:#111;}
 .coord-ck{border:1px solid #e5e7eb;border-radius:4px;margin:0 0 10px;background:#fff;}
 .coord-ck-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #f3f4f6;}
 .coord-ck-b{padding:10px 12px;}
@@ -2119,18 +2142,31 @@ body.portal-coord .aqPlanStrip{display:none!important;}
 <div class="cloudbadge" id="cloudBadge"></div>
 <header class="aqNavbar">
   <div class="aqUtilityBar">
-    <div class="aqUtilityLeft"><span class="aqPortalLabel">Travel Portal</span></div>
+    <div class="aqUtilityLeft"><span class="aqPortalLabel">Arrowquip Travel</span></div>
     <div class="aqUtilityRight">
-      <div class="aqModeSwitch" id="aqModeSwitch" hidden aria-label="Portal mode">
-        <button type="button" data-pmode="sales">My Trips</button>
-        <button type="button" data-pmode="coord">Travel Coordination</button>
-      </div>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
   </div>
   <div class="aqMainNav"><div class="aqNavContainer">
   <div class="aqLogoContainer"><img class="aqLogo" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>
-  <div class="aqNavLinks" id="tabs">
+  <div class="aqNavLinks" id="workspaceTabs" role="navigation" aria-label="Workspace">
+    <div class="aqNavItem"><button type="button" class="tab active" data-ws="trips">My Trips</button></div>
+    <div class="aqNavItem"><button type="button" class="tab" data-ws="team">Team Calendar</button></div>
+    <div class="aqNavItem"><button type="button" class="tab" data-ws="coord" id="wsCoordTab">Coordination</button></div>
+  </div>
+  <div class="aqNavRight">
+    <label class="sr-only" for="aqTerrSelect">Territory</label>
+    <select id="aqTerrSelect" class="aqTerrSelect" aria-label="Territory">
+      <option value="All">All</option>
+      <option value="East">East</option>
+      <option value="South">South</option>
+      <option value="Central">Central</option>
+      <option value="West">West</option>
+      <option value="Exports">Exports</option>
+    </select>
+  </div>
+  <!-- Legacy territory tabs kept for existing sync code; visually replaced by select -->
+  <div id="tabs" class="aqNavLinks" hidden aria-hidden="true">
     <div class="aqNavItem"><button class="tab active" data-t="All">All</button></div>
     <div class="aqNavItem"><button class="tab" data-t="East">East</button></div>
     <div class="aqNavItem"><button class="tab" data-t="South">South</button></div>
@@ -2141,9 +2177,9 @@ body.portal-coord .aqPlanStrip{display:none!important;}
   </div></div>
 </header>
 <nav class="aqPlanStrip" id="aqPlanMode" aria-label="Planning view">
-  <button type="button" class="on" data-planmode="weekly">Weekly Planner</button>
+  <button type="button" class="on" data-planmode="weekly">Weekly</button>
   <span class="aqPlanSep" aria-hidden="true">|</span>
-  <button type="button" data-planmode="year">Year at a Glance</button>
+  <button type="button" data-planmode="year">Year</button>
 </nav>
 <div class="wrap">
   <div class="cards" id="cards" style="display:none"></div>
@@ -2641,6 +2677,9 @@ let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let PLAN_MODE='weekly'; /* weekly | year */
 var PORTAL_MODE='sales'; /* sales = My Trips planning | coord = Travel Coordination */
+var WORKSPACE='trips'; /* trips | team | coord — branded header workspace tabs */
+var ALL_BOARD_MODE='matrix'; /* matrix (people×dates) | weeks (legacy columns) */
+var TC_RANGE='week'; /* week | month | year for Team Calendar */
 /* Bridge for external modules (my-team.js): `let terr` / `let PLAN_MODE` are NOT
    on window, so `window.terr = 'Team'` was a no-op for render(). Always navigate
    through goMyTeam / setPortalTerr. */
@@ -2666,34 +2705,97 @@ function setPortalMode(m, opts){
   if(next==='coord'&&!portalCanSwitchMode()&&!opts.force) next='sales';
   try{ if(typeof mobIsPhone==='function'&&mobIsPhone()) next='sales'; }catch(e){}
   PORTAL_MODE=next;
+  if(next==='coord') WORKSPACE='coord';
+  else if(WORKSPACE==='coord') WORKSPACE=(terr==='All'?'team':'trips');
   try{ localStorage.setItem('aqPortalMode', PORTAL_MODE); }catch(e){}
+  try{ localStorage.setItem('aqWorkspace', WORKSPACE); }catch(e){}
   try{ document.body.classList.toggle('portal-coord', PORTAL_MODE==='coord'); }catch(e){}
-  try{
-    var sw=document.getElementById('aqModeSwitch');
-    if(sw){
-      var show=portalCanSwitchMode();
-      if(show) sw.removeAttribute('hidden'); else sw.setAttribute('hidden','');
-      sw.querySelectorAll('[data-pmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.pmode===PORTAL_MODE); });
-    }
-  }catch(e){}
+  syncWorkspaceTabs();
   if(!opts.silent){ try{ render(); }catch(e){} }
 }
+function syncWorkspaceTabs(){
+  try{
+    var canCoord=portalCanSwitchMode();
+    var ct=document.getElementById('wsCoordTab');
+    if(ct){ ct.style.display=canCoord?'':'none'; if(!canCoord&&WORKSPACE==='coord') WORKSPACE='trips'; }
+    document.querySelectorAll('#workspaceTabs [data-ws]').forEach(function(b){
+      b.classList.toggle('active', b.dataset.ws===WORKSPACE);
+    });
+    var sel=document.getElementById('aqTerrSelect');
+    if(sel && ['All','East','South','Central','West','Exports'].indexOf(terr)>=0) sel.value=terr;
+    document.querySelectorAll('#tabs [data-t]').forEach(function(b){
+      b.classList.toggle('active', b.dataset.t===terr);
+    });
+  }catch(e){}
+}
+function setWorkspace(ws, opts){
+  opts=opts||{};
+  ws=(ws==='team'||ws==='coord')?ws:'trips';
+  if(ws==='coord'&&!portalCanSwitchMode()&&!opts.force) ws='trips';
+  try{ if(typeof mobIsPhone==='function'&&mobIsPhone()&&ws==='coord') ws='trips'; }catch(e){}
+  WORKSPACE=ws;
+  if(ws==='coord'){
+    PORTAL_MODE='coord';
+    if(terr==='Team'||terr==='Master'||terr==='Settings') terr='All';
+    PLAN_MODE='weekly';
+  } else if(ws==='team'){
+    PORTAL_MODE='sales';
+    terr='All';
+    if(TC_RANGE==='year') PLAN_MODE='year';
+    else PLAN_MODE='weekly';
+    ALL_BOARD_MODE='matrix';
+  } else {
+    PORTAL_MODE='sales';
+    if(terr==='All'||terr==='Team'||terr==='Master'||terr==='Settings'){
+      /* Prefer last area territory for My Trips */
+      var last=null;
+      try{ last=localStorage.getItem('aqLastAreaTerr'); }catch(e){}
+      terr=(last&&['East','South','Central','West','Exports'].indexOf(last)>=0)?last:'East';
+    }
+  }
+  try{ localStorage.setItem('aqPortalMode', PORTAL_MODE); localStorage.setItem('aqWorkspace', WORKSPACE); }catch(e){}
+  try{ document.body.classList.toggle('portal-coord', PORTAL_MODE==='coord'); }catch(e){}
+  syncWorkspaceTabs();
+  if(!opts.silent){ try{ render(); }catch(e){} }
+}
+function setTerritoryFilter(t){
+  if(['All','East','South','Central','West','Exports','Master','Settings','Team'].indexOf(t)<0) return;
+  terr=t;
+  if(['East','South','Central','West','Exports'].indexOf(t)>=0){
+    try{ localStorage.setItem('aqLastAreaTerr', t); }catch(e){}
+    if(WORKSPACE==='team'){ /* stay on team calendar but filter matrix by territory via LV_AREAS */ }
+    else if(WORKSPACE==='trips'){ /* ok */ }
+  }
+  if(t==='All'&&WORKSPACE==='trips'){ WORKSPACE='team'; PORTAL_MODE='sales'; }
+  syncWorkspaceTabs();
+  render();
+}
+window.setWorkspace=setWorkspace;
+window.setTerritoryFilter=setTerritoryFilter;
 function bootPortalMode(){
-  var pref='sales';
+  var pref='sales', ws='trips';
   try{
     if(window.AQCoord&&AQCoord.preferredMode) pref=AQCoord.preferredMode();
     else {
       var saved=localStorage.getItem('aqPortalMode');
       if(saved==='sales'||saved==='coord') pref=saved;
     }
+    var sw=localStorage.getItem('aqWorkspace');
+    if(sw==='trips'||sw==='team'||sw==='coord') ws=sw;
   }catch(e){}
-  if(!portalCanSwitchMode()) pref='sales';
+  if(!portalCanSwitchMode()){ pref='sales'; if(ws==='coord') ws='trips'; }
+  if(pref==='coord') ws='coord';
+  WORKSPACE=ws;
   setPortalMode(pref, {silent:true, force:true});
+  syncWorkspaceTabs();
 }
 function goMyTeam(){
+  /* Admin “My Team” roster — not Team Calendar workspace */
   PLAN_MODE='weekly';
   terr='Team';
-  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  WORKSPACE='trips';
+  PORTAL_MODE='sales';
+  syncWorkspaceTabs();
   try{ document.body.classList.remove('trips-layout-on'); }catch(e){}
   render();
 }
@@ -2706,11 +2808,11 @@ window.getPortalAdmin=getPortalAdmin;
 window.portalIsSalesMode=portalIsSalesMode;
 (function(){
   document.addEventListener('click',function(e){
-    var b=e.target&&e.target.closest&&e.target.closest('#aqModeSwitch [data-pmode]');
-    if(!b) return;
-    e.preventDefault();
-    if(b.dataset.pmode==='coord'&&terr==='Team'){ terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); }); }
-    setPortalMode(b.dataset.pmode);
+    var ws=e.target&&e.target.closest&&e.target.closest('#workspaceTabs [data-ws]');
+    if(ws){ e.preventDefault(); setWorkspace(ws.dataset.ws); return; }
+  });
+  document.addEventListener('change',function(e){
+    if(e.target&&e.target.id==='aqTerrSelect'){ setTerritoryFilter(e.target.value); }
   });
 })();
 var YG_EVENTS=[];
@@ -8174,15 +8276,22 @@ function allToolbarHTML(wk){
   var now=wkCurrent();
   var mapOn=(ALL_MAP_MODE!=='collapsed');
   var title=(typeof wk==='number')
-    ? ('WK '+wkNo(wk)+(wk===31?' · Kickoff':'')+' · '+esc(WEEKDATES[wk]||wkDY(wk)))
-    : 'All weeks';
+    ? (esc(WEEKDATES[wk]||wkDY(wk))+' · WK '+wkNo(wk))
+    : 'Team schedule';
   return ''
     +'<button type="button" class="kbb icon" data-allnavtog="1" title="'+(ALL_NAV_OPEN?'Hide sidebar':'Show sidebar')+'">☰</button>'
     +'<button type="button" class="kbb icon" data-allwkgo="-1" title="Previous week">‹</button>'
-    +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-allwkgo="0" title="Actual current calendar week">This Week</button>'
+    +'<button type="button" class="kbb'+(wk===now?' primary':'')+'" data-allwkgo="0" title="This week">This Week</button>'
     +'<button type="button" class="kbb icon" data-allwkgo="1" title="Next week">›</button>'
     +'<span class="kb-title">'+title+'</span>'
+    +'<span class="seg" style="margin-left:8px">'
+    +'<button type="button" class="kbb'+(TC_RANGE==='week'?' on':'')+'" data-tcrange="week">Week</button>'
+    +'<button type="button" class="kbb'+(TC_RANGE==='month'?' on':'')+'" data-tcrange="month">Month</button>'
+    +'<button type="button" class="kbb'+(TC_RANGE==='year'?' on':'')+'" data-tcrange="year">Year</button>'
+    +'</span>'
     +'<span class="kb-space"></span>'
+    +'<button type="button" class="kbb'+(ALL_BOARD_MODE==='matrix'?' on':'')+'" data-allboard="matrix" title="People as rows">People</button>'
+    +'<button type="button" class="kbb'+(ALL_BOARD_MODE==='weeks'?' on':'')+'" data-allboard="weeks" title="Week columns">Weeks</button>'
     +'<button type="button" class="kbb'+(mapOn?' on':'')+'" data-allmaptog="1" title="'+(mapOn?'Hide map':'Show map')+'">'+(mapOn?'Map ✓':'Map')+'</button>'
     +'<div class="kb-more">'
       +'<button type="button" class="kbb icon" data-allmore="1" title="More">⋯</button>'
@@ -8191,6 +8300,84 @@ function allToolbarHTML(wk){
         +'<button type="button" data-hist="1">History</button>'
       +'</div>'
     +'</div>';
+}
+function tcMemberTripLabel(member, wk){
+  var rows=allWeekActivities(wk).filter(function(r){
+    return r.member&&r.member.id===member.id;
+  });
+  if(!rows.length) return null;
+  var dealers=rows.filter(function(r){ return r.kind==='dealer'; });
+  var places=[];
+  dealers.forEach(function(r){ if(r.place&&places.indexOf(r.place)<0) places.push(r.place); });
+  rows.forEach(function(r){ if(r.kind!=='dealer'&&r.title&&places.indexOf(r.title)<0) places.push(r.title); });
+  var title=dealers.length?(dealers.length+' dealer visit'+(dealers.length===1?'':'s')):(rows[0].title||'Travel');
+  var sub=[member.terr||'', places.slice(0,2).join(' · ')].filter(Boolean).join(' · ');
+  return {title:title, sub:sub, rows:rows};
+}
+function tcDayLabel(member, wk, dayIdx){
+  var rows=allWeekActivities(wk).filter(function(r){
+    return r.member&&r.member.id===member.id && r.day===dayIdx;
+  });
+  if(!rows.length) return '';
+  var first=rows[0];
+  var when=first.time?t12s(first.time):'';
+  var label=first.title||'Travel';
+  return '<button type="button" class="tc-block" data-allopenmem="'+esc(member.id)+'" data-wk="'+wk+'" title="Open trip">'
+    +esc(label)
+    +(when||first.place?('<span class="tc-sub">'+esc([when, first.place].filter(Boolean).join(' · '))+'</span>'):'')
+    +'</button>';
+}
+function allTeamMatrixHTML(wk){
+  if(typeof wk!=='number') wk=wkCurrent();
+  var labs=dayLabels(wk);
+  var members=teamRoster().filter(function(m){
+    if(!m||m.active===false) return false;
+    if(terr!=='All'&&m.terr&&m.terr!==terr) return false;
+    if(terr==='All'){
+      var t=m.terr||'';
+      if(t&&LV_AREAS&&LV_AREAS[t]===false) return false;
+    }
+    return true;
+  });
+  /* Also include travellers present this week who may not be in roster filter */
+  allUniqueTravellers(allWeekActivities(wk)).forEach(function(m){
+    if(!m||m._unowned) return;
+    if(members.some(function(x){ return x.id===m.id; })) return;
+    if(terr!=='All'&&m.terr&&m.terr!==terr) return;
+    members.push(m);
+  });
+  members.sort(function(a,b){
+    return String(a.terr||'').localeCompare(String(b.terr||''))||String(a.name||'').localeCompare(String(b.name||''));
+  });
+  var cols=1+labs.length;
+  var head='<div class="tc-head"><div class="tc-cell hd name">Team</div>'
+    +labs.map(function(l,i){
+      var today=(wk===wkCurrent()&&i===mobToday(wk));
+      return '<div class="tc-cell hd'+(today?' today':'')+'">'+esc(l[0])+' '+esc(String(l[1]||'').split(' ').pop()||'')+'</div>';
+    }).join('')+'</div>';
+  var body='';
+  if(!members.length){
+    body='<div class="tc-row"><div class="tc-cell name" style="grid-column:1 / -1"><span class="tc-empty">No team members for this filter. Add people in My Team or clear territory filter.</span></div></div>';
+  } else {
+    body=members.map(function(m){
+      var trip=tcMemberTripLabel(m, wk);
+      var nameCell='<div class="tc-cell name"><button type="button" class="tc-block" style="border-left-color:'+(AREA_COLOR[m.terr]||'#9ca3af')+'" data-allopenmem="'+esc(m.id)+'" data-wk="'+wk+'">'
+        +esc(m.name||'Team')
+        +'<span class="tc-role">'+esc([m.role,m.terr].filter(Boolean).join(' · ')||'—')+'</span>'
+        +(trip?('<span class="tc-sub">'+esc(trip.title)+'</span>'):'')
+        +'</button></div>';
+      var days=labs.map(function(l,i){
+        var today=(wk===wkCurrent()&&i===mobToday(wk));
+        var cell=tcDayLabel(m, wk, i);
+        return '<div class="tc-cell'+(today?' today':'')+'">'+(cell||'<span class="tc-empty">'+(trip?'':'')+'</span>')+'</div>';
+      }).join('');
+      return '<div class="tc-row">'+nameCell+days+'</div>';
+    }).join('');
+  }
+  return '<div class="page-h">Team schedule</div>'
+    +'<p class="page-sub">'+(terr==='All'?'All territories':esc(terr))+' · people as rows, dates as columns</p>'
+    +'<div class="tc-matrix"><div class="tc-grid" style="grid-template-columns:200px repeat('+labs.length+',minmax(110px,1fr))">'
+    +head+body+'</div></div>';
 }
 function allOpenTerritoryForMember(member, wk){
   if(!member) return;
@@ -8304,16 +8491,19 @@ function renderAllOverview(){
   if(hostNav){ hostNav.innerHTML=tripsNavHTML(); try{ tripsNavWire(hostNav); }catch(e){} }
   if(hostToolbar) hostToolbar.innerHTML=allToolbarHTML(ALL_WK);
   if(hostMetrics) hostMetrics.innerHTML=allKpiHTML();
-  var wks=allWeeksList();
-  /* Keep remote out of the main leadership board */
-  hostWeeks.innerHTML=wks.map(allWeekCard).join('');
+  if(ALL_BOARD_MODE==='matrix'){
+    hostWeeks.innerHTML=allTeamMatrixHTML(ALL_WK);
+  } else {
+    var wks=allWeeksList();
+    hostWeeks.innerHTML=wks.map(allWeekCard).join('');
+  }
   allWireShared(document.getElementById('allView')||document.body);
-  /* Double rAF + short timeout: wait for sidebar/grid layout before snapping
-     the current week flush to the left of the board. */
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){ allScrollToWeek(ALL_WK,'auto'); });
-  });
-  setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 80);
+  if(ALL_BOARD_MODE!=='matrix'){
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ allScrollToWeek(ALL_WK,'auto'); });
+    });
+    setTimeout(function(){ allScrollToWeek(ALL_WK,'auto'); }, 80);
+  }
   if(ALL_MAP_MODE!=='collapsed'){ try{ allDrawMapInto('leaderMap'); }catch(e){} }
   try{ tripsDocBarRender(); }catch(e){}
 }
@@ -8330,6 +8520,23 @@ function allWireShared(host){
   /* toolbar */
   host.querySelectorAll('[data-allnavtog]').forEach(function(b){
     b.onclick=function(){ allNavOpenSet(!ALL_NAV_OPEN); };
+  });
+  host.querySelectorAll('[data-allboard]').forEach(function(b){
+    b.onclick=function(){ ALL_BOARD_MODE=b.dataset.allboard==='weeks'?'weeks':'matrix'; try{ localStorage.setItem('aqAllBoard', ALL_BOARD_MODE); }catch(e){} renderAllView(); };
+  });
+  host.querySelectorAll('[data-tcrange]').forEach(function(b){
+    b.onclick=function(){
+      TC_RANGE=b.dataset.tcrange||'week';
+      if(TC_RANGE==='year'){ PLAN_MODE='year'; WORKSPACE='team'; render(); return; }
+      PLAN_MODE='weekly';
+      if(TC_RANGE==='month'){
+        /* Month: show four week columns around focus — use legacy weeks board briefly */
+        ALL_BOARD_MODE='weeks';
+      } else {
+        ALL_BOARD_MODE='matrix';
+      }
+      renderAllView();
+    };
   });
   host.querySelectorAll('[data-allwkgo]').forEach(function(b){
     b.onclick=function(){
@@ -13843,6 +14050,7 @@ function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings', isTeam=terr==='Team';
   pbSaveNav();
   try{ setPortalMode(PORTAL_MODE, {silent:true, force:true}); }catch(e){}
+  try{ syncWorkspaceTabs(); }catch(e){}
   var coordMode=(!portalIsSalesMode() && !isMaster && !isSettings && !isTeam);
   var yearMode=(PLAN_MODE==='year' && !isMaster && !isSettings && !isTeam && !coordMode);
   var planStrip=document.getElementById('aqPlanMode');
@@ -13947,11 +14155,11 @@ function render(){
 (function(){ var hb=document.getElementById('histBtn'); if(hb) hb.addEventListener('click',openHistory); })();
 
 document.querySelector("header.aqNavbar").addEventListener("click",e=>{
-  const b=e.target.closest(".tab");if(!b||!b.dataset.t)return;
-  if(b.classList.contains('aqAction')) return; /* utility actions handled elsewhere */
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));b.classList.add("active");terr=b.dataset.t;search="";const sb=document.getElementById("sbSearch");if(sb)sb.value="";
-  if(PLAN_MODE==='year' && (terr==='Master'||terr==='Settings'||terr==='Team')) PLAN_MODE='weekly';
-  render();
+  const ws=e.target.closest("#workspaceTabs [data-ws]");
+  if(ws){ e.preventDefault(); setWorkspace(ws.dataset.ws); return; }
+  const b=e.target.closest("#tabs .tab");if(!b||!b.dataset.t)return;
+  if(b.classList.contains('aqAction')) return;
+  setTerritoryFilter(b.dataset.t);
 });
 (function(){
   var strip=document.getElementById('aqPlanMode');
@@ -14738,19 +14946,17 @@ function pbRenderAcct(){
         if(a==='settings'){ terr='Settings'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='trips'){
           PLAN_MODE='weekly';
-          setPortalMode('sales', {silent:true});
-          if(terr==='Master'||terr==='Settings'||terr==='Team'){
-            terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); });
-          }
+          if(terr==='Master'||terr==='Settings'||terr==='Team') terr='East';
+          setWorkspace('trips');
           try{ focusWkSet(wkCurrent()); }catch(err){ FOCUS_WK=wkCurrent(); ALL_WK=FOCUS_WK; }
-          render(); return;
+          return;
         }
         if(a==='coord'){
           PLAN_MODE='weekly';
           if(terr==='Master'||terr==='Settings'||terr==='Team'){
-            terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); });
+            terr='All';
           }
-          setPortalMode('coord');
+          setWorkspace('coord');
           return;
         }
       };
