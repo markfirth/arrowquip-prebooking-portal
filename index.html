@@ -334,17 +334,32 @@ body.trips-layout-on #sysHealth{display:none !important;}
 .planwrap.trips-kanban.map-full .map-hint.is-on{display:block;}
 .pin.pool{background:#9ca3af!important;opacity:.85;width:10px;height:10px;border-width:1px;}
 .pin.pool .pinseq{display:none;}
-.mpop{font:12px 'Open Sans',Arial,sans-serif;min-width:180px;max-width:240px;}
+.pin.air{background:#2563eb!important;width:12px;height:12px;border-width:1px;border-radius:2px;}
+.pin.air .pinseq{display:none;}
+.mpop{font:12px 'Open Sans',Arial,sans-serif;min-width:180px;max-width:260px;}
 .mpop b{display:block;font-size:12.5px;color:#111;margin:0 0 2px;}
 .mpop .msub{color:#6b7280;font-size:11px;margin:0 0 8px;}
-.mpop-days,.mpop-radii{display:flex;flex-wrap:wrap;gap:4px;}
-.mpop-days button,.mpop-radii button{
+.mpop-days,.mpop-radii,.mpop-wins{display:flex;flex-wrap:wrap;gap:4px;}
+.mpop-days button,.mpop-radii button,.mpop-wins button{
   appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:3px;
   font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.2px;text-transform:uppercase;
   padding:4px 7px;cursor:pointer;color:#374151;
 }
-.mpop-days button:hover,.mpop-radii button:hover{border-color:#111;color:#111;}
-.mpop-radii button.primary{background:#111;border-color:#111;color:#fff;}
+.mpop-days button:hover,.mpop-radii button:hover,.mpop-wins button:hover{border-color:#111;color:#111;}
+.mpop-radii button.primary,.mpop-days button.primary,.mpop-wins button.primary{background:#111;border-color:#111;color:#fff;}
+.tv-softwin{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px;}
+.tv-softbtns{display:flex;flex-wrap:wrap;gap:5px;}
+.tv-soft{
+  appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:3px;
+  font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.2px;text-transform:uppercase;
+  padding:6px 10px;cursor:pointer;color:#374151;
+}
+.tv-soft:hover{border-color:#111;color:#111;}
+.tv-soft.on{background:#111;border-color:#111;color:#fff;}
+.tv-soft.warn{border-color:#b45309;color:#b45309;}
+.tv-soft.on.warn{background:#b45309;border-color:#b45309;color:#fff;}
+.tv-softtime{display:inline-block;font:700 12px 'Open Sans',Arial,sans-serif;color:#6b7280;padding:6px 0;}
+.tv-sales-note.warn{color:#b45309;}
 .map-back{
   display:none;position:absolute;top:12px;left:12px;z-index:700;
   appearance:none;font-family:inherit;font-size:13px;font-weight:700;
@@ -2126,6 +2141,7 @@ body.portal-coord .aqPlanStrip{display:none!important;}
           <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
           <div class="map-fabs">
             <button type="button" class="map-fab text" data-mappool="1" id="mapPoolBtn" title="Show all dealers — click to add to the trip">Dealers</button>
+            <button type="button" class="map-fab text" data-mapair="1" id="mapAirBtn" title="Show main commercial airports — airlines only, no private hangars">Airports</button>
             <button type="button" class="map-fab text" data-mapstay="1" id="mapStayBtn" title="Click the map to set an overnight near a town">Stay</button>
             <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
             <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
@@ -2715,7 +2731,14 @@ function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderC
 var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!==''){ var n=parseInt(s,10); if(isFinite(n)) return n; } }catch(e){} return null; })();
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
 var MAP_SHOW_POOL=(function(){ try{ return localStorage.getItem('aqMapShowPool')==='1'; }catch(e){ return false; } })();
+var MAP_SHOW_AIR=(function(){ try{ return localStorage.getItem('aqMapShowAir')==='1'; }catch(e){ return false; } })();
 var MAP_STAY_ARM=false;
+/* Soft flight windows for sales planning — preference, not a booked flight time. */
+var FLIGHT_WINDOWS={
+  morning:{id:'morning',label:'Morning',short:'Morning',start:6*60,end:11*60,prefer:9*60},
+  midday:{id:'midday',label:'Mid-day',short:'Mid-day',start:11*60,end:15*60,prefer:13*60},
+  afternoon:{id:'afternoon',label:'Afternoon',short:'Afternoon',start:15*60,end:20*60,prefer:17*60}
+};
 var MAP_SPLIT_PX=(function(){ try{ var s=localStorage.getItem('aqMapSplit'); if(s==null||s==='') return null; var n=parseInt(s,10); return (isFinite(n)&&n>=200&&n<=900)?n:null; }catch(e){ return null; } })();
 var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
 var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
@@ -2820,6 +2843,8 @@ function mapInvalidateSoon(){
   document.addEventListener('click',function(e){
     var pool=e.target&&e.target.closest&&e.target.closest('[data-mappool]');
     if(pool){ e.preventDefault(); e.stopPropagation(); mapTogglePool(); return; }
+    var air=e.target&&e.target.closest&&e.target.closest('[data-mapair]');
+    if(air){ e.preventDefault(); e.stopPropagation(); mapToggleAir(); return; }
     var stay=e.target&&e.target.closest&&e.target.closest('[data-mapstay]');
     if(stay){ e.preventDefault(); e.stopPropagation(); mapToggleStayArm(); return; }
   });
@@ -6300,11 +6325,12 @@ function setTravelField(id,field,val){
   else if(field==='time'||field==='time2'){
     var pv=parseTimeLoose(val);
     if(pv&&typeof pv==='object'&&pv.ambiguous){
-      askAmPm(pv,function(resolved){ if(resolved){ it[field]=resolved; afterTravelEdit(it); } else refreshPlanner(); });
+      askAmPm(pv,function(resolved){ if(resolved){ it[field]=resolved; it.timeSoft=false; afterTravelEdit(it); } else refreshPlanner(); });
       return;
     }
     if(pv==null){ refreshPlanner(); return; }
     it[field]=pv;
+    if(field==='time') it.timeSoft=false;
   }
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='dur'){ var nd=normDur(parseDur(val)); if(nd==null){ refreshPlanner(); return; } it.dur=nd; }
@@ -6315,6 +6341,11 @@ function setTravelField(id,field,val){
   }
   else if(field==='bookStatus'){ it.bookStatus=val||''; }
   else it[field]=val;
+  /* Soft windows re-aim when the flight day changes so same-day appointments are considered. */
+  if(field==='day' && it.softWindow && FLIGHT_WINDOWS[it.softWindow]){
+    var tty=travelType(it);
+    if(tty==='flight_in'||tty==='flight_out') applyFlightSoftWindow(it, it.softWindow);
+  }
   afterTravelEdit(it);
 }
 function afterTravelEdit(it){
@@ -6459,9 +6490,13 @@ function travelCard(it,wk,tl){
       var toC=it.arrAirport||'';
       var route=(fromC&&toC)?(fromC+' → '+toC):(fromC||toC||'');
       label=[it.airline, route||it.name||it.airportName||'Flight'].filter(Boolean).join(' · ')||'Flight';
-      var arrT=it.time2?t12s(it.time2):'';
-      if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
-      else if(_mainT) timeDisp=_mainT;
+      if(it.softWindow&&flightWindowLabel(it.softWindow)){
+        timeDisp=flightWindowLabel(it.softWindow);
+      } else {
+        var arrT=it.time2?t12s(it.time2):'';
+        if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
+        else if(_mainT) timeDisp=_mainT;
+      }
     } else if(isHotel && it.stayNear && it.stayRadiusMin){
       label='Near '+it.stayNear+' · within '+it.stayRadiusMin+' min';
     } else {
@@ -6549,23 +6584,43 @@ function travelCard(it,wk,tl){
     +(depLbl?'<div class="tv-deprow" title="Calculated departure">→ leaves '+esc(depLbl)+'</div>':'');
   var durRow='';
   var when2='';
-  if(isFlight){
+  if(isFlight && salesPlan){
+    /* Sales: soft Morning / Mid-day / Afternoon — no flight numbers or exact booking times. */
+    var softRole=(ty==='flight_out')?'depart':'arrive';
+    var curWin=it.softWindow||'';
+    var softPreview=curWin?flightSoftSuggest(it, curWin, softRole):null;
+    var softNote=(softPreview&&softPreview.note)||'Morning, mid-day, or afternoon — Travel Coordination books the real flight.';
+    var softConflict=!!(softPreview&&softPreview.conflict)||!!it._softConflict;
+    when='<div class="tv-row tv-when3">'
+      +'<div class="tvcol tvcol-day"><span class="tv-lbl">Day</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select></div>'
+      +(it.time?('<div class="tvcol tvcol-time"><span class="tv-lbl">Approx</span><span class="tv-softtime">'+esc(t12s(it.time))+'</span></div>'):'')
+      +'</div>'
+      +'<div class="tv-softwin">'
+      +'<span class="tv-lbl">'+(softRole==='arrive'?'I arrive':'I depart')+'</span>'
+      +'<div class="tv-softbtns">'
+      +['morning','midday','afternoon'].map(function(wid){
+        var w=FLIGHT_WINDOWS[wid];
+        return '<button type="button" class="tv-soft'+(curWin===wid?' on':'')+(softConflict&&curWin===wid?' warn':'')+'" data-fwin="'+it.id+'|'+wid+'">'+esc(w.short)+'</button>';
+      }).join('')
+      +'</div></div>'
+      +'<div class="tv-sales-note'+(softConflict?' warn':'')+'">'+esc(softNote)+'</div>';
+    when2='<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Special travel requirements"></div>';
+  } else if(isFlight){
     when2='<div class="tv-row tv-when3">'
       +'<div class="tvcol tvcol-day"><span class="tv-lbl">Arrive</span>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:it.day)+'</select></div>'
       +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
       +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 2:30pm" data-tv="'+it.id+'" data-f="time2" value="'+esc(it.time2?t12s(it.time2):'')+'" title="'+timeTip+'"></div>'
       +'</div>'
-      +(salesPlan
-        ?('<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Special travel requirements"></div>')
-        :('<div class="tv-row">'
+      +'<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation / reference">'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
       +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
         return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
       }).join('')
       +'</select></div>'
-      +'<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Additional notes"></div>'));
+      +'<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Additional notes"></div>';
   } else if(isHotel){
     var autoCo=(!it.time2&&tl&&tl.depSug!=null)?addMin('00:00',((Math.round(tl.depSug)%1440)+1440)%1440):'';
     var showCo=it.time2||autoCo;
@@ -9825,13 +9880,18 @@ function _wkClear(){ if(!_wkMap) return; _wkMap.eachLayer(function(l){ if(!(l in
 function mapPlanHintUpdate(){
   var h=document.getElementById('mapPlanHint');
   var poolBtn=document.getElementById('mapPoolBtn');
+  var airBtn=document.getElementById('mapAirBtn');
   var stayBtn=document.getElementById('mapStayBtn');
   if(poolBtn) poolBtn.classList.toggle('on', !!MAP_SHOW_POOL);
+  if(airBtn) airBtn.classList.toggle('on', !!MAP_SHOW_AIR);
   if(stayBtn) stayBtn.classList.toggle('armed', !!MAP_STAY_ARM);
   if(!h) return;
   if(MAP_STAY_ARM){
     h.classList.add('is-on');
     h.textContent='Click a town on the map, then choose how far you’re willing to stay from it.';
+  } else if(MAP_SHOW_AIR){
+    h.classList.add('is-on');
+    h.textContent='Blue markers are commercial airline airports — click one to fly in or out (morning / mid-day / afternoon).';
   } else if(MAP_SHOW_POOL){
     h.classList.add('is-on');
     h.textContent='Grey dots are dealers not on this trip — click one to add it by day.';
@@ -9847,11 +9907,221 @@ function mapTogglePool(){
   mapPlanHintUpdate();
   try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
 }
+function mapToggleAir(){
+  MAP_SHOW_AIR=!MAP_SHOW_AIR;
+  try{ localStorage.setItem('aqMapShowAir', MAP_SHOW_AIR?'1':'0'); }catch(e){}
+  if(MAP_SHOW_AIR){
+    MAP_STAY_ARM=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+    try{ apEnsureDB(function(){ try{ drawWeekRoute(terr, focusWkGet()); }catch(e){} }); }catch(e){}
+  }
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
 function mapToggleStayArm(){
   MAP_STAY_ARM=!MAP_STAY_ARM;
-  if(MAP_STAY_ARM && MAP_UI_MODE==='collapsed') mapModeSet('split');
+  if(MAP_STAY_ARM){
+    MAP_SHOW_AIR=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+  }
   mapPlanHintUpdate();
   try{ if(_wkMap&&_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
+}
+/* Commercial airline airports only — IATA + large/scheduled. No private hangars / GA strips. */
+function commercialAirportRows(){
+  var rows=apRows()||[];
+  var full=(AP_STATE==='ready' && AP_ROWS && AP_ROWS.length>1000);
+  var out=[], seen={};
+  for(var i=0;i<rows.length;i++){
+    var a=rows[i];
+    var iata=(a[0]||'').toUpperCase();
+    if(!iata||iata.length!==3) continue;
+    /* Full OurAirports DB: large (≥30) or medium+scheduled+iata (≥33). Seed list is already curated airline airports. */
+    if(full && (a[8]||0)<30) continue;
+    if(seen[iata]) continue;
+    seen[iata]=1;
+    out.push({code:iata,name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''});
+  }
+  return out;
+}
+function commercialAirportsNearTrip(t, wk){
+  var all=commercialAirportRows();
+  var anchors=[];
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon)) anchors.push([+s.lat,+s.lon]);
+    });
+  }catch(e){}
+  if(!anchors.length){
+    try{
+      (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+        if(d&&d.lat!=null&&d.lon!=null&&isFinite(d.lat)&&isFinite(d.lon)) anchors.push([+d.lat,+d.lon]);
+      });
+    }catch(e){}
+  }
+  if(!anchors.length){
+    return all.filter(function(a){ return a.lat>24&&a.lat<60&&a.lon>-130&&a.lon<-50; }).slice(0,80);
+  }
+  var maxDeg=4; /* ~250 mi */
+  var out=[];
+  for(var i=0;i<all.length;i++){
+    var a=all[i], ok=false;
+    for(var j=0;j<anchors.length;j++){
+      if(Math.abs(a.lat-anchors[j][0])<=maxDeg && Math.abs(a.lon-anchors[j][1])<=maxDeg){ ok=true; break; }
+    }
+    if(ok) out.push(a);
+  }
+  return out;
+}
+function flightWindowOf(id){ return FLIGHT_WINDOWS[id]||null; }
+function flightWindowLabel(id){ var w=flightWindowOf(id); return w?w.label:""; }
+function flightSoftSuggest(it, windowId, role){
+  /* role: 'arrive' (flight_in) | 'depart' (flight_out). Returns {time, note, conflict}. */
+  var win=flightWindowOf(windowId); if(!win||!it) return null;
+  var day=(it.day!=null?it.day:0);
+  var wk=it.wk;
+  var airportLat=it.lat, airportLon=it.lon;
+  var sug=win.prefer;
+  var note='';
+  var conflict=false;
+  try{
+    var seq=[];
+    try{ seq=tlSeq(it.terr||terr, wk)||[]; }catch(e){}
+    var same=[], sameUntimed=[];
+    same=seq.filter(function(s){
+      if(s.day!==day) return false;
+      if(s.key==='m:'+it.id) return false;
+      var isAppt=(s.key.charAt(0)==='d'||s.key.charAt(0)==='x');
+      if(!isAppt) return false;
+      if(s.startMin!=null) return true;
+      sameUntimed.push(s);
+      return false;
+    });
+    if(role==='arrive' && same.length){
+      /* Land early enough for first appointment: deplane+rental (~75m) + drive */
+      var first=same.slice().sort(function(a,b){ return a.startMin-b.startMin; })[0];
+      var drive=75;
+      if(airportLat!=null&&first.lat!=null){
+        var d=tlDriveSync({lat:airportLat,lon:airportLon},{lat:first.lat,lon:first.lon});
+        drive=75+(d&&d.min?d.min:30);
+      }
+      var needBy=first.startMin - drive;
+      var dayNeed=needBy-(day*1440);
+      if(dayNeed < win.start){
+        conflict=true;
+        note='Same-day appointment at '+tlT(first.startMin)+' is tight for a '+win.label.toLowerCase()+' arrival — consider an earlier window or move the visit.';
+        sug=win.start;
+      } else {
+        sug=Math.min(win.prefer, Math.max(win.start, dayNeed-15));
+        if(sug>win.end) sug=win.end-30;
+        note='Aimed to land before your '+tlT(first.startMin)+' appointment (includes airport + drive buffer).';
+      }
+    } else if(role==='depart' && same.length){
+      var last=same.slice().sort(function(a,b){ return b.startMin-a.startMin; })[0];
+      var leaveDrive=90;
+      if(airportLat!=null&&last.lat!=null){
+        var d2=tlDriveSync({lat:last.lat,lon:last.lon},{lat:airportLat,lon:airportLon});
+        leaveDrive=90+(d2&&d2.min?d2.min:30)+(last.dur||60);
+      }
+      var leaveAfter=(last.startMin+leaveDrive)-(day*1440);
+      if(leaveAfter > win.end){
+        conflict=true;
+        note='Same-day appointments run late for a '+win.label.toLowerCase()+' departure — consider evening or the next day.';
+        sug=win.end-30;
+      } else {
+        sug=Math.max(win.prefer, Math.min(win.end-15, leaveAfter+15));
+        if(sug<win.start) sug=win.prefer;
+        note='Aimed to depart after your last appointment (includes drive + check-in buffer).';
+      }
+    } else if(sameUntimed.length){
+      sug=win.prefer;
+      note='You have appointments the same day — set their times and we will aim this '+win.label.toLowerCase()+' window around them.';
+    } else {
+      sug=win.prefer;
+      note='Travel Coordination will book a real flight in this window.';
+    }
+  }catch(e){ sug=win.prefer; }
+  sug=Math.max(win.start, Math.min(win.end-1, Math.round(sug)));
+  var hh=Math.floor(sug/60), mm=sug%60;
+  var time=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+  return {time:time, note:note, conflict:conflict, windowId:windowId, mins:sug};
+}
+function applyFlightSoftWindow(it, windowId){
+  if(!it) return;
+  var role=(travelType(it)==='flight_out')?'depart':'arrive';
+  var sug=flightSoftSuggest(it, windowId, role);
+  if(!sug) return;
+  it.softWindow=windowId;
+  it.timeSoft=true;
+  it.time=sug.time;
+  var base=(it.notes||'')
+    .replace(/\s*·?\s*Preferred (morning|mid-day|afternoon)[^·]*/ig,'')
+    .replace(/\s*·?\s*Aimed to (land|depart)[^·]*/ig,'')
+    .replace(/\s*·?\s*Same-day[^·]*/ig,'')
+    .replace(/\s*·?\s*You have appointments[^·]*/ig,'')
+    .trim();
+  var add='Preferred '+flightWindowLabel(windowId).toLowerCase()+(role==='arrive'?' arrival':' departure');
+  if(sug.note && sug.note.indexOf('Preferred ')!==0) add+=' — '+sug.note;
+  it.notes=(base?(base+' · '):'')+add;
+  it._softConflict=!!sug.conflict;
+}
+function mapAirportPopup(ap, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-mairday="'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  var wins=['morning','midday','afternoon'].map(function(wid){
+    var w=FLIGHT_WINDOWS[wid];
+    return '<button type="button" data-mairwin="'+wid+'">'+esc(w.short)+'</button>';
+  }).join('');
+  return '<div class="mpop" data-maircode="'+esc(ap.code)+'" data-mairname="'+esc(ap.name)+'" data-maircity="'+esc(ap.city||'')+'" data-mairlat="'+ap.lat+'" data-mairlon="'+ap.lon+'" data-mairwk="'+wk+'">'
+    +'<b>'+esc(ap.code)+' · '+esc(ap.name)+'</b>'
+    +'<div class="msub">'+(ap.city?esc(ap.city)+' · ':'')+'Commercial airline airport</div>'
+    +'<div class="msub" style="margin-bottom:4px">Fly</div>'
+    +'<div class="mpop-days" id="mairRole">'
+    +'<button type="button" data-mairrole="arrive" class="primary">Arrive</button>'
+    +'<button type="button" data-mairrole="depart">Depart</button>'
+    +'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Day</div>'
+    +'<div class="mpop-days" id="mairDays">'+days+'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Time of day</div>'
+    +'<div class="mpop-wins">'+wins+'</div>'
+    +'<div class="msub" style="margin-top:8px">Morning / mid-day / afternoon — we aim around same-day appointments.</div>'
+    +'</div>';
+}
+function mapAddAirportFlight(ap, wk, day, role, windowId){
+  undoSnap((role==='depart'?'Depart':'Arrive')+' '+ap.code);
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+  var ty=(role==='depart')?'flight_out':'flight_in';
+  var it={
+    id:'L'+Date.now()+Math.floor(Math.random()*1000),
+    terr:terrFor,
+    wk:parseInt(wk,10),
+    type:ty,
+    name:ap.code+' — '+(ap.city||ap.name),
+    address:ap.city||'',
+    lat:+ap.lat, lon:+ap.lon,
+    airportCode:ap.code, airportName:ap.name,
+    airline:'', flightNo:'',
+    day:(day==null||day===''?null:parseInt(day,10)),
+    time:'', day2:null, time2:'',
+    conf:'', notes:'', bookStatus:'',
+    mapsUrl:'https://www.google.com/maps?q='+(+ap.lat)+','+(+ap.lon)
+  };
+  if(role==='arrive'){ it.arrAirport=ap.code; it.arrAirportName=ap.name; }
+  else { it.depAirport=ap.code; it.depAirportName=ap.name; }
+  applyFlightSoftWindow(it, windowId||'morning');
+  LOGI.push(it); teamStampNew('m', it.id);
+  try{
+    if(typeof teamSingleMember==='function'){
+      var one=teamSingleMember();
+      if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
+    }
+  }catch(e){}
+  try{ TVEXP[it.id]=true; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  savePlan(); refreshPlanner({skipMap:false});
+  aqToast((role==='depart'?'Depart':'Arrive')+' '+ap.code+' · '+(flightWindowLabel(windowId||'morning')||'Morning'));
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
 }
 function mapStayRadiusMeters(mins){
   /* ~35 mph average road speed — preference for the EA, not a booking. */
@@ -10061,6 +10331,60 @@ function drawWeekRoute(t,wk){
       bounds.push([d.lat,d.lon]);
     });
   }
+  /* Optional: commercial airline airports (no private hangars / GA) */
+  if(MAP_SHOW_AIR && typeof wk==='number'){
+    commercialAirportsNearTrip(t,wk).forEach(function(ap){
+      if(ap.lat==null||ap.lon==null||!isFinite(ap.lat)||!isFinite(ap.lon)) return;
+      var mk=L.marker([ap.lat,ap.lon],{icon:mkPin('#2563eb','✈',null,'air'), opacity:0.95, zIndexOffset:-40});
+      mk.addTo(_wkMap);
+      mk.bindTooltip('<b>'+esc(ap.code)+'</b> · '+esc(ap.name)+(ap.city?('<br>'+esc(ap.city)):'')+'<br><span style="color:#6b7280">Click to fly in / out</span>', {sticky:true});
+      mk.bindPopup(mapAirportPopup(ap, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          var root=document.querySelector('.leaflet-popup-content .mpop[data-maircode="'+ap.code+'"]');
+          if(!root||root._aqAirBound) return; root._aqAirBound=true;
+          var state={role:'arrive', day:0, win:'morning'};
+          try{
+            var items0=itineraryFor(t,wk)||[];
+            if(state.role==='depart'){
+              items0.forEach(function(s){ if(s.day!=null && s.day>state.day) state.day=s.day; });
+            }
+          }catch(e){}
+          var paint=function(){
+            root.querySelectorAll('[data-mairrole]').forEach(function(b){ b.classList.toggle('primary', b.dataset.mairrole===state.role); });
+            root.querySelectorAll('[data-mairday]').forEach(function(b){ b.classList.toggle('primary', +b.dataset.mairday===state.day); });
+            root.querySelectorAll('[data-mairwin]').forEach(function(b){ b.classList.toggle('primary', b.dataset.mairwin===state.win); });
+          };
+          root.querySelectorAll('[data-mairrole]').forEach(function(b){
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              state.role=b.dataset.mairrole;
+              if(state.role==='depart'){
+                try{
+                  var mx=0; itineraryFor(t,wk).forEach(function(s){ if(s.day!=null&&s.day>mx) mx=s.day; });
+                  state.day=mx;
+                }catch(err){}
+              } else state.day=0;
+              paint();
+            };
+          });
+          root.querySelectorAll('[data-mairday]').forEach(function(b){
+            b.onclick=function(e){ e.preventDefault(); e.stopPropagation(); state.day=+b.dataset.mairday; paint(); };
+          });
+          root.querySelectorAll('[data-mairwin]').forEach(function(b){
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              state.win=b.dataset.mairwin;
+              paint();
+              mapAddAirportFlight(ap, wk, state.day, state.role, state.win);
+            };
+          });
+          paint();
+        }, 0);
+      });
+      bounds.push([ap.lat,ap.lon]);
+    });
+  }
   var legs=[];
   for(var i=1;i<items.length;i++){
     var a=items[i-1],b=items[i];
@@ -10069,7 +10393,7 @@ function drawWeekRoute(t,wk){
   }
   if(bounds.length){
     /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
-    var maxZ=MAP_SHOW_POOL?9:((bounds.length<=1)?10:11);
+    var maxZ=(MAP_SHOW_POOL||MAP_SHOW_AIR)?9:((bounds.length<=1)?10:11);
     _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
   } else _wkMap.setView([43.5,-95],4);
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
@@ -11936,6 +12260,16 @@ function wireDnD(){
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;tvToggleExpand(b.dataset.tvexpand);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
+  document.querySelectorAll('#weeks [data-fwin]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation(); e.preventDefault();
+    var p=String(b.dataset.fwin||'').split('|');
+    if(p.length<2) return;
+    var it=LOGI.filter(function(x){ return x.id===p[0]; })[0];
+    if(!it||!FLIGHT_WINDOWS[p[1]]) return;
+    undoSnap('Flight window');
+    applyFlightSoftWindow(it, p[1]);
+    afterTravelEdit(it);
+  }));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
   document.querySelectorAll('#weeks [data-tlock]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlToggleLock(b.dataset.tlock);}));
