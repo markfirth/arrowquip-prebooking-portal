@@ -1,4 +1,4 @@
-/* Arrowquip TRAVEL — Travel Coordination (Sales EA) work queue + booking checklist.
+/* Arrowquip TRAVEL — Travel Coordination (Sales EA) dedicated page.
    Same TRIPBOOK / LOGI / visit records as Sales Planning. Attaches window.AQCoord. */
 (function (global) {
   'use strict';
@@ -119,32 +119,32 @@
     var items = [];
     function add(kind, title, sourceId) {
       items.push({
-        id: 'ck_' + kind + '_' + (sourceId || items.length) + '_' + Date.now().toString(36).slice(-4),
+        id: kind + '-' + (sourceId || items.length),
         kind: kind,
         title: title,
-        sourceId: sourceId || null,
         status: 'needed',
+        sourceId: sourceId || null,
         details: {},
       });
     }
-    ((pack && pack.ls) || []).forEach(function (it) {
-      var ty = travelType(it);
-      if (ty === 'flight_out' || ty === 'flight_stop') add('flight_out', 'Outbound flight' + (it.airline ? (' · ' + it.airline) : ''), it.id);
-      else if (ty === 'flight_in') add('flight_in', 'Return / inbound flight' + (it.airline ? (' · ' + it.airline) : ''), it.id);
-      else if (ty === 'hotel') {
-        var hTitle = 'Hotel';
-        if (it.stayNear && it.stayRadiusMin) hTitle = 'Hotel near ' + it.stayNear + ' (within ' + it.stayRadiusMin + ' min)';
-        else if (it.name) hTitle = 'Hotel · ' + it.name;
-        else if (it.address) hTitle = 'Hotel · ' + it.address;
-        add('hotel', hTitle, it.id);
-      }
-      else if (ty === 'rental_pickup') add('rental', 'Rental car pickup', it.id);
-      else if (ty === 'rental_return') add('rental_return', 'Rental car return', it.id);
-      else if (ty === 'other' || ty === 'ground') add('ground', it.name || 'Ground transportation', it.id);
-    });
-    /* Only itinerary-derived requirements — never invent flights/hotels the salesperson did not request */
+    try {
+      ((pack && pack.ls) || []).forEach(function (it) {
+        var ty = travelType(it);
+        if (ty === 'flight_out' || ty === 'flight_in') {
+          add(ty, (ty === 'flight_out' ? 'Flight out' : 'Flight in') + (it.name ? (' · ' + it.name) : ''), it.id);
+        } else if (ty === 'hotel') {
+          add('hotel', 'Hotel' + (it.name ? (' · ' + it.name) : ''), it.id);
+        } else if (ty === 'rental_pickup' || ty === 'rental_return' || ty === 'rental') {
+          add('rental', 'Rental car' + (it.name ? (' · ' + it.name) : ''), it.id);
+        }
+      });
+    } catch (e) {}
+    if (!items.length) {
+      add('flight_out', 'Flights');
+      add('hotel', 'Hotel');
+      add('rental', 'Rental car');
+    }
     rec.checklist = items;
-    TRIPBOOK()[key] = rec;
     return items;
   }
 
@@ -159,7 +159,7 @@
     };
   }
 
-  function openTrip(row) {
+  function openTripPlanner(row) {
     try {
       if (global.setPortalTerr) global.setPortalTerr(row.terr);
       else global.terr = row.terr;
@@ -178,11 +178,11 @@
         global.TEAM_IDS[row.memberId] = true;
         try { if (global.teamSaveSel) global.teamSaveSel(); } catch (e) {}
       }
-      /* Stay in Travel Coordination so booking fields remain visible on This Trip. */
-      if (global.setWorkspace) global.setWorkspace('coord', { silent: true, force: true });
-      else if (global.setPortalMode) global.setPortalMode('coord', { silent: true, force: true });
+      /* Leave Coordination for the trip planner (sales view with booking fields via coord mode off) */
+      if (global.setWorkspace) global.setWorkspace('trips', { silent: true });
+      else if (global.setPortalMode) global.setPortalMode('sales', { silent: true });
       if (global.render) global.render();
-      toast('Opened trip for ' + row.traveller + ' — enter booking details on the cards');
+      toast('Opened ' + row.traveller + ' · WK ' + wkNo(row.wk));
     } catch (e) {
       console.error(e);
     }
@@ -240,11 +240,11 @@
         );
       }
       if (prefs.hotelBudget) bits.push('Budget ≈ ' + prefs.hotelBudget);
-      if (!bits.length) return '<div class="coord-prefs">No saved hotel preferences for this traveller. Live hotel search is not connected.</div>';
+      if (!bits.length) return '<div class="coord-prefs">No saved hotel preferences for this traveller.</div>';
       return (
         '<div class="coord-prefs"><b>Traveller hotel memory</b> — ' +
         esc(bits.join(' · ')) +
-        '. Live availability/pricing is not invented — use connected booking tools when available.</div>'
+        '</div>'
       );
     } catch (e) {
       return '';
@@ -337,7 +337,7 @@
       '<div class="mh"><div class="mt">Booking checklist · ' + esc(row.traveller) + '</div>' +
       '<button type="button" class="mclose" id="ckx">×</button></div>' +
       '<div style="padding:12px 16px;max-height:70vh;overflow:auto">' +
-      '<p style="margin:0 0 10px;font-size:12px;color:#6b7280">Enter real booking details only. Nothing is invented. Saving writes confirmations back onto the shared trip events.</p>' +
+      '<p style="margin:0 0 10px;font-size:13px;color:#69717A">Enter real booking details only. Nothing is invented.</p>' +
       items.map(rowHtml).join('') +
       '</div>' +
       '<div style="padding:10px 16px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #e5e7eb">' +
@@ -372,7 +372,6 @@
       close();
       renderCoord();
       toast('Checklist saved');
-      try { if (global.refreshPlanner) global.refreshPlanner(); } catch (e) {}
     };
   }
 
@@ -412,39 +411,48 @@
     var selectedKey = global._COORD_SELECTED || null;
     var selected = rows.filter(function (r) { return r.key === selectedKey; })[0] || rows[0] || null;
     if (selected) global._COORD_SELECTED = selected.key;
+
     var queue = rows
-      .slice(0, 24)
       .map(function (r) {
         var stLabel = (global.TRIP_STATUS && global.TRIP_STATUS[r.status] && global.TRIP_STATUS[r.status].label) || r.status;
         var on = selected && selected.key === r.key;
         return (
-          '<button type="button" class="coord-qrow' + (on ? ' on' : '') + '" data-open="' + esc(r.key) + '">' +
+          '<button type="button" class="coord-qrow' + (on ? ' on' : '') + '" data-pick="' + esc(r.key) + '">' +
           '<span class="cq-name">' + esc(r.traveller) + '</span>' +
-          '<span class="cq-meta">' + esc(r.terr) + ' · ' + esc(r.dates) + '</span>' +
+          '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span>' +
           (r.needsReview ? '<span class="coord-flag">Review</span>' : '') +
-          '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span></button>'
+          '<span class="cq-meta">' + esc(r.terr) + ' · ' + esc(r.dates) +
+          (r.dealers ? (' · ' + r.confirmed + '/' + r.dealers + ' dealers') : '') +
+          '</span></button>'
         );
       })
       .join('');
+
     var panel = '';
     if (selected) {
       var stLabel2 = (global.TRIP_STATUS && global.TRIP_STATUS[selected.status] && global.TRIP_STATUS[selected.status].label) || selected.status;
       var ck = selected.checklist || [];
-      var ckLines = ['flight', 'hotel', 'rental']
-        .map(function (kind) {
-          var hit = ck.filter(function (c) {
-            return (c.kind || '').indexOf(kind) === 0 || c.kind === kind || (kind === 'rental' && /rental|car/.test(c.kind || ''));
-          })[0];
-          var done = hit && hit.status === 'booked';
-          var label = kind === 'flight' ? 'Flights' : kind === 'hotel' ? 'Hotel' : 'Rental car';
-          var hint = kind === 'flight' ? 'Enter confirmation and times' : kind === 'hotel' ? 'Add property and reservation' : 'Add supplier and pickup details';
-          return (
-            '<div class="coord-ckline' + (done ? ' done' : '') + '">' +
-            '<span class="ck-box">' + (done ? '✓' : '') + '</span>' +
-            '<div><b>' + label + '</b><span>' + hint + '</span></div></div>'
-          );
-        })
-        .join('');
+      var ckLines = ck.length
+        ? ck.map(function (c) {
+            var done = c.status === 'booked';
+            var conf = (c.details && c.details.conf) || '';
+            return (
+              '<div class="coord-ckline' + (done ? ' done' : '') + '">' +
+              '<span class="ck-box">' + (done ? '✓' : '') + '</span>' +
+              '<div><b>' + esc(c.title) + '</b><span>' +
+              esc(done ? (conf ? ('Confirmation ' + conf) : 'Booked') : (c.status === 'booking' ? 'Booking…' : 'Needed')) +
+              '</span></div></div>'
+            );
+          }).join('')
+        : ['Flights', 'Hotel', 'Rental car']
+            .map(function (label) {
+              return (
+                '<div class="coord-ckline"><span class="ck-box"></span><div><b>' +
+                label +
+                '</b><span>Needed</span></div></div>'
+              );
+            })
+            .join('');
       panel =
         '<div class="coord-panel">' +
         '<div class="coord-panel-h"><b>' + esc(selected.traveller) + '</b><span>' + esc(stLabel2) + '</span></div>' +
@@ -452,25 +460,31 @@
         (selected.destination && selected.destination !== '—' ? ' · ' + esc(selected.destination) : '') + '</div>' +
         '<div class="coord-cklist">' + ckLines + '</div>' +
         '<div class="coord-panel-actions">' +
-        '<button type="button" class="kbb" data-ck="' + esc(selected.key) + '">Open checklist</button>' +
-        '<button type="button" class="kbb" data-itin="' + esc(selected.key) + '">Open itinerary</button>' +
-        (selected.status === 'ready' ? '<button type="button" class="kbb primary" data-st="' + esc(selected.key) + '|booking">Start booking</button>' : '') +
-        (selected.status === 'booking' ? '<button type="button" class="kbb primary" data-st="' + esc(selected.key) + '|booked">Mark booked</button>' : '') +
+        '<button type="button" class="kbb primary" data-ck="' + esc(selected.key) + '">Enter booking details</button>' +
+        (selected.status === 'ready' ? '<button type="button" class="kbb" data-st="' + esc(selected.key) + '|booking">Start booking</button>' : '') +
+        (selected.status === 'booking' ? '<button type="button" class="kbb" data-st="' + esc(selected.key) + '|booked">Mark booked</button>' : '') +
+        (selected.status === 'booked' || selected.status === 'sent'
+          ? '<button type="button" class="kbb" data-st="' + esc(selected.key) + '|sent">Finalize &amp; send</button>'
+          : '') +
+        '<button type="button" class="kbb" data-itin="' + esc(selected.key) + '">Open trip planner</button>' +
         '</div></div>';
     } else {
-      panel = '<div class="coord-panel empty"><p>No trips in this queue. Sales submits Ready to book from My Trips.</p></div>';
+      panel = '<div class="coord-panel empty"><p>No trips waiting. Sales submits Ready to book from My Trips.</p></div>';
     }
+
     host.innerHTML =
-      '<div class="coord-shell">' +
+      '<div class="coord-page">' +
+      '<h1>Travel coordination</h1>' +
+      '<p class="coord-lead">Book and finalize trips. Pick a traveller from the queue, enter confirmations, then send.</p>' +
       '<div class="coord-metrics">' +
       '<span class="coord-count' + (m.ready ? ' has ready' : '') + '"><b>' + m.ready + '</b>Ready to book</span>' +
       '<span class="coord-count' + (m.booking ? ' has booking' : '') + '"><b>' + m.booking + '</b>In progress</span>' +
       '<span class="coord-count' + (m.booked ? ' has' : '') + '"><b>' + (m.booked || 0) + '</b>Booked</span>' +
-      '<span class="coord-count' + (m.attention ? ' has ready' : '') + '"><b>' + (m.attention || m.ready || 0) + '</b>Needs attention</span>' +
+      '<span class="coord-count' + (m.attention ? ' has ready' : '') + '"><b>' + (m.attention || 0) + '</b>Needs attention</span>' +
       '</div>' +
       '<div class="coord-work">' +
       '<div class="coord-queue">' +
-      '<div class="coord-qh">Booking queue' +
+      '<div class="coord-qh">Queue' +
       '<div class="coord-bar-filters">' +
       '<label class="coord-chk"><input type="checkbox" id="coordAtt"' + (filter.attention !== false ? ' checked' : '') + '> Attention</label>' +
       '<select id="coordTerr" title="Territory"><option value="">All areas</option>' +
@@ -515,18 +529,17 @@
         if (st.value) global._COORD_FILTER.attention = false;
         renderCoord();
       };
-    host.querySelectorAll('[data-open]').forEach(function (b) {
+    /* Pick from queue — stay on Coordination page */
+    host.querySelectorAll('[data-pick]').forEach(function (b) {
       b.onclick = function () {
-        global._COORD_SELECTED = b.dataset.open;
-        var row = rows.filter(function (r) { return r.key === b.dataset.open; })[0];
+        global._COORD_SELECTED = b.dataset.pick;
         renderCoord();
-        if (row) openTrip(row);
       };
     });
     host.querySelectorAll('[data-itin]').forEach(function (b) {
       b.onclick = function () {
         var row = rows.filter(function (r) { return r.key === b.dataset.itin; })[0];
-        if (row) openTrip(row);
+        if (row) openTripPlanner(row);
       };
     });
     host.querySelectorAll('[data-ck]').forEach(function (b) {
