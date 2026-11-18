@@ -406,14 +406,14 @@
     var m = metrics();
     var filter = global._COORD_FILTER || { attention: true };
     var rows = tripRows(filter);
-    var cards = rows
-      .slice(0, 12)
+    var chips = rows
+      .slice(0, 10)
       .map(function (r) {
         var stLabel = (global.TRIP_STATUS && global.TRIP_STATUS[r.status] && global.TRIP_STATUS[r.status].label) || r.status;
         return (
           '<div class="coord-chip" data-ckey="' + esc(r.key) + '">' +
-          '<button type="button" class="coord-link" data-open="' + esc(r.key) + '">' + esc(r.traveller) + '</button>' +
-          '<span class="coord-chip-meta">' + esc(r.terr) + ' · ' + esc(r.dates) + '</span>' +
+          '<button type="button" class="coord-link" data-open="' + esc(r.key) + '" title="Open this trip">' + esc(r.traveller) + '</button>' +
+          '<span class="coord-chip-meta">' + esc(r.dates) + '</span>' +
           (r.needsReview ? '<span class="coord-flag">Review</span>' : '') +
           '<span class="coord-st ' + esc(r.status) + '">' + esc(stLabel) + '</span>' +
           '<button type="button" class="kbb" data-ck="' + esc(r.key) + '">Checklist</button>' +
@@ -424,33 +424,30 @@
       })
       .join('');
     host.innerHTML =
-      '<div class="coord-strip">' +
-      '<div class="coord-strip-h">' +
-      '<div><b>TRAVEL COORDINATION</b><span class="coord-sub"> Same trip as sales — expand a card to enter airline, confirmation, and booking details sales don’t see.</span></div>' +
-      '<div class="coord-metrics coord-metrics-inline">' +
-      '<div class="coord-m"><div class="coord-mn">' + m.ready + '</div><div class="coord-ml">Ready</div></div>' +
-      '<div class="coord-m"><div class="coord-mn">' + m.booking + '</div><div class="coord-ml">Booking</div></div>' +
-      '<div class="coord-m"><div class="coord-mn">' + m.completed + '</div><div class="coord-ml">Done</div></div>' +
-      '</div></div>' +
-      '<div class="coord-toolbar">' +
-      '<label class="coord-chk"><input type="checkbox" id="coordAtt"' + (filter.attention !== false ? ' checked' : '') + '> Needs attention</label>' +
-      '<select id="coordTerr"><option value="">All territories</option>' +
+      '<div class="coord-bar">' +
+      '<span class="coord-bar-label">Queue</span>' +
+      '<div class="coord-counts">' +
+      '<span class="coord-count' + (m.ready ? ' has ready' : '') + '"><b>' + m.ready + '</b>Ready</span>' +
+      '<span class="coord-count' + (m.booking ? ' has booking' : '') + '"><b>' + m.booking + '</b>Booking</span>' +
+      '<span class="coord-count' + (m.completed ? ' has' : '') + '"><b>' + m.completed + '</b>Done</span>' +
+      '</div>' +
+      (chips ? '<div class="coord-chip-row">' + chips + '</div>' : '<div class="coord-bar-spacer"></div>') +
+      '<div class="coord-bar-filters">' +
+      '<label class="coord-chk"><input type="checkbox" id="coordAtt"' + (filter.attention !== false ? ' checked' : '') + '> Attention</label>' +
+      '<select id="coordTerr" title="Territory"><option value="">All areas</option>' +
       ['East', 'South', 'Central', 'West', 'Exports']
         .map(function (t) {
           return '<option value="' + t + '"' + (filter.terr === t ? ' selected' : '') + '>' + t + '</option>';
         })
         .join('') +
       '</select>' +
-      '<select id="coordStat"><option value="">All statuses</option>' +
+      '<select id="coordStat" title="Status"><option value="">All</option>' +
       ['ready', 'booking', 'booked', 'sent', 'completed']
         .map(function (s) {
           return '<option value="' + s + '"' + (filter.status === s ? ' selected' : '') + '>' + s + '</option>';
         })
         .join('') +
-      '</select></div>' +
-      '<div class="coord-chip-row">' +
-      (cards || '<div class="coord-empty-inline">No trips in the queue — submitted Ready to Book trips appear here. Use This Trip below to enter booking details.</div>') +
-      '</div></div>';
+      '</select></div></div>';
 
     var att = host.querySelector('#coordAtt');
     if (att)

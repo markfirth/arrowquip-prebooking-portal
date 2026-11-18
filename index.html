@@ -1941,42 +1941,73 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .aqModeSwitch button+button{border-left:1px solid #e5e7eb;}
 .aqModeSwitch button.on{background:#111;color:#fff;}
 .aqModeSwitch[hidden]{display:none!important;}
-#coordView{display:none;padding:0;background:#f5f5f5;min-height:0;}
+#coordView{display:none;padding:0;background:transparent;min-height:0;}
 #coordView.is-on{display:block;}
-body.portal-coord #coordView.is-on{border-bottom:1px solid #e5e7eb;}
-.coord-strip{padding:10px 16px 12px;background:#fafafa;}
-.coord-strip-h{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin:0 0 8px;}
-.coord-strip-h b{font:900 13px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#111;}
+body.portal-coord #coordView.is-on{border-bottom:1px solid #e8eaed;}
+/* Slim booking-queue bar — sits above This Trip like a toolbar, not a second page */
+.coord-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:6px 14px;background:#fff;min-height:40px;
+}
+.coord-bar-label{
+  font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase;
+  color:#8b9096;flex:0 0 auto;white-space:nowrap;
+}
+.coord-counts{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;}
+.coord-count{
+  appearance:none;border:0;background:transparent;cursor:default;
+  font:700 11px 'Open Sans',Arial,sans-serif;color:#6b7280;
+  padding:3px 8px;border-radius:3px;white-space:nowrap;
+}
+.coord-count b{font:800 11px Frutiger,'Open Sans',Arial,sans-serif;color:#111;margin-right:3px;}
+.coord-count.has{background:#f5f6f7;color:#374151;}
+.coord-count.has.ready{background:#fef3c7;color:#92400e;}
+.coord-count.has.ready b{color:#92400e;}
+.coord-count.has.booking{background:#dbeafe;color:#1e40af;}
+.coord-count.has.booking b{color:#1e40af;}
+.coord-bar-spacer{flex:1 1 auto;min-width:8px;}
+.coord-bar-filters{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;}
+.coord-bar-filters select{
+  appearance:none;font:600 11px 'Open Sans',Arial,sans-serif;color:#374151;
+  border:1px solid #e5e7eb;border-radius:4px;padding:4px 8px;background:#fff;height:28px;
+}
+.coord-chk{font:600 11px 'Open Sans',Arial,sans-serif;color:#6b7280;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.coord-chip-row{
+  display:flex;align-items:center;gap:6px;flex:1 1 220px;min-width:0;
+  overflow-x:auto;padding:0;scrollbar-width:thin;
+}
+.coord-chip{
+  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  background:#fafafa;border:1px solid #e8eaed;border-radius:4px;
+  padding:3px 6px 3px 8px;font:12px 'Open Sans',Arial,sans-serif;max-width:280px;
+}
+.coord-chip-meta{color:#9ca3af;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;}
+.coord-chip .kbb{height:24px;padding:0 8px;font-size:10px;margin:0;}
+.coord-link{appearance:none;border:0;background:none;font:700 12px inherit;color:#111;cursor:pointer;padding:0;white-space:nowrap;}
+.coord-link:hover{color:var(--aq-red,#cf202f);}
+.coord-flag{font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#b45309;}
+.coord-st{display:inline-block;font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#f3f4f6;color:#6b7280;}
+.coord-st.ready{background:#fef3c7;color:#92400e;}
+.coord-st.booking{background:#dbeafe;color:#1e40af;}
+.coord-st.booked,.coord-st.sent,.coord-st.completed{background:#dcfce7;color:#166534;}
 .coord-page{max-width:1100px;margin:0 auto;padding:24px 20px 40px;}
 .coord-head h1{margin:0;font-family:var(--font-heading),Frutiger,Impact,sans-serif;font-size:28px;font-weight:900;letter-spacing:.5px;color:#111;text-transform:uppercase;}
 .coord-sub{margin-top:2px;font-size:12px;color:#6b7280;font-weight:600;}
 .coord-metrics{display:flex;gap:12px;margin:16px 0 14px;flex-wrap:wrap;}
-.coord-metrics-inline{margin:0;gap:8px;}
-.coord-metrics-inline .coord-m{padding:6px 10px;min-width:72px;}
-.coord-metrics-inline .coord-mn{font-size:16px;}
 .coord-m{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 16px;min-width:140px;}
 .coord-mn{font:900 22px Frutiger,'Open Sans',Arial,sans-serif;color:#111;line-height:1;}
 .coord-ml{margin-top:4px;font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;}
-.coord-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
-.coord-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:6px 8px;font:12px 'Open Sans',Arial,sans-serif;}
-.coord-chip-meta{color:#6b7280;font-size:11px;}
-.coord-empty-inline{font:600 12px 'Open Sans',Arial,sans-serif;color:#6b7280;padding:6px 0;}
 .coord-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;}
 .coord-toolbar select{font:12px 'Open Sans',Arial,sans-serif;border:1px solid #d1d5db;border-radius:4px;padding:5px 8px;background:#fff;}
-.coord-chk{font:600 12px 'Open Sans',Arial,sans-serif;color:#374151;display:inline-flex;align-items:center;gap:6px;}
 .coord-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:4px;overflow:auto;}
 .coord-table{width:100%;border-collapse:collapse;font:12px 'Open Sans',Arial,sans-serif;}
 .coord-table th{text-align:left;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fafafa;white-space:nowrap;}
 .coord-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;color:#111;}
-.coord-link{appearance:none;border:0;background:none;font:700 12px inherit;color:#111;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;}
-.coord-flag{font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#b45309;margin-top:3px;}
-.coord-st{display:inline-block;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:#f3f4f6;color:#374151;}
-.coord-st.ready{background:#fef3c7;color:#92400e;}
-.coord-st.booking{background:#dbeafe;color:#1e40af;}
-.coord-st.booked,.coord-st.sent,.coord-st.completed{background:#dcfce7;color:#166534;}
 .coord-acts{white-space:nowrap;}
 .coord-acts .kbb{margin:0 4px 0 0;height:28px;padding:0 10px;font-size:11px;}
 .coord-empty{text-align:center;color:#6b7280;padding:28px 12px!important;}
+body.portal-coord #planTitle{font-size:0;}
+body.portal-coord #planTitle::after{content:'Booking · This Trip';font:800 13px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#111;}
 .coord-ck{border:1px solid #e5e7eb;border-radius:4px;margin:0 0 10px;background:#fff;}
 .coord-ck-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #f3f4f6;}
 .coord-ck-b{padding:10px 12px;}
@@ -13591,7 +13622,7 @@ function render(){
       document.getElementById('terrMap').style.display=isMap?'':'none';
       if(isPlan){ renderPlanner(); wireDnD(); focusCurrentWeekOnce(); }
       else { renderTerrMap(); }
-      document.getElementById('planTitle').textContent=terr+' · Travel Coordination';
+      document.getElementById('planTitle').textContent=terr+' · Booking';
     }
     return;
   }
