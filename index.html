@@ -321,6 +321,52 @@ body.trips-layout-on #sysHealth{display:none !important;}
   box-shadow:0 1px 4px rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;
 }
 .map-fab:hover{border-color:var(--aq-red,#cf202f);color:var(--aq-red,#cf202f);}
+.map-fab.on{background:#111;border-color:#111;color:#fff;}
+.map-fab.text{width:auto;padding:0 9px;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;}
+.map-fab.armed{background:#fff7ed;border-color:#b45309;color:#b45309;}
+.map-hint{
+  position:absolute;left:10px;bottom:10px;z-index:650;display:none;
+  background:rgba(255,255,255,.96);border:1px solid #e5e7eb;border-radius:4px;
+  padding:6px 10px;font:600 11px 'Open Sans',Arial,sans-serif;color:#374151;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);max-width:240px;
+}
+.planwrap.trips-kanban.map-split .map-hint.is-on,
+.planwrap.trips-kanban.map-full .map-hint.is-on{display:block;}
+.pin.pool{background:#9ca3af!important;opacity:.85;width:10px;height:10px;border-width:1px;}
+.pin.pool .pinseq{display:none;}
+.pin.air{background:#2563eb!important;width:12px;height:12px;border-width:1px;border-radius:2px;}
+.pin.air .pinseq{display:none;}
+/* Cindel pipeline — small soft dots; color = stage (kept quiet on the map) */
+.pin.pipe{opacity:.72;width:9px;height:9px;border-width:1px;border-color:rgba(255,255,255,.85);}
+.pin.pipe .pinseq{display:none;}
+.pin.pipe-new{background:#c4b5a0!important;}
+.pin.pipe-working{background:#94a3b8!important;}
+.pin.pipe-qualified{background:#86a8a0!important;}
+.pin.pipe-other{background:#a8a29e!important;}
+.mpop{font:12px 'Open Sans',Arial,sans-serif;min-width:180px;max-width:260px;}
+.mpop b{display:block;font-size:12.5px;color:#111;margin:0 0 2px;}
+.mpop .msub{color:#6b7280;font-size:11px;margin:0 0 8px;}
+.mpop-days,.mpop-radii,.mpop-wins{display:flex;flex-wrap:wrap;gap:4px;}
+.mpop-days button,.mpop-radii button,.mpop-wins button{
+  appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:3px;
+  font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.2px;text-transform:uppercase;
+  padding:4px 7px;cursor:pointer;color:#374151;
+}
+.mpop-days button:hover,.mpop-radii button:hover,.mpop-wins button:hover{border-color:#111;color:#111;}
+.mpop-radii button.primary,.mpop-days button.primary,.mpop-wins button.primary{background:#111;border-color:#111;color:#fff;}
+.tv-softwin{display:flex;flex-direction:column;gap:6px;padding:2px 0 4px;}
+.tv-softbtns{display:flex;flex-wrap:wrap;gap:5px;}
+.tv-soft{
+  appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:3px;
+  font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.2px;text-transform:uppercase;
+  padding:6px 10px;cursor:pointer;color:#374151;
+}
+.tv-soft:hover{border-color:#111;color:#111;}
+.tv-soft.on{background:#111;border-color:#111;color:#fff;}
+.tv-soft.warn{border-color:#b45309;color:#b45309;}
+.tv-soft.on.warn{background:#b45309;border-color:#b45309;color:#fff;}
+.tv-softtime{display:inline-block;font:700 12px 'Open Sans',Arial,sans-serif;color:#6b7280;padding:6px 0;}
+.tv-sales-note.warn{color:#b45309;}
 .map-back{
   display:none;position:absolute;top:12px;left:12px;z-index:700;
   appearance:none;font-family:inherit;font-size:13px;font-weight:700;
@@ -729,7 +775,7 @@ body.wkfull-on{overflow:hidden;}
 .yg-cell.we{background:#f3f4f6;border-color:#e5e7eb;}
 .yg-cell.today{box-shadow:inset 0 0 0 1.5px var(--aq-red);}
 .yg-cell.today .yg-d{color:var(--aq-red);font-weight:800;}
-.yg-cell.sel{background:#fef2f2;border-color:#fecaca;}
+.yg-cell.sel{background:#fef2f2;border-color:#fecaca;box-shadow:inset 0 0 0 1.5px var(--aq-red,#cf202f);}
 .yg-cell:hover:not(.na){border-color:#c9ced4;}
 .yg-d{font-size:9px;font-weight:600;color:#374151;line-height:1;padding:0 1px;}
 .yg-bars{display:flex;flex-direction:column;justify-content:flex-end;min-width:0;flex:1 1 auto;}
@@ -743,33 +789,14 @@ body.wkfull-on{overflow:hidden;}
 .yg-ps{font-size:11px;color:#6b7280;margin-top:1px;}
 .yg-pf{display:flex;gap:8px;padding:8px 12px 12px;flex-wrap:wrap;}
 .yg-empty{font-size:12px;color:#9ca3af;padding:8px 0;}
+.yg-daystrip{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--line-soft);margin-bottom:4px;}
+.yg-dchip{flex:1 1 120px;max-width:220px;background:#fafbfc;border:1px solid var(--line-soft);border-radius:6px;padding:6px 8px;}
+.yg-dchip b{display:block;font-size:10px;font-weight:800;color:#374151;letter-spacing:.02em;margin-bottom:2px;}
+.yg-dchip span{font-size:11px;color:#6b7280;line-height:1.3;}
 .yg-mctable{width:100%;border-collapse:collapse;font-size:12px;}
 .yg-mctable th,.yg-mctable td{padding:4px;border-bottom:1px solid var(--line-soft);text-align:left;}
-.yg-monthly{border-top:1px solid var(--line);padding:14px 12px 18px;background:#fafbfc;}
-.yg-monthly-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
-.yg-monthly-h b{font-size:14px;color:#111;}
-.yg-monthly-h span{font-size:12px;color:#9ca3af;font-weight:600;}
-.yg-monthly-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
-.yg-mcard{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px 8px;min-height:140px;display:flex;flex-direction:column;}
-.yg-mh{display:flex;justify-content:space-between;align-items:center;font:800 11px inherit;letter-spacing:.04em;color:#111;margin-bottom:8px;}
-.yg-medit{appearance:none;border:0;background:transparent;cursor:pointer;color:#9ca3af;font-size:12px;padding:2px;}
-.yg-medit:hover{color:var(--aq-red);}
-.yg-mflab{font:700 9px inherit;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
-.yg-mfocus{font:700 13px inherit;color:#111;line-height:1.25;}
-.yg-mnotes{font-size:11px;color:#6b7280;margin-top:2px;}
-.yg-mset{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 12px inherit;cursor:pointer;padding:0;text-align:left;}
-.yg-mset:hover{color:var(--aq-red);}
-.yg-mdiv{height:1px;background:#f0f1f3;margin:8px 0;}
-.yg-mevs{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
-.yg-mev{display:flex;align-items:flex-start;gap:6px;font-size:11px;}
-.yg-mev i{width:7px;height:7px;border-radius:50%;margin-top:4px;flex:0 0 auto;}
-.yg-mev-l{appearance:none;border:0;background:transparent;font:600 11px inherit;color:#374151;cursor:pointer;padding:0;text-align:left;}
-.yg-mev-l:hover{color:var(--aq-red);}
-.yg-mempty{font-size:11px;color:#b0b5bb;}
-.yg-madd{appearance:none;border:0;background:transparent;color:#9ca3af;font:600 11px inherit;cursor:pointer;padding:6px 0 0;text-align:left;align-self:flex-start;}
-.yg-madd:hover{color:var(--aq-red);}
-@media(max-width:1000px){.yg-monthly-grid{grid-template-columns:1fr 1fr;}.yg-key{flex-basis:120px;}}
-@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-monthly-grid{grid-template-columns:1fr;}.yg-cell{min-height:24px;}}
+@media(max-width:1000px){.yg-key{flex-basis:120px;}}
+@media(max-width:720px){.yg-main{flex-direction:column;}.yg-key{flex:none;border-left:0;border-top:1px solid var(--line);}.yg-cell{min-height:24px;}}
 /* ===== ALL Territories — Leadership travel overview ===== */
 #allView .planwrap.trips-kanban{height:calc(100vh - 140px);max-height:calc(100vh - 140px);border-radius:0;border-left:0;border-right:0;border-top:0;}
 .all-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 8px 0;flex:0 0 auto;}
@@ -1896,6 +1923,102 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 .aqGearMenu.open{display:block;}
 .aqGearMenu button{display:block;width:100%;text-align:left;appearance:none;border:0;background:none;font:700 11px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#111;padding:9px 12px;cursor:pointer;border-radius:4px;}
 .aqGearMenu button:hover{background:#f5f5f5;}
+/* ===== Portal mode: My Trips vs Travel Coordination ===== */
+.aqModeSwitch{display:inline-flex;align-items:center;gap:0;margin-right:12px;border:1px solid #e5e7eb;border-radius:4px;overflow:hidden;background:#fff;}
+.aqModeSwitch button{appearance:none;border:0;background:transparent;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;padding:6px 10px;cursor:pointer;}
+.aqModeSwitch button+button{border-left:1px solid #e5e7eb;}
+.aqModeSwitch button.on{background:#111;color:#fff;}
+.aqModeSwitch[hidden]{display:none!important;}
+#coordView{display:none;padding:0;background:transparent;min-height:0;}
+#coordView.is-on{display:block;}
+body.portal-coord #coordView.is-on{border-bottom:1px solid #e8eaed;}
+/* Slim booking-queue bar — sits above This Trip like a toolbar, not a second page */
+.coord-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:6px 14px;background:#fff;min-height:40px;
+}
+.coord-bar-label{
+  font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase;
+  color:#8b9096;flex:0 0 auto;white-space:nowrap;
+}
+.coord-counts{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;}
+.coord-count{
+  appearance:none;border:0;background:transparent;cursor:default;
+  font:700 11px 'Open Sans',Arial,sans-serif;color:#6b7280;
+  padding:3px 8px;border-radius:3px;white-space:nowrap;
+}
+.coord-count b{font:800 11px Frutiger,'Open Sans',Arial,sans-serif;color:#111;margin-right:3px;}
+.coord-count.has{background:#f5f6f7;color:#374151;}
+.coord-count.has.ready{background:#fef3c7;color:#92400e;}
+.coord-count.has.ready b{color:#92400e;}
+.coord-count.has.booking{background:#dbeafe;color:#1e40af;}
+.coord-count.has.booking b{color:#1e40af;}
+.coord-bar-spacer{flex:1 1 auto;min-width:8px;}
+.coord-bar-filters{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;}
+.coord-bar-filters select{
+  appearance:none;font:600 11px 'Open Sans',Arial,sans-serif;color:#374151;
+  border:1px solid #e5e7eb;border-radius:4px;padding:4px 8px;background:#fff;height:28px;
+}
+.coord-chk{font:600 11px 'Open Sans',Arial,sans-serif;color:#6b7280;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.coord-chip-row{
+  display:flex;align-items:center;gap:6px;flex:1 1 220px;min-width:0;
+  overflow-x:auto;padding:0;scrollbar-width:thin;
+}
+.coord-chip{
+  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  background:#fafafa;border:1px solid #e8eaed;border-radius:4px;
+  padding:3px 6px 3px 8px;font:12px 'Open Sans',Arial,sans-serif;max-width:280px;
+}
+.coord-chip-meta{color:#9ca3af;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;}
+.coord-chip .kbb{height:24px;padding:0 8px;font-size:10px;margin:0;}
+.coord-link{appearance:none;border:0;background:none;font:700 12px inherit;color:#111;cursor:pointer;padding:0;white-space:nowrap;}
+.coord-link:hover{color:var(--aq-red,#cf202f);}
+.coord-flag{font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#b45309;}
+.coord-st{display:inline-block;font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#f3f4f6;color:#6b7280;}
+.coord-st.ready{background:#fef3c7;color:#92400e;}
+.coord-st.booking{background:#dbeafe;color:#1e40af;}
+.coord-st.booked,.coord-st.sent,.coord-st.completed{background:#dcfce7;color:#166534;}
+.coord-page{max-width:1100px;margin:0 auto;padding:24px 20px 40px;}
+.coord-head h1{margin:0;font-family:var(--font-heading),Frutiger,Impact,sans-serif;font-size:28px;font-weight:900;letter-spacing:.5px;color:#111;text-transform:uppercase;}
+.coord-sub{margin-top:2px;font-size:12px;color:#6b7280;font-weight:600;}
+.coord-metrics{display:flex;gap:12px;margin:16px 0 14px;flex-wrap:wrap;}
+.coord-m{background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:12px 16px;min-width:140px;}
+.coord-mn{font:900 22px Frutiger,'Open Sans',Arial,sans-serif;color:#111;line-height:1;}
+.coord-ml{margin-top:4px;font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;}
+.coord-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;}
+.coord-toolbar select{font:12px 'Open Sans',Arial,sans-serif;border:1px solid #d1d5db;border-radius:4px;padding:5px 8px;background:#fff;}
+.coord-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:4px;overflow:auto;}
+.coord-table{width:100%;border-collapse:collapse;font:12px 'Open Sans',Arial,sans-serif;}
+.coord-table th{text-align:left;font:800 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#6b7280;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fafafa;white-space:nowrap;}
+.coord-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;color:#111;}
+.coord-acts{white-space:nowrap;}
+.coord-acts .kbb{margin:0 4px 0 0;height:28px;padding:0 10px;font-size:11px;}
+.coord-empty{text-align:center;color:#6b7280;padding:28px 12px!important;}
+body.portal-coord #planTitle{font-size:0;}
+body.portal-coord #planTitle::after{content:'Booking · This Trip';font:800 13px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#111;}
+.coord-ck{border:1px solid #e5e7eb;border-radius:4px;margin:0 0 10px;background:#fff;}
+.coord-ck-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #f3f4f6;}
+.coord-ck-b{padding:10px 12px;}
+.coord-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.coord-fields label,.coord-notes{display:flex;flex-direction:column;gap:3px;font:700 10px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;color:#6b7280;}
+.coord-fields input,.coord-notes textarea{font:12px 'Open Sans',Arial,sans-serif;border:1px solid #d1d5db;border-radius:4px;padding:6px 8px;text-transform:none;letter-spacing:0;font-weight:400;color:#111;}
+.coord-notes{margin-top:8px;}
+.coord-prefs{margin:0 0 8px;padding:8px 10px;background:#fafafa;border:1px solid #eee;border-radius:4px;font:12px 'Open Sans',Arial,sans-serif;color:#374151;}
+.kcc-conf{appearance:none;flex:0 0 auto;border:1px solid #d1d5db;background:#fff;border-radius:3px;font:800 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:3px 6px;cursor:pointer;color:#6b7280;min-width:52px;height:24px;line-height:1;}
+.kcc-conf.planned{border-color:#d1d5db;color:#6b7280;}
+.kcc-conf.confirmed{border-color:#166534;background:#dcfce7;color:#166534;}
+.kcc-conf.completed{border-color:#111;background:#111;color:#fff;}
+.kcc-conf.reconfirm{border-color:#b45309;background:#fff7ed;color:#b45309;}
+.kcc-caretbtn{appearance:none;border:0;background:transparent;color:#9ca3af;cursor:pointer;padding:4px 6px;font-size:11px;flex:0 0 auto;}
+.kcc-caretbtn:hover{color:#111;}
+.tv-sales-note{font:600 11px 'Open Sans',Arial,sans-serif;color:#6b7280;padding:4px 0 2px;}
+.trb-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12px;margin:0 0 12px;}
+.trb-grid b{font-weight:700;color:#111;}
+.trb-grid span{color:#6b7280;}
+.dq-hint{padding:8px 10px;font:12px 'Open Sans',Arial,sans-serif;color:#6b7280;border-bottom:1px solid #f3f4f6;}
+.dq-hint button{appearance:none;border:0;background:none;color:#111;font:700 12px inherit;text-decoration:underline;cursor:pointer;padding:0;}
+body.portal-coord .aqPlanStrip{display:none!important;}
+@media(max-width:720px){.aqModeSwitch{display:none!important;} .coord-fields{grid-template-columns:1fr;} .trb-grid{grid-template-columns:1fr;}}
 /* ===== My Team (Dealer Portal Users pattern) ===== */
 #teamView{display:none;padding:0 0 40px;background:#f5f5f5;min-height:calc(100vh - 140px);}
 #teamView.is-on{display:block;}
@@ -1998,6 +2121,10 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
   <div class="aqUtilityBar">
     <div class="aqUtilityLeft"><span class="aqPortalLabel">Travel Portal</span></div>
     <div class="aqUtilityRight">
+      <div class="aqModeSwitch" id="aqModeSwitch" hidden aria-label="Portal mode">
+        <button type="button" data-pmode="sales">My Trips</button>
+        <button type="button" data-pmode="coord">Travel Coordination</button>
+      </div>
       <span id="aqAcct" class="aqAcct"></span>
     </div>
   </div>
@@ -2020,6 +2147,7 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
 </nav>
 <div class="wrap">
   <div class="cards" id="cards" style="display:none"></div>
+  <div id="coordView" style="display:none;" aria-label="Travel Coordination"></div>
   <div id="plannerView" style="display:none;">
     <div class="progbar" id="progBar">
       <div class="progtext" id="progText"></div>
@@ -2043,9 +2171,14 @@ input[type=time]::-webkit-datetime-edit{padding:0;}
         <aside class="trips-map" id="tripsMapPane">
           <button type="button" class="map-back" data-mapback="1" title="Return to trip planner">← Back to Trip</button>
           <div class="map-fabs">
+            <button type="button" class="map-fab text" data-mappool="1" id="mapPoolBtn" title="Show all dealers — click to add to the trip">Dealers</button>
+            <button type="button" class="map-fab text" data-mappipe="1" id="mapPipeBtn" title="Cindel’s new dealers near this trip — subtle by pipeline stage">New</button>
+            <button type="button" class="map-fab text" data-mapair="1" id="mapAirBtn" title="Show main commercial airports — airlines only, no private hangars">Airports</button>
+            <button type="button" class="map-fab text" data-mapstay="1" id="mapStayBtn" title="Click the map to set an overnight near a town">Stay</button>
             <button type="button" class="map-fab" data-mapmode="full" title="Maximize map">⛶</button>
             <button type="button" class="map-fab" data-mapmode="collapsed" title="Collapse map">✕</button>
           </div>
+          <div class="map-hint" id="mapPlanHint"></div>
           <div id="tripsMapSlot" data-wkmapslot></div>
         </aside>
       </div>
@@ -2410,7 +2543,7 @@ function wkInfo(wk){
 }
 const WK_LAST=(function(){ var end=new Date(new Date().getFullYear()+1,11,31,12);
   return Math.max(44, 32+Math.floor((end-WK_BASE)/WK_MS)); })();
-const WEEKDATES={31:"Jul 28–29"}, FIELD_NUMS=[], MON={};
+var WEEKDATES={31:"Jul 28–29"}, FIELD_NUMS=[], MON={};
 (function(){ var mo=function(d){ return d.toLocaleString('en-US',{month:'short'}); };
   for(var k=32;k<=WK_LAST;k++){
     var s=wkStart(k), e=new Date(s.getTime()+6*WK_DAY), mon=new Date(s.getTime()+WK_DAY);
@@ -2507,6 +2640,7 @@ function jit(id){var x=0;for(var i=0;i<id.length;i++){x=(x*31+id.charCodeAt(i))>
 let terr="All", search="", mq="";
 let allMode='cal', mapWeek=32, leaderFilter='JW';
 let PLAN_MODE='weekly'; /* weekly | year */
+var PORTAL_MODE='sales'; /* sales = My Trips planning | coord = Travel Coordination */
 /* Bridge for external modules (my-team.js): `let terr` / `let PLAN_MODE` are NOT
    on window, so `window.terr = 'Team'` was a no-op for render(). Always navigate
    through goMyTeam / setPortalTerr. */
@@ -2514,6 +2648,48 @@ function setPortalTerr(t){ terr=t; }
 function setPortalPlanMode(m){ PLAN_MODE=m; }
 function getPortalTerr(){ return terr; }
 function getPortalAdmin(){ return ADMIN; }
+function portalIsSalesMode(){
+  try{ if(typeof mobIsPhone==='function'&&mobIsPhone()) return true; }catch(e){}
+  return PORTAL_MODE!=='coord';
+}
+function portalCanSwitchMode(){
+  try{
+    if(typeof pbIsAdmin==='function'&&pbIsAdmin()) return true;
+    if(typeof coordIsCoordinator==='function') return !!coordIsCoordinator();
+    if(window.AQCoord&&AQCoord.isCoordinatorUser) return !!AQCoord.isCoordinatorUser();
+  }catch(e){}
+  return false;
+}
+function setPortalMode(m, opts){
+  opts=opts||{};
+  var next=(m==='coord')?'coord':'sales';
+  if(next==='coord'&&!portalCanSwitchMode()&&!opts.force) next='sales';
+  try{ if(typeof mobIsPhone==='function'&&mobIsPhone()) next='sales'; }catch(e){}
+  PORTAL_MODE=next;
+  try{ localStorage.setItem('aqPortalMode', PORTAL_MODE); }catch(e){}
+  try{ document.body.classList.toggle('portal-coord', PORTAL_MODE==='coord'); }catch(e){}
+  try{
+    var sw=document.getElementById('aqModeSwitch');
+    if(sw){
+      var show=portalCanSwitchMode();
+      if(show) sw.removeAttribute('hidden'); else sw.setAttribute('hidden','');
+      sw.querySelectorAll('[data-pmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.pmode===PORTAL_MODE); });
+    }
+  }catch(e){}
+  if(!opts.silent){ try{ render(); }catch(e){} }
+}
+function bootPortalMode(){
+  var pref='sales';
+  try{
+    if(window.AQCoord&&AQCoord.preferredMode) pref=AQCoord.preferredMode();
+    else {
+      var saved=localStorage.getItem('aqPortalMode');
+      if(saved==='sales'||saved==='coord') pref=saved;
+    }
+  }catch(e){}
+  if(!portalCanSwitchMode()) pref='sales';
+  setPortalMode(pref, {silent:true, force:true});
+}
 function goMyTeam(){
   PLAN_MODE='weekly';
   terr='Team';
@@ -2524,8 +2700,19 @@ function goMyTeam(){
 window.goMyTeam=goMyTeam;
 window.setPortalTerr=setPortalTerr;
 window.setPortalPlanMode=setPortalPlanMode;
+window.setPortalMode=setPortalMode;
 window.getPortalTerr=getPortalTerr;
 window.getPortalAdmin=getPortalAdmin;
+window.portalIsSalesMode=portalIsSalesMode;
+(function(){
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest&&e.target.closest('#aqModeSwitch [data-pmode]');
+    if(!b) return;
+    e.preventDefault();
+    if(b.dataset.pmode==='coord'&&terr==='Team'){ terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); }); }
+    setPortalMode(b.dataset.pmode);
+  });
+})();
 var YG_EVENTS=[];
 var YG_NOTES={};
 var YG_AVAIL={};
@@ -2574,6 +2761,21 @@ function _wkRerender(){ withPreservedScroll(function(){ renderPlanner(); renderC
 /* ---- Trips Kanban focus / map chrome (device-local only — never in plan) ---- */
 var FOCUS_WK=(function(){ try{ var s=sessionStorage.getItem('aqFocusWk'); if(s!=null&&s!==''){ var n=parseInt(s,10); if(isFinite(n)) return n; } }catch(e){} return null; })();
 var MAP_UI_MODE=(function(){ try{ var m=localStorage.getItem('aqMapMode'); if(m==='collapsed'||m==='split'||m==='full') return m; }catch(e){} return 'split'; })();
+var MAP_SHOW_POOL=(function(){ try{ return localStorage.getItem('aqMapShowPool')==='1'; }catch(e){ return false; } })();
+var MAP_SHOW_AIR=(function(){ try{ return localStorage.getItem('aqMapShowAir')==='1'; }catch(e){ return false; } })();
+var MAP_SHOW_PIPE=(function(){ try{ return localStorage.getItem('aqMapShowPipe')==='1'; }catch(e){ return false; } })();
+/* Cindel new-dealer pipeline cache — shared by map layer + dealer typeahead */
+var PIPELINE_CACHE=[];
+var PIPELINE_CACHE_AT=0;
+var PIPELINE_FETCHING=false;
+var PIPELINE_GEO={}; /* sfLeadId → {lat,lon} */
+var MAP_STAY_ARM=false;
+/* Soft flight windows for sales planning — preference, not a booked flight time. */
+var FLIGHT_WINDOWS={
+  morning:{id:'morning',label:'Morning',short:'Morning',start:6*60,end:11*60,prefer:9*60},
+  midday:{id:'midday',label:'Mid-day',short:'Mid-day',start:11*60,end:15*60,prefer:13*60},
+  afternoon:{id:'afternoon',label:'Afternoon',short:'Afternoon',start:15*60,end:20*60,prefer:17*60}
+};
 var MAP_SPLIT_PX=(function(){ try{ var s=localStorage.getItem('aqMapSplit'); if(s==null||s==='') return null; var n=parseInt(s,10); return (isFinite(n)&&n>=200&&n<=900)?n:null; }catch(e){ return null; } })();
 var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
 var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
@@ -2671,6 +2873,21 @@ function mapInvalidateSoon(){
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },40);
   setTimeout(function(){ try{ if(_wkMap) _wkMap.invalidateSize({animate:false}); }catch(e){} },200);
 }
+/* Map plan controls live outside the week re-render — bind once. */
+(function(){
+  if(window._aqMapPlanWired) return;
+  window._aqMapPlanWired=true;
+  document.addEventListener('click',function(e){
+    var pool=e.target&&e.target.closest&&e.target.closest('[data-mappool]');
+    if(pool){ e.preventDefault(); e.stopPropagation(); mapTogglePool(); return; }
+    var pipe=e.target&&e.target.closest&&e.target.closest('[data-mappipe]');
+    if(pipe){ e.preventDefault(); e.stopPropagation(); mapTogglePipe(); return; }
+    var air=e.target&&e.target.closest&&e.target.closest('[data-mapair]');
+    if(air){ e.preventDefault(); e.stopPropagation(); mapToggleAir(); return; }
+    var stay=e.target&&e.target.closest&&e.target.closest('[data-mapstay]');
+    if(stay){ e.preventDefault(); e.stopPropagation(); mapToggleStayArm(); return; }
+  });
+})();
 
 /* ---- per-week map: ONE lazy Leaflet instance hosted in the Trips map pane ---- */
 let WKMAPON={};                 /* retained for compatibility */
@@ -2686,6 +2903,75 @@ function tvExpanded(id){ return !!TVEXP[id]; }
 function tvToggleExpand(id){ TVEXP[id]=!TVEXP[id]; try{ sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
 function dvExpanded(ref){ return !!DVEXP[ref]; }
 function dvToggleExpand(ref){ DVEXP[ref]=!DVEXP[ref]; try{ sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){} refreshPlanner({skipMap:true}); }
+/* Sales keyboard chain: Add → Time → Duration → next Add (no mouse required). */
+var _salesChain=null;
+var _salesChainAmpm=null;
+function salesChainArm(ref, wk, day, step){
+  if(!ref) return;
+  _salesChain={
+    ref:String(ref),
+    wk:String(wk==null?'':wk),
+    day:(day==null||day===''||day==='none')?'':String(day),
+    step:step||'time'
+  };
+  try{
+    DVEXP[ref]=true;
+    sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP));
+  }catch(e){}
+}
+function salesChainClear(){ _salesChain=null; }
+function salesChainFocus(){
+  var c=_salesChain; if(!c) return;
+  setTimeout(function(){
+    if(!_salesChain||_salesChain.ref!==c.ref) return;
+    function focusEl(el){
+      if(!el) return false;
+      try{ el.focus({preventScroll:true}); }catch(e){ try{ el.focus(); }catch(_){ } }
+      try{ if(el.select) el.select(); }catch(e2){}
+      return true;
+    }
+    if(c.step==='time'){
+      var t=document.querySelector('.vf.vtime[data-vref="'+c.ref+'"]')
+        ||document.querySelector('.vf[data-vref="'+c.ref+'"][data-f="time"]');
+      if(focusEl(t)) return;
+      c.step='dur';
+    }
+    if(c.step==='dur'){
+      var d=document.querySelector('.vf.vdur[data-vref="'+c.ref+'"]')
+        ||document.querySelector('.vf[data-vref="'+c.ref+'"][data-f="dur"]');
+      if(focusEl(d)) return;
+      c.step='add';
+    }
+    if(c.step==='add'){
+      try{ delete DVEXP[c.ref]; sessionStorage.setItem('aqDVEXP',JSON.stringify(DVEXP)); }catch(e){}
+      _salesChain=null;
+      refreshPlanner({skipMap:true});
+      setTimeout(function(){
+        var n=document.querySelector('.dqin[data-qwk="'+c.wk+'"][data-qday="'+c.day+'"]');
+        if(n){ try{ n.focus({preventScroll:true}); }catch(e){ try{ n.focus(); }catch(_){ } } }
+      }, 30);
+    }
+  }, 35);
+}
+function salesChainFromDrop(el){
+  var drop=el&&el.closest&&el.closest('[data-drop]');
+  if(!drop||!drop.dataset.drop) return {wk:'', day:''};
+  var p=String(drop.dataset.drop).split('|');
+  return {wk:p[0]||'', day:(p[1]==null||p[1]==='none')?'':p[1]};
+}
+function salesChainAdvance(ref, field, el){
+  var loc=salesChainFromDrop(el);
+  if(field==='time'){
+    salesChainArm(ref, loc.wk, loc.day, 'dur');
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+    return;
+  }
+  if(field==='dur'){
+    salesChainArm(ref, loc.wk, loc.day, 'add');
+    salesChainFocus();
+  }
+}
 function cardsExpandAll(open){
   /* open=true expands every visible card this render; false collapses all */
   try{
@@ -2702,7 +2988,7 @@ function cardsExpandAll(open){
   refreshPlanner({skipMap:true});
 }
 let SETTINGS={};
-let LOGI=[];
+var LOGI=[]; /* var so Travel Coordination module can share the same records */
 /* Per-dealer trip-stop extras (cost/notes/confirmation). Dealer stops are derived
    from ASSIGN/DAY/TIME, so their budget fields live here keyed by dealer id.
    Manual stops carry their own fields on the LOGI record. */
@@ -3338,9 +3624,11 @@ function hydrateDriveRows(){
     });
   });
 }
-let ASSIGN={},DAY={},TIME={},CONF={},APPT={};
-/* Per-traveller trip booking workflow: Planning → Ready to Book → Booking in Progress → Booked → Reviewed & Sent */
-let TRIPBOOK={};
+var ASSIGN={},DAY={},TIME={},CONF={},APPT={};
+/* Dealer appointment confirmation metadata (who/when + Planned|Confirmed|Completed). */
+var APPTMETA={};
+/* Per-traveller trip booking workflow: Planning → Ready to Book → Booking in Progress → Booked → Reviewed & Sent → Completed */
+var TRIPBOOK={};
 /* AR Issues — a MANUALLY-MANAGED portal field (no Salesforce AR integration).
    Keyed by dealer id in its own map so it survives Salesforce sync (which only
    replaces DEALERS) and is never overwritten by other dealers' updates. */
@@ -3367,8 +3655,9 @@ function makeProspect(o){
     territory:o.territory||terr||'East', loc:o.loc||'', address:o.address||'',
     lat:(o.lat!=null?+o.lat:null), lon:(o.lon!=null?+o.lon:null),
     contactName:o.contact||'', contactPhone:o.phone||'', notes:o.notes||'',
+    sfLeadId:o.sfLeadId||'', city:o.city||'',
     booking:0, loads:0, lastYear:0, t27loads:0, tier:'', areaPlanning:true,
-    status:'Not Started', _prospect:true, _sf:false };
+    status:'Not Started', _prospect:true, _sf:false, _pipeline:!!o.sfLeadId };
 }
 function addProspect(o,cb){
   var p=makeProspect(o);
@@ -3459,12 +3748,12 @@ window.AQ_QA.ar=function(){
    remain the dealer's INITIAL visit exactly as before; XVISITS holds unlimited
    ADDITIONAL visit records, each fully independent:
    {id,dealer,terr,wk,day,time,dur,type,notes,done} */
-let XVISITS=[];
+var XVISITS=[];
 /* ONE planning type per scheduled visit:
    prebook — counts in forecast dollars/loads, territory + weekly totals, reporting.
    visit   — relationship visit only: still on the planner/trip/map, zero forecast. */
 const XV_TYPES={
-  prebook:{label:'Pre-book',c:'#2563eb'},
+  prebook:{label:'Visit',c:'#16a34a'},
   visit:{label:'Visit',c:'#16a34a'}
 };
 function xvTypeKey(t){ return XV_TYPES[t]?t:'visit'; }
@@ -4350,12 +4639,12 @@ function syncCommitments(dealerId){
 }
 DEALERS.forEach(d=>{ASSIGN[d.id]=(d.territory==='Exports')?'remote':'pool';DAY[d.id]=null;TIME[d.id]='';});
 function loadPlan(){try{const s=localStorage.getItem(LS_PLAN_KEY);if(s)return JSON.parse(s);}catch(e){}return null;}
-(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(p.tripbook)TRIPBOOK=p.tripbook;if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}}
+(function(){const p=loadPlan();if(p){if(p.a)Object.assign(ASSIGN,p.a);if(p.day)Object.assign(DAY,p.day);if(p.time)Object.assign(TIME,p.time);if(p.conf)CONF=p.conf;if(p.appt)APPT=p.appt;if(p.apptmeta)APPTMETA=p.apptmeta;if(p.settings)SETTINGS=p.settings;if(p.logi)LOGI=p.logi;if(p.joina)JOINA=p.joina;if(p.dur)DUR=p.dur;if(p.goal)GOAL2027=p.goal;if(p.stopx)STOPX=p.stopx;if(p.expenses)EXPENSES=p.expenses;if(p.actkm)ACTKM=p.actkm;if(p.visit)VISIT=p.visit;if(Array.isArray(p.xvisits))XVISITS=p.xvisits;if(p.ptype)PTYPE=p.ptype;if(+p.fx>0)FX=normUsdCad(+p.fx);if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers;if(p.admin)ADMIN=p.admin;if(Array.isArray(p.commits))COMMITS=p.commits;if(p.ride)RIDEALONG=p.ride;if(p.tle)TLE={lock:p.tle.lock||{}};if(p.ordx)ORD=p.ordx;if(p.arissues)ARISSUES=p.arissues;if(p.confloc)CONFLOC=p.confloc;if(Array.isArray(p.prospects))PROSPECTS=p.prospects;if(p.coordovr)COORDOVR=p.coordovr;if(p.evmeta)EVMETA=p.evmeta;if(p.owners)OWNERS=Object.assign({},p.owners);if(p.tripbook)TRIPBOOK=p.tripbook;if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);}if(p.ygnotes){YG_NOTES=p.ygnotes;if(window.ygSetNotes)ygSetNotes(YG_NOTES);}if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);}if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);}}
 adminInit(); fxSync();
 normalizeVisitData();
 try{ evEnsureMeta(); evBaseline(); }catch(e){}   /* legacy events get ids; snapshot the sync baseline */
 })();
-function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,tripbook:TRIPBOOK,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[]),ygfocus:(typeof YG_FOCUS!=='undefined'?YG_FOCUS:{})};}
+function planPayload(){return {a:ASSIGN,day:DAY,time:TIME,conf:CONF,appt:APPT,apptmeta:APPTMETA,settings:SETTINGS,logi:LOGI,joina:JOINA,dur:DUR,goal:GOAL2027,stopx:STOPX,expenses:EXPENSES,actkm:ACTKM,visit:VISIT,xvisits:XVISITS,ptype:PTYPE,fx:FX,t27tiers:T27_TIERS,admin:ADMIN,commits:COMMITS,ride:RIDEALONG,tle:TLE,ordx:ORD,arissues:ARISSUES,confloc:CONFLOC,prospects:PROSPECTS,coordovr:COORDOVR,evmeta:EVMETA,owners:OWNERS,tripbook:TRIPBOOK,ygevents:(typeof YG_EVENTS!=='undefined'?YG_EVENTS:[]),ygnotes:(typeof YG_NOTES!=='undefined'?YG_NOTES:{}),ygavail:(typeof YG_AVAIL!=='undefined'?YG_AVAIL:{}),ygcats:(typeof YG_CAT_CUSTOM!=='undefined'?YG_CAT_CUSTOM:[]),ygfocus:(typeof YG_FOCUS!=='undefined'?YG_FOCUS:{})};}
 /* ================= EVENT-LEVEL MERGE (flag: eventLevelMerge) =================
    Sync stays on the single prebooking_state.plan row (NO new tables), but
    unrelated events (different visits / weeks / stops) merge automatically
@@ -4555,7 +4844,7 @@ function savePlan(){
 /* Collaboration Test Mode: seed an isolated, clearly-fake trip so testers never
    touch a real plan — 2 dealer visits, 1 hotel, 1 flight, 1 Other stop, 2 weeks. */
 function seedCollabTest(){
-  ASSIGN={};DAY={};TIME={};DUR={};PTYPE={};APPT={};STOPX={};JOINA={};ORD={};XVISITS=[];LOGI=[];PROSPECTS=[];EVMETA={};EVSNAP={};EVBASE={};EVDIRTY={};EVCONFLICT={};
+  ASSIGN={};DAY={};TIME={};DUR={};PTYPE={};APPT={};APPTMETA={};STOPX={};JOINA={};ORD={};XVISITS=[];LOGI=[];PROSPECTS=[];EVMETA={};EVSNAP={};EVBASE={};EVDIRTY={};EVCONFLICT={};
   try{ ensureAssignDefaults(); }catch(e){}
   var east=(typeof dealersIn==='function')?dealersIn('East').filter(function(d){return d.lat!=null;}):[];
   var d1=east[0], d2=east[1]; var W1=32, W2=36;
@@ -4724,7 +5013,7 @@ function dealerCard(d){
   var meta='<span class="dloc">'+esc([d.loc,d.territory].filter(Boolean).join(' · '))+'</span>';
   var actions=isPro
     ? ('<span class="dmk"><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="Visit — click to pick a week, or drag into a week">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>')
-    : ('<span class="dmk"><button class="dadd'+(pb?' pbon':'')+'" data-mk="'+d.id+'|prebook" data-drag="1" data-id="mk:'+d.id+'|prebook" title="'+(pb?'Pre-book scheduled — click or drag to add another':'Pre-book — click to pick a week, or drag into a week')+'">'+(pb?'✓ Pre-book':'+ Pre-book')+'</button><button class="dadd dvis'+(vN?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN?(vN+' visit'+(vN===1?'':'s')+' planned this pre-booking period — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+(vN?('✓ Visits · '+vN):'+ Visit')+'</button></span>');
+    : ('<span class="dmk"><button class="dadd dvis'+(vN||pb?' von':'')+'" data-mk="'+d.id+'|visit" data-drag="1" data-id="mk:'+d.id+'|visit" title="'+(vN||pb?(Math.max(vN,pb?1:0)+' visit'+(Math.max(vN,pb?1:0)===1?'':'s')+' planned — click or drag to add another'):'Visit — click to pick a week, or drag into a week')+'">'+((vN||pb)?('✓ Visit'+(vN>1?(' · '+vN):'')):'+ Visit')+'</button></span>');
   return '<div class="dcard'+(isPro?' dcard-pro':'')+'">'
     +'<div class="dn">'+esc(d.name)+' '+badge+'</div>'
     +'<div class="dm">'+meta+'</div>'
@@ -6065,6 +6354,8 @@ function addTravel(type,wk){
     day2:null, time2:'',           /* check-out / drop-off */
     conf:'', notes:''});
   teamStampNew('m',lid);
+  /* Compact by default — expand only when the user opens details. */
+  try{ delete TVEXP[lid]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
   savePlan();
   if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',lid)){
     teamPickOwner('m', lid, function(){ refreshPlanner(); });
@@ -6076,11 +6367,12 @@ function setTravelField(id,field,val){
   else if(field==='time'||field==='time2'){
     var pv=parseTimeLoose(val);
     if(pv&&typeof pv==='object'&&pv.ambiguous){
-      askAmPm(pv,function(resolved){ if(resolved){ it[field]=resolved; afterTravelEdit(it); } else refreshPlanner(); });
+      askAmPm(pv,function(resolved){ if(resolved){ it[field]=resolved; it.timeSoft=false; afterTravelEdit(it); } else refreshPlanner(); });
       return;
     }
     if(pv==null){ refreshPlanner(); return; }
     it[field]=pv;
+    if(field==='time') it.timeSoft=false;
   }
   else if(field==='type'){ it.type=TRAVEL_TYPES[val]?val:'other'; }
   else if(field==='dur'){ var nd=normDur(parseDur(val)); if(nd==null){ refreshPlanner(); return; } it.dur=nd; }
@@ -6091,6 +6383,11 @@ function setTravelField(id,field,val){
   }
   else if(field==='bookStatus'){ it.bookStatus=val||''; }
   else it[field]=val;
+  /* Soft windows re-aim when the flight day changes so same-day appointments are considered. */
+  if(field==='day' && it.softWindow && FLIGHT_WINDOWS[it.softWindow]){
+    var tty=travelType(it);
+    if(tty==='flight_in'||tty==='flight_out') applyFlightSoftWindow(it, it.softWindow);
+  }
   afterTravelEdit(it);
 }
 function afterTravelEdit(it){
@@ -6142,11 +6439,12 @@ function itineraryFor(t,wk){
   LOGI.forEach(function(it){
     if((t==='All'||it.terr===t) && it.wk===wk && teamFilterMatch('m',it.id)){
       var ty=travelType(it);
-      items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
+      items.push({kind:'travel', id:it.id, key:'m:'+it.id, type:ty, rawType:ty, name:travelPlaceLabel(it)||TRAVEL_TYPES[ty].label,
         address:it.address||'', lat:it.lat, lon:it.lon,
         day:(it.day==null?null:it.day), time:it.time||'',
         day2:it.day2, time2:it.time2,
         airline:it.airline, flightNo:it.flightNo, conf:it.conf, notes:it.notes,
+        stayNear:it.stayNear||'', stayRadiusMin:it.stayRadiusMin||null,
         located:travelHasLocation(it), raw:it});
     }
   });
@@ -6234,9 +6532,15 @@ function travelCard(it,wk,tl){
       var toC=it.arrAirport||'';
       var route=(fromC&&toC)?(fromC+' → '+toC):(fromC||toC||'');
       label=[it.airline, route||it.name||it.airportName||'Flight'].filter(Boolean).join(' · ')||'Flight';
-      var arrT=it.time2?t12s(it.time2):'';
-      if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
-      else if(_mainT) timeDisp=_mainT;
+      if(it.softWindow&&flightWindowLabel(it.softWindow)){
+        timeDisp=flightWindowLabel(it.softWindow);
+      } else {
+        var arrT=it.time2?t12s(it.time2):'';
+        if(_mainT&&arrT) timeDisp=_mainT+'–'+arrT;
+        else if(_mainT) timeDisp=_mainT;
+      }
+    } else if(isHotel && it.stayNear && it.stayRadiusMin){
+      label='Near '+it.stayNear+' · within '+it.stayRadiusMin+' min';
     } else {
       label=it.name||T.label||'Stop';
     }
@@ -6267,23 +6571,25 @@ function travelCard(it,wk,tl){
   var isRental=(ty==='rental_pickup'||ty==='rental_return');
   /* --- place row: airport picker for flights, address + locate for everything else --- */
   var place;
+  var salesPlan=portalIsSalesMode();
   if(isFlight){
     var depDisp=it.depAirport
       ?(it.depAirport+(it.depAirportName?(' — '+it.depAirportName):''))
       :(it.airportCode?(it.airportCode+' — '+(it.airportName||it.address||'')):'');
     var arrDisp=it.arrAirport?(it.arrAirport+(it.arrAirportName?(' — '+it.arrAirportName):'')):'';
-    place='<div class="tv-row">'
+    place=(salesPlan?'':'<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="airline" list="aqAirlines" value="'+esc(it.airline||'')+'" placeholder="Airline — Delta, United, Air Canada…">'
       +'<input class="tv-in tv-fno" data-tv="'+it.id+'" data-f="flightNo" value="'+esc(it.flightNo||'')+'" placeholder="Flight #">'
-      +'</div>'
+      +'</div>')
       +'<div class="tv-row">'
       +'<input class="tv-in ap-in" data-tv="'+it.id+'" data-ap="dep" autocomplete="off" spellcheck="false"'
-      +' value="'+esc(depDisp)+'" placeholder="Departure airport — city or code">'
+      +' value="'+esc(depDisp)+'" placeholder="'+(salesPlan?'Fly from — city or airport code':'Departure airport — city or code')+'">'
       +'</div>'
       +'<div class="tv-row">'
       +'<input class="tv-in ap-in" data-tv="'+it.id+'" data-ap="arr" autocomplete="off" spellcheck="false"'
-      +' value="'+esc(arrDisp)+'" placeholder="Arrival airport — city or code">'
-      +'</div>';
+      +' value="'+esc(arrDisp)+'" placeholder="'+(salesPlan?'Fly into — city or airport code':'Arrival airport — city or code')+'">'
+      +'</div>'
+      +(salesPlan?'<div class="tv-sales-note">Flight numbers and booking confirmations are entered by Travel Coordination.</div>':'');
   } else {
     place='<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="name"'+(isRental?' list="aqRentals"':'')+' value="'+esc(it.name||'')+'"'
@@ -6320,7 +6626,29 @@ function travelCard(it,wk,tl){
     +(depLbl?'<div class="tv-deprow" title="Calculated departure">→ leaves '+esc(depLbl)+'</div>':'');
   var durRow='';
   var when2='';
-  if(isFlight){
+  if(isFlight && salesPlan){
+    /* Sales: soft Morning / Mid-day / Afternoon — no flight numbers or exact booking times. */
+    var softRole=(ty==='flight_out')?'depart':'arrive';
+    var curWin=it.softWindow||'';
+    var softPreview=curWin?flightSoftSuggest(it, curWin, softRole):null;
+    var softNote=(softPreview&&softPreview.note)||'Morning, mid-day, or afternoon — Travel Coordination books the real flight.';
+    var softConflict=!!(softPreview&&softPreview.conflict)||!!it._softConflict;
+    when='<div class="tv-row tv-when3">'
+      +'<div class="tvcol tvcol-day"><span class="tv-lbl">Day</span>'
+      +'<select class="tv-in" data-tv="'+it.id+'" data-f="day">'+dayOpts(it.day)+'</select></div>'
+      +(it.time?('<div class="tvcol tvcol-time"><span class="tv-lbl">Approx</span><span class="tv-softtime">'+esc(t12s(it.time))+'</span></div>'):'')
+      +'</div>'
+      +'<div class="tv-softwin">'
+      +'<span class="tv-lbl">'+(softRole==='arrive'?'I arrive':'I depart')+'</span>'
+      +'<div class="tv-softbtns">'
+      +['morning','midday','afternoon'].map(function(wid){
+        var w=FLIGHT_WINDOWS[wid];
+        return '<button type="button" class="tv-soft'+(curWin===wid?' on':'')+(softConflict&&curWin===wid?' warn':'')+'" data-fwin="'+it.id+'|'+wid+'">'+esc(w.short)+'</button>';
+      }).join('')
+      +'</div></div>'
+      +'<div class="tv-sales-note'+(softConflict?' warn':'')+'">'+esc(softNote)+'</div>';
+    when2='<div class="tv-row"><input class="tv-in" data-tv="'+it.id+'" data-f="notes" value="'+esc(it.notes||'')+'" placeholder="Special travel requirements"></div>';
+  } else if(isFlight){
     when2='<div class="tv-row tv-when3">'
       +'<div class="tvcol tvcol-day"><span class="tv-lbl">Arrive</span>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:it.day)+'</select></div>'
@@ -6339,27 +6667,31 @@ function travelCard(it,wk,tl){
     var autoCo=(!it.time2&&tl&&tl.depSug!=null)?addMin('00:00',((Math.round(tl.depSug)%1440)+1440)%1440):'';
     var showCo=it.time2||autoCo;
     when2='<div class="tv-row tv-when3">'
-      +'<div class="tvcol tvcol-day"><span class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">Checkout</span>'
+      +'<div class="tvcol tvcol-day"><span class="tv-lbl" title="When you check out and leave — the next morning\'s times chain from this">'+(salesPlan?'Overnight':'Checkout')+'</span>'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="day2">'+dayOpts(it.day2!=null?it.day2:(autoCo?Math.floor(tl.depSug/1440):null))+'</select></div>'
       +'<div class="tvcol tvcol-time"><span class="tv-lbl">Time</span>'
       +'<input class="tv-in tv-time" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 10am" data-tv="'+it.id+'" data-f="time2" value="'+esc(showCo?t12s(showCo):'')+'"'
       +(autoCo?' title="Calculated back from your next appointment — change it to set your own checkout"':' title="'+timeTip+'"')+'></div>'
       +'</div>'
-      +'<div class="tv-row">'
+      +(salesPlan
+        ?('<div class="tv-sales-note">Preferred overnight town/hotel only — booking details are handled by Travel Coordination.</div>')
+        :('<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation">'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
       +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
         return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
       }).join('')
-      +'</select></div>';
+      +'</select></div>'));
   } else if(isRental){
-    when2='<div class="tv-row">'
+    when2=salesPlan
+      ?('<div class="tv-sales-note">Rental car needed — Travel Coordination will book and enter confirmation details.</div>')
+      :('<div class="tv-row">'
       +'<input class="tv-in" data-tv="'+it.id+'" data-f="conf" value="'+esc(it.conf||'')+'" placeholder="Booking confirmation">'
       +'<select class="tv-in" data-tv="'+it.id+'" data-f="bookStatus" style="max-width:140px">'
       +[['','Status'],['needed','Needed'],['requested','Requested'],['booked','Booked'],['cancelled','Cancelled']].map(function(o){
         return '<option value="'+o[0]+'"'+((it.bookStatus||'')===o[0]?' selected':'')+'>'+o[1]+'</option>';
       }).join('')
-      +'</select></div>';
+      +'</select></div>');
   }
   var badge=it.virtual
     ? '<span class="tv-ok" title="Virtual — reserves time, no map stop">Virtual</span>'
@@ -6719,7 +7051,9 @@ function kbToolbarHTML(wk){
         +'<button type="button" data-cardall="0">Collapse all appointments</button>'
         +(canBook?('<button type="button" data-tripstatus="booking" data-wk="'+wk+'">Mark Booking in Progress</button>'
           +'<button type="button" data-tripstatus="booked" data-wk="'+wk+'">Mark Booked</button>'
-          +'<button type="button" data-tripstatus="sent" data-wk="'+wk+'">Mark Reviewed &amp; Sent</button>'):'')
+          +'<button type="button" data-tripstatus="sent" data-wk="'+wk+'">Mark Reviewed &amp; Sent</button>'
+          +'<button type="button" data-tripstatus="completed" data-wk="'+wk+'">Mark Completed</button>'):'')
+        +((st.id==='booked'||st.id==='sent'||st.id==='completed')?'<button type="button" data-dlitin="'+wk+'">Download Itinerary</button>':'')
         +'<button type="button" data-hist="1">History</button>'
       +'</div>'
     +'</div>';
@@ -6823,7 +7157,8 @@ function weekCard(wk){
    ref: 'i:<dealerId>' = the dealer's initial card (ASSIGN/DAY/TIME/DUR/STOPX)
         'x:<visitId>'  = an additional card (its XVISITS record)            */
 var VBADGE={
-  prebook:{label:'PRE-BOOK',cls:'pre',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="9" height="8" rx="1"/><path d="M1.5 5h9M4 1v2.5M8 1v2.5"/></svg>'},
+  /* Travel portal: every dealer stop reads as a Visit (legacy pre-book type kept for KPI math). */
+  prebook:{label:'VISIT',cls:'vis',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 11S2 7.4 2 4.8A4 4 0 0 1 10 4.8C10 7.4 6 11 6 11z"/><circle cx="6" cy="4.8" r="1.3"/></svg>'},
   visit  :{label:'VISIT',cls:'vis',icon:'<svg viewBox="0 0 12 12" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 11S2 7.4 2 4.8A4 4 0 0 1 10 4.8C10 7.4 6 11 6 11z"/><circle cx="6" cy="4.8" r="1.3"/></svg>'}
 };
 /* flexible duration: "45m", "1h 30m", "8h", "2:30", "36h", bare numbers
@@ -6841,19 +7176,37 @@ function parseDur(s){
 }
 function normDur(mins){ mins=Math.round(+mins); if(!isFinite(mins)||mins<=0) return null; return Math.max(15,mins); }
 /* normalized view of one card */
+function apptStatusOf(ref){
+  var meta=(APPTMETA&&APPTMETA[ref])||{};
+  var kind=ref.slice(0,1), id=ref.slice(2);
+  var confirmed=false;
+  if(kind==='i') confirmed=!!(APPT&&APPT[id]);
+  else {
+    var x=(XVISITS||[]).filter(function(v){return v.id===id;})[0];
+    confirmed=!!(x&&x.done);
+  }
+  var st=meta.status||(confirmed?'confirmed':'planned');
+  if(st==='completed') return {status:'completed', meta:meta, confirmed:true};
+  if(st==='confirmed'||confirmed) return {status:'confirmed', meta:meta, confirmed:true, needsReconfirm:!!meta.needsReconfirm};
+  return {status:'planned', meta:meta, confirmed:false};
+}
 function dvViewInitial(d,wk){
   d=sfMasterMerge(d);
+  var st=apptStatusOf('i:'+d.id);
   return {ref:'i:'+d.id, dragId:d.id, dealer:d, name:d.name,
     type:vType(d.id), wk:wk, day:DAY[d.id], time:TIME[d.id]||'',
     dur:DUR[d.id]||(wk===31?60:90), notes:(STOPX[d.id]&&STOPX[d.id].notes)||'',
-    done:!!APPT[d.id], remote:(wk==='remote'),
+    done:st.confirmed, apptStatus:st.status, needsReconfirm:!!st.needsReconfirm,
+    remote:(wk==='remote'),
     joined:(JOINA[d.id]||[]), terrName:d.territory||''};
 }
 function dvViewX(x){
   var d=byId[x.dealer]||uniById(x.dealer); if(!d) return null;
+  var st=apptStatusOf('x:'+x.id);
   return {ref:'x:'+x.id, dragId:'xv:'+x.id, dealer:d, name:d.name,
     type:(x.type==='visit'?'visit':'prebook'), wk:x.wk, day:x.day, time:x.time||'',
-    dur:x.dur||60, notes:x.notes||'', done:!!x.done, remote:false, act:x.act||'',
+    dur:x.dur||60, notes:x.notes||'', done:st.confirmed, apptStatus:st.status, needsReconfirm:!!st.needsReconfirm,
+    remote:false, act:x.act||'',
     att:x.att||'', leader:x.leader||'', joined:(x.joined||[]), terrName:x.terr||''};
 }
 function dvCard(v,tl){
@@ -6867,22 +7220,29 @@ function dvCard(v,tl){
   var isFixed=!v.remote&&((tl&&(tl.locked||tl.conf))||(!tl&&(TLE.lock[tkey]||v.done)));
   var autoT=(!isFixed&&!v.remote&&tl&&tl.sug!=null)?addMin('00:00',((Math.round(tl.sug)%1440)+1440)%1440):'';
   var showT=isFixed?v.time:(autoT||v.time);
-  /* ---- compact one-line row: icon | name | time | status | chevron ---- */
+  /* ---- compact one-line row: icon | name | time | confirmation | chevron ---- */
   if(!dvExpanded(v.ref)){
     var endT=(showT&&v.dur)?t12s(addMin(showT,v.dur)):'';
     var timeRange=showT?(endT?(t12s(showT)+'–'+endT):t12s(showT)):'—';
     var cinfoD=schedConflictInfo(tkey, typeof v.wk==='number'?v.wk:null);
     var lateClsC=((tl&&tl.lateMin)||(cinfoD&&cinfoD.conflict)?' tl-late':'')+(cinfoD&&cinfoD.conflict?' sched-conflict':'');
+    var aSt=v.apptStatus||(v.done?'confirmed':'planned');
+    var confCls=aSt+(v.needsReconfirm?' reconfirm':'');
+    var confLbl=v.needsReconfirm?'Reconfirm':(aSt==='completed'?'Done':(aSt==='confirmed'?'Confirmed':'Planned'));
+    var confTitle=v.needsReconfirm?'Date/time changed — click to reconfirm with the dealer'
+      :(aSt==='completed'?'Visit completed — click to cycle status'
+        :(aSt==='confirmed'?'Dealer confirmed — click to mark completed'
+          :'Click once to confirm the dealer agreed to this appointment'));
     return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
       +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+(cinfoD&&cinfoD.reason?esc(cinfoD.reason):'Click to edit details')+'">'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
         +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
         +'<span class="kcc-time">'+timeRange+'</span>'
-        +(v.done?'<span class="booked-dot" title="Confirmed"></span>':'')
         +(cinfoD&&cinfoD.conflict?'<span class="sched-warn" title="'+esc(cinfoD.reason)+'">⚠</span>':'')
-        +'<span class="kcc-caret">▾</span>'
       +'</button>'
+      +'<button type="button" class="kcc-conf '+confCls+'" data-vconf="'+v.ref+'" title="'+esc(confTitle)+'">'+esc(confLbl)+'</button>'
+      +'<button type="button" class="kcc-caretbtn" data-dvexpand="'+v.ref+'" title="Expand">▾</button>'
       +'<button class="cx kcc-del" data-vdel="'+v.ref+'" title="Remove">✕</button>'
     +'</div>';
   }
@@ -6914,7 +7274,7 @@ function dvCard(v,tl){
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
       +(cinfoE&&cinfoE.conflict?'<span class="sched-warn" title="'+esc(cinfoE.reason)+'">⚠</span>':'')
       +'<button class="tv-collapse" data-dvexpand="'+v.ref+'" title="Collapse">▾</button>'
-      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.done?'Appointment confirmed — click to change':'Mark the appointment confirmed')+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.done?'Conf.':'Confirm')+'</button>'
+      +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.apptStatus==='completed'?'Completed — click to change':(v.done?(v.needsReconfirm?'Reconfirm with dealer':'Dealer confirmed — click to mark completed'):'Mark dealer confirmed'))+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.apptStatus==='completed'?'Done':(v.needsReconfirm?'Reconf.':(v.done?'Conf.':'Confirm')))+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
     +'<div class="kc-name" tabindex="0" title="'+esc(v.name)+'">'+esc(v.name)
@@ -6924,11 +7284,32 @@ function dvCard(v,tl){
     +ctl+frame
     +'</div>';
 }
+function apptStampTime(ref){
+  var kind=ref.slice(0,1), id=ref.slice(2);
+  if(kind==='i') return String(TIME[id]||'')+'|'+String(DAY[id]==null?'':DAY[id])+'|'+String(ASSIGN[id]==null?'':ASSIGN[id]);
+  var x=(XVISITS||[]).filter(function(v){return v.id===id;})[0];
+  return x?String(x.time||'')+'|'+String(x.day==null?'':x.day)+'|'+String(x.wk==null?'':x.wk):'';
+}
+function apptFlagReconfirmIfNeeded(ref){
+  try{
+    var st=apptStatusOf(ref);
+    if(st.status!=='confirmed'&&st.status!=='completed') return;
+    var meta=APPTMETA[ref]=APPTMETA[ref]||{};
+    var now=apptStampTime(ref);
+    if(meta.stampedTime && meta.stampedTime!==now){
+      meta.needsReconfirm=true;
+      meta.status='confirmed';
+      meta.reconfirmReason='Date or time changed after dealer confirmation';
+      meta.changedAt=new Date().toISOString();
+    }
+  }catch(e){}
+}
 /* one writer for every inline field on either card kind */
 function setVisitField(ref,f,val){
   var kind=ref.slice(0,1), id=ref.slice(2);
   var finish=function(){
     try{
+      if(f==='time'||f==='day'||f==='wk') apptFlagReconfirmIfNeeded(ref);
       var day=kind==='i'?DAY[id]:(XVISITS.filter(function(v){return v.id===id;})[0]||{}).day;
       var w=kind==='i'?ASSIGN[id]:(XVISITS.filter(function(v){return v.id===id;})[0]||{}).wk;
       var tr=kind==='i'?((byId[id]||uniById(id)||{}).territory||terr):(XVISITS.filter(function(v){return v.id===id;})[0]||{}).terr||terr;
@@ -6944,7 +7325,14 @@ function setVisitField(ref,f,val){
     else if(f==='time'){
       var pv=parseTimeLoose(val);
       if(pv&&typeof pv==='object'&&pv.ambiguous){
-        askAmPm(pv,function(resolved){ if(resolved){ TIME[id]=resolved; finish(); refreshPlanner(); } });
+        askAmPm(pv,function(resolved){
+          if(!resolved) return;
+          TIME[id]=resolved; finish();
+          if(_salesChainAmpm){
+            var p=_salesChainAmpm; _salesChainAmpm=null;
+            salesChainAdvance(p.ref, p.f, p.el);
+          } else refreshPlanner();
+        });
         return null;
       }
       if(pv==null) return false; TIME[id]=pv;
@@ -6958,7 +7346,14 @@ function setVisitField(ref,f,val){
     else if(f==='time'){
       var pvx=parseTimeLoose(val);
       if(pvx&&typeof pvx==='object'&&pvx.ambiguous){
-        askAmPm(pvx,function(resolved){ if(resolved){ x.time=resolved; finish(); refreshPlanner(); } });
+        askAmPm(pvx,function(resolved){
+          if(!resolved) return;
+          x.time=resolved; finish();
+          if(_salesChainAmpm){
+            var p2=_salesChainAmpm; _salesChainAmpm=null;
+            salesChainAdvance(p2.ref, p2.f, p2.el);
+          } else refreshPlanner();
+        });
         return null;
       }
       if(pvx==null) return false; x.time=pvx;
@@ -6969,15 +7364,34 @@ function setVisitField(ref,f,val){
   finish();
   return true;
 }
-function toggleVisitConf(ref){
+function setApptStatus(ref,status){
   var kind=ref.slice(0,1), id=ref.slice(2);
   var dealerId, isPB;
-  if(kind==='i'){ dealerId=id; isPB=(vType(id)==='prebook'); APPT[id]=!APPT[id]; if(!APPT[id])delete APPT[id]; }
-  else { var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return; dealerId=x.dealer; isPB=(x.type!=='visit'); x.done=!x.done; }
-  /* Pre-book confirmations write the commitment ledger; Visit confirmations
-     only track the appointment and never touch financial totals */
+  APPTMETA=APPTMETA||{};
+  var meta=APPTMETA[ref]=APPTMETA[ref]||{};
+  meta.status=status;
+  meta.by=(typeof pbWho==='function'?pbWho():'user');
+  meta.at=new Date().toISOString();
+  meta.stampedTime=apptStampTime(ref);
+  meta.needsReconfirm=false;
+  if(kind==='i'){
+    dealerId=id; isPB=(vType(id)==='prebook');
+    if(status==='planned'){ delete APPT[id]; }
+    else { APPT[id]=true; }
+  } else {
+    var x=XVISITS.filter(function(v){return v.id===id;})[0]; if(!x) return;
+    dealerId=x.dealer; isPB=(x.type!=='visit');
+    x.done=(status!=='planned');
+  }
   if(isPB) syncCommitments(dealerId);
   savePlan(); refreshPlanner();
+}
+function toggleVisitConf(ref){
+  var st=apptStatusOf(ref);
+  if(st.needsReconfirm){ setApptStatus(ref,'confirmed'); return; }
+  if(st.status==='planned') setApptStatus(ref,'confirmed');
+  else if(st.status==='confirmed') setApptStatus(ref,'completed');
+  else setApptStatus(ref,'planned');
 }
 /* delete ONE card. The dealer always stays in the library; any tasks on an
    additional card move to dealer level so nothing is silently lost. */
@@ -6998,10 +7412,11 @@ function deleteVisit(ref){
 }
 /* create a card. Type is chosen here and is permanent for the card's life.
    day is optional — set when the card was dropped/placed on a specific day. */
-function createVisit(dealerId,type,wk,day){
-  var d=uniById(dealerId); if(!d) return;
-  if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return;
-  type=(type==='visit')?'visit':'prebook';
+function createVisit(dealerId,type,wk,day,opts){
+  opts=opts||{};
+  var d=uniById(dealerId); if(!d) return null;
+  if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return null;
+  type=(type==='prebook')?'prebook':'visit'; /* travel portal defaults to Visit */
   day=(day==null||day===''||day==='none')?null:parseInt(day,10);
   if(day!=null&&!isFinite(day)) day=null;
   var expandRef=null;
@@ -7012,7 +7427,7 @@ function createVisit(dealerId,type,wk,day){
     teamStampNew('d',dealerId);
     expandRef='i:'+dealerId;
   } else {
-    if(wk==='remote') return;
+    if(wk==='remote') return null;
     var xid='X'+Date.now()+Math.floor(Math.random()*1000);
     XVISITS.push({id:xid, dealer:dealerId,
       terr:(d.territory==='Exports'?'Exports':(d.territory||((terr!=='All'&&terr!=='Master')?terr:'East'))),
@@ -7020,8 +7435,17 @@ function createVisit(dealerId,type,wk,day){
     teamStampNew('x',xid);
     expandRef='x:'+xid;
   }
-  /* Leave cards collapsed by default (one-line). Expansion is user-driven. */
-  savePlan(); refreshPlanner();
+  savePlan();
+  /* Sales planning: expand and start time → duration → next add chain. */
+  if(opts.chain!==false && expandRef && wk!=='remote' && (typeof portalIsSalesMode!=='function'||portalIsSalesMode())){
+    var step=opts.step||'time';
+    salesChainArm(expandRef, wk, day, step);
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+  } else {
+    refreshPlanner();
+  }
+  return expandRef;
 }
 function renderAllView(){
   /* Leadership overview is the default. Map is a retractable pane (hidden by default).
@@ -8655,7 +9079,7 @@ function tripBodyHTML(){
     var rows=groups[w].map(function(r){
       var meta=(r.kind==='litem')
         ? (TRIP_ITEM_TYPES[r.type]||'Item')+(r.notes?(' · '+esc(r.notes)):'')
-        : esc(r.tm||'—')+' · '+esc(r.terr)+(r.state?(' · '+esc(r.state)):'')+(r.ptype==='visit'?' · Visit':' · Pre-book')+(r.status==='Confirmed'?' · <b class="ok">Confirmed</b>':'');
+        : esc(r.tm||'—')+' · '+esc(r.terr)+(r.state?(' · '+esc(r.state)):'')+' · Visit'+(r.status==='Confirmed'?' · <b class="ok">Confirmed</b>':'');
       var timeTxt=r.time?t12s(r.time):(r.kind==='litem'?'':'—');
       return '<div class="ltp-stop'+(r.missing?' missing':'')+'" draggable="true" data-tripuid="'+r.uid+'">'
         +'<span class="ltp-grip">⋮⋮</span>'
@@ -8704,7 +9128,7 @@ function tripDownloadTrip(){
     groups[w].forEach(function(r){
       var drive='';
       if(r.lat!=null&&prev){ var mi=roadMi([prev.lat,prev.lon],[r.lat,r.lon]); if(mi!=null) drive='~'+fmtDur(Math.max(15,Math.round(mi/55*60)))+' · '+Math.round(mi)+' mi'; }
-      var typ=(r.kind==='litem')?(TRIP_ITEM_TYPES[r.type]||'Item'):(r.ptype==='visit'?'Visit':'Pre-book');
+      var typ=(r.kind==='litem')?(TRIP_ITEM_TYPES[r.type]||'Item'):'Visit';
       var locTxt=(r.kind==='litem')?esc(r.notes||''):(esc(r.state||'')+(r.address?(' · '+esc(r.address)):''));
       var qr='';
       if(r.lat!=null){ var g='https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon;
@@ -9277,7 +9701,7 @@ function stopTip(s){
   if(s.kind==='dealer'||s.kind==='xvisit'){
     if(s.state) h+='<br>'+esc(s.state);
     h+='<br>'+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
-    h+='<br>'+(s.ptype==='visit'?'VISIT':'PRE-BOOK');
+    h+='<br>VISIT';
     var al=attLine(s); if(al) h+='<br><span style="color:#8e24aa">'+esc(al)+'</span>';
   } else if(s.rawType==='hotel'){
     h+='<br>Check-in: '+esc(s.dayLabel)+(s.time?(' · '+t12s(s.time)):'');
@@ -9496,15 +9920,634 @@ function _wkMapEnsure(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_wkMap);
 }
 function _wkClear(){ if(!_wkMap) return; _wkMap.eachLayer(function(l){ if(!(l instanceof L.TileLayer)) _wkMap.removeLayer(l); }); }
+function mapPlanHintUpdate(){
+  var h=document.getElementById('mapPlanHint');
+  var poolBtn=document.getElementById('mapPoolBtn');
+  var pipeBtn=document.getElementById('mapPipeBtn');
+  var airBtn=document.getElementById('mapAirBtn');
+  var stayBtn=document.getElementById('mapStayBtn');
+  if(poolBtn) poolBtn.classList.toggle('on', !!MAP_SHOW_POOL);
+  if(pipeBtn) pipeBtn.classList.toggle('on', !!MAP_SHOW_PIPE);
+  if(airBtn) airBtn.classList.toggle('on', !!MAP_SHOW_AIR);
+  if(stayBtn) stayBtn.classList.toggle('armed', !!MAP_STAY_ARM);
+  if(!h) return;
+  if(MAP_STAY_ARM){
+    h.classList.add('is-on');
+    h.textContent='Click a town on the map, then choose how far you’re willing to stay from it.';
+  } else if(MAP_SHOW_AIR){
+    h.classList.add('is-on');
+    h.textContent='Blue markers are commercial airline airports — click one to fly in or out (morning / mid-day / afternoon).';
+  } else if(MAP_SHOW_PIPE){
+    h.classList.add('is-on');
+    h.textContent='Soft dots are Cindel’s new dealers near this trip — shade shows pipeline stage. Click to add.';
+  } else if(MAP_SHOW_POOL){
+    h.classList.add('is-on');
+    h.textContent='Grey dots are dealers not on this trip — click one to add it by day.';
+  } else {
+    h.classList.remove('is-on');
+    h.textContent='';
+  }
+}
+function mapTogglePool(){
+  MAP_SHOW_POOL=!MAP_SHOW_POOL;
+  try{ localStorage.setItem('aqMapShowPool', MAP_SHOW_POOL?'1':'0'); }catch(e){}
+  if(MAP_SHOW_POOL) MAP_STAY_ARM=false;
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
+function mapTogglePipe(){
+  MAP_SHOW_PIPE=!MAP_SHOW_PIPE;
+  try{ localStorage.setItem('aqMapShowPipe', MAP_SHOW_PIPE?'1':'0'); }catch(e){}
+  if(MAP_SHOW_PIPE){
+    MAP_STAY_ARM=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+    pipelineEnsureNearTrip(terr, focusWkGet(), function(){
+      try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+    });
+  }
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
+function mapToggleAir(){
+  MAP_SHOW_AIR=!MAP_SHOW_AIR;
+  try{ localStorage.setItem('aqMapShowAir', MAP_SHOW_AIR?'1':'0'); }catch(e){}
+  if(MAP_SHOW_AIR){
+    MAP_STAY_ARM=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+    try{ apEnsureDB(function(){ try{ drawWeekRoute(terr, focusWkGet()); }catch(e){} }); }catch(e){}
+  }
+  mapPlanHintUpdate();
+  try{ drawWeekRoute(terr, focusWkGet()); }catch(e){}
+}
+function mapToggleStayArm(){
+  MAP_STAY_ARM=!MAP_STAY_ARM;
+  if(MAP_STAY_ARM){
+    MAP_SHOW_AIR=false;
+    if(MAP_UI_MODE==='collapsed') mapModeSet('split');
+  }
+  mapPlanHintUpdate();
+  try{ if(_wkMap&&_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
+}
+/* Commercial airline airports only — IATA + large/scheduled. No private hangars / GA strips. */
+function commercialAirportRows(){
+  var rows=apRows()||[];
+  var full=(AP_STATE==='ready' && AP_ROWS && AP_ROWS.length>1000);
+  var out=[], seen={};
+  for(var i=0;i<rows.length;i++){
+    var a=rows[i];
+    var iata=(a[0]||'').toUpperCase();
+    if(!iata||iata.length!==3) continue;
+    /* Full OurAirports DB: large (≥30) or medium+scheduled+iata (≥33). Seed list is already curated airline airports. */
+    if(full && (a[8]||0)<30) continue;
+    if(seen[iata]) continue;
+    seen[iata]=1;
+    out.push({code:iata,name:a[1],city:a[2],lat:a[3],lon:a[4],icao:a[5]||'',region:a[6]||''});
+  }
+  return out;
+}
+function commercialAirportsNearTrip(t, wk){
+  var all=commercialAirportRows();
+  var anchors=[];
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon)) anchors.push([+s.lat,+s.lon]);
+    });
+  }catch(e){}
+  if(!anchors.length){
+    try{
+      (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+        if(d&&d.lat!=null&&d.lon!=null&&isFinite(d.lat)&&isFinite(d.lon)) anchors.push([+d.lat,+d.lon]);
+      });
+    }catch(e){}
+  }
+  if(!anchors.length){
+    return all.filter(function(a){ return a.lat>24&&a.lat<60&&a.lon>-130&&a.lon<-50; }).slice(0,80);
+  }
+  var maxDeg=4; /* ~250 mi */
+  var out=[];
+  for(var i=0;i<all.length;i++){
+    var a=all[i], ok=false;
+    for(var j=0;j<anchors.length;j++){
+      if(Math.abs(a.lat-anchors[j][0])<=maxDeg && Math.abs(a.lon-anchors[j][1])<=maxDeg){ ok=true; break; }
+    }
+    if(ok) out.push(a);
+  }
+  return out;
+}
+function flightWindowOf(id){ return FLIGHT_WINDOWS[id]||null; }
+function flightWindowLabel(id){ var w=flightWindowOf(id); return w?w.label:""; }
+function flightSoftSuggest(it, windowId, role){
+  /* role: 'arrive' (flight_in) | 'depart' (flight_out). Returns {time, note, conflict}. */
+  var win=flightWindowOf(windowId); if(!win||!it) return null;
+  var day=(it.day!=null?it.day:0);
+  var wk=it.wk;
+  var airportLat=it.lat, airportLon=it.lon;
+  var sug=win.prefer;
+  var note='';
+  var conflict=false;
+  try{
+    var seq=[];
+    try{ seq=tlSeq(it.terr||terr, wk)||[]; }catch(e){}
+    var same=[], sameUntimed=[];
+    same=seq.filter(function(s){
+      if(s.day!==day) return false;
+      if(s.key==='m:'+it.id) return false;
+      var isAppt=(s.key.charAt(0)==='d'||s.key.charAt(0)==='x');
+      if(!isAppt) return false;
+      if(s.startMin!=null) return true;
+      sameUntimed.push(s);
+      return false;
+    });
+    if(role==='arrive' && same.length){
+      /* Land early enough for first appointment: deplane+rental (~75m) + drive */
+      var first=same.slice().sort(function(a,b){ return a.startMin-b.startMin; })[0];
+      var drive=75;
+      if(airportLat!=null&&first.lat!=null){
+        var d=tlDriveSync({lat:airportLat,lon:airportLon},{lat:first.lat,lon:first.lon});
+        drive=75+(d&&d.min?d.min:30);
+      }
+      var needBy=first.startMin - drive;
+      var dayNeed=needBy-(day*1440);
+      if(dayNeed < win.start){
+        conflict=true;
+        note='Same-day appointment at '+tlT(first.startMin)+' is tight for a '+win.label.toLowerCase()+' arrival — consider an earlier window or move the visit.';
+        sug=win.start;
+      } else {
+        sug=Math.min(win.prefer, Math.max(win.start, dayNeed-15));
+        if(sug>win.end) sug=win.end-30;
+        note='Aimed to land before your '+tlT(first.startMin)+' appointment (includes airport + drive buffer).';
+      }
+    } else if(role==='depart' && same.length){
+      var last=same.slice().sort(function(a,b){ return b.startMin-a.startMin; })[0];
+      var leaveDrive=90;
+      if(airportLat!=null&&last.lat!=null){
+        var d2=tlDriveSync({lat:last.lat,lon:last.lon},{lat:airportLat,lon:airportLon});
+        leaveDrive=90+(d2&&d2.min?d2.min:30)+(last.dur||60);
+      }
+      var leaveAfter=(last.startMin+leaveDrive)-(day*1440);
+      if(leaveAfter > win.end){
+        conflict=true;
+        note='Same-day appointments run late for a '+win.label.toLowerCase()+' departure — consider evening or the next day.';
+        sug=win.end-30;
+      } else {
+        sug=Math.max(win.prefer, Math.min(win.end-15, leaveAfter+15));
+        if(sug<win.start) sug=win.prefer;
+        note='Aimed to depart after your last appointment (includes drive + check-in buffer).';
+      }
+    } else if(sameUntimed.length){
+      sug=win.prefer;
+      note='You have appointments the same day — set their times and we will aim this '+win.label.toLowerCase()+' window around them.';
+    } else {
+      sug=win.prefer;
+      note='Travel Coordination will book a real flight in this window.';
+    }
+  }catch(e){ sug=win.prefer; }
+  sug=Math.max(win.start, Math.min(win.end-1, Math.round(sug)));
+  var hh=Math.floor(sug/60), mm=sug%60;
+  var time=(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+  return {time:time, note:note, conflict:conflict, windowId:windowId, mins:sug};
+}
+function applyFlightSoftWindow(it, windowId){
+  if(!it) return;
+  var role=(travelType(it)==='flight_out')?'depart':'arrive';
+  var sug=flightSoftSuggest(it, windowId, role);
+  if(!sug) return;
+  it.softWindow=windowId;
+  it.timeSoft=true;
+  it.time=sug.time;
+  var base=(it.notes||'')
+    .replace(/\s*·?\s*Preferred (morning|mid-day|afternoon)[^·]*/ig,'')
+    .replace(/\s*·?\s*Aimed to (land|depart)[^·]*/ig,'')
+    .replace(/\s*·?\s*Same-day[^·]*/ig,'')
+    .replace(/\s*·?\s*You have appointments[^·]*/ig,'')
+    .trim();
+  var add='Preferred '+flightWindowLabel(windowId).toLowerCase()+(role==='arrive'?' arrival':' departure');
+  if(sug.note && sug.note.indexOf('Preferred ')!==0) add+=' — '+sug.note;
+  it.notes=(base?(base+' · '):'')+add;
+  it._softConflict=!!sug.conflict;
+}
+function mapAirportPopup(ap, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-mairday="'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  var wins=['morning','midday','afternoon'].map(function(wid){
+    var w=FLIGHT_WINDOWS[wid];
+    return '<button type="button" data-mairwin="'+wid+'">'+esc(w.short)+'</button>';
+  }).join('');
+  return '<div class="mpop" data-maircode="'+esc(ap.code)+'" data-mairname="'+esc(ap.name)+'" data-maircity="'+esc(ap.city||'')+'" data-mairlat="'+ap.lat+'" data-mairlon="'+ap.lon+'" data-mairwk="'+wk+'">'
+    +'<b>'+esc(ap.code)+' · '+esc(ap.name)+'</b>'
+    +'<div class="msub">'+(ap.city?esc(ap.city)+' · ':'')+'Commercial airline airport</div>'
+    +'<div class="msub" style="margin-bottom:4px">Fly</div>'
+    +'<div class="mpop-days" id="mairRole">'
+    +'<button type="button" data-mairrole="arrive" class="primary">Arrive</button>'
+    +'<button type="button" data-mairrole="depart">Depart</button>'
+    +'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Day</div>'
+    +'<div class="mpop-days" id="mairDays">'+days+'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Time of day</div>'
+    +'<div class="mpop-wins">'+wins+'</div>'
+    +'<div class="msub" style="margin-top:8px">Morning / mid-day / afternoon — we aim around same-day appointments.</div>'
+    +'</div>';
+}
+function mapAddAirportFlight(ap, wk, day, role, windowId){
+  undoSnap((role==='depart'?'Depart':'Arrive')+' '+ap.code);
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+  var ty=(role==='depart')?'flight_out':'flight_in';
+  var it={
+    id:'L'+Date.now()+Math.floor(Math.random()*1000),
+    terr:terrFor,
+    wk:parseInt(wk,10),
+    type:ty,
+    name:ap.code+' — '+(ap.city||ap.name),
+    address:ap.city||'',
+    lat:+ap.lat, lon:+ap.lon,
+    airportCode:ap.code, airportName:ap.name,
+    airline:'', flightNo:'',
+    day:(day==null||day===''?null:parseInt(day,10)),
+    time:'', day2:null, time2:'',
+    conf:'', notes:'', bookStatus:'',
+    mapsUrl:'https://www.google.com/maps?q='+(+ap.lat)+','+(+ap.lon)
+  };
+  if(role==='arrive'){ it.arrAirport=ap.code; it.arrAirportName=ap.name; }
+  else { it.depAirport=ap.code; it.depAirportName=ap.name; }
+  applyFlightSoftWindow(it, windowId||'morning');
+  LOGI.push(it); teamStampNew('m', it.id);
+  try{
+    if(typeof teamSingleMember==='function'){
+      var one=teamSingleMember();
+      if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
+    }
+  }catch(e){}
+  /* Stay compact — expand only when the salesperson opens details. */
+  try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  savePlan(); refreshPlanner({skipMap:false});
+  aqToast((role==='depart'?'Depart':'Arrive')+' '+ap.code+' · '+(flightWindowLabel(windowId||'morning')||'Morning'));
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+}
+function mapStayRadiusMeters(mins){
+  /* ~35 mph average road speed — preference for the EA, not a booking. */
+  var mi=(Math.max(15, +mins||30)/60)*35;
+  return mi*1609.34;
+}
+function mapPoolDealers(t, wk){
+  var onTrip={};
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&(s.kind==='dealer'||s.kind==='xvisit')&&s.id) onTrip[String(s.id).replace(/^xv:/,'')]=1;
+      if(s&&s.dealer) onTrip[String(s.dealer)]=1;
+    });
+  }catch(e){}
+  var list=[];
+  try{
+    (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+      if(!d||d.lat==null||d.lon==null||!isFinite(d.lat)||!isFinite(d.lon)) return;
+      if(onTrip[d.id]) return;
+      if(ASSIGN[d.id] && ASSIGN[d.id]!=='pool' && ASSIGN[d.id]!==wk && ASSIGN[d.id]!=='remote'){
+        /* already scheduled another week — still show lightly so they can add a second visit */
+      }
+      list.push(d);
+    });
+  }catch(e){}
+  return list;
+}
+/* —— Cindel pipeline on map / search —— */
+function pipeStageKey(status){
+  var s=String(status||'').toLowerCase();
+  if(/qualif|nurtur|warm|hot|opportunity/.test(s)) return 'qualified';
+  if(/work|contact|attempt|open|engaged|follow/.test(s)) return 'working';
+  if(/new|uncontact|not\s*contact|raw/.test(s)) return 'new';
+  return 'other';
+}
+function pipeStageColor(status){
+  var k=pipeStageKey(status);
+  return k==='qualified'?'#86a8a0':(k==='working'?'#94a3b8':(k==='new'?'#c4b5a0':'#a8a29e'));
+}
+function tripNearAnchors(t, wk){
+  var anchors=[];
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon)) anchors.push([+s.lat,+s.lon]);
+    });
+  }catch(e){}
+  if(!anchors.length){
+    try{
+      (typeof dealersIn==='function'?dealersIn(t):[]).forEach(function(d){
+        if(d&&d.lat!=null&&d.lon!=null&&isFinite(d.lat)&&isFinite(d.lon)) anchors.push([+d.lat,+d.lon]);
+      });
+    }catch(e){}
+  }
+  return anchors;
+}
+function tripNearStates(t, wk){
+  var seen={}, out=[];
+  function add(st){
+    st=String(st||'').trim().toUpperCase();
+    if(!/^[A-Z]{2}$/.test(st) || seen[st]) return;
+    seen[st]=1; out.push(st);
+  }
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      add(s.loc||s.state);
+      if(s.dealer&&byId[s.dealer]) add(byId[s.dealer].loc||byId[s.dealer].state);
+      if(s.kind==='dealer'||s.kind==='xvisit'){
+        var d=byId[String(s.id||'').replace(/^xv:/,'')];
+        if(d) add(d.loc||d.state);
+      }
+      /* infer from airport region like US-TX */
+      var reg=s.region||(s.raw&&s.raw.region)||'';
+      if(/-([A-Z]{2})$/.test(String(reg))) add(RegExp.$1);
+    });
+  }catch(e){}
+  try{
+    commercialAirportsNearTrip(t,wk).forEach(function(ap){
+      if(ap.region&&/-([A-Z]{2})$/.test(String(ap.region))) add(RegExp.$1);
+    });
+  }catch(e){}
+  return out.slice(0,12);
+}
+function pipelineMergeLeads(leads){
+  var by={}; PIPELINE_CACHE.forEach(function(l){ if(l&&l.sfLeadId) by[l.sfLeadId]=l; });
+  (leads||[]).forEach(function(l){
+    if(!l||!l.sfLeadId) return;
+    var prev=by[l.sfLeadId]||{};
+    by[l.sfLeadId]=Object.assign({}, prev, l, {
+      lat:l.lat!=null?l.lat:(prev.lat!=null?prev.lat:(PIPELINE_GEO[l.sfLeadId]&&PIPELINE_GEO[l.sfLeadId].lat)),
+      lon:l.lon!=null?l.lon:(prev.lon!=null?prev.lon:(PIPELINE_GEO[l.sfLeadId]&&PIPELINE_GEO[l.sfLeadId].lon)),
+      _pipeline:true, _prospect:true, ptype2:'potential'
+    });
+  });
+  PIPELINE_CACHE=Object.keys(by).map(function(k){ return by[k]; });
+  PIPELINE_CACHE_AT=Date.now();
+}
+function pipelineGeocodeLead(lead, cb){
+  if(!lead||!lead.sfLeadId){ if(cb) cb(null); return; }
+  if(lead.lat!=null&&lead.lon!=null&&isFinite(lead.lat)&&isFinite(lead.lon)){ if(cb) cb(lead); return; }
+  if(PIPELINE_GEO[lead.sfLeadId]){
+    lead.lat=PIPELINE_GEO[lead.sfLeadId].lat; lead.lon=PIPELINE_GEO[lead.sfLeadId].lon;
+    if(cb) cb(lead); return;
+  }
+  var q=[lead.address, [lead.city, lead.state||lead.loc].filter(Boolean).join(', ')].filter(Boolean)[0];
+  if(!q){
+    var st=String(lead.state||lead.loc||'').toUpperCase();
+    if(COORD[st]){
+      lead.lat=COORD[st][0]; lead.lon=COORD[st][1];
+      PIPELINE_GEO[lead.sfLeadId]={lat:lead.lat,lon:lead.lon,approx:true};
+      if(cb) cb(lead); return;
+    }
+    if(cb) cb(null); return;
+  }
+  geocodeQueue(q, function(r){
+    if(r&&r.lat!=null&&r.lon!=null){
+      lead.lat=+r.lat; lead.lon=+r.lon;
+      PIPELINE_GEO[lead.sfLeadId]={lat:lead.lat,lon:lead.lon};
+      if(cb) cb(lead);
+    } else if(cb) cb(null);
+  });
+}
+function pipelineEnsureNearTrip(t, wk, done){
+  if(typeof pbApiFetch!=='function'){ if(done) done(); return; }
+  var states=tripNearStates(t, wk);
+  var url='/api/salesforce-leads?limit=80';
+  if(states.length) url+='&states='+encodeURIComponent(states.join(','));
+  /* also keep a short recent list so search has fodder when states are empty */
+  PIPELINE_FETCHING=true;
+  pbApiFetch(url,{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+    PIPELINE_FETCHING=false;
+    if(j&&j.ok&&j.leads) pipelineMergeLeads(j.leads);
+    var pending=0, list=PIPELINE_CACHE.slice();
+    list.forEach(function(lead){
+      if(lead.lat!=null&&lead.lon!=null) return;
+      pending++;
+      pipelineGeocodeLead(lead, function(){ pending--; if(pending<=0&&done) done(); });
+    });
+    if(!pending&&done) done();
+  }).catch(function(){ PIPELINE_FETCHING=false; if(done) done(); });
+}
+function pipelineSearchRefresh(q){
+  q=String(q||'').trim();
+  if(q.length<2||typeof pbApiFetch!=='function') return;
+  clearTimeout(pipelineSearchRefresh._t);
+  pipelineSearchRefresh._t=setTimeout(function(){
+    pbApiFetch('/api/salesforce-leads?q='+encodeURIComponent(q)+'&limit=20',{cache:'no-store'})
+      .then(function(r){ return r.json(); }).then(function(j){
+        if(j&&j.ok&&j.leads){
+          pipelineMergeLeads(j.leads);
+          try{ if(DQ.inp&&document.getElementById('dqPop')) dqRender(); }catch(e){}
+        }
+      }).catch(function(){});
+  }, 260);
+}
+function mapPipeDealersNear(t, wk){
+  var anchors=tripNearAnchors(t, wk);
+  var maxDeg=3.5;
+  var onTrip={};
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(s&&s.sfLeadId) onTrip[s.sfLeadId]=1;
+      var id=String(s&&s.id||'').replace(/^xv:/,'');
+      var p=byId[id];
+      if(p&&p.sfLeadId) onTrip[p.sfLeadId]=1;
+    });
+  }catch(e){}
+  var out=[];
+  PIPELINE_CACHE.forEach(function(l){
+    if(!l||!l.sfLeadId||onTrip[l.sfLeadId]) return;
+    var lat=l.lat, lon=l.lon;
+    if((lat==null||lon==null)&&PIPELINE_GEO[l.sfLeadId]){ lat=PIPELINE_GEO[l.sfLeadId].lat; lon=PIPELINE_GEO[l.sfLeadId].lon; }
+    if(lat==null||lon==null||!isFinite(lat)||!isFinite(lon)) return;
+    if(anchors.length){
+      var ok=false;
+      for(var i=0;i<anchors.length;i++){
+        if(Math.abs(lat-anchors[i][0])<=maxDeg && Math.abs(lon-anchors[i][1])<=maxDeg){ ok=true; break; }
+      }
+      if(!ok) return;
+    }
+    out.push(Object.assign({}, l, {lat:+lat, lon:+lon, id:'lead:'+l.sfLeadId}));
+  });
+  return out.slice(0,60);
+}
+function mapPipeAddPopup(lead, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var sub=[lead.city, lead.state||lead.loc, lead.status].filter(Boolean).join(' · ');
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-mpipe="'+esc(lead.sfLeadId)+'|'+wk+'|'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop"><b>'+esc(lead.name)+'</b>'
+    +'<div class="msub">'+esc(sub||'New dealer pipeline')+'</div>'
+    +'<div class="mpop-days">'+days+'</div></div>';
+}
+function mapAddPipeLeadToDay(sfLeadId, wk, day){
+  var lead=null;
+  for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
+  if(!lead){ aqToast('Pipeline lead not found', false); return; }
+  undoSnap('Map add pipeline');
+  var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
+  var finish=function(p){
+    createVisit(p.id,'visit',parseInt(wk,10), day, {chain:true, step:'time'});
+    aqToast('Added '+p.name+' · pick time');
+    try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  };
+  if(existing){ finish(existing); return; }
+  addProspect({
+    name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+    phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+    territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
+    notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
+  }, finish);
+}
+function mapDealerAddPopup(d, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var sub=[d.city,d.loc||d.state].filter(Boolean).join(', ');
+  var days=labs.map(function(l,i){
+    return '<button type="button" data-madd="'+esc(d.id)+'|'+wk+'|'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop"><b>'+esc(d.name)+'</b>'
+    +(sub?('<div class="msub">'+esc(sub)+'</div>'):'<div class="msub">Add to this week</div>')
+    +'<div class="mpop-days">'+days+'</div></div>';
+}
+function mapStayPopup(lat, lon, placeName, wk){
+  var labs=(typeof wk==='number')?dayLabels(wk):[];
+  var dayOpts=labs.map(function(l,i){
+    return '<button type="button" data-mstayday="'+i+'">'+esc(l[0])+'</button>';
+  }).join('');
+  return '<div class="mpop" data-mstaylat="'+lat+'" data-mstaylon="'+lon+'" data-mstayplace="'+esc(placeName)+'" data-mstaywk="'+wk+'">'
+    +'<b>Stay near '+esc(placeName)+'</b>'
+    +'<div class="msub">Tell Travel Coordination how far is acceptable. No hotel is booked yet.</div>'
+    +'<div class="msub" style="margin-bottom:4px">Night</div>'
+    +'<div class="mpop-days" id="mstayDays">'+dayOpts+'</div>'
+    +'<div class="msub" style="margin:8px 0 4px">Within</div>'
+    +'<div class="mpop-radii">'
+    +'<button type="button" data-mstaymin="30">30 min</button>'
+    +'<button type="button" data-mstaymin="60" class="primary">1 hour</button>'
+    +'<button type="button" data-mstaymin="90">90 min</button>'
+    +'<button type="button" data-mstaymin="120">2 hours</button>'
+    +'</div></div>';
+}
+function mapAddDealerToDay(dealerId, wk, day){
+  undoSnap('Map add dealer');
+  var ref=createVisit(dealerId, 'visit', parseInt(wk,10), day, {chain:true, step:'time'});
+  if(!ref){
+    /* already on a week — createVisit may have made an xvisit; chain handles focus */
+    aqToast('Added from map');
+  } else {
+    aqToast('Added · pick time');
+  }
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+}
+function mapAddStayNear(lat, lon, placeName, wk, day, mins){
+  undoSnap('Overnight near '+placeName);
+  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+  var it={
+    id:'L'+Date.now()+Math.floor(Math.random()*1000),
+    terr:terrFor,
+    wk:parseInt(wk,10),
+    type:'hotel',
+    name:'Near '+placeName,
+    address:placeName,
+    lat:+lat, lon:+lon,
+    day:(day==null||day===''?null:parseInt(day,10)),
+    time:'', day2:null, time2:'',
+    conf:'', notes:'Stay within '+mins+' minutes of '+placeName+' — Travel Coordination to book',
+    bookStatus:'',
+    stayNear:placeName,
+    stayRadiusMin:+mins,
+    mapsUrl:'https://www.google.com/maps?q='+(+lat)+','+(+lon)
+  };
+  LOGI.push(it); teamStampNew('m', it.id);
+  try{
+    if(typeof teamSingleMember==='function'){
+      var one=teamSingleMember();
+      if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
+    }
+  }catch(e){}
+  MAP_STAY_ARM=false;
+  mapPlanHintUpdate();
+  try{ if(_wkMapEl) _wkMapEl.style.cursor=''; }catch(e){}
+  try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+  savePlan(); refreshPlanner({skipMap:false});
+  aqToast('Overnight preference set · within '+mins+' min of '+placeName);
+  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+}
+function mapReversePlace(lat, lon, cb){
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&addressdetails=1&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lon), {
+    headers:{'Accept':'application/json'}
+  }).then(function(r){ return r.json(); }).then(function(j){
+    var a=(j&&j.address)||{};
+    var place=a.city||a.town||a.village||a.hamlet||a.county||a.state||(j&&j.name)||('Location '+(+lat).toFixed(2)+', '+(+lon).toFixed(2));
+    if(a.state&&place.indexOf(a.state)<0 && !a.city && !a.town) place=place+(a.state?(', '+a.state):'');
+    else if(a.state && (a.city||a.town||a.village)) place=(a.city||a.town||a.village)+', '+a.state;
+    cb(place);
+  }).catch(function(){ cb('this location'); });
+}
+function mapBindPlanClicks(){
+  if(!_wkMap || _wkMap._aqPlanBound) return;
+  _wkMap._aqPlanBound=true;
+  _wkMap.on('click', function(ev){
+    if(!MAP_STAY_ARM) return;
+    var lat=ev.latlng.lat, lon=ev.latlng.lng;
+    var wk=focusWkGet();
+    if(typeof wk!=='number'){ aqToast('Pick a travel week first', false); return; }
+    var pop=L.popup({maxWidth:260}).setLatLng(ev.latlng).setContent('<div class="mpop"><b>Finding town…</b></div>').openOn(_wkMap);
+    mapReversePlace(lat, lon, function(place){
+      pop.setContent(mapStayPopup(lat, lon, place, wk));
+      /* default night = last day with activity, else day 0 */
+      var defaultDay=0;
+      try{
+        var items=itineraryFor(terr,wk);
+        items.forEach(function(s){ if(s.day!=null && s.day>defaultDay) defaultDay=s.day; });
+      }catch(e){}
+      pop._aqStayDay=defaultDay;
+      setTimeout(function(){
+        var root=pop.getElement(); if(!root) return;
+        root.querySelectorAll('[data-mstayday]').forEach(function(b){
+          if(+b.dataset.mstayday===defaultDay) b.classList.add('primary');
+          b.onclick=function(e){
+            e.preventDefault(); e.stopPropagation();
+            pop._aqStayDay=+b.dataset.mstayday;
+            root.querySelectorAll('[data-mstayday]').forEach(function(x){ x.classList.toggle('primary', +x.dataset.mstayday===pop._aqStayDay); });
+          };
+        });
+        root.querySelectorAll('[data-mstaymin]').forEach(function(b){
+          b.onclick=function(e){
+            e.preventDefault(); e.stopPropagation();
+            mapAddStayNear(lat, lon, place, wk, pop._aqStayDay, +b.dataset.mstaymin);
+          };
+        });
+      }, 0);
+    });
+  });
+}
 /* Draw one week's route from the SAME ordered itinerary the cards use, so the
    map always mirrors the schedule (drag / time / address / add / remove). */
 function drawWeekRoute(t,wk){
   _wkMapEnsure(); if(!_wkMap) return;
   _wkClear();
+  mapBindPlanClicks();
+  mapPlanHintUpdate();
+  try{ if(_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
   var gen=++_aqMapGen; _wkMap._aqGen=gen;
   var items=itineraryFor(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var bounds=[];
+  /* Overnight preference circles — show EA search radius without inventing hotels */
+  items.forEach(function(s){
+    if(s.rawType==='hotel' || (s.type==='hotel')){
+      var mins=(s.stayRadiusMin!=null?s.stayRadiusMin:(s.raw&&s.raw.stayRadiusMin));
+      if(!mins && s.notes && /within\s+(\d+)\s+min/i.test(s.notes)) mins=+RegExp.$1;
+      /* also read from LOGI source */
+      try{
+        var raw=(LOGI||[]).filter(function(x){ return x.id===s.id || x.id===s.rawId; })[0];
+        if(raw&&raw.stayRadiusMin) mins=raw.stayRadiusMin;
+      }catch(e){}
+      if(mins){
+        L.circle([s.lat,s.lon],{
+          radius:mapStayRadiusMeters(mins),
+          color:'#b45309', weight:1, opacity:.55, fillColor:'#fbbf24', fillOpacity:.08
+        }).addTo(_wkMap).bindTooltip('Stay within '+mins+' min of '+(s.stayNear||s.name||'town'));
+      }
+    }
+  });
   items.forEach(function(s,i){
     var st=STOP_TYPES[normType(s.type)]||STOP_TYPES.other;
     var isDealer=(s.kind==='dealer'||s.kind==='xvisit');
@@ -9514,6 +10557,114 @@ function drawWeekRoute(t,wk){
       .bindTooltip(stopTip(s)).bindPopup(popupHTML(s));
     bounds.push([s.lat,s.lon]);
   });
+  /* Optional: all territory dealers for click-to-plan */
+  if(MAP_SHOW_POOL && typeof wk==='number'){
+    mapPoolDealers(t,wk).forEach(function(d){
+      var mk=L.marker([d.lat,d.lon],{icon:mkPin('#9ca3af','',null,'pool'), opacity:0.9, zIndexOffset:-50});
+      mk.addTo(_wkMap);
+      mk.bindTooltip('<b>'+esc(d.name)+'</b>'+(d.city?('<br>'+esc(d.city)):'')+'<br><span style="color:#6b7280">Click to add</span>', {sticky:true});
+      mk.bindPopup(mapDealerAddPopup(d, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          document.querySelectorAll('[data-madd]').forEach(function(b){
+            if(b._aqBound) return; b._aqBound=true;
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              var p=String(b.dataset.madd).split('|');
+              mapAddDealerToDay(p[0], p[1], p[2]);
+            };
+          });
+        }, 0);
+      });
+      bounds.push([d.lat,d.lon]);
+    });
+  }
+  /* Optional: Cindel new-dealer pipeline near flight/trip anchors */
+  if(MAP_SHOW_PIPE && typeof wk==='number'){
+    mapPipeDealersNear(t,wk).forEach(function(lead){
+      var stage=pipeStageKey(lead.status);
+      var mk=L.marker([lead.lat,lead.lon],{
+        icon:mkPin(pipeStageColor(lead.status),'',null,'pipe pipe-'+stage),
+        opacity:0.78, zIndexOffset:-60
+      });
+      mk.addTo(_wkMap);
+      mk.bindTooltip(
+        '<b>'+esc(lead.name)+'</b>'
+        +(lead.city||lead.state?('<br>'+esc([lead.city,lead.state||lead.loc].filter(Boolean).join(', '))):'')
+        +(lead.status?('<br><span style="color:#6b7280">'+esc(lead.status)+'</span>'):'')
+        +'<br><span style="color:#9ca3af">New dealer · click to add</span>',
+        {sticky:true}
+      );
+      mk.bindPopup(mapPipeAddPopup(lead, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          document.querySelectorAll('[data-mpipe]').forEach(function(b){
+            if(b._aqBound) return; b._aqBound=true;
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              var p=String(b.dataset.mpipe).split('|');
+              mapAddPipeLeadToDay(p[0], p[1], p[2]);
+            };
+          });
+        }, 0);
+      });
+      bounds.push([lead.lat,lead.lon]);
+    });
+  }
+  /* Optional: commercial airline airports (no private hangars / GA) */
+  if(MAP_SHOW_AIR && typeof wk==='number'){
+    commercialAirportsNearTrip(t,wk).forEach(function(ap){
+      if(ap.lat==null||ap.lon==null||!isFinite(ap.lat)||!isFinite(ap.lon)) return;
+      var mk=L.marker([ap.lat,ap.lon],{icon:mkPin('#2563eb','✈',null,'air'), opacity:0.95, zIndexOffset:-40});
+      mk.addTo(_wkMap);
+      mk.bindTooltip('<b>'+esc(ap.code)+'</b> · '+esc(ap.name)+(ap.city?('<br>'+esc(ap.city)):'')+'<br><span style="color:#6b7280">Click to fly in / out</span>', {sticky:true});
+      mk.bindPopup(mapAirportPopup(ap, wk));
+      mk.on('popupopen', function(){
+        setTimeout(function(){
+          var root=document.querySelector('.leaflet-popup-content .mpop[data-maircode="'+ap.code+'"]');
+          if(!root||root._aqAirBound) return; root._aqAirBound=true;
+          var state={role:'arrive', day:0, win:'morning'};
+          try{
+            var items0=itineraryFor(t,wk)||[];
+            if(state.role==='depart'){
+              items0.forEach(function(s){ if(s.day!=null && s.day>state.day) state.day=s.day; });
+            }
+          }catch(e){}
+          var paint=function(){
+            root.querySelectorAll('[data-mairrole]').forEach(function(b){ b.classList.toggle('primary', b.dataset.mairrole===state.role); });
+            root.querySelectorAll('[data-mairday]').forEach(function(b){ b.classList.toggle('primary', +b.dataset.mairday===state.day); });
+            root.querySelectorAll('[data-mairwin]').forEach(function(b){ b.classList.toggle('primary', b.dataset.mairwin===state.win); });
+          };
+          root.querySelectorAll('[data-mairrole]').forEach(function(b){
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              state.role=b.dataset.mairrole;
+              if(state.role==='depart'){
+                try{
+                  var mx=0; itineraryFor(t,wk).forEach(function(s){ if(s.day!=null&&s.day>mx) mx=s.day; });
+                  state.day=mx;
+                }catch(err){}
+              } else state.day=0;
+              paint();
+            };
+          });
+          root.querySelectorAll('[data-mairday]').forEach(function(b){
+            b.onclick=function(e){ e.preventDefault(); e.stopPropagation(); state.day=+b.dataset.mairday; paint(); };
+          });
+          root.querySelectorAll('[data-mairwin]').forEach(function(b){
+            b.onclick=function(e){
+              e.preventDefault(); e.stopPropagation();
+              state.win=b.dataset.mairwin;
+              paint();
+              mapAddAirportFlight(ap, wk, state.day, state.role, state.win);
+            };
+          });
+          paint();
+        }, 0);
+      });
+      bounds.push([ap.lat,ap.lon]);
+    });
+  }
   var legs=[];
   for(var i=1;i<items.length;i++){
     var a=items[i-1],b=items[i];
@@ -9522,7 +10673,7 @@ function drawWeekRoute(t,wk){
   }
   if(bounds.length){
     /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
-    var maxZ=(bounds.length<=1)?10:11;
+    var maxZ=(MAP_SHOW_POOL||MAP_SHOW_AIR||MAP_SHOW_PIPE)?9:((bounds.length<=1)?10:11);
     _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
   } else _wkMap.setView([43.5,-95],4);
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
@@ -9615,27 +10766,42 @@ function preferHotelFromMemory(placeHint, brand){
   return hit||null;
 }
 function smartStampVisit(dealerId, wk, dayN, intent){
-  createVisit(dealerId, 'prebook', (wk==='remote'?'remote':parseInt(wk,10)), dayN);
-  if(!intent) return;
+  var hasTime=!!(intent&&intent.time&&typeof intent.time==='string');
+  var hasDur=!!(intent&&intent.durationMin);
+  /* Chain starts after create — skip steps the NL parse already filled. */
+  var step=!hasTime?'time':(!hasDur?'dur':'add');
+  var ref=createVisit(dealerId, 'visit', (wk==='remote'?'remote':parseInt(wk,10)), dayN, {chain:false});
+  if(!intent){
+    if(ref){ salesChainArm(ref, wk, dayN, 'time'); refreshPlanner({skipMap:true}); salesChainFocus(); }
+    return ref;
+  }
   try{
-    if(intent.time && typeof intent.time==='string'){
+    if(hasTime){
       if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
         TIME[dealerId]=intent.time;
-        if(intent.durationMin) DUR[dealerId]=intent.durationMin;
+        if(hasDur) DUR[dealerId]=intent.durationMin;
       } else {
         var xv=XVISITS[XVISITS.length-1];
         if(xv && xv.dealer===dealerId){
           xv.time=intent.time;
-          if(intent.durationMin) xv.dur=intent.durationMin;
+          if(hasDur) xv.dur=intent.durationMin;
         }
       }
-      savePlan(); refreshPlanner();
-    } else if(intent.durationMin){
+    } else if(hasDur){
       if(ASSIGN[dealerId]===(wk==='remote'?'remote':parseInt(wk,10))){
-        DUR[dealerId]=intent.durationMin; savePlan(); refreshPlanner();
+        DUR[dealerId]=intent.durationMin;
       }
     }
+    savePlan();
   }catch(e){}
+  if(ref && wk!=='remote' && (typeof portalIsSalesMode!=='function'||portalIsSalesMode())){
+    salesChainArm(ref, wk, dayN, step);
+    refreshPlanner({skipMap:true});
+    salesChainFocus();
+  } else {
+    refreshPlanner();
+  }
+  return ref;
 }
 function applySmartIntent(intent, wk, day){
   if(!intent) return false;
@@ -9746,7 +10912,13 @@ function smartTryEnter(inp){
   }
   applySmartIntent(intent, inp.dataset.qwk, inp.dataset.qday);
   inp.value=''; dqClose();
-  setTimeout(function(){ try{ inp.focus({preventScroll:true}); }catch(e){ try{inp.focus();}catch(_){} } },40);
+  /* Dealer chain focuses time/dur itself. Travel/other falls back to same-day Add. */
+  if(!_salesChain){
+    setTimeout(function(){
+      var n=document.querySelector('.dqin[data-qwk="'+inp.dataset.qwk+'"][data-qday="'+inp.dataset.qday+'"]')||inp;
+      try{ n.focus({preventScroll:true}); }catch(e){ try{n.focus();}catch(_){} }
+    },40);
+  }
   return true;
 }
 function smartBulkReview(text, wk, day){
@@ -9791,28 +10963,56 @@ function smartBulkReview(text, wk, day){
   };
 }
 function dqMatches(q){
-  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer. */
+  /* Prefer smart ranking so “Dealer at 9am for 2 hours” still finds the dealer.
+     Also merge Cindel’s new-dealer pipeline so one search covers both. */
+  pipelineSearchRefresh(q);
+  var rows=[];
   try{
     if(window.AQSmart&&AQSmart.rankDealers){
       var intent=AQSmart.parse(q);
       var query=(intent&&(intent.query||intent.name))||q;
       var ranked=AQSmart.rankDealers(query, planningUniverse());
-      if(ranked.length) return ranked.slice(0,10);
+      if(ranked.length) rows=ranked.slice(0,10);
     }
   }catch(e){}
-  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean); if(!toks.length) return [];
+  var toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
   var stop={at:1,for:1,the:1,a:1,an:1,with:1,to:1,in:1,on:1,of:1,and:1,am:1,pm:1};
   toks=toks.filter(function(t){ return !stop[t] && !/^\d+([.:]\d+)?(am|pm)?$/.test(t) && !/^(hours?|hrs?|minutes?|mins?)$/.test(t); });
-  if(!toks.length) return [];
-  var rows=planningUniverse().filter(function(d){
-    var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
-    return toks.every(function(t){ return h.indexOf(t)>=0; });
+  if(!rows.length){
+    if(!toks.length) return [];
+    rows=planningUniverse().filter(function(d){
+      var h=[d.name,d.loc,d.city,d.address,d.zip,d.postal,d.postcode,d.accountNumber,d.acct,d.sfId,d.id].join(' ').toLowerCase();
+      return toks.every(function(t){ return h.indexOf(t)>=0; });
+    });
+    var q0=toks[0];
+    var score=function(d){ var n=(d.name||'').toLowerCase();
+      return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
+    rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
+    rows=rows.slice(0,10);
+  }
+  if(!toks.length) return rows;
+  var seen={}; rows.forEach(function(d){ seen[d.id]=1; if(d.sfLeadId) seen['lead:'+d.sfLeadId]=1; });
+  var pipeHits=[];
+  PIPELINE_CACHE.forEach(function(l){
+    if(!l||!l.sfLeadId) return;
+    var id='lead:'+l.sfLeadId;
+    if(seen[id]) return;
+    /* already converted to a local prospect */
+    var local=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId===l.sfLeadId; })[0];
+    if(local&&seen[local.id]) return;
+    var h=[l.name,l.city,l.state||l.loc,l.contactName,l.status,l.address].join(' ').toLowerCase();
+    if(!toks.every(function(t){ return h.indexOf(t)>=0; })) return;
+    pipeHits.push(local||{
+      id:id, sfLeadId:l.sfLeadId, name:l.name, city:l.city||'', loc:l.state||l.loc||'',
+      address:l.address||'', phone:l.phone||'', status:l.status||'',
+      _pipeline:true, _prospect:true, ptype2:'potential', contactName:l.contactName||''
+    });
   });
-  var q0=toks[0];
-  var score=function(d){ var n=(d.name||'').toLowerCase();
-    return (d.territory===terr?0:4)+(n.indexOf(q0)===0?0:(n.indexOf(' '+q0)>=0?1:2)); };
-  rows.sort(function(a,b){ return score(a)-score(b)||String(a.name).localeCompare(String(b.name)); });
-  return rows.slice(0,10);
+  pipeHits.sort(function(a,b){
+    var an=(a.name||'').toLowerCase(), bn=(b.name||'').toLowerCase(), t0=toks[0];
+    return (an.indexOf(t0)===0?0:1)-(bn.indexOf(t0)===0?0:1)||an.localeCompare(bn);
+  });
+  return rows.concat(pipeHits.slice(0,6)).slice(0,14);
 }
 var DQ={inp:null,rows:[],on:0};
 function dqClose(){ var p=document.getElementById('dqPop'); if(p) p.remove(); DQ.rows=[]; }
@@ -9820,8 +11020,26 @@ function dqPick(id,type){
   var inp=DQ.inp; if(!inp) return;
   var wk=inp.dataset.qwk, day=inp.dataset.qday;
   dqClose();
-  createVisit(id,type||'prebook',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day));
-  setTimeout(function(){ var n=document.querySelector('.dqin[data-qwk="'+wk+'"][data-qday="'+day+'"]'); if(n){ try{ n.focus({preventScroll:true}); }catch(_){ n.focus(); } } },30);
+  /* Pipeline lead from typeahead — promote to local prospect then visit */
+  if(String(id).indexOf('lead:')===0){
+    var sfLeadId=String(id).slice(5);
+    var lead=null;
+    for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
+    var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
+    var finish=function(p){
+      createVisit(p.id,type||'visit',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
+    };
+    if(existing){ finish(existing); return; }
+    if(!lead){ aqToast('Pipeline lead not loaded', false); return; }
+    addProspect({
+      name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+      phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+      territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
+      notes:(lead.status?('Lead status: '+lead.status):'')
+    }, finish);
+    return;
+  }
+  createVisit(id,type||'visit',(wk==='remote'?'remote':parseInt(wk,10)),(day===''?null:day), {chain:true, step:'time'});
 }
 /* Everything the day-level + Add can create besides a dealer visit. k = stop type
    (existing TRAVEL_TYPES, so routing/cards/mobile all understand it); v = virtual:
@@ -9901,14 +11119,24 @@ function dqRender(){
   p.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px'; p.style.width=w+'px';
   var below=window.innerHeight-r.bottom;
   if(below<260&&r.top>below){ p.style.top=''; p.style.bottom=(window.innerHeight-r.top+3)+'px'; } else { p.style.bottom=''; p.style.top=(r.bottom+3)+'px'; }
-  DQ.rows=q?dqMatches(q):[]; DQ.cats=q?dqCatMatches(q):ADD_CATS.slice(); if(DQ.on>=DQ.rows.length+DQ.cats.length) DQ.on=0;
+  DQ.rows=q?dqMatches(q):[];
+  /* Do not dump the full event-type menu on empty focus — let the user type.
+     Manual browse remains available via a subtle control. */
+  if(q) DQ.cats=dqCatMatches(q);
+  else if(DQ.showManual) DQ.cats=ADD_CATS.slice();
+  else DQ.cats=[];
+  if(DQ.on>=DQ.rows.length+DQ.cats.length) DQ.on=0;
   var h='';
-  if(!q) h+='<div class="dq-grp">Type a dealer name — or pick a stop</div>';
+  if(!q){
+    h+='<div class="dq-hint">Type naturally — e.g. <b>Monday 9am Dealer A</b> — then press Enter. '
+      +'<button type="button" data-dqmanual="1">'+(DQ.showManual?'Hide event types':'Browse event types')+'</button></div>';
+  }
   DQ.rows.forEach(function(d,i){
-    var sub=[prospectTypeLabel(d),[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
+    var typeLbl=d._pipeline?(d.status?('Pipeline · '+d.status):'Pipeline'):prospectTypeLabel(d);
+    var sub=[typeLbl,[d.city,d.loc].filter(Boolean).join(', '),d.territory].filter(Boolean).join(' · ');
     var more=(DQ.more===d.id);
     h+='<div class="dq-row'+(i===DQ.on?' on':'')+'" data-dqi="'+i+'"><div class="dq-txt"><span class="dq-nm">'+esc(d.name)+'</span><span class="dq-sub">'+esc(sub)+'</span></div>'
-      +'<div class="dq-act"><button data-dqt="prebook" data-dqi="'+i+'">Pre-book</button><button data-dqt="visit" data-dqi="'+i+'">Visit</button><button data-dqa="dropin" data-dqi="'+i+'">Drop-in</button><button data-dqmore="'+i+'" title="More visit types">⋯</button></div></div>';
+      +'<div class="dq-act"><button data-dqt="visit" data-dqi="'+i+'">Visit</button><button data-dqa="dropin" data-dqi="'+i+'">Drop-in</button><button data-dqmore="'+i+'" title="More visit types">⋯</button></div></div>';
     if(more) h+='<div class="dq-moreline">'+DQ_ACTS.slice(1).map(function(a){ return '<button data-dqa="'+a[0]+'" data-dqi="'+i+'">'+a[1]+'</button>'; }).join('')+'</div>';
   });
   var lastG=null;
@@ -9918,12 +11146,12 @@ function dqRender(){
     var ic=(TRAVEL_TYPES[c.k]||{}).icon||'•'; if(c.v) ic='💻';
     h+='<div class="dq-row dq-cat'+(idx===DQ.on?' on':'')+'" data-dqc="'+j+'"><span class="dq-ic">'+ic+'</span><span class="dq-nm">'+esc(c.n)+'</span>'+(c.v?'<span class="dq-sub" style="margin-left:auto">reserves time · no map stop</span>':'')+'</div>';
   });
-  if(q&&!DQ.rows.length&&!DQ.cats.length) h+='<div class="dq-none">No match for “'+esc(q)+'”.</div>';
+  if(q&&!DQ.rows.length&&!DQ.cats.length) h+='<div class="dq-none">No match for “'+esc(q)+'”. Press Enter to create from this text.</div>';
   h+='<div class="dq-row dq-new" data-dqnew="1"><span class="dq-ic">＋</span><span class="dq-nm">New dealer, prospect or competitor…</span></div>';
   p.innerHTML=h;
 }
 document.addEventListener('input',function(e){ var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return; DQ.inp=t; DQ.on=0; dqRender(); });
-document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; DQ.on=0; DQ.more=null; dqRender(); } });
+document.addEventListener('focusin',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('dqin')){ DQ.inp=t; DQ.on=0; DQ.more=null; DQ.showManual=false; dqRender(); } });
 document.addEventListener('keydown',function(e){
   var t=e.target; if(!t||!t.classList||!t.classList.contains('dqin')) return;
   if(e.key==='Escape'){ t.value=''; dqClose(); t.blur(); return; }
@@ -9949,6 +11177,7 @@ document.addEventListener('mousedown',function(e){
   var p=document.getElementById('dqPop'); if(!p) return;
   if(p.contains(e.target)){
     e.preventDefault();                                   /* keep focus in the field */
+    var man=e.target.closest('[data-dqmanual]'); if(man){ DQ.showManual=!DQ.showManual; dqRender(); return; }
     var nw=e.target.closest('[data-dqnew]'); if(nw){ var wk0=DQ.inp.dataset.qwk, dy0=DQ.inp.dataset.qday; dqClose(); openDealerAdd(wk0==='remote'?'remote':parseInt(wk0,10),(dy0===''?null:parseInt(dy0,10))); return; }
     var mo=e.target.closest('[data-dqmore]'); if(mo){ var dm=DQ.rows[+mo.dataset.dqmore]; DQ.more=(dm&&DQ.more!==dm.id)?dm.id:null; dqRender(); return; }
     var ca=e.target.closest('[data-dqc]'); if(ca){ var c=(DQ.cats||[])[+ca.dataset.dqc]; if(c) dqAddStop(c); return; }
@@ -9978,16 +11207,22 @@ function openDealerAdd(wk,day){
   var inp='style="width:100%;box-sizing:border-box;border:1px solid var(--line,#ccc);border-radius:7px;padding:8px 10px;font:400 13px Open Sans,Arial,sans-serif;margin-top:3px"';
   var lbl='style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888"';
   var mode='existing';
-  wrap.innerHTML='<div class="aqmodal-box" style="max-width:480px">'
+  wrap.innerHTML='<div class="aqmodal-box" style="max-width:520px">'
     +'<div class="aqmodal-h" style="display:flex;align-items:center;gap:8px"><span style="color:var(--aq-red)">🤝</span> Add dealer visit'
     +'<button id="dpClose" class="btn" style="margin-left:auto;padding:4px 8px">×</button></div>'
     +'<div style="display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-bottom:10px">'
-    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 12px inherit;padding:8px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing dealer</button>'
-    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 12px inherit;padding:8px;cursor:pointer;color:#6b7280">Potential new dealer</button>'
+    +'<button type="button" class="dp-tab on" data-dptab="existing" style="flex:1;appearance:none;border:0;background:#fff;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:var(--aq-red);box-shadow:inset 0 -2px 0 var(--aq-red)">Existing</button>'
+    +'<button type="button" class="dp-tab" data-dptab="pipeline" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:#6b7280">Pipeline</button>'
+    +'<button type="button" class="dp-tab" data-dptab="potential" style="flex:1;appearance:none;border:0;background:#f5f6f7;font:700 11px inherit;padding:8px 4px;cursor:pointer;color:#6b7280">New</button>'
     +'</div>'
     +'<div id="dpExisting">'
     +'<input id="dpSearch" '+inp+' placeholder="Search dealer name, city, state or account…" autocomplete="off">'
     +'<div id="dpResults" class="dp-results"></div>'
+    +'</div>'
+    +'<div id="dpPipeline" style="display:none">'
+    +'<input id="dpPipeSearch" '+inp+' placeholder="Search Cindel’s new-dealer pipeline (company, city, contact)…" autocomplete="off">'
+    +'<div id="dpPipeNote" style="font-size:11px;color:#6b7280;margin:6px 0 8px">Open Salesforce leads — add to this trip as a visit. Account conversion stays with ISS.</div>'
+    +'<div id="dpPipeResults" class="dp-results"></div>'
     +'</div>'
     +'<div id="dpPotential" style="display:none">'
     +'<input id="dpPlaces" '+inp+' placeholder="Search business name, town or address…" autocomplete="off">'
@@ -10017,8 +11252,10 @@ function openDealerAdd(wk,day){
       b.style.boxShadow=on?'inset 0 -2px 0 var(--aq-red)':'none';
     });
     $('#dpExisting').style.display=tab==='existing'?'':'none';
+    $('#dpPipeline').style.display=tab==='pipeline'?'':'none';
     $('#dpPotential').style.display=tab==='potential'?'':'none';
     if(tab==='existing') setTimeout(function(){ $('#dpSearch').focus(); },20);
+    else if(tab==='pipeline') setTimeout(function(){ $('#dpPipeSearch').focus(); },20);
     else {
       $('#dpPlacesNote').textContent=placesConfigured()
         ? 'Search Google Places for farm equipment and related businesses.'
@@ -10029,23 +11266,88 @@ function openDealerAdd(wk,day){
   wrap.querySelectorAll('[data-dptab]').forEach(function(b){ b.onclick=function(){ setTab(b.dataset.dptab); }; });
   var renderResults=function(){
     var q=($('#dpSearch').value||'').trim();
-    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, postal code or account…</div>'; return; }
+    if(!q){ $('#dpResults').innerHTML='<div class="dp-hint">Type a dealer name, city, state, or account — current dealers and Cindel’s pipeline search together.</div>'; return; }
     var rows=dqMatches(q);
-    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Potential new dealer.</div>'; return; }
+    if(!rows.length){ $('#dpResults').innerHTML='<div class="dp-hint">No match — try Pipeline or New.</div>'; return; }
     $('#dpResults').innerHTML=rows.map(function(d){
-      var t=prospectTypeLabel(d), cls=d._prospect?('pt-'+d.ptype2):'pt-current';
+      var t=d._pipeline?(d.status?('Pipeline · '+d.status):'Pipeline'):prospectTypeLabel(d);
+      var cls=d._pipeline?'pt-potential':(d._prospect?('pt-'+d.ptype2):'pt-current');
       var sub=[d.city,d.loc,d.territory].filter(Boolean).join(' · ');
       return '<button class="dp-row" data-pick="'+esc(d.id)+'"><span class="dp-nm">'+esc(d.name)+'</span>'
         +'<span class="ptbadge '+cls+'">'+esc(t)+'</span><span class="dp-terr">'+esc(sub)+'</span></button>';
     }).join('');
     $('#dpResults').querySelectorAll('[data-pick]').forEach(function(b){
       b.onclick=function(){
-        createVisit(b.dataset.pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+        var pick=b.dataset.pick;
+        if(String(pick).indexOf('lead:')===0){
+          var sf=String(pick).slice(5);
+          var lead=null;
+          for(var i=0;i<(rows||[]).length;i++) if(rows[i].sfLeadId===sf||rows[i].id===pick){ lead=rows[i]; break; }
+          if(!lead){ for(var j=0;j<PIPELINE_CACHE.length;j++) if(PIPELINE_CACHE[j].sfLeadId===sf){ lead=PIPELINE_CACHE[j]; break; } }
+          if(lead){ addLeadToTrip(lead); return; }
+        }
+        createVisit(pick,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
         wrap.remove();
       };
     });
   };
   $('#dpSearch').addEventListener('input',renderResults); renderResults();
+  function addLeadToTrip(lead){
+    var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===lead.sfLeadId; })[0];
+    var finish=function(p){
+      createVisit(p.id,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day);
+      wrap.remove();
+      aqToast('Added '+p.name+' from pipeline');
+    };
+    if(existing){ finish(existing); return; }
+    addProspect({
+      name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+      phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+      territory:terr, sfLeadId:lead.sfLeadId,
+      notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
+    }, finish);
+  }
+  var pipeTimer=null;
+  $('#dpPipeSearch').addEventListener('input',function(){
+    clearTimeout(pipeTimer);
+    pipeTimer=setTimeout(function(){
+      var q=($('#dpPipeSearch').value||'').trim();
+      var box=$('#dpPipeResults');
+      if(q.length<2){ box.innerHTML='<div class="dp-hint">Type at least 2 characters to search the pipeline.</div>'; return; }
+      box.innerHTML='<div class="dp-hint">Searching pipeline…</div>';
+      var localHits=(PROSPECTS||[]).filter(function(p){
+        var hay=((p.name||'')+' '+(p.city||'')+' '+(p.loc||'')+' '+(p.contactName||'')).toLowerCase();
+        return hay.indexOf(q.toLowerCase())>=0;
+      }).slice(0,8);
+      function paint(leads, note){
+        var rows=[].concat(leads||[]);
+        localHits.forEach(function(p){
+          if(!rows.some(function(r){ return (r.sfLeadId&&r.sfLeadId===p.sfLeadId)||r.name===p.name; }))
+            rows.unshift({sfLeadId:p.sfLeadId||'', name:p.name, city:p.city||'', state:p.loc||'', address:p.address||'', contactName:p.contactName||'', phone:p.phone||p.contactPhone||'', status:p._pipeline?'Local pipeline':'Local prospect', _local:true, _prospectId:p.id});
+        });
+        if(!rows.length){ box.innerHTML='<div class="dp-hint">'+(note||'No pipeline matches — try New to enter manually.')+'</div>'; return; }
+        box.innerHTML=(note?('<div class="dp-hint">'+esc(note)+'</div>'):'')+rows.map(function(d,i){
+          var sub=[d.city||d.state,d.contactName,d.status].filter(Boolean).join(' · ');
+          return '<button class="dp-row" data-pipei="'+i+'"><span class="dp-nm">'+esc(d.name)+'</span>'
+            +'<span class="ptbadge pt-potential">Pipeline</span><span class="dp-terr">'+esc(sub)+'</span></button>';
+        }).join('');
+        box._aqLeads=rows;
+        box.querySelectorAll('[data-pipei]').forEach(function(b){
+          b.onclick=function(){
+            var lead=box._aqLeads[+b.dataset.pipei];
+            if(!lead) return;
+            if(lead._prospectId){ createVisit(lead._prospectId,'visit',(wk==='remote'?'remote':parseInt(wk,10)),day); wrap.remove(); return; }
+            addLeadToTrip(lead);
+          };
+        });
+      }
+      if(typeof pbApiFetch!=='function'){ paint([], 'Sign in required to search Salesforce leads.'); return; }
+      pbApiFetch('/api/salesforce-leads?q='+encodeURIComponent(q),{cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        if(!j||!j.ok){ paint([], (j&&j.error)?('Pipeline unavailable: '+j.error+' — local prospects still shown.'):'Pipeline unavailable — local prospects still shown.'); return; }
+        paint(j.leads||[], j.leads&&j.leads.length?'':'No open leads matched — try another spelling or New.');
+      }).catch(function(){ paint([], 'Pipeline request failed — local prospects still shown.'); });
+    },280);
+  });
   var placesTimer=null;
   $('#dpPlaces').addEventListener('input',function(){
     clearTimeout(placesTimer);
@@ -11035,7 +12337,7 @@ function undoSnap(label){
   try{ UNDO.push({label:label,p:JSON.parse(JSON.stringify(planPayload()))}); if(UNDO.length>25) UNDO.shift(); REDO=[]; }catch(e){}
 }
 function applyPlanSnapshot(p){
-  ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{};
+  ASSIGN=p.a||{}; DAY=p.day||{}; TIME=p.time||{}; CONF=p.conf||{}; APPT=p.appt||{}; APPTMETA=p.apptmeta||{};
   SETTINGS=p.settings||{}; LOGI=p.logi||[]; JOINA=p.joina||{}; DUR=p.dur||{};
   GOAL2027=p.goal||0; STOPX=p.stopx||{}; EXPENSES=p.expenses||[]; ACTKM=p.actkm||{};
   VISIT=p.visit||{}; XVISITS=p.xvisits||[]; PTYPE=p.ptype||{}; ARISSUES=p.arissues||{}; CONFLOC=p.confloc||{}; PROSPECTS=Array.isArray(p.prospects)?p.prospects:[];
@@ -11153,8 +12455,24 @@ function uiInit(){
       return;
     }
     if(typing){
-      /* Enter commits the inline edit (fires the change on blur) */
-      if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('vf')||e.target.classList.contains('vnote'))){ e.preventDefault(); e.target.blur(); }
+      /* Enter on time → duration → next Add anything (sales keyboard chain). */
+      if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('vf')){
+        e.preventDefault();
+        var ref=e.target.dataset.vref, f=e.target.dataset.f;
+        if(ref&&(f==='time'||f==='dur')){
+          e.target._salesChainEnter=true;
+          _salesChainAmpm={ref:ref, f:f, el:e.target};
+          var ok=setVisitField(ref, f, e.target.value);
+          if(ok===false){ _salesChainAmpm=null; refreshPlanner({skipMap:true}); return; }
+          if(ok===null) return; /* waiting on AM/PM picker — continues chain after pick */
+          _salesChainAmpm=null;
+          salesChainAdvance(ref, f, e.target);
+          return;
+        }
+        e.target.blur();
+        return;
+      }
+      if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('vnote')){ e.preventDefault(); e.target.blur(); }
       return;
     }
     if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ e.preventDefault(); undoRestore(); return; }
@@ -11178,6 +12496,8 @@ function wireDnD(){
   /* inline card fields: one writer for both card kinds. Notes never re-render
      the planner (no scroll jumps, no per-keystroke work) — they just persist. */
   document.querySelectorAll('.vf').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();
+    /* Enter handler already saved + advanced the sales chain */
+    if(el._salesChainEnter){ el._salesChainEnter=false; return; }
     var ok=setVisitField(el.dataset.vref, el.dataset.f, el.value);
     if(ok===false){ refreshPlanner(); return; }        /* invalid input: revert display */
     refreshPlanner();
@@ -11201,15 +12521,9 @@ function wireDnD(){
       el.classList.add('saved'); setTimeout(function(){ el.classList.remove('saved'); },900);
     });
   });
-  /* confirming is one click; un-confirming asks once, inline (no modal, no permanent X) */
+  /* Dealer appointment status: Planned → Dealer confirmed → Completed (one click each). */
   document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
-    if(!b.classList.contains('on')){ toggleVisitConf(b.dataset.vconf); return; }
-    if(!b.classList.contains('arm')){
-      b.classList.add('arm'); b.textContent='Unconfirm?';
-      b._t=setTimeout(function(){ b.classList.remove('arm'); b.textContent='✓ Conf.'; },2500);
-      return;
-    }
-    clearTimeout(b._t); toggleVisitConf(b.dataset.vconf);
+    toggleVisitConf(b.dataset.vconf);
   }));
   /* delete: lightweight second-click confirmation + a 10s Undo toast */
   document.querySelectorAll('[data-vdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
@@ -11308,7 +12622,8 @@ function wireDnD(){
       var extra={};
       if(st==='booking') extra.bookingBy=(typeof pbWho==='function'?pbWho():'coordinator');
       if(st==='booked'){ extra.bookedBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.bookedAt=new Date().toISOString(); extra.needsReview=false; }
-      if(st==='sent'){ extra.sentBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.sentAt=new Date().toISOString(); }
+      if(st==='sent'){ extra.sentBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.sentAt=new Date().toISOString(); extra.deliveryStatus='sent'; }
+      if(st==='completed'){ extra.completedBy=(typeof pbWho==='function'?pbWho():'coordinator'); extra.completedAt=new Date().toISOString(); }
       tripSetStatus(terr,wk,m.id,st,extra);
       savePlan(); refreshPlanner();
       if(typeof aqToast==='function') aqToast('Trip status: '+(TRIP_STATUS[st]?TRIP_STATUS[st].label:st));
@@ -11327,6 +12642,14 @@ function wireDnD(){
       });
     }
   }));
+  document.querySelectorAll('[data-dlitin]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    var wk=+b.dataset.dlitin;
+    var m=teamSingleMember();
+    var t=(terr==='All'?(m&&m.terr)||'East':terr);
+    if(typeof tripExportPdf==='function') tripExportPdf(t, wk, m||null);
+    else if(typeof exportWeek==='function') exportWeek(t, wk);
+  }));
   document.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
     /* Legacy week confirm → Ready to Book flow */
     var k=b.dataset.conf, parts=String(k).split('|');
@@ -11338,6 +12661,16 @@ function wireDnD(){
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();var pr=b.dataset.add.split('|');addTravel(pr[0],pr[1]);}));
   document.querySelectorAll('#weeks [data-tvexpand]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();if(DND.justDragged)return;tvToggleExpand(b.dataset.tvexpand);}));
   document.querySelectorAll('#weeks [data-tv]').forEach(el=>el.addEventListener('change',e=>{e.stopPropagation();setTravelField(el.dataset.tv, el.dataset.f, el.value);}));
+  document.querySelectorAll('#weeks [data-fwin]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation(); e.preventDefault();
+    var p=String(b.dataset.fwin||'').split('|');
+    if(p.length<2) return;
+    var it=LOGI.filter(function(x){ return x.id===p[0]; })[0];
+    if(!it||!FLIGHT_WINDOWS[p[1]]) return;
+    undoSnap('Flight window');
+    applyFlightSoftWindow(it, p[1]);
+    afterTravelEdit(it);
+  }));
   document.querySelectorAll('[data-tvgeo]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();geocodeTravel(b.dataset.tvgeo);}));
   /* intelligent timeline: lock anchors */
   document.querySelectorAll('#weeks [data-tlock]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();tlToggleLock(b.dataset.tlock);}));
@@ -11382,7 +12715,8 @@ var TRIP_STATUS={
   ready:{id:'ready',label:'Ready to Book',cls:'ready'},
   booking:{id:'booking',label:'Booking in Progress',cls:'booking'},
   booked:{id:'booked',label:'Booked',cls:'booked'},
-  sent:{id:'sent',label:'Reviewed & Sent',cls:'sent'}
+  sent:{id:'sent',label:'Reviewed & Sent',cls:'sent'},
+  completed:{id:'completed',label:'Completed',cls:'completed'}
 };
 function tripConfKey(t,wk,memberId){ return memberId?(t+'|'+wk+'|'+memberId):(t+'|'+wk); }
 function tripBookGet(t,wk,memberId){
@@ -11398,7 +12732,7 @@ function tripBookStatus(t,wk,memberId){
 }
 function tripWeekIsConfirmed(t,wk,memberId){
   var st=tripBookStatus(t,wk,memberId).id;
-  return st==='ready'||st==='booking'||st==='booked'||st==='sent';
+  return st==='ready'||st==='booking'||st==='booked'||st==='sent'||st==='completed';
 }
 function tripWeekConfState(t,wk){
   var members=teamSelectedMembers();
@@ -11420,10 +12754,16 @@ function tripFlagDirtyIfSubmitted(t,wk){
       if(k.indexOf((t||'')+'|'+wk)!==0) return;
       var rec=TRIPBOOK[k];
       if(!rec) return;
-      if(rec.status==='ready'||rec.status==='booking'||rec.status==='booked'||rec.status==='sent'){
+      if(rec.status==='ready'||rec.status==='booking'||rec.status==='booked'||rec.status==='sent'||rec.status==='completed'){
         rec.needsReview=true;
         rec.changedAt=new Date().toISOString();
         rec.changedBy=(typeof pbWho==='function'?pbWho():'traveller');
+        /* Flag checklist items that may need coordinator review — never silently replace bookings */
+        try{
+          (rec.checklist||[]).forEach(function(c){
+            if(c&&(c.status==='booked'||c.status==='booking')){ c.needsReview=true; }
+          });
+        }catch(e2){}
       }
     });
   }catch(e){}
@@ -11443,35 +12783,56 @@ function salesAssistantForTerr(t){
     || pick(function(m){ return m.role==='TC'||m.accessGroup==='coordinator'; })
     || pick(function(m){ return /nikita/i.test(m.name||''); });
 }
+function tripDealerConfirmCounts(pack){
+  var dealers=0, confirmed=0, completed=0;
+  ((pack&&pack.vs)||[]).forEach(function(d){
+    dealers++;
+    var st=apptStatusOf('i:'+d.id);
+    if(st.status==='confirmed'||st.status==='completed') confirmed++;
+    if(st.status==='completed') completed++;
+  });
+  ((pack&&pack.xs)||[]).forEach(function(x){
+    dealers++;
+    var st=apptStatusOf('x:'+x.id);
+    if(st.status==='confirmed'||st.status==='completed') confirmed++;
+    if(st.status==='completed') completed++;
+  });
+  return {dealers:dealers, confirmed:confirmed, completed:completed};
+}
 function tripValidateReady(t,wk,member){
-  var issues=[], soft=[];
+  var issues=[], soft=[], warnings=[];
   if(!member||!member.id) issues.push('Assign a traveller before submitting.');
   var pack=tripCollectWeek(t,wk,member);
   var flights=(pack.ls||[]).filter(function(x){ var ty=travelType(x); return ty==='flight_in'||ty==='flight_out'||ty==='flight_stop'; });
   var hotels=(pack.ls||[]).filter(function(x){ return travelType(x)==='hotel'; });
   var rentals=(pack.ls||[]).filter(function(x){ var ty=travelType(x); return ty==='rental_pickup'||ty==='rental_return'; });
   if(!(pack.vs||[]).length&&!(pack.ls||[]).length&&!(pack.xs||[]).length) issues.push('Add at least one destination or travel stop.');
+  /* Sales planning: preferred flight timing + airports — not booking numbers. */
   flights.forEach(function(f){
-    if(f.day==null||!f.time) issues.push('Flight needs departure date and time'+(f.airline?(' ('+f.airline+')'):'')+'.');
-    if(!(f.depAirport||f.airportCode)||!f.arrAirport) soft.push('Flight route incomplete — add departure and arrival airports.');
+    if(f.day==null) issues.push('Flight needs a preferred day'+(f.airline?(' ('+f.airline+')'):'')+'.');
+    if(!f.time) soft.push('Add a preferred flight time so Travel Coordination can book.');
+    if(!(f.depAirport||f.airportCode)||!f.arrAirport) soft.push('Add preferred fly-from / fly-into airports.');
   });
   hotels.forEach(function(h){
-    if(h.day==null) issues.push('Hotel needs a check-in day'+(h.name?(' ('+h.name+')'):'')+'.');
-    if(!h.name&&!h.address) soft.push('Hotel is missing a name or address.');
+    if(h.day==null) soft.push('Overnight / hotel needs a preferred night'+(h.name?(' ('+h.name+')'):'')+'.');
   });
   rentals.forEach(function(r){
-    if(r.day==null||!r.time) soft.push('Rental car timing is incomplete.');
+    if(r.day==null) soft.push('Rental car day is incomplete.');
   });
+  var dc=tripDealerConfirmCounts(pack);
+  if(dc.dealers && dc.confirmed<dc.dealers){
+    warnings.push((dc.dealers-dc.confirmed)+' of '+dc.dealers+' dealer appointment'+(dc.dealers===1?'':'s')+' not yet dealer-confirmed.');
+  }
   try{
     var TL=tlCompute(t,wk);
     var hard=(TL.conflicts||[]).filter(function(c){ return c.sched||c.lateMin; });
-    if(hard.length) issues.push('Resolve '+hard.length+' scheduling conflict'+(hard.length>1?'s':'')+' before submitting.');
+    if(hard.length) issues.push('Resolve '+hard.length+' critical scheduling conflict'+(hard.length>1?'s':'')+' before submitting.');
   }catch(e){}
   try{
     var err=document.getElementById('pbSaveErr');
     if(err&&err.style.display!=='none'&&err.offsetParent!==null) issues.push('Wait for cloud sync to succeed before submitting.');
   }catch(e){}
-  return {ok:!issues.length, issues:issues, soft:soft, pack:pack, flights:flights, hotels:hotels, rentals:rentals};
+  return {ok:!issues.length, issues:issues, soft:soft, warnings:warnings, pack:pack, flights:flights, hotels:hotels, rentals:rentals, dealerCounts:dc};
 }
 function tripReadySummary(t,wk,member,pack){
   var dest=[];
@@ -11518,6 +12879,7 @@ async function tripNotifySalesAssistant(t,wk,member,rec,summary){
     'Flights required: '+summary.flights,
     'Hotels required: '+summary.hotels,
     'Rental cars required: '+summary.rentals,
+    'Dealer appointments confirmed: '+(summary.confirmedDealers!=null?summary.confirmedDealers:'—')+' / '+(summary.dealerTotal!=null?summary.dealerTotal:'—'),
     'Special instructions: '+(rec.notes||'—'),
     '',
     'Open trip: '+link
@@ -11540,6 +12902,7 @@ async function tripNotifySalesAssistant(t,wk,member,rec,summary){
           +[['Traveller',summary.traveller],['Territory',summary.territory],['Trip dates',summary.dates],
             ['Destinations',summary.destinations.join(', ')||'—'],['Flights required',String(summary.flights)],
             ['Hotels required',String(summary.hotels)],['Rental cars required',String(summary.rentals)],
+            ['Dealer confirmed',String(summary.confirmedDealers!=null?summary.confirmedDealers:'—')+' / '+String(summary.dealerTotal!=null?summary.dealerTotal:'—')],
             ['Special instructions',rec.notes||'—']].map(function(r){
               return '<tr><td style="padding:4px 12px 4px 0;color:#6b7280">'+esc(r[0])+'</td><td style="padding:4px 0;font-weight:600">'+esc(r[1])+'</td></tr>';
             }).join('')
@@ -11577,30 +12940,65 @@ function tripSubmitReady(t,wk,member){
     wrap.innerHTML='<div class="modalbox" style="width:min(440px,94vw)"><div class="mh"><div class="mt">Complete before Ready to Book</div><button type="button" class="mclose" id="trbX">×</button></div>'
       +'<div style="padding:12px 16px;font-size:13px"><ul style="margin:0;padding-left:18px">'
       +v.issues.map(function(i){ return '<li style="margin:0 0 6px">'+esc(i)+'</li>'; }).join('')
-      +'</ul></div></div>';
+      +'</ul>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">'
+      +'<button type="button" class="kbb" id="trbKeep">Keep as Planning</button>'
+      +'<button type="button" class="kbb" id="trbX2">Close</button></div></div></div>';
     document.body.appendChild(wrap);
-    wrap.querySelector('#trbX').onclick=function(){ wrap.remove(); };
-    wrap.addEventListener('click',function(e){ if(e.target===wrap) wrap.remove(); });
+    var closeBlock=function(){ wrap.remove(); };
+    wrap.querySelector('#trbX').onclick=closeBlock;
+    wrap.querySelector('#trbX2').onclick=closeBlock;
+    wrap.querySelector('#trbKeep').onclick=function(){
+      tripSetStatus(t,wk,member.id,'planning',{keptPlanningAt:new Date().toISOString()});
+      savePlan(); refreshPlanner(); closeBlock();
+      if(typeof aqToast==='function') aqToast('Saved as Planning');
+    };
+    wrap.addEventListener('click',function(e){ if(e.target===wrap) closeBlock(); });
     return;
   }
-  var softNote=v.soft.length?('<p style="margin:0 0 10px;color:#b45309;font-size:12px">Optional: '+esc(v.soft[0])+(v.soft.length>1?(' (+'+(v.soft.length-1)+' more)'):'')+'</p>'):'';
+  var summary=tripReadySummary(t,wk,member,v.pack);
+  var dc=v.dealerCounts||{dealers:0,confirmed:0};
+  var softNote=v.soft.length?('<p style="margin:0 0 8px;color:#b45309;font-size:12px">Missing optional detail: '+esc(v.soft.slice(0,2).join(' · '))+(v.soft.length>2?(' (+'+(v.soft.length-2)+' more)'):'')+'</p>'):'';
+  var warnNote=(v.warnings&&v.warnings.length)?('<p style="margin:0 0 8px;color:#b45309;font-size:12px">'+esc(v.warnings[0])+'</p>'):'';
+  var needAck=!!(v.warnings&&v.warnings.length);
   var wrap2=document.createElement('div'); wrap2.className='modalbg';
-  wrap2.innerHTML='<div class="modalbox" style="width:min(460px,94vw)"><div class="mh"><div class="mt">Ready to Book</div><button type="button" class="mclose" id="trb2X">×</button></div>'
+  wrap2.innerHTML='<div class="modalbox" style="width:min(500px,94vw)"><div class="mh"><div class="mt">Ready to Book</div><button type="button" class="mclose" id="trb2X">×</button></div>'
     +'<div style="padding:12px 16px;font-size:13px">'
-    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Submit <b>'+esc(member.name)+'</b>’s week for the sales assistant to arrange bookings. This does not mean travel is already booked.</p>'
-    +softNote
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Review and submit for Travel Coordination. This does not purchase travel.</p>'
+    +'<div class="trb-grid">'
+    +'<div><span>Traveller</span><br><b>'+esc(summary.traveller)+'</b></div>'
+    +'<div><span>Trip dates</span><br><b>'+esc(summary.dates)+'</b></div>'
+    +'<div><span>Flight requirements</span><br><b>'+summary.flights+'</b></div>'
+    +'<div><span>Dealer visits</span><br><b>'+dc.dealers+'</b></div>'
+    +'<div><span>Dealer confirmed</span><br><b>'+dc.confirmed+' / '+dc.dealers+'</b></div>'
+    +'<div><span>Overnight / hotel</span><br><b>'+summary.hotels+'</b></div>'
+    +'<div><span>Rental car</span><br><b>'+summary.rentals+'</b></div>'
+    +'<div><span>Destinations</span><br><b>'+esc((summary.destinations||[]).slice(0,3).join(', ')||'—')+'</b></div>'
+    +'</div>'
+    +softNote+warnNote
+    +(needAck?'<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:0 0 10px"><input type="checkbox" id="trbAck"><span>I need travel booked before every dealer appointment is confirmed.</span></label>':'')
     +'<label style="display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px">Special instructions</label>'
     +'<textarea id="trbNotes" rows="3" style="width:100%;font:13px inherit;border:1px solid var(--line);border-radius:6px;padding:8px"></textarea>'
-    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">'
+    +'<button type="button" class="kbb" id="trbPlan">Save as Planning</button>'
     +'<button type="button" class="kbb" id="trbCancel">Cancel</button>'
-    +'<button type="button" class="kbb primary" id="trbGo">Submit</button></div>'
+    +'<button type="button" class="kbb primary" id="trbGo">Submit Ready to Book</button></div>'
     +'</div></div>';
   document.body.appendChild(wrap2);
   var close=function(){ wrap2.remove(); };
   wrap2.querySelector('#trb2X').onclick=close;
   wrap2.querySelector('#trbCancel').onclick=close;
+  wrap2.querySelector('#trbPlan').onclick=function(){
+    tripSetStatus(t,wk,member.id,'planning',{keptPlanningAt:new Date().toISOString(), notes:(wrap2.querySelector('#trbNotes').value||'').trim()});
+    savePlan(); refreshPlanner(); close();
+    if(typeof aqToast==='function') aqToast('Saved as Planning');
+  };
   wrap2.addEventListener('click',function(e){ if(e.target===wrap2) close(); });
   wrap2.querySelector('#trbGo').onclick=async function(){
+    if(needAck){
+      var ack=wrap2.querySelector('#trbAck');
+      if(!ack||!ack.checked){ if(typeof aqToast==='function') aqToast('Acknowledge unconfirmed appointments, or confirm them first', false); return; }
+    }
     var btn=wrap2.querySelector('#trbGo'); btn.disabled=true; btn.textContent='Submitting…';
     var notes=(wrap2.querySelector('#trbNotes').value||'').trim();
     var existing=tripBookGet(t,wk,member.id);
@@ -11614,17 +13012,27 @@ function tripSubmitReady(t,wk,member){
       submittedBy:(typeof pbWho==='function'?pbWho():'traveller'),
       notes:notes,
       needsReview:false,
-      notifyKey:tripConfKey(t,wk,member.id)+'|'+submittedAt
+      travellerName:member.name,
+      dealerConfirmed:dc.confirmed,
+      dealerTotal:dc.dealers,
+      exceptionUnconfirmed:needAck,
+      notifyKey:tripConfKey(t,wk,member.id)+'|'+submittedAt,
+      itineraryVersion:{at:submittedAt, flights:summary.flights, hotels:summary.hotels, rentals:summary.rentals, dealers:dc.dealers}
     });
+    try{
+      if(window.AQCoord&&AQCoord.ensureChecklist){
+        var pack=v.pack;
+        AQCoord.ensureChecklist(tripConfKey(t,wk,member.id), {terr:t,wk:wk,memberId:member.id}, pack, rec);
+      }
+    }catch(e){}
     savePlan();
-    var summary=tripReadySummary(t,wk,member,v.pack);
-    var mail=await tripNotifySalesAssistant(t,wk,member,rec,summary);
+    var mail=await tripNotifySalesAssistant(t,wk,member,rec,Object.assign({},summary,{confirmedDealers:dc.confirmed,dealerTotal:dc.dealers}));
     rec.notifyResult={ok:!!mail.ok, sent:!!mail.sent, message:mail.message||'', at:new Date().toISOString(), id:mail.id||null};
     if(mail.ok&&mail.sent){ rec.notifiedAt=rec.notifyResult.at; }
     TRIPBOOK[tripConfKey(t,wk,member.id)]=rec;
     savePlan(); refreshPlanner();
     close();
-    if(mail.ok&&mail.sent){ if(typeof aqToast==='function') aqToast('Ready to Book — sales assistant notified'); }
+    if(mail.ok&&mail.sent){ if(typeof aqToast==='function') aqToast('Ready to Book — Travel Coordination notified'); }
     else if(mail.ok&&!mail.sent){ if(typeof aqToast==='function') aqToast(mail.message||'Submitted — email not sent (transport/dry-run)'); }
     else { if(typeof aqToast==='function') aqToast(mail.message||'Submitted — notification failed', false); }
   };
@@ -12434,13 +13842,16 @@ function pbRestoreNav(){
 function render(){
   const isMaster=terr==='Master', isAll=terr==='All', isSettings=terr==='Settings', isTeam=terr==='Team';
   pbSaveNav();
-  var yearMode=(PLAN_MODE==='year' && !isMaster && !isSettings && !isTeam);
+  try{ setPortalMode(PORTAL_MODE, {silent:true, force:true}); }catch(e){}
+  var coordMode=(!portalIsSalesMode() && !isMaster && !isSettings && !isTeam);
+  var yearMode=(PLAN_MODE==='year' && !isMaster && !isSettings && !isTeam && !coordMode);
   var planStrip=document.getElementById('aqPlanMode');
-  if(planStrip) planStrip.style.display=(isMaster||isSettings||isTeam)?'none':'flex';
+  if(planStrip) planStrip.style.display=(isMaster||isSettings||isTeam||coordMode)?'none':'flex';
   document.querySelectorAll('[data-planmode]').forEach(function(b){ b.classList.toggle('on', b.dataset.planmode===(yearMode?'year':'weekly')); });
   var yv=document.getElementById('yearView');
   var ys=document.getElementById('yearShell');
   var tv=document.getElementById('teamView');
+  var cv=document.getElementById('coordView');
   if(ys){
     ys.classList.toggle('is-on', yearMode);
     ys.style.display=yearMode?'flex':'none';
@@ -12453,6 +13864,10 @@ function render(){
     tv.classList.toggle('is-on', isTeam);
     tv.style.display=isTeam?'block':'none';
   }
+  if(cv){
+    cv.classList.toggle('is-on', !!coordMode);
+    cv.style.display=coordMode?'block':'none';
+  }
   if(yearMode){
     try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
     document.getElementById("cards").style.display='none';
@@ -12461,6 +13876,7 @@ function render(){
     document.getElementById("masterView").style.display='none';
     document.getElementById("settingsView").style.display='none';
     if(tv) tv.style.display='none';
+    if(cv){ cv.style.display='none'; cv.classList.remove('is-on'); }
     try{
       if(typeof YG!=='undefined' && YG){
         YG.terr=(isAll||terr==='All')?'All':terr;
@@ -12475,6 +13891,30 @@ function render(){
   if(ys){ ys.classList.remove('is-on'); ys.style.display='none'; }
   document.getElementById("cards").style.display='none';
   renderCards();
+  if(coordMode){
+    /* EA works in the same This Trip planner as sales, with booking fields visible
+       (portalIsSalesMode=false). Queue strip stays above for Ready-to-Book handoffs. */
+    try{ document.body.classList.add('trips-layout-on'); }catch(e0){}
+    document.getElementById("plannerView").style.display=(isAll||isMaster||isSettings||isTeam)?'none':'';
+    document.getElementById("allView").style.display=isAll?'':'none';
+    document.getElementById("masterView").style.display='none';
+    document.getElementById("settingsView").style.display='none';
+    if(tv) tv.style.display='none';
+    if(cv){ cv.style.display='block'; cv.classList.add('is-on'); }
+    try{ if(typeof renderCoord==='function') renderCoord(); else if(window.AQCoord&&AQCoord.render) AQCoord.render(); }catch(e){ console.error(e); }
+    if(isAll){ try{ renderAllView(); }catch(e){} return; }
+    if(!isAll&&!isMaster&&!isSettings&&!isTeam){
+      document.querySelectorAll('#terrSeg .segb').forEach(function(b){b.classList.toggle('on',b.dataset.tm===terrMode);});
+      var isPlan=terrMode!=='map', isMap=terrMode==='map';
+      document.getElementById('planwrap').style.display=isPlan?'':'none';
+      document.getElementById('terrSched').style.display='none';
+      document.getElementById('terrMap').style.display=isMap?'':'none';
+      if(isPlan){ renderPlanner(); wireDnD(); focusCurrentWeekOnce(); }
+      else { renderTerrMap(); }
+      document.getElementById('planTitle').textContent=terr+' · Booking';
+    }
+    return;
+  }
   document.getElementById("plannerView").style.display=(!isAll&&!isMaster&&!isSettings&&!isTeam)?'':'none';
   document.getElementById("allView").style.display=isAll?'':'none';
   document.getElementById("masterView").style.display=isMaster?'':'none';
@@ -12779,7 +14219,7 @@ function applyCloudRow(id,data){ if(id==='dealers'){ if(Array.isArray(data)&&dat
     adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll(); evBaseline();
     applyCloudRow._conflicts=_confl||[];
   } else {
-    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.tripbook)TRIPBOOK=Object.assign({},p.tripbook); if(p.appt)APPT=p.appt; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
+    if(p.a)ASSIGN=Object.assign({},p.a); if(p.day)DAY=Object.assign({},p.day); if(p.time)TIME=Object.assign({},p.time); if(p.conf)CONF=p.conf; if(p.tripbook)TRIPBOOK=Object.assign({},p.tripbook); if(p.appt)APPT=p.appt;if(p.apptmeta)APPTMETA=p.apptmeta; if(p.settings)SETTINGS=p.settings; if(p.logi)LOGI=p.logi; if(p.joina)JOINA=p.joina; if(p.dur)DUR=p.dur; if(p.goal!=null)GOAL2027=p.goal; if(p.stopx)STOPX=p.stopx; if(p.expenses)EXPENSES=p.expenses; if(p.actkm)ACTKM=p.actkm; if(p.visit)VISIT=p.visit; if(Array.isArray(p.xvisits))XVISITS=p.xvisits; if(p.ptype)PTYPE=Object.assign({},p.ptype); if(+p.fx>0)FX=normUsdCad(+p.fx); if(Array.isArray(p.t27tiers))T27_TIERS=p.t27tiers; if(p.admin)ADMIN=p.admin; if(Array.isArray(p.commits))COMMITS=p.commits; if(p.ride)RIDEALONG=Object.assign({},p.ride); if(p.arissues)ARISSUES=Object.assign({},p.arissues); if(p.ordx)ORD=Object.assign({},p.ordx); if(p.confloc)CONFLOC=Object.assign({},p.confloc); if(Array.isArray(p.prospects))PROSPECTS=p.prospects; if(p.coordovr)COORDOVR=Object.assign({},p.coordovr); if(p.evmeta)EVMETA=Object.assign({},p.evmeta); if(p.owners)OWNERS=Object.assign({},p.owners); if(Array.isArray(p.ygevents)){YG_EVENTS=p.ygevents;if(window.ygSetEvents)ygSetEvents(YG_EVENTS);} if(p.ygnotes){YG_NOTES=Object.assign({},p.ygnotes);if(window.ygSetNotes)ygSetNotes(YG_NOTES);} if(p.ygavail){YG_AVAIL=Object.assign({},p.ygavail);if(window.ygSetAvail)ygSetAvail(YG_AVAIL);} if(Array.isArray(p.ygcats)){YG_CAT_CUSTOM=p.ygcats;if(window.ygSetCats)ygSetCats(YG_CAT_CUSTOM);} if(p.ygfocus){YG_FOCUS=Object.assign({},p.ygfocus);if(window.ygSetFocus)ygSetFocus(YG_FOCUS);} if(p.tle)TLE={lock:Object.assign({},p.tle.lock||{})};   /* time locks: previously never loaded on the production path, so a fresh browser saved them back empty */ adminInit(); fxSync(); normalizeVisitData(); CALC.dirtyAll();
   }
 } else if(id==='overlay_v1'){ SF_OVERLAY=(data&&typeof data==='object'&&!Array.isArray(data))?data:{}; } invalidateUniverse(); }
 function cloudLoad(cb){
@@ -13264,7 +14704,8 @@ function pbRenderAcct(){
   if(pbIsAdmin()) menuItems+='<button type="button" data-gear="team">My Team</button>';
   if(pbIsAdmin()||pbIsSuperAdmin()) menuItems+='<button type="button" data-gear="master">Master Sheet</button>';
   if(pbIsAdmin()) menuItems+='<button type="button" data-gear="settings">Settings</button>';
-  menuItems+='<button type="button" data-gear="trips">Trips</button>';
+  menuItems+='<button type="button" data-gear="trips">My Trips</button>';
+  if(portalCanSwitchMode()) menuItems+='<button type="button" data-gear="coord">Travel Coordination</button>';
   host.innerHTML=who+badge
     +'<button type="button" class="aqGear" id="aqGear" title="Settings" aria-haspopup="true" aria-expanded="false">'+gearSvg+'</button>'
     +'<div class="aqGearMenu" id="aqGearMenu" role="menu">'+menuItems+'</div>'
@@ -13297,11 +14738,20 @@ function pbRenderAcct(){
         if(a==='settings'){ terr='Settings'; PLAN_MODE='weekly'; document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');}); render(); return; }
         if(a==='trips'){
           PLAN_MODE='weekly';
+          setPortalMode('sales', {silent:true});
           if(terr==='Master'||terr==='Settings'||terr==='Team'){
             terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); });
           }
           try{ focusWkSet(wkCurrent()); }catch(err){ FOCUS_WK=wkCurrent(); ALL_WK=FOCUS_WK; }
           render(); return;
+        }
+        if(a==='coord'){
+          PLAN_MODE='weekly';
+          if(terr==='Master'||terr==='Settings'||terr==='Team'){
+            terr='All'; document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('active', t.dataset.t==='All'); });
+          }
+          setPortalMode('coord');
+          return;
         }
       };
     });
@@ -13310,6 +14760,7 @@ function pbRenderAcct(){
     });
   }
   var s=document.getElementById('aqSignout'); if(s) s.onclick=pbSignOut;
+  try{ bootPortalMode(); }catch(e){}
 }
 
 /* ---- Super Admin: approved-user & role management (req 4). RLS also enforces
@@ -13760,10 +15211,17 @@ function mobTrip_render(){
     +'<div class="tc-stat"><b>'+openTasks+'</b><span>Tasks</span></div>'
     +'<div class="tc-stat"><b>'+pct+'%</b><span>Progress</span></div></div>';
   h+='<div class="tc-ctx">';
-  if(hotel) h+='<div class="row"><span>Tonight</span><b>'+esc(hotel.name)+'</b></div>';
-  if(flight) h+='<div class="row"><span>Next flight</span><b>'+esc(flight.name)+(flight.time?(' · '+t12s(flight.time)):'')+'</b></div>';
-  if(rental) h+='<div class="row"><span>Rental</span><b>'+esc(rental.name)+'</b></div>';
+  if(hotel) h+='<div class="row"><span>Tonight</span><b>'+esc(hotel.name)+(hotel.conf?(' · #'+esc(hotel.conf)):'')+'</b></div>';
+  if(flight) h+='<div class="row"><span>Next flight</span><b>'+esc([flight.airline,flight.flightNo,flight.name].filter(Boolean).join(' ')||'Flight')+(flight.time?(' · '+t12s(flight.time)):'')+(flight.conf?(' · #'+esc(flight.conf)):'')+'</b></div>';
+  if(rental) h+='<div class="row"><span>Rental</span><b>'+esc(rental.name)+(rental.conf?(' · #'+esc(rental.conf)):'')+'</b></div>';
   if(!hotel && !flight && !rental) h+='<div class="row"><span>Travel</span><b>No flights, hotel or rental on file</b></div>';
+  try{
+    var _sm=(typeof teamSingleMember==='function')?teamSingleMember():null;
+    var _st=_sm?tripBookStatus(MOB.terr||terr,wk,_sm.id):null;
+    if(_st&&(_st.id==='booked'||_st.id==='sent'||_st.id==='completed')){
+      h+='<div class="row"><button type="button" class="tm-btn" data-mobdlitin="1" style="width:100%;margin-top:6px">Download Itinerary</button></div>';
+    }
+  }catch(e){}
   h+='</div>';
   h+=tcNextCard(next, wk, items);
   h+='<div class="tc-mapbox"><div class="teaser" id="tcMapToggle"><b>Trip route</b><span>'+(MOB.mapOpen?'Collapse':'Expand map')+'</span></div>'
@@ -15152,6 +16610,12 @@ function wireMobile(){
   q('[data-tccomplete]').forEach(function(b){ b.onclick=function(){ tcCompleteOneTap(b.dataset.tccomplete); }; });
   var mt=document.getElementById('tcMapToggle');
   if(mt) mt.onclick=function(){ MOB.mapOpen=!MOB.mapOpen; renderMobile(); };
+  q('[data-mobdlitin]').forEach(function(b){ b.onclick=function(){
+    var m=(typeof teamSingleMember==='function')?teamSingleMember():null;
+    var t=MOB.terr||terr||'East';
+    if(typeof tripExportPdf==='function') tripExportPdf(t, MOB.wk, m||null);
+    else if(typeof exportWeek==='function') exportWeek(t, MOB.wk);
+  };});
   q('[data-tasktog]').forEach(function(b){ b.onclick=function(){
     var parts=String(b.dataset.tasktog||'').split(':'); var id=parts[0], ix=+parts[1];
     if(TRIP_DEMO && String(id).indexOf('demo-')===0){
@@ -15815,5 +17279,6 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 <script src="/year-glance.js"></script>
 <script src="/smart-entry.js?v=se2"></script>
 <script src="/my-team.js?v=mt4"></script>
+<script src="/travel-coord.js?v=tc1"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ var YG_MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oc
 var YG_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 var YG_AVAIL_DEFAULTS = [
-  {id:'TR', abbr:'TR', label:'Travelling', color:'#2563eb', text:'#fff', system:true, class:'away'},
+  {id:'TR', abbr:'TR', label:'Away', color:'#2563eb', text:'#fff', system:true, class:'away'},
   {id:'OF', abbr:'OF', label:'In office', color:'#4b5563', text:'#fff', system:true, class:'present'},
   {id:'RM', abbr:'RM', label:'Working remotely', color:'#0d9488', text:'#fff', system:true, class:'present'},
   {id:'TS', abbr:'TS', label:'Trade show', color:'#d97706', text:'#fff', system:true, class:'away'},
@@ -27,6 +27,7 @@ var YG = {
   cats: {},
   panelDate: null,
   rangeStart: null,
+  selectedDays: {}, /* iso → true — multi-day click on/off for who/where overview */
   keyOpen: true,
   teamMenuOpen: false
 };
@@ -260,6 +261,20 @@ function ygBuildActivities(){
   return byDay;
 }
 
+function ygTripIsBooked(terr, wk, memberId){
+  /* Booked / Sent / Completed trips → firm "I will be away" on Year at a Glance. */
+  try{
+    var TB=global.TRIPBOOK||{};
+    var keys=[];
+    if(memberId) keys.push(String(terr)+'|'+wk+'|'+memberId);
+    keys.push(String(terr)+'|'+wk);
+    for(var i=0;i<keys.length;i++){
+      var rec=TB[keys[i]];
+      if(rec && (rec.status==='booked'||rec.status==='sent'||rec.status==='completed')) return true;
+    }
+  }catch(e){}
+  return false;
+}
 function ygBuildAvailability(byAct){
   var byDay={}, team=ygTeam(), teamIds={};
   team.forEach(function(m){ teamIds[m.id]=m; });
@@ -302,6 +317,9 @@ function ygBuildAvailability(byAct){
     var parts=k.split('|'), mid=parts[0], wk=+parts[1], s=spans[k];
     var m=teamIds[mid]||(global.teamById&&global.teamById(mid));
     if(!m||!memberInFilter(m)||!s.hasOvernight||s.min>s.max) return;
+    var tripTerr=(m.terrs&&m.terrs[0])||(m.terr)||ygTerr()||'East';
+    if(tripTerr==='All') tripTerr=(m.terr)||'East';
+    var booked=ygTripIsBooked(tripTerr, wk, m.id);
     for(var di=s.min; di<=s.max; di++){
       var dt=ygFromWkDay(wk, di);
       if(!dt || dt.getFullYear()!==YG.year) continue;
@@ -309,11 +327,46 @@ function ygBuildAvailability(byAct){
       var dayActs=(byAct[iso]||[]).filter(function(a){ return a.member&&a.member.id===mid; });
       var isTs=dayActs.some(function(a){ return a.type==='tradeshow'; });
       pushAvail(byDay, iso, {
-        member:m, status:isTs?'TS':'TR', geo:s.geo||'', conf:s.conf, tentative:!s.conf,
+        member:m, status:isTs?'TS':'TR', geo:s.geo||'',
+        conf:booked||s.conf, tentative:!(booked||s.conf), booked:booked,
+        title:booked?'I will be away':(isTs?'Trade show':'Travelling'),
         acts:dayActs, source:'trip'
       });
     }
   });
+
+  /* Booked trips with only daytime visits (no hotel/flight yet) still mark Away. */
+  try{
+    var TB=global.TRIPBOOK||{};
+    Object.keys(TB).forEach(function(key){
+      var rec=TB[key];
+      if(!rec||!(rec.status==='booked'||rec.status==='sent'||rec.status==='completed')) return;
+      var parts=String(key).split('|');
+      var tTerr=parts[0], wk=+parts[1], mid=parts[2]||null;
+      if(!isFinite(wk)) return;
+      var m=mid?(teamIds[mid]||(global.teamById&&global.teamById(mid))):null;
+      var targets=m?[m]:team.filter(function(tm){
+        if(!memberInFilter(tm)) return false;
+        if(tTerr&&tTerr!=='All'&&tm.terr&&tm.terr!==tTerr&&!(tm.terrs&&tm.terrs.indexOf(tTerr)>=0)) return false;
+        return true;
+      });
+      targets.forEach(function(tm){
+        if(!memberInFilter(tm)) return;
+        for(var di=0; di<=6; di++){
+          var dt=ygFromWkDay(wk, di);
+          if(!dt || dt.getFullYear()!==YG.year) continue;
+          var iso=ygISO(dt);
+          var dayActs=(byAct[iso]||[]).filter(function(a){ return a.member&&a.member.id===tm.id; });
+          if(!dayActs.length && di>4) continue; /* skip empty weekend unless activity */
+          if((byDay[iso]||[]).some(function(r){ return r.member&&r.member.id===tm.id&&(r.source==='override'||r.booked); })) continue;
+          pushAvail(byDay, iso, {
+            member:tm, status:'TR', geo:'', conf:true, tentative:false, booked:true,
+            title:'I will be away', acts:dayActs, source:'tripbook'
+          });
+        }
+      });
+    });
+  }catch(e){}
 
   Object.keys(byAct).forEach(function(iso){
     (byAct[iso]||[]).forEach(function(ev){
@@ -449,8 +502,8 @@ function ygMonthRowHTML(month, byAvail, cols){
       var cat=ygAvailCat(st.status);
       bar='<span class="yg-bar" style="background:'+cat.color+'" title="'+esc(cat.label+(st.geo?(' · '+st.geo):''))+'"></span>';
     }
-    var sel=(YG.panelDate===iso)||(YG.rangeStart===iso);
-    cells+='<button type="button" class="yg-cell'+(we?' we':'')+(isToday?' today':'')+(sel?' sel':'')+(st?' has':'')+sep+'" data-ygday="'+iso+'">'
+    var sel=!!(YG.selectedDays&&YG.selectedDays[iso]);
+    cells+='<button type="button" class="yg-cell'+(we?' we':'')+(isToday?' today':'')+(sel?' sel':'')+(st?' has':'')+sep+'" data-ygday="'+iso+'" title="Click to select · click again to clear">'
       +'<span class="yg-d">'+dayNum+'</span><span class="yg-bars">'+bar+'</span></button>';
   }
   return '<div class="yg-month" data-ygmonth="'+month+'" style="--yg-cols:'+cols+'">'
@@ -502,7 +555,7 @@ function ygKeyEventsForMonth(month, byAct, byAvail){
     (byAvail[iso]||[]).forEach(function(r){
       if(r.source!=='trip' && r.source!=='event') return;
       if(r.status!=='TR' && r.status!=='TS' && r.status!=='CE' && r.status!=='HO') return;
-      var title=r.title || (r.geo?(r.status+' · '+r.geo):ygAvailCat(r.status).label);
+      var title=r.booked?'I will be away':(r.title || (r.geo?(r.status+' · '+r.geo):ygAvailCat(r.status).label));
       var id='av|'+iso+'|'+(r.member?r.member.id:'')+'|'+r.status;
       if(seen[id]) return; seen[id]=1;
       /* collapse consecutive travel into ranges later */
@@ -533,68 +586,104 @@ function ygKeyEventsForMonth(month, byAct, byAvail){
   }).slice(0,6);
 }
 
-function ygMonthlyHTML(byAct, byAvail){
-  var cards='';
-  for(var m=0;m<12;m++){
-    var focus=ygFocusFor(m);
-    var events=ygKeyEventsForMonth(m, byAct, byAvail);
-    var evHtml=events.length
-      ? events.map(function(e){
-          return '<div class="yg-mev"><i style="background:'+e.color+'"></i><button type="button" class="yg-mev-l" data-ygiso="'+esc(e.iso)+'">'+esc(e.label)+'</button></div>';
-        }).join('')
-      : '<div class="yg-mempty">No key events planned</div>';
-    cards+='<div class="yg-mcard" data-ygm="'+m+'">'
-      +'<div class="yg-mh"><span>'+YG_MONTHS[m].toUpperCase()+'</span>'
-      +(ygCanAdmin()?'<button type="button" class="yg-medit" data-ygfocus="'+m+'" title="Edit monthly focus">✎</button>':'')
-      +'</div>'
-      +'<div class="yg-mflab">Monthly focus</div>'
-      +(focus&&focus.title
-        ? '<div class="yg-mfocus">'+esc(focus.title)+'</div>'+(focus.notes?('<div class="yg-mnotes">'+esc(focus.notes)+'</div>'):'')
-        : (ygCanAdmin()
-          ? '<button type="button" class="yg-mset" data-ygfocus="'+m+'">+ Set monthly focus</button>'
-          : '<div class="yg-mempty">Set monthly focus</div>'))
-      +'<div class="yg-mdiv"></div>'
-      +'<div class="yg-mevs">'+evHtml+'</div>'
-      +'<button type="button" class="yg-madd" data-ygaddev="'+m+'">+ Event</button>'
-      +'</div>';
-  }
-  return '<section class="yg-monthly">'
-    +'<div class="yg-monthly-h"><b>Monthly Focus &amp; Events</b><span>'+YG.year+'</span></div>'
-    +'<div class="yg-monthly-grid">'+cards+'</div></section>';
+function ygSelectedIsos(){
+  return Object.keys(YG.selectedDays||{}).filter(function(iso){ return YG.selectedDays[iso]; }).sort();
 }
-
-function ygPanelHTML(iso, byAct, byAvail){
-  if(!iso) return '';
-  var dt=ygParseISO(iso);
-  var title=dt.toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric', year:'numeric'});
-  var wk=null; try{ if(global.dateToWk) wk=global.dateToWk(dt); }catch(e){}
-  var rows=byAvail[iso]||[];
-  var acts=byAct[iso]||[];
-  var body='';
-  if(rows.length){
-    body+=rows.map(function(r){
+function ygPanelHTML(byAct, byAvail){
+  var isos=ygSelectedIsos();
+  if(!isos.length) return '';
+  var title;
+  if(isos.length===1){
+    var dt0=ygParseISO(isos[0]);
+    title=dt0.toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  } else {
+    var a=ygParseISO(isos[0]), b=ygParseISO(isos[isos.length-1]);
+    title=isos.length+' days selected · '
+      +a.toLocaleDateString('en-US',{month:'short', day:'numeric'})
+      +' – '
+      +b.toLocaleDateString('en-US',{month:'short', day:'numeric', year:'numeric'});
+  }
+  var wk=null;
+  try{ if(global.dateToWk) wk=global.dateToWk(ygParseISO(isos[0])); }catch(e){}
+  /* Aggregate who is where across selected days */
+  var byPerson={};
+  isos.forEach(function(iso){
+    (byAvail[iso]||[]).forEach(function(r){
+      var mid=(r.member&&r.member.id)||'_team';
+      var entry=byPerson[mid]||{member:r.member, statuses:{}, geos:{}, days:0, booked:false, tentative:false};
+      entry.days++;
       var cat=ygAvailCat(r.status);
-      var m=r.member||{};
+      var lbl=r.booked?'I will be away':(r.title||cat.label);
+      entry.statuses[lbl]=(entry.statuses[lbl]||0)+1;
+      if(r.geo) entry.geos[r.geo]=(entry.geos[r.geo]||0)+1;
+      if(r.booked) entry.booked=true;
+      if(r.tentative) entry.tentative=true;
+      entry._status=r.status;
+      byPerson[mid]=entry;
+    });
+    (byAct[iso]||[]).forEach(function(e){
+      if(!e.member) return;
+      var mid=e.member.id;
+      var entry=byPerson[mid]||{member:e.member, statuses:{}, geos:{}, days:0, acts:[]};
+      entry.acts=entry.acts||[];
+      if(entry.acts.length<6) entry.acts.push({title:e.title, iso:iso, time:e.time, place:e.place||e.geo});
+      if(e.geo||e.place){ var g=e.geo||e.place; entry.geos[g]=(entry.geos[g]||0)+1; }
+      byPerson[mid]=entry;
+    });
+  });
+  var people=Object.keys(byPerson).map(function(id){ return byPerson[id]; });
+  people.sort(function(a,b){ return String((a.member&&a.member.name)||'').localeCompare(String((b.member&&b.member.name)||'')); });
+  var body='';
+  /* Day-by-day where strip when more than one day is highlighted */
+  if(isos.length>1){
+    body+='<div class="yg-daystrip">';
+    isos.forEach(function(iso){
+      var dt=ygParseISO(iso);
+      var places=[];
+      (byAvail[iso]||[]).forEach(function(r){
+        var who=(r.member&&r.member.name)?r.member.name.split(' ')[0]:'';
+        var where=r.geo||(r.booked?'Away':ygAvailCat(r.status).label);
+        places.push((who?who+' · ':'')+where);
+      });
+      if(!places.length){
+        (byAct[iso]||[]).slice(0,2).forEach(function(e){
+          places.push((e.member?e.member.name.split(' ')[0]+' · ':'')+(e.place||e.geo||e.title));
+        });
+      }
+      body+='<div class="yg-dchip"><b>'+dt.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'})+'</b>'
+        +'<span>'+esc(places.slice(0,3).join(' · ')||'Not planned')+'</span></div>';
+    });
+    body+='</div>';
+  }
+  if(people.length){
+    body+=people.map(function(p){
+      var cat=ygAvailCat(p._status||'TR');
+      var where=Object.keys(p.geos||{}).sort(function(a,b){ return (p.geos[b]-p.geos[a]); }).slice(0,3);
+      var statusBits=Object.keys(p.statuses||{});
+      var m=p.member||{};
+      var sub=[statusBits[0]||cat.label].concat(where).filter(Boolean).join(' · ');
+      if(p.booked) sub+=' · Booked';
+      else if(p.tentative) sub+=' · Tentative';
+      if(p.days>1) sub+=' · '+p.days+' days';
+      var acts=(p.acts||[]).slice(0,3).map(function(a){
+        return '<div class="yg-ps">'+esc(a.title)+(a.place?(' · '+esc(a.place)):'')+'</div>';
+      }).join('');
       return '<div class="yg-pline"><span class="yg-pcat" style="background:'+cat.color+'">'+esc(cat.abbr)+'</span>'
         +'<div class="yg-pmain"><div class="yg-pt">'+esc(m.name||'Team')+(m.role?(' · '+esc(m.role)):'')+'</div>'
-        +'<div class="yg-ps">'+esc(cat.label)+(r.geo?(' · '+esc(r.geo)):'')+(r.tentative?' · Tentative':'')+'</div></div></div>';
+        +'<div class="yg-ps">'+esc(sub)+'</div>'+acts+'</div></div>';
     }).join('');
+  } else {
+    body+='<div class="yg-empty">Nobody planned on the selected day'+(isos.length>1?'s':'')+'.</div>';
   }
-  if(acts.length){
-    body+=acts.slice(0,8).map(function(e){
-      return '<div class="yg-pline"><span class="yg-pcat" style="background:#6b7280">•</span>'
-        +'<div class="yg-pmain"><div class="yg-pt">'+esc(e.title)+'</div>'
-        +'<div class="yg-ps">'+(e.member?esc(e.member.name):esc(e.terr||''))+(e.time?(' · '+(global.t12s?global.t12s(e.time):e.time)):'')+'</div></div></div>';
-    }).join('');
-  }
-  if(!body) body='<div class="yg-empty">Not yet planned.</div>';
   return '<div class="yg-panel" id="ygPanel">'
-    +'<div class="yg-ph"><div><b>'+esc(title)+'</b></div><button type="button" class="kbb" id="ygPanelClose">×</button></div>'
+    +'<div class="yg-ph"><div><b>'+esc(title)+'</b>'
+    +'<div class="yg-ps">Who is where — click days on the calendar to add or remove</div></div>'
+    +'<button type="button" class="kbb" id="ygPanelClose" title="Clear selection">×</button></div>'
     +'<div class="yg-pb">'+body+'</div>'
     +'<div class="yg-pf">'
-    +'<button type="button" class="kbb" id="ygPlanDay">+ Event</button>'
+    +'<button type="button" class="kbb" id="ygClearDays">Clear days</button>'
+    +(isos.length===1?'<button type="button" class="kbb" id="ygPlanDay">+ Event</button>':'')
     +(wk!=null?('<button type="button" class="kbb primary" id="ygOpenWeek" data-wk="'+wk+'">Open Weekly Planner</button>'):'')
-    +'<button type="button" class="kbb" id="ygPanelClose2">Close</button>'
     +'</div></div>';
 }
 
@@ -613,8 +702,7 @@ function ygRender(){
     +'<div class="yg-board">'+ygHeadHTML(cols)+months+'</div>'
     +ygKeyHTML()
     +'</div>'
-    +ygMonthlyHTML(byAct, byAvail)
-    +(YG.panelDate?ygPanelHTML(YG.panelDate, byAct, byAvail):'')
+    +ygPanelHTML(byAct, byAvail)
     +'</div>';
   host.classList.add('is-on');
   host.style.display='block';
@@ -675,34 +763,36 @@ function ygWire(host, byAct, byAvail){
     b.onclick=function(e){
       var iso=b.dataset.ygday;
       if(e.shiftKey && YG.rangeStart){
-        ygOpenEventModal(YG.rangeStart, iso);
-        YG.rangeStart=null;
+        /* Shift+click fills inclusive range into the selection */
+        var a=YG.rangeStart, bIso=iso;
+        if(a>bIso){ var t=a; a=bIso; bIso=t; }
+        var cur=ygParseISO(a), end=ygParseISO(bIso);
+        for(var d=new Date(cur); d<=end; d.setDate(d.getDate()+1)){
+          YG.selectedDays[ygISO(d)]=true;
+        }
+        YG.rangeStart=iso;
+        ygRender();
         return;
       }
-      YG.panelDate=iso;
+      if(YG.selectedDays[iso]) delete YG.selectedDays[iso];
+      else YG.selectedDays[iso]=true;
       YG.rangeStart=iso;
+      YG.panelDate=iso;
       ygRender();
     };
   });
-  var pc=host.querySelector('#ygPanelClose'); if(pc) pc.onclick=function(){ YG.panelDate=null; ygRender(); };
-  var pc2=host.querySelector('#ygPanelClose2'); if(pc2) pc2.onclick=function(){ YG.panelDate=null; ygRender(); };
-  var planDay=host.querySelector('#ygPlanDay'); if(planDay) planDay.onclick=function(){ ygOpenEventModal(YG.panelDate, YG.panelDate); };
+  function ygClearSelection(){ YG.selectedDays={}; YG.panelDate=null; YG.rangeStart=null; ygRender(); }
+  var pc=host.querySelector('#ygPanelClose'); if(pc) pc.onclick=ygClearSelection;
+  var clr=host.querySelector('#ygClearDays'); if(clr) clr.onclick=ygClearSelection;
+  var planDay=host.querySelector('#ygPlanDay');
+  if(planDay) planDay.onclick=function(){
+    var isos=ygSelectedIsos();
+    if(isos.length) ygOpenEventModal(isos[0], isos[0]);
+  };
   var ow=host.querySelector('#ygOpenWeek');
   if(ow) ow.onclick=function(){ ygOpenWeekly(parseInt(ow.dataset.wk,10)); };
-  var add=host.querySelector('#ygAddEvent'); if(add) add.onclick=function(){ ygOpenEventModal(YG.panelDate, YG.panelDate); };
+  var add=host.querySelector('#ygAddEvent'); if(add) add.onclick=function(){ var isos=ygSelectedIsos(); ygOpenEventModal(isos[0]||null, isos[0]||null); };
   var mc=host.querySelector('#ygManageCats'); if(mc) mc.onclick=function(){ ygOpenManageCats(); };
-  host.querySelectorAll('[data-ygfocus]').forEach(function(b){
-    b.onclick=function(){ ygEditFocus(parseInt(b.dataset.ygfocus,10)); };
-  });
-  host.querySelectorAll('[data-ygaddev]').forEach(function(b){
-    b.onclick=function(){
-      var m=parseInt(b.dataset.ygaddev,10);
-      ygOpenEventModal(ygISO(ygDate(YG.year,m,1)), ygISO(ygDate(YG.year,m,1)));
-    };
-  });
-  host.querySelectorAll('[data-ygiso]').forEach(function(b){
-    b.onclick=function(){ YG.panelDate=b.dataset.ygiso; ygRender(); };
-  });
   document.addEventListener('click', function hideMenu(ev){
     if(!host.contains(ev.target)) return;
     var menu=host.querySelector('#ygTeamMenu');
@@ -893,17 +983,6 @@ function ygExportPdf(){
   var w=window.open('','_blank'); if(!w){ alert('Allow pop-ups'); return; }
   var monthsHtml=ygHeadHTML(cols);
   for(var m=0;m<12;m++) monthsHtml+=ygMonthRowHTML(m, byAvail, cols);
-  var focusHtml='';
-  for(var i=0;i<12;i++){
-    var f=ygFocusFor(i);
-    var ev=ygKeyEventsForMonth(i, byAct, byAvail);
-    focusHtml+='<div style="break-inside:avoid;margin:0 0 8px;padding:6px;border:1px solid #e5e7eb">'
-      +'<b>'+YG_MONTHS[i]+'</b><div style="font-size:10px;color:#6b7280">Monthly focus</div>'
-      +'<div>'+(f&&f.title?esc(f.title):'—')+'</div>'
-      +'<ul style="margin:4px 0 0;padding-left:14px;font-size:10px">'
-      +(ev.length?ev.map(function(e){return '<li>'+esc(e.label)+'</li>';}).join(''):'<li>No key events planned</li>')
-      +'</ul></div>';
-  }
   w.document.write('<html><head><title>Arrowquip Year '+YG.year+'</title><style>'
     +'body{font-family:Arial,sans-serif;font-size:8px;margin:8px;color:#111}'
     +'h1{font-size:14px;margin:0 0 8px}.yg-month,.yg-head{display:grid;grid-template-columns:36px repeat('+cols+',minmax(10px,1fr));gap:1px}'
@@ -911,8 +990,7 @@ function ygExportPdf(){
     +'.yg-cell.na{border:0;background:transparent}.yg-bar{display:block;height:4px;margin-top:2px}'
     +'.yg-d{font-size:6px}.yg-mlbl{font-weight:700}@page{size:landscape;margin:6mm}</style></head><body>'
     +'<h1>ARROWQUIP TRAVEL — Year at a Glance '+YG.year+(ygTerr()!=='All'?' · '+esc(ygTerr()):'')+'</h1>'
-    +monthsHtml+'<h2 style="font-size:12px;margin:12px 0 6px">Monthly Focus &amp; Events</h2>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+focusHtml+'</div>'
+    +monthsHtml
     +'<div style="margin-top:8px;color:#666">Generated '+new Date().toLocaleString()+'</div>'
     +'<script>setTimeout(function(){window.print();},300)<\\/script></body></html>');
   w.document.close();

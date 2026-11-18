@@ -421,4 +421,68 @@ async function getDealerById(id) {
   return dealers.find((d) => d.sfAccountId === id || d.id === id) || null
 }
 
-module.exports = { getDealers, getDealerById, auditRecordTypes, auditSync, CACHE_TTL_MS }
+/**
+ * Read-only Salesforce Lead search for Cindel’s new-dealer pipeline.
+ * Filters to open (unconverted) leads. Used by trip “Pipeline” search —
+ * ISS still owns Lead → Account conversion.
+ */
+function escapeSoql(s) {
+  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+}
+
+async function searchLeads({ q = '', limit = 25, states = [] } = {}) {
+  const query = String(q || '').trim()
+  const stateList = (Array.isArray(states) ? states : String(states || '').split(','))
+    .map((s) => String(s || '').trim().toUpperCase())
+    .filter((s) => /^[A-Z]{2}$/.test(s))
+    .slice(0, 20)
+  /* Empty q is allowed when listing recent open leads (map layer) or filtering by state. */
+  if (query.length === 1) return { leads: [], meta: { source: 'salesforce', count: 0, q: query } }
+  const { accessToken, instanceUrl } = await authenticate()
+  const base = `${instanceUrl}/services/data/${apiVersion()}`
+  const clauses = ['IsConverted = false', 'IsDeleted = false']
+  if (query.length >= 2) {
+    const like = `%${escapeSoql(query)}%`
+    clauses.push(
+      `(Company LIKE '${like}' OR City LIKE '${like}' OR State LIKE '${like}' OR ` +
+      `FirstName LIKE '${like}' OR LastName LIKE '${like}' OR Email LIKE '${like}')`
+    )
+  }
+  if (stateList.length) {
+    clauses.push(`State IN (${stateList.map((s) => `'${escapeSoql(s)}'`).join(',')})`)
+  }
+  const lim = Math.min(100, Math.max(1, +limit || 25))
+  const soql =
+    `SELECT Id, Company, FirstName, LastName, Street, City, State, PostalCode, ` +
+    `Phone, Email, Status, LeadSource, Owner.Name, CreatedDate ` +
+    `FROM Lead WHERE ${clauses.join(' AND ')} ` +
+    `ORDER BY CreatedDate DESC LIMIT ${lim}`
+  const records = await queryAll(base, instanceUrl, accessToken, soql)
+  const leads = records.map((r) => {
+    const contact = [r.FirstName, r.LastName].filter(Boolean).join(' ').trim()
+    const address = [r.Street, r.City, r.State, r.PostalCode].filter(Boolean).join(', ')
+    return {
+      id: r.Id,
+      sfLeadId: r.Id,
+      name: r.Company || contact || 'Lead',
+      contactName: contact,
+      city: r.City || '',
+      state: r.State || '',
+      loc: r.State || '',
+      address,
+      phone: r.Phone || '',
+      email: r.Email || '',
+      status: r.Status || '',
+      leadSource: r.LeadSource || '',
+      owner: (r.Owner && r.Owner.Name) || '',
+      _pipeline: true,
+      _prospect: true,
+    }
+  })
+  return {
+    leads,
+    meta: { source: 'salesforce', count: leads.length, q: query, states: stateList },
+  }
+}
+
+module.exports = { getDealers, getDealerById, searchLeads, auditRecordTypes, auditSync, CACHE_TTL_MS }
