@@ -1721,6 +1721,12 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 .trip-rep-banner.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
 .trip-rep-banner.ok b{color:#14532d;}
 .sb-check.radio .box{border-radius:50%;}
+.kcc-noloc,.kc-noloc{appearance:none;flex:0 0 auto;border:1px solid #f59e0b;background:#fffbeb;color:#b45309;border-radius:4px;font:700 9px Frutiger,'Open Sans',Arial,sans-serif;letter-spacing:.02em;padding:3px 7px;cursor:pointer;white-space:nowrap;}
+.kcc-noloc:hover,.kc-noloc:hover{border-color:#d97706;color:#92400e;}
+.kcard.kccompact.no-loc,.kcard.vc.no-loc{border-color:#f59e0b;box-shadow:inset 3px 0 0 #f59e0b;}
+.map-missing{position:absolute;left:10px;right:10px;bottom:10px;z-index:500;background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:8px 10px;font:600 11.5px Frutiger,'Open Sans',Arial,sans-serif;color:#92400e;box-shadow:0 4px 14px rgba(0,0,0,.12);}
+.map-missing button{appearance:none;margin-left:6px;border:1px solid #f59e0b;background:#fff;border-radius:4px;padding:2px 7px;font:700 10.5px Frutiger,'Open Sans',Arial,sans-serif;color:#b45309;cursor:pointer;}
+.map-missing button:hover{border-color:#d97706;}
 .sched-warn{flex:0 0 auto;color:#dc2626;font-size:11px;font-weight:700;line-height:1;cursor:help;padding:0 2px;}
 .trip-status{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;margin-right:8px;white-space:nowrap;}
 .trip-status.ready{color:#b45309;}
@@ -3820,8 +3826,87 @@ function makeProspect(o){
 function addProspect(o,cb){
   var p=makeProspect(o);
   var finish=function(){ PROSPECTS.push(p); invalidateUniverse(); reindex(); savePlan(); cb&&cb(p); };
-  if((p.lat==null||p.lon==null) && p.address){ geocodeAddress(p.address,function(g){ if(g&&g.lat!=null){ p.lat=g.lat; p.lon=g.lon; if(g.state)p.loc=g.state; } finish(); }); }
-  else finish();
+  var q=[p.address, p.city, p.loc, p.name].filter(Boolean).join(', ');
+  if((p.lat==null||p.lon==null) && q){
+    geocodeAddress(q,function(g){
+      if(g&&g.lat!=null){ p.lat=g.lat; p.lon=g.lon; if(g.state)p.loc=g.state; }
+      finish();
+    });
+  } else finish();
+}
+function dealerLocated(d){
+  if(!d) return false;
+  var m=(typeof sfMasterMerge==='function')?sfMasterMerge(d):d;
+  return m&&m.lat!=null&&m.lon!=null&&isFinite(m.lat)&&isFinite(m.lon);
+}
+function dealerLocateQuery(d){
+  if(!d) return '';
+  return [d.address, d.city, d.loc||d.state, d.name, 'USA'].filter(Boolean).join(', ');
+}
+/* Auto-pin prospects / dealers missing coordinates so they appear on the map. */
+var _autoLocTried={};
+function ensureDealerOnMap(d, done){
+  if(!d||dealerLocated(d)){ if(done) done(true); return; }
+  if(_autoLocTried[d.id]){ if(done) done(false); return; }
+  _autoLocTried[d.id]=1;
+  var q=dealerLocateQuery(d);
+  if(!q){ if(done) done(false); return; }
+  geocodeQueue(q, function(g){
+    if(!g||g.lat==null||g.lon==null){ if(done) done(false); return; }
+    try{
+      if(d._prospect){
+        d.lat=+g.lat; d.lon=+g.lon;
+        if(g.state&&!d.loc) d.loc=g.state;
+        if(g.city&&!d.city) d.city=g.city;
+      } else {
+        CONFLOC[d.id]={
+          address:d.address||q, lat:+g.lat, lon:+g.lon,
+          confirmed:false, by:'auto-map', at:new Date().toISOString()
+        };
+      }
+      invalidateUniverse(); reindex();
+      try{ savePlan(); }catch(e){}
+      if(done) done(true);
+    }catch(e){ if(done) done(false); }
+  });
+}
+function weekUnlocatedStops(t,wk){
+  var missing=[];
+  try{
+    itineraryFor(t,wk).forEach(function(s){
+      if(!s||(s.raw&&s.raw.virtual)) return;
+      if(s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon)) return;
+      if(s.kind==='dealer'){
+        missing.push({kind:'dealer', id:s.id, name:s.name||'Stop', dealerId:s.id});
+      } else if(s.kind==='xvisit'){
+        var xid=String(s.id).replace(/^xv:/,'');
+        var xv=null; for(var i=0;i<(XVISITS||[]).length;i++) if(XVISITS[i].id===xid){ xv=XVISITS[i]; break; }
+        missing.push({kind:'xvisit', id:s.id, name:s.name||'Stop', dealerId:xv?xv.dealer:null});
+      } else if(s.kind==='travel'){
+        missing.push({kind:'travel', id:s.id, name:s.name||'Travel'});
+      }
+    });
+  }catch(e){}
+  return missing;
+}
+function autoLocateWeekStops(t,wk){
+  var missing=weekUnlocatedStops(t,wk);
+  if(!missing.length) return;
+  var pending=0, found=0;
+  missing.forEach(function(m){
+    if(m.kind==='travel') return;
+    var d=byId[m.dealerId]||uniById(m.dealerId)||(m.kind==='dealer'?byId[m.id]:null);
+    if(!d) return;
+    pending++;
+    ensureDealerOnMap(d, function(ok){
+      if(ok) found++;
+      pending--;
+      if(pending<=0 && found){
+        try{ tlInvalidate(); refreshPlanner({skipMap:false}); }catch(e){}
+        if(typeof aqToast==='function') aqToast(found===1?(missing[0].name+' pinned on map'):(found+' stops pinned on map'));
+      }
+    });
+  });
 }
 /* Location review tool (#6): view current + Salesforce address, edit the physical
    address, search for coordinates, confirm, or reset to the Salesforce address. */
@@ -7512,14 +7597,17 @@ function dvCard(v,tl){
       ?(tl.brokenDrive?'Too far after confirmed appointment — needs flight or hotel'
         :(tl.lateMin?('Can\'t make this after confirmed stop — ~'+fmtDur(tl.lateMin)+' late'):'Doesn\'t work after confirmed appointment'))
       :(cinfoD&&cinfoD.reason?cinfoD.reason:'Click to edit details');
-    return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
-      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+esc(breakTitle)+'">'
+    var hasLoc=dealerLocated(v.dealer);
+    var locBtn=hasLoc?'':('<button type="button" class="kcc-noloc" data-vlocate="'+(v.dealer?esc(v.dealer.id):'')+'" title="Not on the map — set a location">Locate</button>');
+    return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+(hasLoc?'':' no-loc')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
+      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+(hasLoc?esc(breakTitle):'Not on the map — needs a location')+'">'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
         +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
         +'<span class="kcc-time">'+timeRange+'</span>'
         +((cinfoD&&cinfoD.conflict)||(tl&&tl.afterConf)?'<span class="sched-warn" title="'+esc(breakTitle)+'">⚠</span>':'')
       +'</button>'
+      +locBtn
       +'<button type="button" class="kcc-conf '+confCls+'" data-vconf="'+v.ref+'" title="'+esc(confTitle)+'">'+esc(confLbl)+'</button>'
       +'<button type="button" class="kcc-caretbtn" data-dvexpand="'+v.ref+'" title="Expand">▾</button>'
       +'<button class="cx kcc-del" data-vdel="'+v.ref+'" title="Remove">✕</button>'
@@ -7551,12 +7639,14 @@ function dvCard(v,tl){
   var lateTitle=(tl&&tl.afterConf)
     ?(' title="'+(tl.brokenDrive?'Too far after confirmed appointment':(tl.lateMin?('Can\'t make this after confirmed stop — ~'+fmtDur(tl.lateMin)+' late'):'Doesn\'t work after confirmed appointment'))+'"')
     :((cinfoE&&cinfoE.reason)?(' title="'+esc(cinfoE.reason)+'"'):((tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):''));
-  return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
+  var hasLocE=dealerLocated(v.dealer);
+  return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+(hasLocE?'':' no-loc')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
       +(al?('<span class="attag" title="'+esc(al)+'">'+esc(al)+'</span>'):'')
       +(cinfoE&&cinfoE.conflict?'<span class="sched-warn" title="'+esc(cinfoE.reason)+'">⚠</span>':'')
       +'<button class="tv-collapse" data-dvexpand="'+v.ref+'" title="Collapse">▾</button>'
+      +(hasLocE?'':('<button type="button" class="kc-noloc" data-vlocate="'+(v.dealer?esc(v.dealer.id):'')+'" title="Not on the map — set a location">Locate on map</button>'))
       +'<button class="vok'+(v.done?' on':'')+'" data-vconf="'+v.ref+'" title="'+(v.apptStatus==='completed'?'Completed — click to change':(v.done?(v.needsReconfirm?'Reconfirm with dealer':'Dealer confirmed — click to mark completed'):'Mark dealer confirmed'))+'"><span class="vokdot">'+(v.done?'✓':'')+'</span>'+(v.apptStatus==='completed'?'Done':(v.needsReconfirm?'Reconf.':(v.done?'Conf.':'Confirm')))+'</button>'
       +'<button class="cx vdel" data-vdel="'+v.ref+'" title="Remove this card — the dealer stays in the library">✕</button>'
     +'</div>'
@@ -7564,6 +7654,7 @@ function dvCard(v,tl){
       +(function(){ var d=v.dealer; if(!d) return ''; var t=prospectTypeLabel(d);
         if(!t||t==='Current Dealer') return ''; return ' <span class="ptbadge pt-'+(d._prospect?d.ptype2:'current')+'">'+esc(t)+'</span>'; })()
     +'</div>'
+    +(hasLocE?'':('<div class="legrow warn" style="margin-top:6px"><span class="ltxt">Not on the map — add an address so this stop can route</span></div>'))
     +ctl+frame
     +'</div>';
 }
@@ -10973,6 +11064,23 @@ function drawWeekRoute(t,wk){
     var maxZ=(MAP_SHOW_POOL||MAP_SHOW_AIR||MAP_SHOW_PIPE)?9:((bounds.length<=1)?10:11);
     _wkMap.fitBounds(L.latLngBounds(bounds).pad(0.22),{maxZoom:maxZ});
   } else _wkMap.setView([43.5,-95],4);
+  /* Call out stops on the itinerary that have no pin (e.g. Potential Dealer without coords) */
+  try{
+    var miss=weekUnlocatedStops(t,wk);
+    var slot=document.getElementById('tripsMapSlot');
+    var old=slot&&slot.querySelector('.map-missing'); if(old) old.remove();
+    if(miss.length&&slot){
+      var box=document.createElement('div'); box.className='map-missing';
+      box.innerHTML=(miss.length===1
+        ?('<b>'+esc(miss[0].name)+'</b> is on the trip but not on the map — no location yet')
+        :(miss.length+' stops are on the trip but not on the map'))
+        +miss.slice(0,3).map(function(m){
+          if(!m.dealerId) return '';
+          return ' <button type="button" data-vlocate="'+esc(m.dealerId)+'">Locate '+esc(m.name)+'</button>';
+        }).join('');
+      slot.appendChild(box);
+    }
+  }catch(e){}
   setTimeout(function(){ if(_wkMap&&_wkMap._aqGen===gen) _wkMap.invalidateSize(); },60);
 }
 /* Move the single map element into the week that currently hosts it and redraw.
@@ -10993,6 +11101,7 @@ function syncWeekMap(opts){
   drawWeekRoute(terr,host);
   _mapDrawnKey=key;
   mapInvalidateSoon();
+  try{ if(typeof host==='number') autoLocateWeekStops(terr,host); }catch(e){}
 }
 /* ---- Simple Add menu: one entry point for every kind of stop ---- */
 function _closeAddMenu(){ var m=document.getElementById('addMenuPop'); if(m) m.remove(); document.removeEventListener('click',_closeAddMenu,true); }
@@ -12841,6 +12950,20 @@ function wireDnD(){
   /* Dealer appointment status: Planned → Dealer confirmed → Completed (one click each). */
   document.querySelectorAll('[data-vconf]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
     toggleVisitConf(b.dataset.vconf);
+  }));
+  /* Locate missing map pins (Potential Dealers without coordinates) */
+  document.querySelectorAll('[data-vlocate]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation(); e.preventDefault();
+    var id=b.dataset.vlocate; if(!id) return;
+    var d=byId[id]||uniById(id);
+    if(!d){ aqToast('Account not found', false); return; }
+    b.disabled=true; b.textContent='Locating…';
+    ensureDealerOnMap(d, function(ok){
+      if(ok){ aqToast(d.name+' pinned on map'); refreshPlanner({skipMap:false}); return; }
+      b.disabled=false; b.textContent='Locate';
+      if(typeof aqLocationReview==='function') aqLocationReview(id);
+      else aqToast('Couldn’t find a location — add an address', false);
+    });
   }));
   /* delete: lightweight second-click confirmation + a 10s Undo toast */
   document.querySelectorAll('[data-vdel]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
