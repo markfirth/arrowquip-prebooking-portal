@@ -1706,9 +1706,21 @@ body.placing #weeks [data-drop].placetgt:hover,body.placing #weeks [data-drop].p
 /* an appointment the chain can't reach in time: a quiet red fade on the card */
 .kcard.tl-late,.tvcard.tl-late{background:#fdf0f0;border-color:#f3c1c1;box-shadow:inset 3px 0 0 #dc8a8a;opacity:.92;}
 .tl-late input:disabled{color:#6b7280;}
+/* After a Confirmed stop, later stops that cannot work go clearly red */
+.kcard.tl-after-conf,.tvcard.tl-after-conf,.kcard.kccompact.tl-after-conf{
+  background:#fef2f2;border-color:#ef4444;box-shadow:inset 3px 0 0 #dc2626;
+}
 .kcard.sched-conflict,.tvcard.sched-conflict,.kcard.kccompact.sched-conflict,.tvcard.tvcompact.sched-conflict{
   border-color:#ef4444;box-shadow:inset 2px 0 0 #ef4444;
 }
+.trip-rep-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin:0 0 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;font-size:12.5px;color:#9a3412;}
+.trip-rep-banner b{color:#7c2d12;}
+.trip-rep-banner .trip-rep-pick{display:inline-flex;flex-wrap:wrap;gap:6px;}
+.trip-rep-banner .trip-rep-pick button{appearance:none;border:1px solid #fdba74;background:#fff;border-radius:5px;padding:5px 10px;font:600 11.5px Frutiger,'Open Sans',Arial,sans-serif;color:#9a3412;cursor:pointer;}
+.trip-rep-banner .trip-rep-pick button:hover{border-color:#c2410c;color:#c2410c;}
+.trip-rep-banner.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
+.trip-rep-banner.ok b{color:#14532d;}
+.sb-check.radio .box{border-radius:50%;}
 .sched-warn{flex:0 0 auto;color:#dc2626;font-size:11px;font-weight:700;line-height:1;cursor:help;padding:0 2px;}
 .trip-status{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;margin-right:8px;white-space:nowrap;}
 .trip-status.ready{color:#b45309;}
@@ -3361,13 +3373,41 @@ function tlDriveSync(a,b){
   var mi=roadMi([+a.lat,+a.lon],[+b.lat,+b.lon])||0;
   return {min:Math.max(1,Math.round(mi/55*60)),km:mi*1.60934,est:true};
 }
+/* Resolve arrival/departure airport coords for a flight stop (dep+arr). */
+function flightPairAirports(it){
+  if(!it) return null;
+  var ty=travelType(it);
+  if(ty!=='flight_in'&&ty!=='flight_out'&&ty!=='flight_stop') return null;
+  var depCode=it.depAirport||(ty==='flight_out'?it.airportCode:null)||'';
+  var arrCode=it.arrAirport||(ty==='flight_in'?it.airportCode:null)||'';
+  if(!depCode||!arrCode||String(depCode).toUpperCase()===String(arrCode).toUpperCase()) return null;
+  var dep=airportByCode(depCode), arr=airportByCode(arrCode);
+  if(!dep||!arr||dep.lat==null||arr.lat==null) return null;
+  return {dep:dep, arr:arr, depCode:String(depCode).toUpperCase(), arrCode:String(arrCode).toUpperCase()};
+}
+function flyMinsKm(lat1,lon1,lat2,lon2){
+  var gk=(hav([+lat1,+lon1],[+lat2,+lon2])||0)*1.60934;
+  return {kind:'fly',min:Math.round(gk/750*60+30),km:gk,est:false};
+}
 /* travel between two consecutive stops */
 function tlTravel(a,b){
   var d=hav([+a.lat,+a.lon],[+b.lat,+b.lon]);
   if(sameSpot(a,b)) return {kind:'same',min:0,km:0,est:false};
   if(a.ty==='airport'&&b.ty==='airport'){
-    var gk=(d||0)*1.60934;
-    return {kind:'fly',min:Math.round(gk/750*60+30),km:gk,est:false};
+    return flyMinsKm(a.lat,a.lon,b.lat,b.lon);
+  }
+  /* Flight with both airports: don't route the air leg as a road drive. */
+  var pairA=a.it?flightPairAirports(a.it):(a.raw?flightPairAirports(a.raw):null);
+  if(pairA){
+    var flyA=flyMinsKm(pairA.dep.lat,pairA.dep.lon,pairA.arr.lat,pairA.arr.lon);
+    var groundA=tlDriveSync({lat:pairA.arr.lat,lon:pairA.arr.lon}, b);
+    return {kind:'fly',min:flyA.min+groundA.min,km:groundA.km,est:groundA.est,flyThenDrive:true};
+  }
+  var pairB=b.it?flightPairAirports(b.it):(b.raw?flightPairAirports(b.raw):null);
+  if(pairB){
+    var groundB=tlDriveSync(a,{lat:pairB.dep.lat,lon:pairB.dep.lon});
+    var flyB=flyMinsKm(pairB.dep.lat,pairB.dep.lon,pairB.arr.lat,pairB.arr.lon);
+    return {kind:'fly',min:groundB.min+flyB.min,km:groundB.km,est:groundB.est,driveThenFly:true};
   }
   var r=tlDriveSync(a,b);
   return {kind:'drive',min:r.min,km:r.km,est:r.est};
@@ -3470,7 +3510,8 @@ function tlCompute(t,wk){
   /* forward pass. Only a FIXED time (manual lock, confirmed appointment,
      flight) holds its ground; every other time — typed or not — follows the
      chain and updates automatically. */
-  var cursor=null;
+  var cursor=null, seenConf=false;
+  var maxDriveMin=((settingsFor(t).maxDrive||3))*60;
   seq.forEach(function(s,idx){
     var trav=idx>0?seq[idx-1].tnext:null;
     s.estArr=(cursor!=null&&trav)?cursor+trav.min:null;   /* when the chain physically gets here */
@@ -3480,12 +3521,27 @@ function tlCompute(t,wk){
       if(s.estArr!=null&&s.ty0!=='hotel'&&wk!==31&&s.estArr>s.startMin+2){ s.lateMin=s.estArr-s.startMin; conflicts.push(s); }
       cursor=tlEnd(s);
     } else if(s.estArr!=null){
-      s.sug=s.estArr; s.sugSrc='fwd';
-      cursor=(s.ty0==='hotel')?tlEnd(s):(s.sug+(s.dur||0));
+      /* After a Confirmed appointment, a later timed stop that can't be made goes red
+         (do not silently slide it — the confirmed time is the commitment). */
+      if(seenConf && s.anchored && s.ty0!=='hotel' && wk!==31 && s.startMin!=null && s.estArr>s.startMin+2){
+        s.lateMin=s.estArr-s.startMin; s.afterConf=true; conflicts.push(s);
+        cursor=tlEnd(s);
+      } else {
+        s.sug=s.estArr; s.sugSrc='fwd';
+        cursor=(s.ty0==='hotel')?tlEnd(s):(s.sug+(s.dur||0));
+      }
     } else if(s.startMin!=null){
       cursor=tlEnd(s);            /* soft seed: nothing before it, its own time starts the chain */
     } else cursor=(s.ty0==='hotel')?tlEnd(s):null;
+    /* Impossible drive after a confirmed stop → mark the destination broken */
+    if(seenConf && trav && trav.kind==='drive' && !trav.est && trav.min>maxDriveMin
+      && s.ty0!=='hotel' && seq[idx-1] && seq[idx-1].ty0!=='hotel' && wk!==31){
+      s.afterConf=true; s.brokenDrive=true;
+      if(!conflicts.some(function(c){ return c.key===s.key && c.brokenDrive; }))
+        conflicts.push({key:s.key, afterConf:true, brokenDrive:true, reason:'Too far after confirmed appointment — needs flight or hotel'});
+    }
     s.depShow=cursor;
+    if(s.conf) seenConf=true;
   });
   /* backward pass: fixed anchors pull everything unlocked before them */
   for(var k=seq.length-2;k>=0;k--){
@@ -3689,8 +3745,11 @@ function legRowHTML(a,b,wk){
     return '';
   }
   if(t.kind==='fly'){
+    var pair=a.it?flightPairAirports(a.it):(b.it?flightPairAirports(b.it):null);
+    var route=pair?(pair.depCode+' → '+pair.arrCode):((a.code||a.name)+' → '+(b.code||b.name));
+    var ground=(t.flyThenDrive||t.driveThenFly)?(' · + ground '+fmtDur(Math.max(0,(t.min||0)-(pair?flyMinsKm(pair.dep.lat,pair.dep.lon,pair.arr.lat,pair.arr.lon).min:0)))):'';
     return '<div class="legrow fly" title="'+esc(a.name)+' → '+esc(b.name)+'">'
-      +'<span class="ltxt">✈ Flight · '+esc(a.code||a.name)+' → '+esc(b.code||b.name)+' · ~'+fmtDur(t.min)
+      +'<span class="ltxt">✈ Flight · '+esc(route)+' · ~'+fmtDur(t.min)+esc(ground)
       +'</span></div>';
   }
   /* drive: depart → drive time + distance → arrive. An unreachable stop is
@@ -4187,6 +4246,10 @@ function teamRefreshViews(){
   try{ if(terr==='All') renderAllView(); else refreshPlanner(); }catch(e){ try{render();}catch(_){} }
   try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e2){}
 }
+function teamPlanMode(){
+  /* My Trips for a single territory: plan one rep at a time so stops don't mix. */
+  return terr==='East'||terr==='South'||terr==='Central'||terr==='West';
+}
 function teamToggleAll(){
   /* Fully selected → clear everyone. Unchecked or partial → select everyone. */
   if(teamIsAll()){ TEAM_ALL=false; TEAM_IDS={}; }
@@ -4194,8 +4257,25 @@ function teamToggleAll(){
   teamSaveSel();
   teamRefreshViews();
 }
+function teamSelectOnly(id){
+  TEAM_ALL=false; TEAM_IDS={};
+  if(id) TEAM_IDS[id]=true;
+  teamSaveSel();
+  teamRefreshViews();
+}
 function teamToggleMember(id){
   if(!id) return;
+  /* Territory trip planner: picking a name assigns the trip to that rep only. */
+  if(teamPlanMode()){
+    if(!TEAM_ALL && TEAM_IDS[id] && Object.keys(TEAM_IDS).length===1){
+      /* Clicking the active rep again clears — force an explicit re-pick */
+      TEAM_ALL=false; TEAM_IDS={};
+      teamSaveSel(); teamRefreshViews();
+      return;
+    }
+    teamSelectOnly(id);
+    return;
+  }
   var members=teamRoster();
   if(TEAM_ALL){
     /* Uncheck this person only; keep every other member selected. */
@@ -4213,6 +4293,57 @@ function teamToggleMember(id){
   teamSaveSel();
   teamRefreshViews();
 }
+function teamNeedsRepPick(){
+  return teamPlanMode() && teamShowNav() && !teamIsSingle();
+}
+function teamRepBannerHTML(){
+  if(!teamPlanMode()||!teamShowNav()) return '';
+  var one=teamSingleMember();
+  if(one){
+    return '<div class="trip-rep-banner ok" id="tripRepBanner">'
+      +'<span>Planning trip for <b>'+esc(one.name)+'</b> · '+esc(one.role||'')+'</span>'
+      +'<span class="kb-space"></span>'
+      +'<button type="button" class="kbb" data-triprep-clear="1">Change rep</button>'
+      +'</div>';
+  }
+  var members=teamRoster();
+  if(!members.length){
+    return '<div class="trip-rep-banner" id="tripRepBanner"><b>Add a team member</b> in Team before planning this trip.</div>';
+  }
+  return '<div class="trip-rep-banner" id="tripRepBanner">'
+    +'<span><b>Pick the rep first</b> — choose who this trip belongs to so stops don’t mix.</span>'
+    +'<div class="trip-rep-pick">'
+    +members.map(function(m){
+      return '<button type="button" data-triprep="'+esc(m.id)+'">'+esc(m.name)+' · '+esc(m.role||'')+'</button>';
+    }).join('')
+    +'</div></div>';
+}
+function teamEnsureRepBeforeAdd(thenFn){
+  if(!teamNeedsRepPick()){ if(thenFn) thenFn(); return true; }
+  var members=teamRoster();
+  if(!members.length){ aqToast('Add a team member before planning'); return false; }
+  var wrap=document.createElement('div'); wrap.className='modalbg';
+  wrap.innerHTML='<div class="modalbox" style="width:min(400px,94vw)"><div class="mh"><div class="mt">Whose trip is this?</div><button class="mclose" id="trpX">×</button></div>'
+    +'<div style="padding:12px 16px;font-size:13px">'
+    +'<p style="margin:0 0 10px;color:#6b7280;font-size:12px">Pick one rep before adding stops — keeps flights and appointments from mixing between people.</p>'
+    +members.map(function(m){
+      return '<button type="button" class="kbb" data-trp="'+esc(m.id)+'" style="display:block;width:100%;margin:0 0 6px;height:32px;text-align:left">'
+        +esc(m.name)+' · '+esc(m.role)+'</button>';
+    }).join('')
+    +'</div></div>';
+  document.body.appendChild(wrap);
+  var close=function(){ wrap.remove(); };
+  wrap.querySelector('#trpX').onclick=close;
+  wrap.addEventListener('click',function(e){ if(e.target===wrap) close(); });
+  wrap.querySelectorAll('[data-trp]').forEach(function(b){
+    b.onclick=function(){
+      teamSelectOnly(b.dataset.trp);
+      close();
+      if(thenFn) thenFn();
+    };
+  });
+  return false;
+}
 function teamOwnerKey(kind,id){ return kind+':'+id; }
 function teamOwnerOf(kind,id){ return OWNERS[teamOwnerKey(kind,id)]||null; }
 function teamSetOwner(kind,id,memberId){
@@ -4229,6 +4360,8 @@ function teamFilterMatch(kind,id){
 }
 function teamStampNew(kind,id){
   if(!teamShowNav()) return;
+  var one=teamSingleMember();
+  if(one){ teamSetOwner(kind,id,one.id); return; }
   if(TEAM_ALL) return; /* All view: leave unassigned rather than inventing ownership */
   var ids=Object.keys(TEAM_IDS);
   if(ids.length===1) teamSetOwner(kind,id,ids[0]);
@@ -5170,8 +5303,9 @@ function renderPlanner(opts){
   var weeksEl=document.getElementById('weeks');
   if(weeksEl){
     weeksEl.className='weeks kb-list';
-    weeksEl.innerHTML=kanbanWeekHTML(focus);
+    weeksEl.innerHTML=teamRepBannerHTML()+kanbanWeekHTML(focus);
   }
+  try{ wireTripRepBanner(); }catch(e){}
   /* keep legacy pool hidden but populated for any code that reads it */
   try{ syncWeekMap(renderPlanner._opts||{}); }catch(e){}
   renderPlanner._opts=null;
@@ -6442,23 +6576,26 @@ function migrateTravel(){
   return changed;
 }
 function addTravel(type,wk){
-  var t=TRAVEL_TYPES[type]?type:'other';
-  var lid='L'+Date.now()+Math.floor(Math.random()*1000);
-  LOGI.push({id:lid, terr:terr,
-    wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
-    name:'', address:'', lat:null, lon:null,
-    airportCode:'', airportName:'',
-    airline:'', flightNo:'',
-    day:null, time:'',
-    day2:null, time2:'',           /* check-out / drop-off */
-    conf:'', notes:''});
-  teamStampNew('m',lid);
-  /* Compact by default — expand only when the user opens details. */
-  try{ delete TVEXP[lid]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
-  savePlan();
-  if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',lid)){
-    teamPickOwner('m', lid, function(){ refreshPlanner(); });
-  } else refreshPlanner();
+  var run=function(){
+    var t=TRAVEL_TYPES[type]?type:'other';
+    var lid='L'+Date.now()+Math.floor(Math.random()*1000);
+    LOGI.push({id:lid, terr:terr,
+      wk:(wk==='remote'?'remote':parseInt(wk,10)), type:t,
+      name:'', address:'', lat:null, lon:null,
+      airportCode:'', airportName:'',
+      airline:'', flightNo:'',
+      day:null, time:'',
+      day2:null, time2:'',           /* check-out / drop-off */
+      conf:'', notes:''});
+    teamStampNew('m',lid);
+    /* Compact by default — expand only when the user opens details. */
+    try{ delete TVEXP[lid]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+    savePlan();
+    if(teamShowNav() && !TEAM_ALL && Object.keys(TEAM_IDS).length>1 && !teamOwnerOf('m',lid)){
+      teamPickOwner('m', lid, function(){ refreshPlanner(); });
+    } else refreshPlanner();
+  };
+  if(!teamEnsureRepBeforeAdd(run)) return;
 }
 function setTravelField(id,field,val){
   var it=LOGI.filter(function(x){return x.id===id;})[0]; if(!it||!field) return;
@@ -6579,16 +6716,48 @@ window.AQ_QA.sequence=function(){
 /* legs between consecutive LOCATED items; unlocated items break no legs, they're skipped */
 function sameSpot(a,b){ return a&&b&&a.lat!=null&&b.lat!=null
   &&Math.abs(a.lat-b.lat)<0.0005&&Math.abs(a.lon-b.lon)<0.0005; }
+/* Expand flights that have both dep + arr into two map points so the air
+   segment draws as a flight arc instead of a road drive. */
+function mapExpandFlightPoints(items){
+  var out=[];
+  (items||[]).forEach(function(s){
+    if(!s||s.lat==null||s.lon==null||!isFinite(s.lat)||!isFinite(s.lon)) return;
+    var raw=s.raw||s.it||null;
+    var pair=raw?flightPairAirports(raw):null;
+    if(pair){
+      out.push({
+        kind:'travel', id:s.id, key:(s.key||('m:'+s.id))+':dep', type:'airport', rawType:s.rawType||s.type,
+        name:pair.depCode+(pair.dep.name?(' — '+pair.dep.name):''),
+        lat:+pair.dep.lat, lon:+pair.dep.lon, day:s.day, time:s.time||'',
+        located:true, flyPair:true, flightId:s.id, flightEnd:'dep', status:s.status||'Pending'
+      });
+      out.push({
+        kind:'travel', id:s.id, key:(s.key||('m:'+s.id))+':arr', type:'airport', rawType:s.rawType||s.type,
+        name:pair.arrCode+(pair.arr.name?(' — '+pair.arr.name):''),
+        lat:+pair.arr.lat, lon:+pair.arr.lon, day:s.day, time:s.time||'',
+        located:true, flyPair:true, flightId:s.id, flightEnd:'arr', status:s.status||'Pending'
+      });
+      return;
+    }
+    out.push(s);
+  });
+  return out;
+}
+function isFlyMapLeg(a,b){
+  if(!a||!b) return false;
+  if(a.flyPair&&b.flyPair&&a.flightId&&a.flightId===b.flightId) return true;
+  return (normType(a.type)==='airport'&&normType(b.type)==='airport');
+}
 function legsFor(items){
-  var pts=items.filter(function(i){return i.located;});
+  var pts=mapExpandFlightPoints(items.filter(function(i){return i.located;}));
   var legs=[], totalMi=0;
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
     /* identical consecutive locations: no meaningless drive */
     if(sameSpot(a,b)) continue;
     /* between every pair of differing physical stops there is a travel
-       segment: airport→airport is a flight, anything else is a drive */
-    var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+       segment: airport→airport (or expanded flight pair) is a flight */
+    var fly=isFlyMapLeg(a,b);
     if(fly){
       var gk=(hav([a.lat,a.lon],[b.lat,b.lon])||0)*1.60934;
       legs.push({from:a, to:b, miles:gk/1.60934, km:gk, hours:gk/750+0.5, fly:true,
@@ -6895,12 +7064,17 @@ function tripsNavHTML(){
       members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
     }
     var allOn=teamIsAll(), partial=teamIsPartial();
-    var checks='<button type="button" class="sb-check'+(allOn?' on':'')+(partial?' partial':'')+'" data-teamall="1" title="Select or clear all team members">'
-      +'<span class="box">'+(allOn?'✓':(partial?'−':''))+'</span><span class="nm">All team members</span></button>';
+    var planOne=teamPlanMode();
+    var checks=planOne
+      ? '<div class="sb-empty" style="padding:4px 2px 8px;color:#6b7280">Pick <b>one</b> rep for this trip</div>'
+      : ('<button type="button" class="sb-check'+(allOn?' on':'')+(partial?' partial':'')+'" data-teamall="1" title="Select or clear all team members">'
+        +'<span class="box">'+(allOn?'✓':(partial?'−':''))+'</span><span class="nm">All team members</span></button>');
     function memberCheck(m){
-      var on=teamIsSelected(m.id);
-      return '<button type="button" class="sb-check'+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'+esc(TEAM_ROLE_LABEL[m.role]||m.role)+'">'
-        +'<span class="box">'+(on?'✓':'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
+      var on=teamIsSelected(m.id) && (!planOne || teamIsSingle());
+      if(planOne) on=!!TEAM_IDS[m.id] && !TEAM_ALL;
+      return '<button type="button" class="sb-check'+(planOne?' radio':'')+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'
+        +(planOne?'Plan this trip for '+esc(m.name):esc(TEAM_ROLE_LABEL[m.role]||m.role))+'">'
+        +'<span class="box">'+(on?(planOne?'●':'✓'):'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
     }
     if(isAllTerr){
       checks+='<div class="sb-rolef">'
@@ -7324,7 +7498,9 @@ function dvCard(v,tl){
     var endT=(showT&&v.dur)?t12s(addMin(showT,v.dur)):'';
     var timeRange=showT?(endT?(t12s(showT)+'–'+endT):t12s(showT)):'—';
     var cinfoD=schedConflictInfo(tkey, typeof v.wk==='number'?v.wk:null);
-    var lateClsC=((tl&&tl.lateMin)||(cinfoD&&cinfoD.conflict)?' tl-late':'')+(cinfoD&&cinfoD.conflict?' sched-conflict':'');
+    var lateClsC=((tl&&tl.lateMin)||(cinfoD&&cinfoD.conflict)?' tl-late':'')
+      +(tl&&tl.afterConf?' tl-after-conf':'')
+      +(cinfoD&&cinfoD.conflict?' sched-conflict':'');
     var aSt=v.apptStatus||(v.done?'confirmed':'planned');
     var confCls=aSt+(v.needsReconfirm?' reconfirm':'');
     var confLbl=v.needsReconfirm?'Reconfirm':(aSt==='completed'?'Done':(aSt==='confirmed'?'Confirmed':'Planned'));
@@ -7332,13 +7508,17 @@ function dvCard(v,tl){
       :(aSt==='completed'?'Visit completed — click to cycle status'
         :(aSt==='confirmed'?'Dealer confirmed — click to mark completed'
           :'Click once to confirm the dealer agreed to this appointment'));
+    var breakTitle=(tl&&tl.afterConf)
+      ?(tl.brokenDrive?'Too far after confirmed appointment — needs flight or hotel'
+        :(tl.lateMin?('Can\'t make this after confirmed stop — ~'+fmtDur(tl.lateMin)+' late'):'Doesn\'t work after confirmed appointment'))
+      :(cinfoD&&cinfoD.reason?cinfoD.reason:'Click to edit details');
     return '<div class="kcard kccompact vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateClsC+'" data-drag="1" data-id="'+v.dragId+'">'
-      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+(cinfoD&&cinfoD.reason?esc(cinfoD.reason):'Click to edit details')+'">'
+      +'<button class="kcc-row" data-dvexpand="'+v.ref+'" title="'+esc(breakTitle)+'">'
         +'<span class="kcc-ic" style="background:var(--aq-red,#cc152f)">'+((B.icon||'•').charAt(0))+'</span>'
         +'<span class="kcc-main">'+esc(v.name)+'</span>'
         +teamWhoBadge(v.ref.charAt(0)==='i'?'d':'x', v.ref.slice(2))
         +'<span class="kcc-time">'+timeRange+'</span>'
-        +(cinfoD&&cinfoD.conflict?'<span class="sched-warn" title="'+esc(cinfoD.reason)+'">⚠</span>':'')
+        +((cinfoD&&cinfoD.conflict)||(tl&&tl.afterConf)?'<span class="sched-warn" title="'+esc(breakTitle)+'">⚠</span>':'')
       +'</button>'
       +'<button type="button" class="kcc-conf '+confCls+'" data-vconf="'+v.ref+'" title="'+esc(confTitle)+'">'+esc(confLbl)+'</button>'
       +'<button type="button" class="kcc-caretbtn" data-dvexpand="'+v.ref+'" title="Expand">▾</button>'
@@ -7365,8 +7545,12 @@ function dvCard(v,tl){
     +'</div>';
   var al=(v.att||v.joined&&v.joined.length)?attLine(v):'';
   var cinfoE=schedConflictInfo(tkey, typeof v.wk==='number'?v.wk:null);
-  var lateCls=((tl&&tl.lateMin)||(cinfoE&&cinfoE.conflict)?' tl-late':'')+(cinfoE&&cinfoE.conflict?' sched-conflict':'');
-  var lateTitle=(cinfoE&&cinfoE.reason)?(' title="'+esc(cinfoE.reason)+'"'):((tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):'');
+  var lateCls=((tl&&tl.lateMin)||(cinfoE&&cinfoE.conflict)?' tl-late':'')
+    +(tl&&tl.afterConf?' tl-after-conf':'')
+    +(cinfoE&&cinfoE.conflict?' sched-conflict':'');
+  var lateTitle=(tl&&tl.afterConf)
+    ?(' title="'+(tl.brokenDrive?'Too far after confirmed appointment':(tl.lateMin?('Can\'t make this after confirmed stop — ~'+fmtDur(tl.lateMin)+' late'):'Doesn\'t work after confirmed appointment'))+'"')
+    :((cinfoE&&cinfoE.reason)?(' title="'+esc(cinfoE.reason)+'"'):((tl&&tl.lateMin)?(' title="Can\'t make this time — you\'d arrive about '+fmtDur(tl.lateMin)+' late"'):''));
   return '<div class="kcard vc '+B.cls+' '+(v.done?'confirmed':'planned')+lateCls+'" data-drag="1" data-id="'+v.dragId+'"'+lateTitle+'>'
     +'<div class="kc-top">'
       +'<span class="vbadge '+B.cls+'">'+B.icon+B.label+'</span>'
@@ -7513,6 +7697,10 @@ function deleteVisit(ref){
    day is optional — set when the card was dropped/placed on a specific day. */
 function createVisit(dealerId,type,wk,day,opts){
   opts=opts||{};
+  if(teamNeedsRepPick() && !opts._repOk){
+    teamEnsureRepBeforeAdd(function(){ createVisit(dealerId,type,wk,day,Object.assign({},opts,{_repOk:true})); });
+    return null;
+  }
   var d=uniById(dealerId); if(!d) return null;
   if(wk!=='remote'&&!isFinite(parseInt(wk,10))) return null;
   type=(type==='prebook')?'prebook':'visit'; /* travel portal defaults to Visit */
@@ -9980,15 +10168,16 @@ function drawTripMap(stops){
   _tripMap=L.map(el,{zoomControl:true,scrollWheelZoom:true}).setView([43.5,-79],5);
   var gen=++_aqMapGen; _tripMap._aqGen=gen;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(_tripMap);
-  var pts=stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);});
+  var pts=mapExpandFlightPoints(stops.filter(function(s){return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon);}));
   pts.forEach(function(s,i){ L.marker([s.lat,s.lon],{icon:pinIcon(s,i+1)}).addTo(_tripMap).bindTooltip(stopTip(s)).bindPopup(popupHTML(s)); });
   var legs=[];
   for(var i=1;i<pts.length;i++){
     var a=pts[i-1], b=pts[i];
+    if(sameSpot(a,b)) continue;
     var both=(a.status==='Confirmed'&&b.status==='Confirmed');
-    var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
+    var fly=isFlyMapLeg(a,b);
     legs.push(drawLeg(_tripMap,gen,a,b,
-      both?{color:'#16a34a',weight:2.5}:{color:'#2563eb',weight:2,dashArray:'6 6'},
+      fly?{color:'#2563eb',weight:1.5,dashArray:'1 6'}:(both?{color:'#16a34a',weight:2.5}:{color:'#2563eb',weight:2,dashArray:'6 6'}),
       {from:a.name,to:b.name,area:terr,rep:FLAT.tm[terr]||'',fly:fly,day:b.dayLabel,time:b.time}));
   }
   /* routed trip totals for the Overview card (falls back to the estimate) */
@@ -10247,39 +10436,42 @@ function mapAirportPopup(ap, wk){
     +'</div>';
 }
 function mapAddAirportFlight(ap, wk, day, role, windowId){
-  undoSnap((role==='depart'?'Depart':'Arrive')+' '+ap.code);
-  var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
-  var ty=(role==='depart')?'flight_out':'flight_in';
-  var it={
-    id:'L'+Date.now()+Math.floor(Math.random()*1000),
-    terr:terrFor,
-    wk:parseInt(wk,10),
-    type:ty,
-    name:ap.code+' — '+(ap.city||ap.name),
-    address:ap.city||'',
-    lat:+ap.lat, lon:+ap.lon,
-    airportCode:ap.code, airportName:ap.name,
-    airline:'', flightNo:'',
-    day:(day==null||day===''?null:parseInt(day,10)),
-    time:'', day2:null, time2:'',
-    conf:'', notes:'', bookStatus:'',
-    mapsUrl:'https://www.google.com/maps?q='+(+ap.lat)+','+(+ap.lon)
+  var run=function(){
+    undoSnap((role==='depart'?'Depart':'Arrive')+' '+ap.code);
+    var terrFor=(terr==='All'||terr==='Master'||terr==='Team'||terr==='Settings')?'East':terr;
+    var ty=(role==='depart')?'flight_out':'flight_in';
+    var it={
+      id:'L'+Date.now()+Math.floor(Math.random()*1000),
+      terr:terrFor,
+      wk:parseInt(wk,10),
+      type:ty,
+      name:ap.code+' — '+(ap.city||ap.name),
+      address:ap.city||'',
+      lat:+ap.lat, lon:+ap.lon,
+      airportCode:ap.code, airportName:ap.name,
+      airline:'', flightNo:'',
+      day:(day==null||day===''?null:parseInt(day,10)),
+      time:'', day2:null, time2:'',
+      conf:'', notes:'', bookStatus:'',
+      mapsUrl:'https://www.google.com/maps?q='+(+ap.lat)+','+(+ap.lon)
+    };
+    if(role==='arrive'){ it.arrAirport=ap.code; it.arrAirportName=ap.name; }
+    else { it.depAirport=ap.code; it.depAirportName=ap.name; }
+    applyFlightSoftWindow(it, windowId||'morning');
+    LOGI.push(it); teamStampNew('m', it.id);
+    try{
+      if(typeof teamSingleMember==='function'){
+        var one=teamSingleMember();
+        if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
+      }
+    }catch(e){}
+    /* Stay compact — expand only when the salesperson opens details. */
+    try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
+    savePlan(); refreshPlanner({skipMap:false});
+    aqToast((role==='depart'?'Depart':'Arrive')+' '+ap.code+' · '+(flightWindowLabel(windowId||'morning')||'Morning'));
+    try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
   };
-  if(role==='arrive'){ it.arrAirport=ap.code; it.arrAirportName=ap.name; }
-  else { it.depAirport=ap.code; it.depAirportName=ap.name; }
-  applyFlightSoftWindow(it, windowId||'morning');
-  LOGI.push(it); teamStampNew('m', it.id);
-  try{
-    if(typeof teamSingleMember==='function'){
-      var one=teamSingleMember();
-      if(one&&one.id&&!teamOwnerOf('m',it.id)) OWNERS['m:'+it.id]=one.id;
-    }
-  }catch(e){}
-  /* Stay compact — expand only when the salesperson opens details. */
-  try{ delete TVEXP[it.id]; sessionStorage.setItem('aqTVEXP',JSON.stringify(TVEXP)); }catch(e){}
-  savePlan(); refreshPlanner({skipMap:false});
-  aqToast((role==='depart'?'Depart':'Arrive')+' '+ap.code+' · '+(flightWindowLabel(windowId||'morning')||'Morning'));
-  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  if(!teamEnsureRepBeforeAdd(run)) return;
 }
 function mapStayRadiusMeters(mins){
   /* ~35 mph average road speed — preference for the EA, not a booking. */
@@ -10474,23 +10666,26 @@ function mapPipeAddPopup(lead, wk){
     +'<div class="mpop-days">'+days+'</div></div>';
 }
 function mapAddPipeLeadToDay(sfLeadId, wk, day){
-  var lead=null;
-  for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
-  if(!lead){ aqToast('Pipeline lead not found', false); return; }
-  undoSnap('Map add pipeline');
-  var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
-  var finish=function(p){
-    createVisit(p.id,'visit',parseInt(wk,10), day, {chain:true, step:'time'});
-    aqToast('Added '+p.name+' · pick time');
-    try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  var run=function(){
+    var lead=null;
+    for(var i=0;i<PIPELINE_CACHE.length;i++) if(PIPELINE_CACHE[i].sfLeadId===sfLeadId){ lead=PIPELINE_CACHE[i]; break; }
+    if(!lead){ aqToast('Pipeline lead not found', false); return; }
+    undoSnap('Map add pipeline');
+    var existing=(PROSPECTS||[]).filter(function(p){ return p.sfLeadId&&p.sfLeadId===sfLeadId; })[0];
+    var finish=function(p){
+      createVisit(p.id,'visit',parseInt(wk,10), day, {chain:true, step:'time'});
+      aqToast('Added '+p.name+' · pick time');
+      try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+    };
+    if(existing){ finish(existing); return; }
+    addProspect({
+      name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
+      phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
+      territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
+      notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
+    }, finish);
   };
-  if(existing){ finish(existing); return; }
-  addProspect({
-    name:lead.name, address:lead.address||'', city:lead.city||'', loc:lead.state||lead.loc||'',
-    phone:lead.phone||'', contact:lead.contactName||'', ptype2:'potential',
-    territory:terr, sfLeadId:lead.sfLeadId, lat:lead.lat, lon:lead.lon,
-    notes:(lead.status?('Lead status: '+lead.status):'')+(lead.owner?(' · Owner: '+lead.owner):'')
-  }, finish);
+  if(!teamEnsureRepBeforeAdd(run)) return;
 }
 function mapDealerAddPopup(d, wk){
   var labs=(typeof wk==='number')?dayLabels(wk):[];
@@ -10521,15 +10716,18 @@ function mapStayPopup(lat, lon, placeName, wk){
     +'</div></div>';
 }
 function mapAddDealerToDay(dealerId, wk, day){
-  undoSnap('Map add dealer');
-  var ref=createVisit(dealerId, 'visit', parseInt(wk,10), day, {chain:true, step:'time'});
-  if(!ref){
-    /* already on a week — createVisit may have made an xvisit; chain handles focus */
-    aqToast('Added from map');
-  } else {
-    aqToast('Added · pick time');
-  }
-  try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  var run=function(){
+    undoSnap('Map add dealer');
+    var ref=createVisit(dealerId, 'visit', parseInt(wk,10), day, {chain:true, step:'time'});
+    if(!ref){
+      /* already on a week — createVisit may have made an xvisit; chain handles focus */
+      aqToast('Added from map');
+    } else {
+      aqToast('Added · pick time');
+    }
+    try{ if(_wkMap) _wkMap.closePopup(); }catch(e){}
+  };
+  if(!teamEnsureRepBeforeAdd(run)) return;
 }
 function mapAddStayNear(lat, lon, placeName, wk, day, mins){
   undoSnap('Overnight near '+placeName);
@@ -10623,7 +10821,7 @@ function drawWeekRoute(t,wk){
   mapPlanHintUpdate();
   try{ if(_wkMapEl) _wkMapEl.style.cursor=MAP_STAY_ARM?'crosshair':''; }catch(e){}
   var gen=++_aqMapGen; _wkMap._aqGen=gen;
-  var items=itineraryFor(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); });
+  var items=mapExpandFlightPoints(itineraryFor(t,wk).filter(function(s){ return s.lat!=null&&s.lon!=null&&isFinite(s.lat)&&isFinite(s.lon); }));
   var labs=(typeof wk==='number')?dayLabels(wk):[];
   var bounds=[];
   /* Overnight preference circles — show EA search radius without inventing hotels */
@@ -10764,8 +10962,11 @@ function drawWeekRoute(t,wk){
   var legs=[];
   for(var i=1;i<items.length;i++){
     var a=items[i-1],b=items[i];
-    var fly=(normType(a.type)==='airport'&&normType(b.type)==='airport');
-    legs.push(drawLeg(_wkMap,gen,a,b,{color:'#2563eb',weight:2,opacity:.85},{from:a.name,to:b.name,area:t,fly:fly,time:b.time}));
+    if(sameSpot(a,b)) continue;
+    var fly=isFlyMapLeg(a,b);
+    legs.push(drawLeg(_wkMap,gen,a,b,
+      fly?{color:'#2563eb',weight:1.5,dashArray:'1 6',opacity:.9}:{color:'#2563eb',weight:2,opacity:.85},
+      {from:a.name,to:b.name,area:t,fly:fly,time:b.time}));
   }
   if(bounds.length){
     /* Week overview: keep the whole itinerary in view — never zoom into a single building. */
@@ -10795,7 +10996,27 @@ function syncWeekMap(opts){
 }
 /* ---- Simple Add menu: one entry point for every kind of stop ---- */
 function _closeAddMenu(){ var m=document.getElementById('addMenuPop'); if(m) m.remove(); document.removeEventListener('click',_closeAddMenu,true); }
+function wireTripRepBanner(){
+  document.querySelectorAll('[data-triprep]').forEach(function(b){
+    if(b._aqRep) return; b._aqRep=true;
+    b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      teamSelectOnly(b.dataset.triprep);
+    });
+  });
+  document.querySelectorAll('[data-triprep-clear]').forEach(function(b){
+    if(b._aqRep) return; b._aqRep=true;
+    b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      TEAM_ALL=false; TEAM_IDS={}; teamSaveSel(); teamRefreshViews();
+    });
+  });
+}
 function openAddMenu(wk,anchor){
+  if(teamNeedsRepPick()){
+    teamEnsureRepBeforeAdd(function(){ openAddMenu(wk,anchor); });
+    return;
+  }
   _closeAddMenu();
   var items=[
     ['Dealer / Prospect','👥',function(){ openDealerAdd(wk); }],
