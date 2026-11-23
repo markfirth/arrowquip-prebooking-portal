@@ -6,7 +6,7 @@
    - Supabase, Salesforce, Nominatim and OSM tiles are NEVER cached. Plan data must
      always come from the network, or a stale tab could show a plan that no longer
      exists. */
-const CACHE = 'aq-prebooking-v2';  /* v2: dealer seed removed from the page — drop old cached copies */
+const CACHE = 'aq-prebooking-v13';  /* v13: simplify — kanban Team + dedicated Coord page */
 const PRECACHE = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -48,8 +48,17 @@ self.addEventListener('fetch', function (e) {
   if (neverCache(url)) return;                     /* straight to network, untouched */
 
   var isDoc = req.mode === 'navigate' || (req.headers.get('accept') || '').indexOf('text/html') >= 0;
+  /* App shell JS must be network-first — cache-first my-team.js masked the
+     goMyTeam bridge and left the gear menu opening a broken Team view. */
+  var isAppJs = url.origin === location.origin && /\.(?:js)$/i.test(url.pathname)
+    && (url.pathname === '/my-team.js'
+      || url.pathname === '/smart-entry.js'
+      || url.pathname === '/scheduling.js'
+      || url.pathname === '/year-glance.js'
+      || url.pathname === '/sw.js'
+      || /\/api\//.test(url.pathname) === false);
 
-  if (isDoc) {                                     /* network-first */
+  if (isDoc || isAppJs) {                          /* network-first */
     e.respondWith(
       fetch(req).then(function (r) {
         var copy = r.clone();
@@ -60,7 +69,7 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  if (url.origin === location.origin) {            /* cache-first for our own static assets */
+  if (url.origin === location.origin) {            /* cache-first for fonts/icons/logo */
     e.respondWith(
       caches.match(req).then(function (hit) {
         return hit || fetch(req).then(function (r) {
