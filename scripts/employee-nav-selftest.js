@@ -68,6 +68,21 @@ chk('EA views assigned', canView(roster[4], 'R2', roster) === true);
 chk('EA cannot view unassigned', canView(roster[4], 'R1', roster) === false);
 chk('admin views all', canView(roster[5], 'R1a', roster) === true);
 
+/* Personal vs management workspace contract (string-level against employee-nav.js) */
+var fs = require('fs');
+var path = require('path');
+var src = fs.readFileSync(path.join(__dirname, '..', 'employee-nav.js'), 'utf8');
+chk('exports canSeeMyTeamWorkspace', /canSeeMyTeamWorkspace/.test(src));
+chk('exports tripsTitle', /tripsTitle/.test(src));
+chk('My Team tabs host teamEmpTabs', /teamEmpTabs/.test(src));
+chk('no All Reports tab in My Team strip', !/label: 'All Reports'/.test(src));
+var html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+chk('main nav My Team label', /data-ws="team"[^>]*>My Team</.test(html));
+chk('no territory select in header', !/id="aqTerrSelect"/.test(html));
+chk('teamEnsureRepBeforeAdd personal short-circuit', /teamIsPersonalWorkspace\(\)/.test(html));
+chk('portalPlanTitle helper', /function portalPlanTitle\(/.test(html));
+chk('mobile itinerary\/map toggle', /id="mobImap"/.test(html));
+
 console.log('\nEmployee nav tests: ' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);
 console.log('Employee nav tests OK');

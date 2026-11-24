@@ -1,11 +1,11 @@
-/* Arrowquip Travel Portal — Employee tabs (reporting hierarchy)
-   Replaces territory-first navigation with people: My Travel | All Reports | reports…
-   Extends ADMIN.team; does not invent a parallel roster.
-   Depends on index.html globals: ADMIN, teamById, terr, WORKSPACE, TEAM_*, pb*, render. */
+/* Arrowquip Travel Portal — Employee / reporting helpers
+   My Trips = personal (logged-in user only).
+   My Team  = leader management workspace with direct-report name tabs.
+   Extends ADMIN.team; does not invent a parallel roster. */
 (function (global) {
   'use strict';
 
-  var EMP_VIEW = { mode: 'self', memberId: null }; /* self | all | member */
+  var EMP_VIEW = { mode: 'self', memberId: null }; /* self | member */
 
   function ADMIN() {
     if (typeof global.getPortalAdmin === 'function') {
@@ -77,8 +77,7 @@
     return !!(me && (me.isAdmin || me.portalRole === 'admin'));
   }
 
-  /** Walk managerId chain; detect cycles. */
-  function managerChain(memberId, stopAt) {
+  function managerChain(memberId) {
     var seen = {};
     var chain = [];
     var cur = memberId;
@@ -86,7 +85,6 @@
       if (seen[cur]) return { chain: chain, cycle: true };
       seen[cur] = 1;
       chain.push(cur);
-      if (stopAt && cur === stopAt) break;
       var m = byId(cur);
       cur = m && m.managerId ? m.managerId : null;
       if (chain.length > 50) return { chain: chain, cycle: true };
@@ -169,39 +167,42 @@
     if (!me) return false;
     if (me.id === memberId) return true;
     ensureShape(me);
-    /* EA: edit on behalf of assigned employees */
     if ((me.eaFor || []).indexOf(memberId) >= 0) return true;
-    /* Leaders may edit assigned reports' travel */
     if ((me.portalRole === 'leader' || me.accessGroup === 'leadership') && isReportOf(me.id, memberId)) return true;
     return false;
   }
 
-  function visibleEmployeeTabs() {
+  /** People available as My Team tabs: direct reports + EA assignees (+ all for admin). */
+  function manageablePeople() {
     var me = currentEmployee();
-    var tabs = [];
-    tabs.push({ id: '__self', label: 'My Travel', mode: 'self' });
-    var reports = me ? directReports(me.id) : [];
-    var ea = me ? eaAssignees(me.id) : [];
-    var showAll = isAdminActor() || (me && (reports.length || me.portalRole === 'leader' || me.accessGroup === 'leadership'));
-    if (showAll || (me && ea.length)) {
-      tabs.push({ id: '__all', label: 'All Reports', mode: 'all' });
-    }
     var seen = {};
-    function addPerson(m) {
+    var out = [];
+    function add(m) {
       if (!m || seen[m.id]) return;
       if (me && m.id === me.id) return;
       if (!canViewMember(m.id)) return;
       seen[m.id] = 1;
-      tabs.push({ id: m.id, label: m.name || m.email || 'Employee', mode: 'member', member: m });
+      out.push(m);
     }
-    reports.forEach(addPerson);
-    ea.forEach(addPerson);
+    if (me) {
+      directReports(me.id).forEach(add);
+      eaAssignees(me.id).forEach(add);
+    }
     if (isAdminActor()) {
       teamArr().filter(function (m) { return m && m.active !== false; })
         .sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); })
-        .forEach(addPerson);
+        .forEach(add);
     }
-    return tabs;
+    return out;
+  }
+
+  function canSeeMyTeamWorkspace() {
+    if (isAdminActor()) return true;
+    var me = currentEmployee();
+    if (!me) return false;
+    if (directReports(me.id).length) return true;
+    if (eaAssignees(me.id).length) return true;
+    return me.portalRole === 'leader' || me.accessGroup === 'leadership';
   }
 
   function primaryTerr(m) {
@@ -212,50 +213,55 @@
     return t;
   }
 
+  function lockTeamIds(memberId) {
+    global.TEAM_ALL = false;
+    global.TEAM_IDS = {};
+    if (memberId) global.TEAM_IDS[memberId] = true;
+    try {
+      if (typeof global.teamSaveSel === 'function') global.teamSaveSel();
+    } catch (e) {}
+  }
+
   function applyViewFilters() {
-    var mode = EMP_VIEW.mode;
-    var mid = EMP_VIEW.memberId;
     try {
       if (typeof global.TEAM_ALL === 'undefined') return;
     } catch (e) { return; }
 
-    if (mode === 'all') {
-      global.TEAM_ALL = true;
-      global.TEAM_IDS = {};
-      if (typeof global.WORKSPACE !== 'undefined') global.WORKSPACE = 'team';
-      if (typeof global.PORTAL_MODE !== 'undefined') global.PORTAL_MODE = 'sales';
-      if (typeof global.terr !== 'undefined') global.terr = 'All';
-      return;
-    }
-
     var target = null;
-    if (mode === 'self') target = currentEmployee();
-    else if (mode === 'member') target = byId(mid);
+    if (EMP_VIEW.mode === 'member') target = byId(EMP_VIEW.memberId);
+    else target = currentEmployee();
 
-    if (!target) {
-      global.TEAM_ALL = false;
-      global.TEAM_IDS = {};
-      return;
-    }
-    if (!canViewMember(target.id)) {
+    if (EMP_VIEW.mode === 'member' && (!target || !canViewMember(target.id))) {
       EMP_VIEW = { mode: 'self', memberId: null };
       target = currentEmployee();
-      if (!target) return;
     }
 
-    global.TEAM_ALL = false;
-    global.TEAM_IDS = {};
-    global.TEAM_IDS[target.id] = true;
-    if (typeof global.WORKSPACE !== 'undefined') global.WORKSPACE = 'trips';
+    if (!target) {
+      lockTeamIds(null);
+      return;
+    }
+
+    lockTeamIds(target.id);
+    if (typeof global.WORKSPACE !== 'undefined' && global.WORKSPACE !== 'coord') {
+      /* Keep workspace; only adjust territory for dealer library scoping */
+    }
     if (typeof global.PORTAL_MODE !== 'undefined') global.PORTAL_MODE = 'sales';
-    if (typeof global.terr !== 'undefined') global.terr = primaryTerr(target);
+    if (typeof global.terr !== 'undefined') {
+      var t = primaryTerr(target);
+      /* Never park personal/management travel on All/Team admin views */
+      if (global.terr === 'All' || global.terr === 'Team' || global.terr === 'Master' || global.terr === 'Settings') {
+        global.terr = t;
+      } else if (EMP_VIEW.mode === 'member' || EMP_VIEW.mode === 'self') {
+        global.terr = t;
+      }
+    }
     try { localStorage.setItem('aqLastAreaTerr', global.terr); } catch (e) {}
     try { localStorage.setItem('aqEmpView', JSON.stringify(EMP_VIEW)); } catch (e) {}
   }
 
   function setEmpView(mode, memberId, opts) {
     opts = opts || {};
-    mode = mode === 'all' || mode === 'member' ? mode : 'self';
+    mode = mode === 'member' ? 'member' : 'self';
     if (mode === 'member') {
       if (!memberId || !canViewMember(memberId)) {
         if (typeof global.aqToast === 'function') global.aqToast('You do not have access to that traveller', false);
@@ -265,14 +271,11 @@
     }
     EMP_VIEW = { mode: mode, memberId: mode === 'member' ? memberId : null };
     applyViewFilters();
-    try {
-      if (typeof global.teamSaveSel === 'function') global.teamSaveSel();
-    } catch (e) {}
+    paintTabs();
+    paintContextBanner();
     try {
       if (typeof global.syncWorkspaceTabs === 'function') global.syncWorkspaceTabs();
     } catch (e) {}
-    paintTabs();
-    paintContextBanner();
     if (!opts.silent) {
       try {
         if (typeof global.render === 'function') global.render();
@@ -281,60 +284,86 @@
     }
   }
 
+  function selectedPerson() {
+    if (EMP_VIEW.mode === 'member') return byId(EMP_VIEW.memberId);
+    return currentEmployee();
+  }
+
   function selectedLabel() {
-    if (EMP_VIEW.mode === 'all') return 'All Reports';
-    if (EMP_VIEW.mode === 'member') {
-      var m = byId(EMP_VIEW.memberId);
-      return m ? (m.name || 'Employee') : 'Employee';
-    }
+    var m = selectedPerson();
+    return m ? (m.name || 'Employee') : 'My Trips';
+  }
+
+  function tripsTitle() {
     var me = currentEmployee();
-    return me ? (me.name || 'My Travel') : 'My Travel';
+    var name = me ? (me.name || 'My Trips') : 'My Trips';
+    return name + ' — My Trips';
+  }
+
+  function teamTitle() {
+    var m = selectedPerson();
+    if (!m) return 'My Team';
+    if (EMP_VIEW.mode === 'self') return tripsTitle();
+    return (m.name || 'Employee') + ' — Travel';
   }
 
   function paintContextBanner() {
     var el = document.getElementById('empContextBanner');
     if (!el) return;
-    var label = selectedLabel();
-    var mode = EMP_VIEW.mode;
-    var edit = true;
-    if (mode === 'member') edit = canEditMember(EMP_VIEW.memberId);
-    else if (mode === 'self') edit = true;
-    else edit = false;
-    el.className = 'emp-context' + (mode === 'all' ? ' all' : '') + (edit ? '' : ' readonly');
+    var ws = global.WORKSPACE || 'trips';
+    if (ws !== 'team') {
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    var m = selectedPerson();
+    if (!m || EMP_VIEW.mode !== 'member') {
+      el.className = 'emp-context';
+      el.innerHTML = '<span>Select a team member to view their travel</span>';
+      el.style.display = '';
+      return;
+    }
+    var edit = canEditMember(m.id);
+    el.className = 'emp-context' + (edit ? '' : ' readonly');
     el.innerHTML =
-      '<span>Viewing travel for <b>' + esc(label) + '</b>' +
+      '<span>Managing travel for <b>' + esc(m.name || 'Employee') + '</b>' +
       (edit ? '' : ' <span class="emp-ro">(view only)</span>') +
       '</span>';
     el.style.display = '';
   }
 
   function paintTabs() {
-    var host = document.getElementById('empTabs');
+    var host = document.getElementById('teamEmpTabs');
+    var strip = document.getElementById('teamEmpStrip');
     if (!host) return;
     normalizeAll();
-    var tabs = visibleEmployeeTabs();
-    var html = tabs.map(function (t) {
-      var on =
-        (t.mode === 'self' && EMP_VIEW.mode === 'self') ||
-        (t.mode === 'all' && EMP_VIEW.mode === 'all') ||
-        (t.mode === 'member' && EMP_VIEW.mode === 'member' && EMP_VIEW.memberId === t.id);
+    var ws = global.WORKSPACE || 'trips';
+    if (strip) strip.style.display = ws === 'team' ? '' : 'none';
+    if (ws !== 'team') {
+      host.innerHTML = '';
+      return;
+    }
+    var people = manageablePeople();
+    var html = people.map(function (m) {
+      var on = EMP_VIEW.mode === 'member' && EMP_VIEW.memberId === m.id;
       return (
-        '<button type="button" class="emp-tab' + (on ? ' on' : '') + '" data-empmode="' + esc(t.mode) + '"' +
-        (t.mode === 'member' ? ' data-empid="' + esc(t.id) + '"' : '') +
-        ' title="' + esc(t.label) + '">' + esc(t.label) + '</button>'
+        '<button type="button" class="emp-tab' + (on ? ' on' : '') + '" data-empmode="member" data-empid="' +
+        esc(m.id) + '" title="' + esc(m.name || '') + '">' + esc(m.name || m.email || 'Employee') + '</button>'
       );
     }).join('');
     var me = currentEmployee();
-    var canAdd = isAdminActor() || (me && (me.portalRole === 'leader' || me.accessGroup === 'leadership' || directReports(me.id).length >= 0 && (me.portalRole === 'leader' || isAdminActor())));
-    canAdd = isAdminActor() || (me && (me.portalRole === 'leader' || me.accessGroup === 'leadership'));
+    var canAdd = isAdminActor() || (me && (me.portalRole === 'leader' || me.accessGroup === 'leadership'));
     if (canAdd) {
       html += '<button type="button" class="emp-tab add" data-empadd="1" title="Add report">+ Add Report</button>';
+    }
+    if (!people.length && !canAdd) {
+      html = '<span class="emp-empty">No direct reports assigned</span>';
     }
     host.innerHTML = html;
     host.querySelectorAll('[data-empmode]').forEach(function (b) {
       b.onclick = function (e) {
         e.preventDefault();
-        setEmpView(b.dataset.empmode, b.dataset.empid || null);
+        setEmpView('member', b.dataset.empid || null);
       };
     });
     var add = host.querySelector('[data-empadd]');
@@ -343,8 +372,8 @@
 
   function openAddReportModal() {
     if (!isAdminActor()) {
-      var me = currentEmployee();
-      if (!me || (me.portalRole !== 'leader' && me.accessGroup !== 'leadership')) {
+      var me0 = currentEmployee();
+      if (!me0 || (me0.portalRole !== 'leader' && me0.accessGroup !== 'leadership')) {
         if (typeof global.aqToast === 'function') global.aqToast('Only leaders or admins can add reports', false);
         return;
       }
@@ -387,10 +416,9 @@
       err.textContent = '';
       if (!id) { err.textContent = 'Select an employee'; return; }
       var managerId = me ? me.id : null;
-      if (isAdminActor() && me) managerId = me.id;
       var res = setManager(id, managerId);
       if (!res.ok) { err.textContent = res.error || 'Could not assign'; return; }
-      try { if (typeof global.savePlan === 'function') global.savePlan(); } catch (e) {}
+      try { if (typeof global.savePlan === 'function') global.savePlan({ force: true }); } catch (e) {}
       try { if (typeof global.persistTeamOrg === 'function') global.persistTeamOrg(); } catch (e) {}
       close();
       paintTabs();
@@ -401,16 +429,23 @@
 
   function bootEmpView() {
     normalizeAll();
-    try {
-      var raw = localStorage.getItem('aqEmpView');
-      if (raw) {
-        var o = JSON.parse(raw);
-        if (o && (o.mode === 'self' || o.mode === 'all' || o.mode === 'member')) {
-          EMP_VIEW = { mode: o.mode, memberId: o.memberId || null };
+    var ws = global.WORKSPACE || 'trips';
+    if (ws === 'team') {
+      try {
+        var raw = localStorage.getItem('aqEmpView');
+        if (raw) {
+          var o = JSON.parse(raw);
+          if (o && o.mode === 'member' && o.memberId && canViewMember(o.memberId)) {
+            EMP_VIEW = { mode: 'member', memberId: o.memberId };
+          }
         }
+      } catch (e) {}
+      if (EMP_VIEW.mode !== 'member' || !canViewMember(EMP_VIEW.memberId)) {
+        var people = manageablePeople();
+        if (people.length) EMP_VIEW = { mode: 'member', memberId: people[0].id };
+        else EMP_VIEW = { mode: 'self', memberId: null };
       }
-    } catch (e) {}
-    if (EMP_VIEW.mode === 'member' && !canViewMember(EMP_VIEW.memberId)) {
+    } else {
       EMP_VIEW = { mode: 'self', memberId: null };
     }
     applyViewFilters();
@@ -418,15 +453,11 @@
     paintContextBanner();
   }
 
-  /** Gate mutations: when viewing someone you cannot edit, block savePlan side-effects callers should check first. */
   function assertCanEditCurrent() {
-    if (isAdminActor()) {
-      /* Admins may edit any traveller; All Reports stays view-only for trip edits. */
-      return EMP_VIEW.mode !== 'all';
-    }
-    if (EMP_VIEW.mode === 'all') return false;
+    if (isAdminActor()) return EMP_VIEW.mode !== 'all';
     if (EMP_VIEW.mode === 'self') return true;
-    return canEditMember(EMP_VIEW.memberId);
+    if (EMP_VIEW.mode === 'member') return canEditMember(EMP_VIEW.memberId);
+    return false;
   }
 
   function orgPayload() {
@@ -480,7 +511,6 @@
       if (!r.ok) return null;
       var j = await r.json().catch(function () { return null; });
       if (!j || !j.ok || !j.data || !Array.isArray(j.data.members)) return null;
-      /* Merge hierarchy fields into local ADMIN.team without wiping travel fields */
       j.data.members.forEach(function (row) {
         var m = byId(row.id);
         if (!m && row.email) {
@@ -507,19 +537,25 @@
     boot: bootEmpView,
     paint: function () { paintTabs(); paintContextBanner(); },
     currentEmployee: currentEmployee,
+    selectedPerson: selectedPerson,
     directReports: directReports,
     allReports: allReports,
+    manageablePeople: manageablePeople,
+    canSeeMyTeamWorkspace: canSeeMyTeamWorkspace,
     canViewMember: canViewMember,
     canEditMember: canEditMember,
     setManager: setManager,
     wouldCreateCycle: wouldCreateCycle,
     assertCanEditCurrent: assertCanEditCurrent,
     selectedLabel: selectedLabel,
+    tripsTitle: tripsTitle,
+    teamTitle: teamTitle,
     persistTeamOrg: persistTeamOrg,
     loadTeamOrg: loadTeamOrg,
     orgPayload: orgPayload,
     ensureShape: ensureShape,
     normalizeAll: normalizeAll,
+    primaryTerr: primaryTerr,
   };
   global.persistTeamOrg = persistTeamOrg;
 })(typeof window !== 'undefined' ? window : global);
