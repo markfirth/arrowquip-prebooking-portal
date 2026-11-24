@@ -6,7 +6,7 @@
    - Supabase, Salesforce, Nominatim and OSM tiles are NEVER cached. Plan data must
      always come from the network, or a stale tab could show a plan that no longer
      exists. */
-const CACHE = 'aq-prebooking-v15';  /* v15: pin unlocated stops (Farmers Feed) on map */
+const CACHE = 'aq-prebooking-v16';  /* v16: employee tabs from reporting hierarchy */
 const PRECACHE = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -52,9 +52,11 @@ self.addEventListener('fetch', function (e) {
      goMyTeam bridge and left the gear menu opening a broken Team view. */
   var isAppJs = url.origin === location.origin && /\.(?:js)$/i.test(url.pathname)
     && (url.pathname === '/my-team.js'
+      || url.pathname === '/employee-nav.js'
       || url.pathname === '/smart-entry.js'
       || url.pathname === '/scheduling.js'
       || url.pathname === '/year-glance.js'
+      || url.pathname === '/travel-coord.js'
       || url.pathname === '/sw.js'
       || /\/api\//.test(url.pathname) === false);
 

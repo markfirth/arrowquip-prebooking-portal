@@ -10,7 +10,8 @@
     "test:smart": "node scripts/smart-entry-selftest.js",
     "test:coord": "node scripts/travel-coord-selftest.js",
     "test:flights": "node scripts/flight-windows-selftest.js",
-    "test": "npm run test:scheduling && npm run test:time && npm run test:myteam && npm run test:smart && npm run test:coord && npm run test:flights"
+    "test:empnav": "node scripts/employee-nav-selftest.js",
+    "test": "npm run test:scheduling && npm run test:time && npm run test:myteam && npm run test:smart && npm run test:coord && npm run test:flights && npm run test:empnav"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"

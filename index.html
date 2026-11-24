@@ -98,16 +98,44 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqNavLinks .tab{display:flex;align-items:center;height:100%;appearance:none;background:0 0;border:0;padding:20px 0;color:#fff;font-family:var(--font-heading);font-size:14px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .2s;}
 .aqNavLinks .tab:hover{color:var(--aq-red);}
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
-.aqNavRight{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.aqNavRight{display:flex;align-items:center;gap:10px;margin-left:auto;min-width:0;max-width:min(62vw,720px);}
+.emp-tabs{
+  display:flex;align-items:center;gap:2px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;max-width:100%;padding:2px 0;mask-image:linear-gradient(90deg,#000 92%,transparent);
+}
+.emp-tabs::-webkit-scrollbar{height:3px;}
+.emp-tabs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:2px;}
+.emp-tab{
+  appearance:none;flex:0 0 auto;height:32px;padding:0 12px;border:0;border-radius:4px;background:transparent;
+  color:rgba(255,255,255,.78);font:800 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;white-space:nowrap;transition:color .15s,background .15s;
+}
+.emp-tab:hover{color:#fff;background:rgba(255,255,255,.08);}
+.emp-tab.on{color:#fff;background:var(--aq-red);}
+.emp-tab.add{color:rgba(255,255,255,.92);border:1px dashed rgba(255,255,255,.35);}
+.emp-tab.add:hover{border-color:#fff;background:rgba(255,255,255,.1);}
 .aqTerrSelect{
-  appearance:none;height:32px;min-width:118px;padding:0 28px 0 10px;border:1px solid rgba(255,255,255,.28);
-  border-radius:5px;background:#111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%9ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
-  color:#fff;font:700 12px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+  appearance:none;height:28px;min-width:88px;flex:0 0 auto;padding:0 24px 0 8px;border:1px solid rgba(255,255,255,.22);
+  border-radius:4px;background:#111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%9ca3af'/%3E%3C/svg%3E") no-repeat right 8px center;
+  color:rgba(255,255,255,.85);font:700 10px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
 }
 .aqTerrSelect:focus{outline:2px solid var(--aq-red);outline-offset:2px;}
 .aqTerrSelect option{color:#111;background:#fff;}
+.emp-context{
+  display:flex;align-items:center;gap:10px;padding:6px 16px;background:#f7f7f8;border-bottom:1px solid var(--line);
+  font:600 12px var(--font-body);color:var(--aq-black);
+}
+.emp-context b{font-weight:800;color:var(--aq-red);}
+.emp-context.all{background:#f3f4f6;}
+.emp-context.readonly{background:#fff8e8;}
+.emp-context .emp-ro{color:#9a6a12;font-weight:700;margin-left:4px;}
 #tabsLegacy{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
 .aqTeamNav{display:none!important;}
+@media (max-width:720px){
+  .aqNavRight{max-width:58vw;}
+  .aqTerrSelect{display:none;}
+  .emp-tab{padding:0 10px;font-size:10px;}
+}
 /* ---- Page heading ---- */
 .wrap{max-width:100%;width:100%;margin:0;padding:0;box-sizing:border-box;}
 #plannerView,#allView{width:100%;max-width:100%;box-sizing:border-box;}
@@ -2172,9 +2200,10 @@ body.portal-coord .aqPlanStrip{display:none!important;}
     <div class="aqNavItem"><button type="button" class="tab" data-ws="coord" id="wsCoordTab">Coordination</button></div>
   </div>
   <div class="aqNavRight">
-    <label class="sr-only" for="aqTerrSelect">Territory</label>
-    <select id="aqTerrSelect" class="aqTerrSelect" aria-label="Territory">
-      <option value="All">All</option>
+    <div id="empTabs" class="emp-tabs" role="tablist" aria-label="Employees"></div>
+    <label class="sr-only" for="aqTerrSelect">Territory filter</label>
+    <select id="aqTerrSelect" class="aqTerrSelect" aria-label="Territory filter" title="Territory filter">
+      <option value="All">All areas</option>
       <option value="East">East</option>
       <option value="South">South</option>
       <option value="Central">Central</option>
@@ -2182,7 +2211,7 @@ body.portal-coord .aqPlanStrip{display:none!important;}
       <option value="Exports">Exports</option>
     </select>
   </div>
-  <!-- Legacy territory tabs kept for existing sync code; visually replaced by select -->
+  <!-- Legacy territory tabs kept for existing sync code; people tabs are primary nav -->
   <div id="tabs" class="aqNavLinks" hidden aria-hidden="true">
     <div class="aqNavItem"><button class="tab active" data-t="All">All</button></div>
     <div class="aqNavItem"><button class="tab" data-t="East">East</button></div>
@@ -2198,6 +2227,7 @@ body.portal-coord .aqPlanStrip{display:none!important;}
   <span class="aqPlanSep" aria-hidden="true">|</span>
   <button type="button" data-planmode="year">Year</button>
 </nav>
+<div id="empContextBanner" class="emp-context" style="display:none" aria-live="polite"></div>
 <div class="wrap">
   <div class="cards" id="cards" style="display:none"></div>
   <div id="coordView" style="display:none;" aria-label="Travel Coordination"></div>
@@ -2742,6 +2772,7 @@ function syncWorkspaceTabs(){
     document.querySelectorAll('#tabs [data-t]').forEach(function(b){
       b.classList.toggle('active', b.dataset.t===terr);
     });
+    try{ if(window.AQEmp&&AQEmp.paint) AQEmp.paint(); }catch(e2){}
   }catch(e){}
 }
 function setWorkspace(ws, opts){
@@ -2778,11 +2809,16 @@ function setTerritoryFilter(t){
   terr=t;
   if(['East','South','Central','West','Exports'].indexOf(t)>=0){
     try{ localStorage.setItem('aqLastAreaTerr', t); }catch(e){}
-    if(WORKSPACE==='team'){ /* stay on team calendar but filter matrix by territory via LV_AREAS */ }
-    else if(WORKSPACE==='trips'){ /* ok */ }
   }
-  if(t==='All'&&WORKSPACE==='trips'){ WORKSPACE='team'; PORTAL_MODE='sales'; }
+  /* With employee tabs, territory is a secondary filter — do not steal the
+     employee view into All Reports unless the user explicitly chose All Reports. */
+  var empMode=null;
+  try{ empMode=window.AQEmp&&AQEmp.getView&&AQEmp.getView().mode; }catch(e){}
+  if(t==='All'&&WORKSPACE==='trips'&&empMode!=='self'&&empMode!=='member'){
+    WORKSPACE='team'; PORTAL_MODE='sales';
+  }
   syncWorkspaceTabs();
+  try{ if(window.AQEmp&&AQEmp.paint) AQEmp.paint(); }catch(e){}
   render();
 }
 window.setWorkspace=setWorkspace;
@@ -5152,8 +5188,17 @@ window.AQ_QA.merge=function(){
   console.table(rows); console.log(ok?'✅ EVENT-MERGE TESTS PASSED':'❌ EVENT-MERGE TESTS FAILED');
   return {passed:ok,rows:rows};
 };
-function savePlan(){
+function savePlan(opts){
+  opts=opts||{};
   if(PB_READONLY) return;                       /* verification screens never write */
+  if(!opts.force){
+    try{
+      if(window.AQEmp&&AQEmp.assertCanEditCurrent&&!AQEmp.assertCanEditCurrent()){
+        if(typeof aqToast==='function') aqToast('View only — you cannot edit this traveller’s plan', false);
+        return;
+      }
+    }catch(e){}
+  }
   if(EVENT_LEVEL_MERGE){ try{ evTouchAll(); }catch(e){} }
   try{localStorage.setItem(LS_PLAN_KEY,JSON.stringify(planPayload()));}catch(e){}
   collabLog('save'); cloudSave(PLAN_KEY,planPayload());
@@ -7389,7 +7434,7 @@ function kbToolbarHTML(wk){
   var canBook=false;
   try{ canBook=!!(typeof pbIsAdmin==='function'&&pbIsAdmin())||teamSelectedMembers().some(function(){return false;});
     var me=null; try{ me=(ADMIN.team||[]).filter(function(m){ return m.email&&typeof pbWho==='function'&&String(m.email).toLowerCase()===String(pbWho()).toLowerCase(); })[0]; }catch(e){}
-    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.isAdmin)) canBook=true;
+    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.portalRole==='ea'||me.portalRole==='admin'||me.isAdmin)) canBook=true;
     if(typeof pbIsAdmin==='function'&&pbIsAdmin()) canBook=true;
   }catch(e){}
   return ''
@@ -14866,26 +14911,27 @@ function pbCleanAuthUrl(){
   }catch(e){}
 }
 function pbPersonalizeLanding(){
-  /* Prefer the employee's own territory + current week on first open after login.
-     Leadership / Travel Coordinators keep restored nav when present. */
+  /* Prefer My Travel (logged-in employee) + current week on first open after login.
+     Leaders / EAs may restore a prior employee tab via aqEmpView. */
   try{
     if(typeof mtNormalizeTeam==='function') mtNormalizeTeam();
+    try{ if(window.AQEmp&&AQEmp.normalizeAll) AQEmp.normalizeAll(); }catch(e){}
     var email=String((PB_USER&&PB_USER.email)||'').toLowerCase();
     var me=null;
     if(email){ (ADMIN.team||[]).forEach(function(m){ if(m&&m.email&&String(m.email).toLowerCase()===email) me=m; }); }
-    var isLead=me&&(me.role==='LEAD'||me.role==='TC'||me.isAdmin);
+    var isLead=me&&(me.role==='LEAD'||me.role==='TC'||me.isAdmin||me.portalRole==='leader'||me.portalRole==='admin'||me.portalRole==='ea');
     var hadNav=false;
     try{ hadNav=!!localStorage.getItem('aqNavState'); }catch(e){}
     if(!hadNav || (!isLead && me)){
       PLAN_MODE='weekly';
       var homeTerr=(me&&me.terr)||(me&&Array.isArray(me.terrs)&&me.terrs[0])||null;
-      if(homeTerr==='All') homeTerr='All';
-      if(homeTerr && (homeTerr==='All'||TERRS.indexOf(homeTerr)>=0)){
+      if(homeTerr==='All') homeTerr='East';
+      if(homeTerr && TERRS.indexOf(homeTerr)>=0){
         terr=homeTerr;
         document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t===terr); });
       } else if(!hadNav){
-        terr='All';
-        document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t==='All'); });
+        terr='East';
+        document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t==='East'); });
       }
       var wk=wkCurrent();
       FOCUS_WK=wk; ALL_WK=wk;
@@ -14894,6 +14940,10 @@ function pbPersonalizeLanding(){
         TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[me.id]=true; teamSaveSel();
       }
     }
+    try{
+      if(window.AQEmp&&AQEmp.boot) AQEmp.boot();
+      else if(window.AQEmp&&AQEmp.setView) AQEmp.setView('self', null, {silent:true});
+    }catch(e){}
   }catch(e){}
 }
 function unlockApp(){
@@ -14908,6 +14958,14 @@ function unlockApp(){
     recalcTargets();    /* booking stays derived from Target Loads + FX */
     pbRestoreNav();     /* refresh returns to the same tab/view/week */
     try{ pbPersonalizeLanding(); }catch(e){}
+    try{
+      if(window.AQEmp&&AQEmp.loadTeamOrg){
+        AQEmp.loadTeamOrg().then(function(){
+          try{ if(AQEmp.boot) AQEmp.boot(); }catch(e){}
+          try{ render(); }catch(e){}
+        });
+      }
+    }catch(e){}
     render();
     mobBoot();          /* Trip Mode: phone widths only */
     try{ backfillCoords(); }catch(e){}   /* resolve any missing coordinates in the background */
@@ -17705,7 +17763,8 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 </script>
 <script src="/year-glance.js"></script>
 <script src="/smart-entry.js?v=se2"></script>
-<script src="/my-team.js?v=mt4"></script>
+<script src="/my-team.js?v=mt5"></script>
+<script src="/employee-nav.js?v=en1"></script>
 <script src="/travel-coord.js?v=tc1"></script>
 </body>
 </html>
