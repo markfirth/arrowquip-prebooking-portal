@@ -121,7 +121,47 @@
     try { return global._PB_TOKEN || null; } catch (e) { return null; }
   }
   function save() {
-    try { if (global.savePlan) global.savePlan(); } catch (e) {}
+    /* Roster/admin writes must persist even when the employee nav is on All Reports. */
+    try { if (global.savePlan) global.savePlan({ force: true }); } catch (e) {}
+    try {
+      if (global.persistTeamOrg) global.persistTeamOrg();
+      else if (global.AQEmp && global.AQEmp.persistTeamOrg) global.AQEmp.persistTeamOrg();
+    } catch (e) {}
+  }
+  function managerOptionsHtml(selectedId, selfId) {
+    var opts = '<option value="">— None —</option>';
+    teamArr()
+      .filter(function (m) { return m && m.active !== false && m.id !== selfId; })
+      .sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); })
+      .forEach(function (m) {
+        opts +=
+          '<option value="' + esc(m.id) + '"' + (selectedId === m.id ? ' selected' : '') + '>' +
+          esc(m.name || m.email || m.id) +
+          '</option>';
+      });
+    return opts;
+  }
+  function eaChecksHtml(selected, selfId) {
+    var sel = selected || [];
+    return teamArr()
+      .filter(function (m) { return m && m.active !== false && m.id !== selfId; })
+      .sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); })
+      .map(function (m) {
+        var on = sel.indexOf(m.id) >= 0;
+        return (
+          '<label class="mt-check"><input type="checkbox" name="mtu_ea" value="' + esc(m.id) + '"' +
+          (on ? ' checked' : '') + '> ' + esc(m.name || m.email || m.id) + '</label>'
+        );
+      })
+      .join('') || '<span class="mt-muted">No other employees yet</span>';
+  }
+  function portalRoleLabel(r) {
+    return ({ employee: 'Employee', leader: 'Leader', ea: 'EA / Coordinator', admin: 'Admin' })[r] || r || 'Employee';
+  }
+  function managerName(id) {
+    if (!id) return '—';
+    var m = teamArr().filter(function (x) { return x.id === id; })[0];
+    return m ? (m.name || m.email || id) : '—';
   }
   function toast(msg, ok) {
     try { if (global.aqToast) global.aqToast(msg, ok !== false); else if (global.cloudBadge) global.cloudBadge(msg); } catch (e) {}
@@ -186,6 +226,14 @@
       if (m.role === 'TC') m.accessGroup = 'coordinator';
       else if (m.role === 'LEAD') m.accessGroup = 'leadership';
       else m.accessGroup = 'standard';
+    }
+    if (!Array.isArray(m.eaFor)) m.eaFor = Array.isArray(m.eaForIds) ? m.eaForIds.slice() : [];
+    if (m.managerId === undefined) m.managerId = m.manager_id || null;
+    if (!m.portalRole) {
+      if (m.isAdmin || m.accessGroup === 'administrator') m.portalRole = 'admin';
+      else if (m.accessGroup === 'coordinator' || m.role === 'SA' || m.role === 'TC') m.portalRole = 'ea';
+      else if (m.accessGroup === 'leadership' || m.role === 'LEAD') m.portalRole = 'leader';
+      else m.portalRole = 'employee';
     }
     return m;
   }
@@ -279,6 +327,8 @@
         '</td>' +
         '<td>' + esc(terrDisplay(m)) + '</td>' +
         '<td><select class="mt-role" data-mtrole="' + esc(m.id) + '"' + (canManage() ? '' : ' disabled') + ' title="Position">' + roleOpts + '</select></td>' +
+        '<td>' + esc(managerName(m.managerId)) + '</td>' +
+        '<td>' + esc(portalRoleLabel(m.portalRole)) + '</td>' +
         '<td class="mt-last">' + esc(fmtLastSignIn(m.lastSignIn || _lastSignIn[String(email).toLowerCase()])) + '</td>' +
         '<td><span class="mt-status-pill' + (inactive ? ' off' : (status === 'Active' ? ' on' : '')) + '">' + esc(status) + '</span></td>' +
         '<td class="mt-admin"><input type="checkbox" data-mtadmin="' + esc(m.id) + '"' + (m.isAdmin ? ' checked' : '') + (canManage() ? '' : ' disabled') + ' title="Administrator access"></td>' +
@@ -297,10 +347,10 @@
       '<button type="button" class="mt-btn solid" id="mtAddUser">ADD USER</button>' +
       '</div>' +
       '<div class="mt-table-wrap"><table class="mt-table">' +
-      '<thead><tr><th>NAME</th><th>EMAIL</th><th>DIALPAD</th><th>TERRITORY</th><th>POSITION</th><th>LAST SIGN-IN</th><th>STATUS</th><th>ADMIN</th><th></th></tr></thead>' +
-      '<tbody>' + (body || '<tr><td colspan="9" class="mt-empty">No team members yet. Click ADD USER to invite the first employee.</td></tr>') + '</tbody>' +
+      '<thead><tr><th>NAME</th><th>EMAIL</th><th>DIALPAD</th><th>TERRITORY</th><th>POSITION</th><th>MANAGER</th><th>PORTAL ROLE</th><th>LAST SIGN-IN</th><th>STATUS</th><th>ADMIN</th><th></th></tr></thead>' +
+      '<tbody>' + (body || '<tr><td colspan="11" class="mt-empty">No team members yet. Click ADD USER to invite the first employee.</td></tr>') + '</tbody>' +
       '</table></div>' +
-      '<p class="mt-foot">Operational positions (AM, DSR, ISS, Sales Assistant) are separate from administrator access. Deactivating a user preserves their travel history.</p>' +
+      '<p class="mt-foot">Job title and territory are separate from portal permissions (Employee / Leader / EA / Admin). Reporting lines drive employee tabs. Deactivating a user preserves their travel history.</p>' +
       '</div></div>';
 
     wireMyTeam(host);
@@ -476,9 +526,21 @@
       '<div class="mt-label">Territory</div><div class="mt-checks" id="mtu_terrs">' +
       terrCheckboxes(existing ? memberTerrs(existing) : [preTerr], 'mtu_terr') +
       '</div>' +
+      '<label>Reporting manager<select id="mtu_manager">' +
+      managerOptionsHtml(existing ? existing.managerId : null, existing ? existing.id : null) +
+      '</select></label>' +
+      '<label>Portal role<select id="mtu_portal">' +
+      ['employee', 'leader', 'ea', 'admin'].map(function (r) {
+        var cur = existing ? existing.portalRole : 'employee';
+        return '<option value="' + r + '"' + (cur === r ? ' selected' : '') + '>' + portalRoleLabel(r) + '</option>';
+      }).join('') +
+      '</select></label>' +
+      '<div class="mt-label">EA assignment (coordinate on behalf of)</div><div class="mt-checks" id="mtu_ea">' +
+      eaChecksHtml(existing ? existing.eaFor : [], existing ? existing.id : null) +
+      '</div>' +
       '<div class="mt-label">Access permissions</div>' +
       '<label class="mt-check admin"><input type="checkbox" id="mtu_admin"' + (existing && existing.isAdmin ? ' checked' : '') + '> Administrator access</label>' +
-      '<p class="mt-hint" style="margin:6px 0 0">Positions control day-to-day work. Administrator access is separate and required to manage users.</p>' +
+      '<p class="mt-hint" style="margin:6px 0 0">Portal role controls travel access (own / reports / EA assignees / all). Job title and territory stay independent. Administrator access is required to manage users.</p>' +
       '<div class="mt-err" id="mtu_err"></div>' +
       '</div>' +
       '<div class="mt-mf">' +
@@ -499,7 +561,10 @@
       var dial = toE164(wrap.querySelector('#mtu_dial').value);
       var role = wrap.querySelector('#mtu_role').value;
       var isAdmin = wrap.querySelector('#mtu_admin').checked;
+      var portalRole = wrap.querySelector('#mtu_portal').value || 'employee';
+      var managerId = wrap.querySelector('#mtu_manager').value || null;
       var terrs = Array.prototype.slice.call(wrap.querySelectorAll('input[name="mtu_terr"]:checked')).map(function (c) { return c.value; });
+      var eaFor = Array.prototype.slice.call(wrap.querySelectorAll('input[name="mtu_ea"]:checked')).map(function (c) { return c.value; });
       var err = wrap.querySelector('#mtu_err');
       err.textContent = '';
       if (!first) { err.textContent = 'Enter a first name'; return; }
@@ -507,6 +572,7 @@
       if (wrap.querySelector('#mtu_dial').value.trim() && !dial) { err.textContent = 'Enter a valid international telephone number'; return; }
       if (!terrs.length) { err.textContent = 'Select at least one territory'; return; }
       if (terrs.indexOf('All') >= 0) terrs = ['All'];
+      if (portalRole === 'admin') isAdmin = true;
 
       var dup = teamArr().filter(function (x) {
         if (existing && x.id === existing.id) return false;
@@ -531,6 +597,13 @@
         };
         teamArr().push(member);
       }
+      if (managerId) {
+        if (managerId === member.id) { err.textContent = 'Cannot report to yourself'; return; }
+        if (global.AQEmp && AQEmp.wouldCreateCycle && AQEmp.wouldCreateCycle(member.id, managerId)) {
+          err.textContent = 'That reporting line would create a circular relationship';
+          return;
+        }
+      }
       member.firstName = first;
       member.lastName = last;
       member.name = name;
@@ -540,14 +613,21 @@
       member.terrs = terrs;
       member.terr = terrs[0] === 'All' ? 'East' : terrs[0];
       member.isAdmin = !!isAdmin;
+      member.portalRole = portalRole;
+      member.managerId = managerId || null;
+      member.eaFor = eaFor;
       member.active = member.active !== false;
       member.inviteStatus = member.inviteStatus || 'pending';
       var rr = rolesArr().filter(function (r) { return r.id === role; })[0];
       member.accessGroup = (rr && rr.group) || 'standard';
+      if (portalRole === 'admin') member.accessGroup = 'administrator';
+      else if (portalRole === 'leader') member.accessGroup = 'leadership';
+      else if (portalRole === 'ea') member.accessGroup = 'coordinator';
       save();
       close();
       toast(existing ? 'Saving & inviting…' : 'Creating account…');
       await inviteMember(member, { resend: true });
+      try { if (global.AQEmp && AQEmp.paint) AQEmp.paint(); } catch (e) {}
       if (currentTerr() === 'Team') renderMyTeam();
       else try { if (global.render) global.render(); } catch (e) {}
     };
@@ -566,7 +646,7 @@
           fullName: m.name,
           dialpad: m.dialpad || '',
           admin: !!m.isAdmin,
-          portalRole: m.isAdmin ? 'admin' : 'planner',
+          portalRole: m.isAdmin || m.portalRole === 'admin' ? 'admin' : (m.portalRole === 'ea' ? 'coordinator' : 'planner'),
           redirectTo: location.origin + '/',
           dryRun: false,
         }),

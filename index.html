@@ -98,16 +98,70 @@ header.aqNavbar{position:sticky;top:0;left:0;width:100%;z-index:1100;}
 .aqNavLinks .tab{display:flex;align-items:center;height:100%;appearance:none;background:0 0;border:0;padding:20px 0;color:#fff;font-family:var(--font-heading);font-size:14px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .2s;}
 .aqNavLinks .tab:hover{color:var(--aq-red);}
 .aqNavLinks .tab.active{color:#fff;box-shadow:inset 0 -3px 0 0 var(--aq-red);}
-.aqNavRight{display:flex;align-items:center;gap:12px;margin-left:auto;}
-.aqTerrSelect{
-  appearance:none;height:32px;min-width:118px;padding:0 28px 0 10px;border:1px solid rgba(255,255,255,.28);
-  border-radius:5px;background:#111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%9ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
-  color:#fff;font:700 12px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+.aqNavRight{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.team-emp-strip{
+  display:none;align-items:center;gap:10px;padding:6px 16px;background:#111;border-bottom:1px solid #222;
 }
-.aqTerrSelect:focus{outline:2px solid var(--aq-red);outline-offset:2px;}
-.aqTerrSelect option{color:#111;background:#fff;}
+.team-emp-strip .emp-tabs{
+  display:flex;align-items:center;gap:2px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;max-width:100%;padding:2px 0;flex:1 1 auto;min-width:0;
+}
+.team-emp-strip .emp-tabs::-webkit-scrollbar{height:3px;}
+.team-emp-strip .emp-tabs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:2px;}
+.emp-tab{
+  appearance:none;flex:0 0 auto;height:32px;padding:0 12px;border:0;border-radius:4px;background:transparent;
+  color:rgba(255,255,255,.78);font:800 11px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;white-space:nowrap;transition:color .15s,background .15s;
+}
+.emp-tab:hover{color:#fff;background:rgba(255,255,255,.08);}
+.emp-tab.on{color:#fff;background:var(--aq-red);}
+.emp-tab.add{color:rgba(255,255,255,.92);border:1px dashed rgba(255,255,255,.35);}
+.emp-tab.add:hover{border-color:#fff;background:rgba(255,255,255,.1);}
+.emp-empty{color:rgba(255,255,255,.55);font:600 12px var(--font-body);padding:0 4px;white-space:nowrap;}
+.emp-context{
+  display:flex;align-items:center;gap:10px;padding:6px 16px;background:#f7f7f8;border-bottom:1px solid var(--line);
+  font:600 12px var(--font-body);color:var(--aq-black);
+}
+.emp-context b{font-weight:800;color:var(--aq-red);}
+.emp-context.readonly{background:#fff8e8;}
+.emp-context .emp-ro{color:#9a6a12;font-weight:700;margin-left:4px;}
+.mob-imap{display:none;}
 #tabsLegacy{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
 .aqTeamNav{display:none!important;}
+@media (max-width:900px){
+  .aqNavLinks{gap:12px;}
+  .aqNavLinks .tab{font-size:12px;padding:16px 0;}
+  .emp-tab{padding:0 10px;font-size:10px;}
+  /* Mobile/tablet planner: never side-by-side map; itinerary full width */
+  .planwrap.trips-kanban.map-split > .trips-body,
+  .planwrap.trips-kanban.nav-collapsed.map-split > .trips-body{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .planwrap.trips-kanban.map-split .trips-split{display:none!important;}
+  .planwrap.trips-kanban.map-split:not(.mob-show-map) .trips-map{display:none!important;}
+  .planwrap.trips-kanban.map-split.mob-show-map > .trips-body{grid-template-columns:minmax(0,1fr)!important;}
+  .planwrap.trips-kanban.map-split.mob-show-map .boardcol{display:none!important;}
+  .planwrap.trips-kanban.map-split.mob-show-map .trips-map{display:block!important;min-height:55vh;}
+  .planwrap.trips-kanban .trips-nav,
+  .planwrap.trips-kanban.nav-collapsed .trips-nav{
+    display:block!important;position:absolute;z-index:30;left:0;top:0;bottom:44px;width:min(86vw,300px);
+    transform:translateX(-105%);transition:transform .2s ease;box-shadow:4px 0 24px rgba(0,0,0,.18);
+    pointer-events:none;
+  }
+  .planwrap.trips-kanban:not(.nav-collapsed) .trips-nav{
+    transform:translateX(0);pointer-events:auto;
+  }
+  .mob-imap{display:flex;gap:6px;align-items:center;padding:6px 10px;background:#fff;border-bottom:1px solid var(--line);}
+  .mob-imap button{
+    flex:1;min-height:40px;border:1px solid var(--line);border-radius:8px;background:#f7f7f8;
+    font:800 12px var(--font-heading);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;
+  }
+  .mob-imap button.on{background:var(--aq-red);border-color:var(--aq-red);color:#fff;}
+  .trips-kanban .kcard,.trips-kanban .tvcard{font-size:13px;}
+  .trips-kanban .kcc-row,.trips-kanban .tvc-row{padding:8px 10px;}
+  body{overflow-x:hidden;}
+  .wrap,.planwrap,.trips-body,.boardcol,.kb-board-wrap{max-width:100vw;overflow-x:hidden;}
+}
 /* ---- Page heading ---- */
 .wrap{max-width:100%;width:100%;margin:0;padding:0;box-sizing:border-box;}
 #plannerView,#allView{width:100%;max-width:100%;box-sizing:border-box;}
@@ -1255,10 +1309,16 @@ body.wkfull-on{overflow:hidden;}
 #tripmode{display:none;}
 .tm-only{display:none;}
 @media(max-width:820px){
-  /* hide the desktop planner entirely, show Trip Mode */
-  header.aqNavbar, .wrap, .cloudbadge{display:none!important;}
-  #tripmode{display:block;}
-  body{background:#f2f3f5;font-size:15px;}
+  /* Personal planner first: keep the main shell (responsive CSS above).
+     Trip Mode overlay stays available in DOM but is not forced. */
+  #tripmode{display:none;}
+  body{background:#f2f3f5;font-size:15px;overflow-x:hidden;}
+  .aqUtilityBar{display:none;}
+  .aqMainNav{min-height:52px;}
+  .aqLogo{height:22px;}
+  .aqNavLinks .tab{font-size:11px;padding:14px 0;letter-spacing:.3px;}
+  .aqPlanStrip{padding:4px 10px;}
+  .pt{font-size:15px!important;}
 }
 #tripmode{
   --safe-t:env(safe-area-inset-top,0px);
@@ -1400,7 +1460,8 @@ body.wkfull-on{overflow:hidden;}
 /* ---- branded splash (§2): dark, logo, Trip Mode, subtitle, loader ---- */
 #tmSplash{display:none;}
 @media(max-width:820px){
-  #tmSplash{display:flex;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s ease;padding:0 32px calc(48px + env(safe-area-inset-bottom,0px));}
+  #tmSplash{display:none!important;}
+  #tmSplash.force{display:flex;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s ease;padding:0 32px calc(48px + env(safe-area-inset-bottom,0px));}
   #tmSplash.gone{opacity:0;pointer-events:none;}
   #tmSplash .tsp-mid{display:flex;flex-direction:column;align-items:center;flex:1 1 auto;justify-content:center;}
   #tmSplash img{height:34px;width:auto;display:block;}
@@ -2168,21 +2229,11 @@ body.portal-coord .aqPlanStrip{display:none!important;}
   <div class="aqLogoContainer"><img class="aqLogo" src="/assets/aq-logo-red-white-horizontal.png" alt="Arrowquip"></div>
   <div class="aqNavLinks" id="workspaceTabs" role="navigation" aria-label="Workspace">
     <div class="aqNavItem"><button type="button" class="tab active" data-ws="trips">My Trips</button></div>
-    <div class="aqNavItem"><button type="button" class="tab" data-ws="team">Team</button></div>
+    <div class="aqNavItem"><button type="button" class="tab" data-ws="team" id="wsTeamTab">My Team</button></div>
     <div class="aqNavItem"><button type="button" class="tab" data-ws="coord" id="wsCoordTab">Coordination</button></div>
   </div>
-  <div class="aqNavRight">
-    <label class="sr-only" for="aqTerrSelect">Territory</label>
-    <select id="aqTerrSelect" class="aqTerrSelect" aria-label="Territory">
-      <option value="All">All</option>
-      <option value="East">East</option>
-      <option value="South">South</option>
-      <option value="Central">Central</option>
-      <option value="West">West</option>
-      <option value="Exports">Exports</option>
-    </select>
-  </div>
-  <!-- Legacy territory tabs kept for existing sync code; visually replaced by select -->
+  <div class="aqNavRight"></div>
+  <!-- Legacy territory tabs kept hidden for any residual sync; not shown in main nav -->
   <div id="tabs" class="aqNavLinks" hidden aria-hidden="true">
     <div class="aqNavItem"><button class="tab active" data-t="All">All</button></div>
     <div class="aqNavItem"><button class="tab" data-t="East">East</button></div>
@@ -2193,11 +2244,19 @@ body.portal-coord .aqPlanStrip{display:none!important;}
   </div>
   </div></div>
 </header>
+<div id="teamEmpStrip" class="team-emp-strip" aria-label="Team members">
+  <div id="teamEmpTabs" class="emp-tabs" role="tablist"></div>
+</div>
 <nav class="aqPlanStrip" id="aqPlanMode" aria-label="Planning view">
   <button type="button" class="on" data-planmode="weekly">Weekly</button>
   <span class="aqPlanSep" aria-hidden="true">|</span>
   <button type="button" data-planmode="year">Year</button>
 </nav>
+<div id="empContextBanner" class="emp-context" style="display:none" aria-live="polite"></div>
+<div class="mob-imap" id="mobImap" aria-label="Itinerary or map">
+  <button type="button" class="on" data-mobview="itin">Itinerary</button>
+  <button type="button" data-mobview="map">Map</button>
+</div>
 <div class="wrap">
   <div class="cards" id="cards" style="display:none"></div>
   <div id="coordView" style="display:none;" aria-label="Travel Coordination"></div>
@@ -2734,39 +2793,63 @@ function syncWorkspaceTabs(){
     var canCoord=portalCanSwitchMode();
     var ct=document.getElementById('wsCoordTab');
     if(ct){ ct.style.display=canCoord?'':'none'; if(!canCoord&&WORKSPACE==='coord') WORKSPACE='trips'; }
+    var canTeam=true;
+    try{ canTeam=!(window.AQEmp&&AQEmp.canSeeMyTeamWorkspace)||AQEmp.canSeeMyTeamWorkspace(); }catch(e){}
+    var tt=document.getElementById('wsTeamTab');
+    if(tt){
+      tt.style.display=canTeam?'':'none';
+      if(!canTeam&&WORKSPACE==='team') WORKSPACE='trips';
+    }
     document.querySelectorAll('#workspaceTabs [data-ws]').forEach(function(b){
       b.classList.toggle('active', b.dataset.ws===WORKSPACE);
     });
-    var sel=document.getElementById('aqTerrSelect');
-    if(sel && ['All','East','South','Central','West','Exports'].indexOf(terr)>=0) sel.value=terr;
     document.querySelectorAll('#tabs [data-t]').forEach(function(b){
       b.classList.toggle('active', b.dataset.t===terr);
     });
+    try{ if(window.AQEmp&&AQEmp.paint) AQEmp.paint(); }catch(e2){}
   }catch(e){}
 }
 function setWorkspace(ws, opts){
   opts=opts||{};
   ws=(ws==='team'||ws==='coord')?ws:'trips';
   if(ws==='coord'&&!portalCanSwitchMode()&&!opts.force) ws='trips';
+  try{
+    if(ws==='team'&&window.AQEmp&&AQEmp.canSeeMyTeamWorkspace&&!AQEmp.canSeeMyTeamWorkspace()&&!opts.force) ws='trips';
+  }catch(e){}
   try{ if(typeof mobIsPhone==='function'&&mobIsPhone()&&ws==='coord') ws='trips'; }catch(e){}
   WORKSPACE=ws;
   if(ws==='coord'){
     PORTAL_MODE='coord';
-    if(terr==='Team'||terr==='Master'||terr==='Settings') terr='All';
+    if(terr==='Team'||terr==='Master'||terr==='Settings'||terr==='All') terr='East';
     PLAN_MODE='weekly';
   } else if(ws==='team'){
     PORTAL_MODE='sales';
-    terr='All';
     PLAN_MODE='weekly';
-    ALL_BOARD_MODE='weeks';
+    if(terr==='All'||terr==='Team'||terr==='Master'||terr==='Settings'){
+      var lastT=null; try{ lastT=localStorage.getItem('aqLastAreaTerr'); }catch(e){}
+      terr=(lastT&&['East','South','Central','West','Exports'].indexOf(lastT)>=0)?lastT:'East';
+    }
+    try{
+      if(window.AQEmp){
+        var people=AQEmp.manageablePeople?AQEmp.manageablePeople():[];
+        var cur=AQEmp.getView?AQEmp.getView():null;
+        if(cur&&cur.mode==='member'&&cur.memberId&&AQEmp.canViewMember(cur.memberId)){
+          AQEmp.setView('member', cur.memberId, {silent:true});
+        } else if(people.length){
+          AQEmp.setView('member', people[0].id, {silent:true});
+        } else {
+          AQEmp.setView('self', null, {silent:true});
+        }
+      }
+    }catch(e){}
   } else {
     PORTAL_MODE='sales';
     if(terr==='All'||terr==='Team'||terr==='Master'||terr==='Settings'){
-      /* Prefer last area territory for My Trips */
       var last=null;
       try{ last=localStorage.getItem('aqLastAreaTerr'); }catch(e){}
       terr=(last&&['East','South','Central','West','Exports'].indexOf(last)>=0)?last:'East';
     }
+    try{ if(window.AQEmp) AQEmp.setView('self', null, {silent:true}); }catch(e){}
   }
   try{ localStorage.setItem('aqPortalMode', PORTAL_MODE); localStorage.setItem('aqWorkspace', WORKSPACE); }catch(e){}
   try{ document.body.classList.toggle('portal-coord', PORTAL_MODE==='coord'); }catch(e){}
@@ -2774,16 +2857,26 @@ function setWorkspace(ws, opts){
   if(!opts.silent){ try{ render(); }catch(e){} }
 }
 function setTerritoryFilter(t){
+  /* Territory is no longer a main-nav control. Keep helper for Master/Settings/admin. */
   if(['All','East','South','Central','West','Exports','Master','Settings','Team'].indexOf(t)<0) return;
+  if(t==='All'&&(WORKSPACE==='trips'||WORKSPACE==='team')){
+    /* Regional All board removed from personal/management workspaces */
+    t='East';
+  }
   terr=t;
   if(['East','South','Central','West','Exports'].indexOf(t)>=0){
     try{ localStorage.setItem('aqLastAreaTerr', t); }catch(e){}
-    if(WORKSPACE==='team'){ /* stay on team calendar but filter matrix by territory via LV_AREAS */ }
-    else if(WORKSPACE==='trips'){ /* ok */ }
   }
-  if(t==='All'&&WORKSPACE==='trips'){ WORKSPACE='team'; PORTAL_MODE='sales'; }
   syncWorkspaceTabs();
+  try{ if(window.AQEmp&&AQEmp.paint) AQEmp.paint(); }catch(e){}
   render();
+}
+function portalPlanTitle(){
+  try{
+    if(WORKSPACE==='team'&&window.AQEmp&&AQEmp.teamTitle) return AQEmp.teamTitle();
+    if(window.AQEmp&&AQEmp.tripsTitle) return AQEmp.tripsTitle();
+  }catch(e){}
+  return 'My Trips';
 }
 window.setWorkspace=setWorkspace;
 window.setTerritoryFilter=setTerritoryFilter;
@@ -2826,8 +2919,19 @@ window.portalIsSalesMode=portalIsSalesMode;
     var ws=e.target&&e.target.closest&&e.target.closest('#workspaceTabs [data-ws]');
     if(ws){ e.preventDefault(); setWorkspace(ws.dataset.ws); return; }
   });
-  document.addEventListener('change',function(e){
-    if(e.target&&e.target.id==='aqTerrSelect'){ setTerritoryFilter(e.target.value); }
+  document.addEventListener('click',function(e){
+    var mv=e.target&&e.target.closest&&e.target.closest('#mobImap [data-mobview]');
+    if(!mv) return;
+    var view=mv.dataset.mobview;
+    document.querySelectorAll('#mobImap [data-mobview]').forEach(function(b){ b.classList.toggle('on', b.dataset.mobview===view); });
+    var wrap=document.getElementById('planwrap')||document.getElementById('allPlanwrap');
+    if(!wrap) return;
+    if(view==='map'){
+      wrap.classList.add('mob-show-map');
+      try{ if(MAP_UI_MODE==='collapsed') mapModeSet('split'); }catch(err){}
+    } else {
+      wrap.classList.remove('mob-show-map');
+    }
   });
 })();
 var YG_EVENTS=[];
@@ -2895,7 +2999,11 @@ var FLIGHT_WINDOWS={
 };
 var MAP_SPLIT_PX=(function(){ try{ var s=localStorage.getItem('aqMapSplit'); if(s==null||s==='') return null; var n=parseInt(s,10); return (isFinite(n)&&n>=200&&n<=900)?n:null; }catch(e){ return null; } })();
 var TRIPS_VIEW=(function(){ try{ var v=localStorage.getItem('aqTripsView'); if(v==='board'||v==='list') return v; }catch(e){} return 'list'; })();
-var NAV_OPEN=(function(){ try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){} return true; })();
+var NAV_OPEN=(function(){
+  try{ var v=localStorage.getItem('aqNavOpen'); if(v==='0') return false; if(v==='1') return true; }catch(e){}
+  try{ if(window.matchMedia&&window.matchMedia('(max-width:900px)').matches) return false; }catch(e){}
+  return true;
+})();
 function focusWkGet(){ if(FOCUS_WK!=null && (WEEKDATES[FOCUS_WK]||FOCUS_WK==='remote')) return FOCUS_WK; return wkCurrent(); }
 function tripsExpandPath(wk){
   /* device-local only — expands Year/Quarter/Month for a week in the nav tree */
@@ -4278,7 +4386,27 @@ function teamList(terrFilter, includeInactive){
 }
 function teamById(id){ var L=ADMIN.team||[]; for(var i=0;i<L.length;i++) if(L[i].id===id) return L[i]; return null; }
 function teamCanManage(){ try{ return pbIsAdmin()||!PB_USER; }catch(e){ return true; } }
-function teamShowNav(){ return terr==='East'||terr==='South'||terr==='Central'||terr==='West'||terr==='All'; }
+function teamShowNav(){
+  /* Ownership filtering is always on for trips/team workspaces; regional team
+     picker UI is never shown (My Trips is personal; My Team uses report tabs). */
+  return WORKSPACE==='trips'||WORKSPACE==='team'||terr==='East'||terr==='South'||terr==='Central'||terr==='West'||terr==='All';
+}
+function teamIsPersonalWorkspace(){ return WORKSPACE==='trips'; }
+function teamIsManageWorkspace(){ return WORKSPACE==='team'; }
+function teamActorId(){
+  try{
+    if(window.AQEmp&&AQEmp.selectedPerson){
+      var p=AQEmp.selectedPerson();
+      if(p&&p.id) return p.id;
+    }
+    if(window.AQEmp&&AQEmp.currentEmployee){
+      var me=AQEmp.currentEmployee();
+      if(me&&me.id) return me.id;
+    }
+  }catch(e){}
+  var ids=Object.keys(TEAM_IDS||{});
+  return ids.length===1?ids[0]:null;
+}
 function teamRoster(){
   return teamList(terr==='All'?null:terr,false)||[];
 }
@@ -4332,7 +4460,8 @@ function teamRefreshViews(){
   try{ if(typeof tripsDocBarRender==='function') tripsDocBarRender(); }catch(e2){}
 }
 function teamPlanMode(){
-  /* My Trips for a single territory: plan one rep at a time so stops don't mix. */
+  /* Personal My Trips and My Team report views are always single-traveller. */
+  if(teamIsPersonalWorkspace()||teamIsManageWorkspace()) return true;
   return terr==='East'||terr==='South'||terr==='Central'||terr==='West';
 }
 function teamToggleAll(){
@@ -4379,31 +4508,21 @@ function teamToggleMember(id){
   teamRefreshViews();
 }
 function teamNeedsRepPick(){
+  /* Auth account (or selected My Team report) owns the trip — never ask to pick. */
+  if(teamIsPersonalWorkspace()||teamIsManageWorkspace()) return false;
   return teamPlanMode() && teamShowNav() && !teamIsSingle();
 }
 function teamRepBannerHTML(){
-  if(!teamPlanMode()||!teamShowNav()) return '';
-  var one=teamSingleMember();
-  if(one){
-    return '<div class="trip-rep-banner ok" id="tripRepBanner">'
-      +'<span>Planning trip for <b>'+esc(one.name)+'</b> · '+esc(one.role||'')+'</span>'
-      +'<span class="kb-space"></span>'
-      +'<button type="button" class="kbb" data-triprep-clear="1">Change rep</button>'
-      +'</div>';
-  }
-  var members=teamRoster();
-  if(!members.length){
-    return '<div class="trip-rep-banner" id="tripRepBanner"><b>Add a team member</b> in Team before planning this trip.</div>';
-  }
-  return '<div class="trip-rep-banner" id="tripRepBanner">'
-    +'<span><b>Pick the rep first</b> — choose who this trip belongs to so stops don’t mix.</span>'
-    +'<div class="trip-rep-pick">'
-    +members.map(function(m){
-      return '<button type="button" data-triprep="'+esc(m.id)+'">'+esc(m.name)+' · '+esc(m.role||'')+'</button>';
-    }).join('')
-    +'</div></div>';
+  /* Rep-pick banner removed: My Trips is personal; My Team uses the context banner. */
+  return '';
 }
 function teamEnsureRepBeforeAdd(thenFn){
+  if(teamIsPersonalWorkspace()||teamIsManageWorkspace()){
+    var aid=teamActorId();
+    if(aid){ TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[aid]=true; try{ teamSaveSel(); }catch(e){} }
+    if(thenFn) thenFn();
+    return true;
+  }
   if(!teamNeedsRepPick()){ if(thenFn) thenFn(); return true; }
   var members=teamRoster();
   if(!members.length){ aqToast('Add a team member before planning'); return false; }
@@ -4436,21 +4555,34 @@ function teamSetOwner(kind,id,memberId){
   if(!memberId) delete OWNERS[k]; else OWNERS[k]=memberId;
 }
 function teamFilterMatch(kind,id){
+  if(teamIsPersonalWorkspace()||teamIsManageWorkspace()){
+    var aid=teamActorId();
+    if(!aid) return false;
+    var o=teamOwnerOf(kind,id);
+    if(o) return o===aid; /* never show another employee’s travel */
+    /* Unowned historical: visible in personal My Trips only (same territory pool).
+       My Team report views require explicit ownership so leaders don’t mix shared leftovers. */
+    return teamIsPersonalWorkspace();
+  }
   if(!teamShowNav()) return true;
   if(TEAM_ALL) return true;
-  if(!Object.keys(TEAM_IDS).length) return false; /* nobody selected → hide individual travel */
-  var o=teamOwnerOf(kind,id);
-  if(!o) return false; /* unassigned historical only under All */
-  return !!TEAM_IDS[o];
+  if(!Object.keys(TEAM_IDS).length) return false;
+  var own=teamOwnerOf(kind,id);
+  if(!own) return false;
+  return !!TEAM_IDS[own];
 }
 function teamStampNew(kind,id){
+  if(teamIsPersonalWorkspace()||teamIsManageWorkspace()){
+    var aid=teamActorId();
+    if(aid) teamSetOwner(kind,id,aid);
+    return;
+  }
   if(!teamShowNav()) return;
   var one=teamSingleMember();
   if(one){ teamSetOwner(kind,id,one.id); return; }
-  if(TEAM_ALL) return; /* All view: leave unassigned rather than inventing ownership */
+  if(TEAM_ALL) return;
   var ids=Object.keys(TEAM_IDS);
   if(ids.length===1) teamSetOwner(kind,id,ids[0]);
-  /* Multi-select: ownership chosen via teamPickOwner after create */
 }
 function teamPickOwner(kind, id, onDone){
   var members=teamSelectedMembers();
@@ -4493,7 +4625,9 @@ function teamInitials(memberId){
   return (parts[0].charAt(0)+parts[parts.length-1].charAt(0)).toUpperCase();
 }
 function teamWhoBadge(kind,id){
-  /* Only show ownership chips when more than one traveller is in view. */
+  /* Personal itinerary: no redundant initials. Multi-person views only. */
+  if(teamIsPersonalWorkspace()) return '';
+  if(teamIsManageWorkspace() && teamIsSingle()) return '';
   if(teamSelectedMembers().length<=1) return '';
   var o=teamOwnerOf(kind,id); if(!o) return '<span class="kcc-who" title="Unassigned — needs owner">?</span>';
   var ini=teamInitials(o); if(!ini) return '';
@@ -5152,8 +5286,17 @@ window.AQ_QA.merge=function(){
   console.table(rows); console.log(ok?'✅ EVENT-MERGE TESTS PASSED':'❌ EVENT-MERGE TESTS FAILED');
   return {passed:ok,rows:rows};
 };
-function savePlan(){
+function savePlan(opts){
+  opts=opts||{};
   if(PB_READONLY) return;                       /* verification screens never write */
+  if(!opts.force){
+    try{
+      if(window.AQEmp&&AQEmp.assertCanEditCurrent&&!AQEmp.assertCanEditCurrent()){
+        if(typeof aqToast==='function') aqToast('View only — you cannot edit this traveller’s plan', false);
+        return;
+      }
+    }catch(e){}
+  }
   if(EVENT_LEVEL_MERGE){ try{ evTouchAll(); }catch(e){} }
   try{localStorage.setItem(LS_PLAN_KEY,JSON.stringify(planPayload()));}catch(e){}
   collabLog('save'); cloudSave(PLAN_KEY,planPayload());
@@ -5338,7 +5481,7 @@ function dealerCard(d){
 }
 function renderPlanner(opts){
   renderPlanner._opts=opts||{};
-  document.getElementById("planTitle").textContent=terr+" · Trips";
+  document.getElementById("planTitle").textContent=portalPlanTitle();
   const isExp=terr==='Exports';
   /* the Dealer Pool is a permanent library: it ALWAYS contains every dealer in
      the territory. Scheduling never removes a dealer from here. */
@@ -7139,54 +7282,8 @@ function tripsNavHTML(){
   }
   grid+='</tbody></table></div>';
 
-  /* Team */
+  /* Team regional picker removed — My Trips is personal; My Team uses header report tabs. */
   var teamHtml='';
-  if(teamShowNav()){
-    var isAllTerr=(terr==='All');
-    var members=teamList(isAllTerr?null:terr,false);
-    if(typeof ALL_ROLE_F==='undefined') window.ALL_ROLE_F={AM:true,DSR:true,ISS:true,SA:true,TC:true,LEAD:true};
-    if(isAllTerr){
-      members=members.filter(function(m){ return ALL_ROLE_F[m.role]!==false; });
-    }
-    var allOn=teamIsAll(), partial=teamIsPartial();
-    var planOne=teamPlanMode();
-    var checks=planOne
-      ? '<div class="sb-empty" style="padding:4px 2px 8px;color:#6b7280">Pick <b>one</b> rep for this trip</div>'
-      : ('<button type="button" class="sb-check'+(allOn?' on':'')+(partial?' partial':'')+'" data-teamall="1" title="Select or clear all team members">'
-        +'<span class="box">'+(allOn?'✓':(partial?'−':''))+'</span><span class="nm">All team members</span></button>');
-    function memberCheck(m){
-      var on=teamIsSelected(m.id) && (!planOne || teamIsSingle());
-      if(planOne) on=!!TEAM_IDS[m.id] && !TEAM_ALL;
-      return '<button type="button" class="sb-check'+(planOne?' radio':'')+(on?' on':'')+'" data-teammember="'+esc(m.id)+'" title="'
-        +(planOne?'Plan this trip for '+esc(m.name):esc(TEAM_ROLE_LABEL[m.role]||m.role))+'">'
-        +'<span class="box">'+(on?(planOne?'●':'✓'):'')+'</span><span class="nm">'+esc(m.name)+'<span class="rl">· '+esc(m.role)+'</span></span></button>';
-    }
-    if(isAllTerr){
-      checks+='<div class="sb-rolef">'
-        +['AM','DSR','ISS','SA','TC','LEAD'].map(function(r){
-          return '<button type="button" class="'+(ALL_ROLE_F[r]!==false?'on':'')+'" data-allrole="'+r+'">'+r+'</button>';
-        }).join('')+'</div>';
-      var byTerr={};
-      members.forEach(function(m){ (byTerr[m.terr]=byTerr[m.terr]||[]).push(m); });
-      (TERRS||[]).forEach(function(t){
-        var list=byTerr[t]||[]; if(!list.length) return;
-        checks+='<div class="sb-team-terr">'+esc(t)+'</div>';
-        list.forEach(function(m){ checks+=memberCheck(m); });
-      });
-      Object.keys(byTerr).forEach(function(t){
-        if((TERRS||[]).indexOf(t)>=0) return;
-        var list=byTerr[t]||[]; if(!list.length) return;
-        checks+='<div class="sb-team-terr">'+esc(t||'Other')+'</div>';
-        list.forEach(function(m){ checks+=memberCheck(m); });
-      });
-    } else {
-      members.forEach(function(m){ checks+=memberCheck(m); });
-    }
-    teamHtml='<details class="sb-sec" data-sbsec="team"'+(sbSecOpen('team',true)?' open':'')+'>'
-      +'<summary>Team — '+esc(isAllTerr?'All territories':terr)
-      +(teamCanManage()?'<button type="button" class="sb-add" data-teamadd="1" title="Add team member">+</button>':'')
-      +'</summary><div class="sb-sec-body">'+checks+'</div></details>';
-  }
 
   /* Needs Attention */
   var attn=sbAttentionItems();
@@ -7389,7 +7486,7 @@ function kbToolbarHTML(wk){
   var canBook=false;
   try{ canBook=!!(typeof pbIsAdmin==='function'&&pbIsAdmin())||teamSelectedMembers().some(function(){return false;});
     var me=null; try{ me=(ADMIN.team||[]).filter(function(m){ return m.email&&typeof pbWho==='function'&&String(m.email).toLowerCase()===String(pbWho()).toLowerCase(); })[0]; }catch(e){}
-    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.isAdmin)) canBook=true;
+    if(me&&(me.role==='TC'||me.role==='SA'||me.accessGroup==='coordinator'||me.portalRole==='ea'||me.portalRole==='admin'||me.isAdmin)) canBook=true;
     if(typeof pbIsAdmin==='function'&&pbIsAdmin()) canBook=true;
   }catch(e){}
   return ''
@@ -14369,7 +14466,7 @@ function render(){
     document.getElementById('terrMap').style.display=isMap?'':'none';
     if(isPlan){ renderPlanner(); wireDnD(); focusCurrentWeekOnce(); }
     else { renderTerrMap(); }
-    document.getElementById('planTitle').textContent=terr+' · Trips';
+    document.getElementById('planTitle').textContent=portalPlanTitle();
   }
 }
 /* scoped to the whole navbar: territory links live in #tabs, "Master Sheet" in the utility bar */
@@ -14751,7 +14848,7 @@ function focusCurrentWeekOnce(){
   _didFocusWeek=true;
   try{ focusWkSet(wk,{expand:true}); }catch(e){}
 }
-function refreshPlanner(opts){ opts=opts||{}; withPreservedScroll(function(){ tlInvalidate(); renderPlanner(opts); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=terr+' · Trips'; }); }
+function refreshPlanner(opts){ opts=opts||{}; withPreservedScroll(function(){ tlInvalidate(); renderPlanner(opts); renderCards(); wireDnD(); var pt=document.getElementById('planTitle'); if(pt) pt.textContent=portalPlanTitle(); }); }
 /* ============ TRIP-ORDER INVARIANT TESTS ============================
    Non-destructive: snapshots ASSIGN/DAY/TIME/ORD/LOGI/APPT/TLE, builds
    synthetic scenarios, asserts every surface (schedule tlSeq == desktop map
@@ -14866,34 +14963,33 @@ function pbCleanAuthUrl(){
   }catch(e){}
 }
 function pbPersonalizeLanding(){
-  /* Prefer the employee's own territory + current week on first open after login.
-     Leadership / Travel Coordinators keep restored nav when present. */
+  /* Always land on personal My Trips for the signed-in employee. */
   try{
     if(typeof mtNormalizeTeam==='function') mtNormalizeTeam();
+    try{ if(window.AQEmp&&AQEmp.normalizeAll) AQEmp.normalizeAll(); }catch(e){}
+    WORKSPACE='trips';
+    PORTAL_MODE='sales';
+    PLAN_MODE='weekly';
     var email=String((PB_USER&&PB_USER.email)||'').toLowerCase();
     var me=null;
     if(email){ (ADMIN.team||[]).forEach(function(m){ if(m&&m.email&&String(m.email).toLowerCase()===email) me=m; }); }
-    var isLead=me&&(me.role==='LEAD'||me.role==='TC'||me.isAdmin);
-    var hadNav=false;
-    try{ hadNav=!!localStorage.getItem('aqNavState'); }catch(e){}
-    if(!hadNav || (!isLead && me)){
-      PLAN_MODE='weekly';
-      var homeTerr=(me&&me.terr)||(me&&Array.isArray(me.terrs)&&me.terrs[0])||null;
-      if(homeTerr==='All') homeTerr='All';
-      if(homeTerr && (homeTerr==='All'||TERRS.indexOf(homeTerr)>=0)){
-        terr=homeTerr;
-        document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t===terr); });
-      } else if(!hadNav){
-        terr='All';
-        document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t==='All'); });
-      }
-      var wk=wkCurrent();
-      FOCUS_WK=wk; ALL_WK=wk;
-      try{ calSetToWeek(wk); }catch(e){}
-      if(me&&me.id){
-        TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[me.id]=true; teamSaveSel();
-      }
+    var homeTerr=(me&&me.terr)||(me&&Array.isArray(me.terrs)&&me.terrs[0])||null;
+    if(!homeTerr || homeTerr==='All' || TERRS.indexOf(homeTerr)<0){
+      try{ homeTerr=localStorage.getItem('aqLastAreaTerr'); }catch(e){}
     }
+    if(!homeTerr || TERRS.indexOf(homeTerr)<0) homeTerr='East';
+    terr=homeTerr;
+    var wk=wkCurrent();
+    FOCUS_WK=wk; ALL_WK=wk;
+    try{ calSetToWeek(wk); }catch(e){}
+    if(me&&me.id){
+      TEAM_ALL=false; TEAM_IDS={}; TEAM_IDS[me.id]=true; teamSaveSel();
+    }
+    try{
+      if(window.AQEmp&&AQEmp.setView) AQEmp.setView('self', null, {silent:true});
+      else if(window.AQEmp&&AQEmp.boot) AQEmp.boot();
+    }catch(e){}
+    try{ localStorage.setItem('aqWorkspace','trips'); }catch(e){}
   }catch(e){}
 }
 function unlockApp(){
@@ -14908,6 +15004,14 @@ function unlockApp(){
     recalcTargets();    /* booking stays derived from Target Loads + FX */
     pbRestoreNav();     /* refresh returns to the same tab/view/week */
     try{ pbPersonalizeLanding(); }catch(e){}
+    try{
+      if(window.AQEmp&&AQEmp.loadTeamOrg){
+        AQEmp.loadTeamOrg().then(function(){
+          try{ if(AQEmp.boot) AQEmp.boot(); }catch(e){}
+          try{ render(); }catch(e){}
+        });
+      }
+    }catch(e){}
     render();
     mobBoot();          /* Trip Mode: phone widths only */
     try{ backfillCoords(); }catch(e){}   /* resolve any missing coordinates in the background */
@@ -15130,7 +15234,7 @@ function pbRenderAcct(){
            :(PB_ROLE==='admin'?'<span class="aqRole">Admin</span>':'');
   var gearSvg='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.2.6.7 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   var menuItems='';
-  if(pbIsAdmin()) menuItems+='<button type="button" data-gear="team">My Team</button>';
+  if(pbIsAdmin()) menuItems+='<button type="button" data-gear="team">Users &amp; reporting</button>';
   if(pbIsAdmin()||pbIsSuperAdmin()) menuItems+='<button type="button" data-gear="master">Master Sheet</button>';
   if(pbIsAdmin()) menuItems+='<button type="button" data-gear="settings">Settings</button>';
   menuItems+='<button type="button" data-gear="trips">My Trips</button>';
@@ -17705,7 +17809,8 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
 </script>
 <script src="/year-glance.js"></script>
 <script src="/smart-entry.js?v=se2"></script>
-<script src="/my-team.js?v=mt4"></script>
+<script src="/my-team.js?v=mt6"></script>
+<script src="/employee-nav.js?v=en2"></script>
 <script src="/travel-coord.js?v=tc1"></script>
 </body>
 </html>
